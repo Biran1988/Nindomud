@@ -1,0 +1,11 @@
+data/
+/data_*/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.zip
+*.backup_*
+.nindo_mud_backup_*/
+.pytest_cache/
+.coverage
