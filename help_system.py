@@ -93,9 +93,9 @@ DEFAULT_HELP_ENTRIES = [
                      "willpower", "chakra control"],
         "title": "Attributes",
         "body": (
-            "Syntax: train <attribute>\n"
+            "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n"
             "\n"
-            "Description: Your nine core attributes, trained one point at a time with 'train <attribute>' using training points earned each level. Every attribute is capped at 75.\n"
+            "Description: Your nine core attributes, trained one point at a time with 'train <attribute>' using training points earned each level. Short forms like 'train str' and 'train con' work too. Every attribute is capped at 75.\n"
             "\n"
             "&CStrength&x - Increases your damage in combat: +1 to your basic attack's damage for every 4 points.\n"
             "  &G[Active]&x\n"
@@ -1679,7 +1679,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: equipment  (alias: eq)\n"
             "\n"
-            "Description: Shows what you currently have worn, wielded, and held.\n"
+            "Description: Shows every wear location, including empty slots, along with what you currently have worn, wielded, and held.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -2371,7 +2371,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["train"],
         "title": "Train",
         "body": (
-            "Syntax: train <attribute>\n"
+            "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n"
             "\n"
             "Description: Spends a training point to raise one attribute by one point, up to the cap of 75. See 'help attributes' for what each attribute does.\n"
             "\n"
@@ -2811,7 +2811,7 @@ DEFAULT_HELP_ENTRIES = [
             "Syntax: mset create <vnum> <name>  |  mset <vnum> <field> <value>  |  mset spawn <vnum> <room>  |  mset list\n"
             "        mset fields [mob|player]  |  mset <vnum> <field> (show current value and options)\n"
             "\n"
-            "Description: Creates and edits mob prototypes field by field -- level, stats, damage dice, act flags, shop/gambler/teacher flags, mob programs, and more. 'mset fields' shows grouped mob fields; 'mset fields player' shows player fields. 'act' works as a shorter alias for 'act_flags'. See 'mstat <vnum>' to review a prototype's current fields.\n"
+            "Description: Creates and edits mob prototypes field by field -- level, stats, damage dice, flags, shop/gambler/teacher fields, mob programs, and more. 'mset fields' shows grouped mob fields; 'mset fields player' shows player fields. Use 'mset <vnum> flags Wander' for mob flags. Field names can be typed without underscores; the older names still work. See 'mstat <vnum>' to review a prototype.\n"
             "\n"
             "&D(Staff only.)&x\n"
             "\n"
@@ -3103,18 +3103,20 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Creates and edits item prototypes field by field. 'oset load <vnum>' places one instance on the ground in the room you're standing in right now, with no persistence -- see 'help spawnpoint' for a version that survives a server restart.\n"
             "\n"
-            "&WString fields:&x short_desc, long_desc, description, item_type, weapon_type, scroll_jutsu, rarity, wear_loc\n"
-            "  item_type      -- category (weapon/armor/tool/trash/scroll/material/etc.); drives shop pricing and more\n"
-            "  weapon_type    -- kunai/sword/shuriken/blunt/polearm/exotic\n"
-            "  wear_loc       -- where this item can be equipped (head/body/legs/feet/hands/waist/finger/neck/piercing/back/chakra aura for armor, or wielded/tool). item_type weapon/tool auto-fills this if left blank\n"
+            "&WText fields:&x short, long, description, itemtype, weapontype, scrolljutsu, rarity, wearloc\n"
+            "  itemtype      -- category (weapon/armor/tool/trash/scroll/material/etc.); drives shop pricing and more\n"
+            "  weapontype    -- kunai/sword/shuriken/blunt/polearm/exotic\n"
+            "  wearloc       -- where this item can be equipped (head/body/legs/feet/hands/waist/finger/neck/piercing/back/chakra aura for armor, or wielded/tool). itemtype weapon/tool auto-fills this if left blank\n"
             "  rarity         -- common/uncommon/rare/epic/legendary; drives display color everywhere the item's name is shown\n"
-            "  scroll_jutsu   -- set alongside item_type scroll to make this item teach a jutsu on 'read'\n"
+            "  scrolljutsu   -- set alongside itemtype scroll to make this item teach a jutsu on 'read'\n"
             "\n"
-            "&WNumber fields:&x weight, cost, level, condition, set_bonus_percent\n"
+            "&WNumber fields:&x weight, cost, level, condition, setbonuspercent, containercapacity\n"
             "\n"
-            "&WList fields:&x keywords, extra_flags, wear_flags, set_vnums\n"
-            "  extra_flags    -- recognized misc flags, e.g. 'no_sac' (protects from sacrifice) or 'no_take' (protects from being picked up); see 'help flags'\n"
-            "  set_vnums      -- the OTHER object vnums that must also be worn to complete this item's armor set\n"
+            "&WList fields:&x keywords, flags, wear, setvnums\n"
+            "  flags          -- item flags such as 'nosac' or 'notake'; see 'help flags'\n"
+            "  wear           -- item's wear permissions (e.g. take); wearloc chooses the actual slot\n"
+            "  setvnums       -- the OTHER object vnums that must also be worn to complete this item's armor set\n"
+            "  Older underscore field names still work. Type 'oset fields' for the short reference.\n"
             "\n"
             "&WStat perks:&x 'oset <vnum> statbonus <stat> <n>' -- hitroll/damroll/armor_class, applies to every instance of this item once equipped; 0 clears it. Positive is always beneficial, even for armor_class (which itself displays as lower-is-better). For a WIELDED item, 'ostat' shows Hitroll/Damroll/Damage on their own dedicated line -- see 'help ostat'.\n"
             "\n"
@@ -3141,7 +3143,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: ostat <vnum or name>\n"
             "\n"
-            "Description: Shows an item prototype's full stat block. For an item with wear_loc set to 'wielded', also shows a dedicated Hitroll/Damroll/Damage line -- Hitroll/Damroll come from 'oset statbonus hitroll|damroll <n>' (starting at +0 if unset), Damage is that weapon_type's own fixed base bonus (see 'help oset').\n"
+            "Description: Shows an item prototype's full stat block. For an item with wearloc set to 'wielded', also shows a dedicated Hitroll/Damroll/Damage line -- Hitroll/Damroll come from 'oset statbonus hitroll|damroll <n>' (starting at +0 if unset), Damage is that weapontype's own fixed base bonus (see 'help oset').\n"
             "\n"
             "&D(Staff only.)&x\n"
             "\n"
@@ -3215,10 +3217,12 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "flags",
-        "keywords": ["flags", "room flags", "extra_flags", "act_flags", "capturepoint", "no_sac", "no_take", "banker", "bountyoffice"],
+        "keywords": ["flags", "room flags", "extra_flags", "act_flags", "capturepoint", "no_sac", "no_take", "nosac", "notake", "banker", "bountyoffice"],
         "title": "Flags (staff)",
         "body": (
-            "Syntax: rset flags <flagname>  (room flags -- toggle: running it again with the same name removes it)  |  oset <vnum> extra_flags <flagname>  (item flags -- add; use '-<flagname>' to remove)  |  mset <vnum> act_flags <flagname>  (mob flags -- add; use '-<flagname>' to remove; 'act' works as a shorter alias for 'act_flags')\n"
+            "Syntax: rset flags <flagname>  (room flags -- toggle)\n"
+            "        oset <vnum> flags <flagname>  (item flags -- prefix - to remove)\n"
+            "        mset <vnum> flags <flagname>  (mob flags -- prefix - to remove)\n"
             "\n"
             "Description: Only a recognized flag can be set on any of the three -- an unknown name (including a typo) is refused outright, telling you the valid list. Matching is case-insensitive; whichever way you type a valid flag, it's stored under its one correct/canonical casing shown below, so it's always recognized correctly by whatever system actually checks for it.\n"
             "\n"
@@ -3226,11 +3230,11 @@ DEFAULT_HELP_ENTRIES = [
             "  CapturePoint       -- makes this room a war/territory control point; see 'help territory'\n"
             "  accelerated_healing -- faster regen in this room (set automatically on every hospital; rarely needs setting by hand)\n"
             "\n"
-            "&WItem flags (extra_flags):&x\n"
+            "&WItem flags:&x\n"
             "  no_sac             -- protects this item from being destroyed by 'sacrifice', including 'sacrifice all'\n"
             "  no_take            -- protects this item from being picked up with 'get' at all -- for cosmetic room decoration (furniture, signs, plants) placed via 'oset load' or a registered spawn point, meant to stay exactly where it's put\n"
             "\n"
-            "&WMob flags (act_flags):&x\n"
+            "&WMob flags:&x\n"
             "  Banker             -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob\n"
             "  BountyOffice       -- lets a player claim a bounty in person at this mob\n"
             "  Wander             -- gives this mob a small per-tick chance to move through a random available exit (moves roughly every few minutes, not constantly; never into an apartment room)\n"

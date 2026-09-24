@@ -16,9 +16,15 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.221: `changelog.py`.
+- The in-game change history through version 15.224: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
+- Builder commands accept compact field names, including `flags`, `wear`,
+  `wearloc`, `containercapacity`, and joined spellings for the other fields.
+  `train str`, `train con`, and the other stat abbreviations work: `olc.py`,
+  `commands.py`, and `help_system.py`.
+- Local `say` chat displays in bright green: `commands.py`.
+- `eq`/`equipment` lists every wear slot, including empty ones: `commands.py`.
 
 Verification: `python3 -m unittest discover -p 'test_*.py'` and
 `python3 test_smoke.py`. The tests cover damage tiers, shop persistence,

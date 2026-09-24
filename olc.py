@@ -329,7 +329,7 @@ def cmd_mstat(session, args: List[str]) -> None:
         _rule(),
         f"&C{'FLAGS AND BEHAVIOR'.center(62)}&x",
         _rule(),
-        f"&WAct Flags:&x {_fmt_list(t['act_flags'])}",
+        f"&WFlags:&x {_fmt_list(t['act_flags'])}",
         f"&WAffected By:&x {_fmt_list(t['affected_by'])}",
         f"&WAttacks:&x {_fmt_list(t['attack_verbs'])}",
         f"&WDefenses:&x {_fmt_list(t['defenses'])}",
@@ -438,8 +438,8 @@ def cmd_ostat(session, args: List[str]) -> None:
             + (", ".join(f"{k.replace('_', ' ').title()} {v:+d}" for k, v in o.get("stat_bonuses", {}).items())
                or "&D(none)&x")
         ),
-        f"&WExtra Flags:&x {_fmt_list(o['extra_flags'])}",
-        f"&WWear Flags:&x {_fmt_list(o['wear_flags'])}",
+        f"&WFlags:&x {_fmt_list(o['extra_flags'])}",
+        f"&WWear:&x {_fmt_list(o['wear_flags'])}",
         f"&WValues:&x {' '.join(str(v) for v in o['values'])}",
         f"&WEnabled:&x {'&Gyes&x' if o.get('enabled', True) else '&Rno&x'}",
         _rule(),
@@ -666,6 +666,13 @@ VALID_MOB_ACT_FLAGS = {
     "Mission",      # missions.py -- marks this mob as eligible for the dynamic C/B/A/S rank-request mission pool (see missions.pick_mission_mob); the mob's own level, weighed against the requesting player's level, determines which rank it can actually be offered for
     "Immortal",     # combat.is_immortal_mob -- per direct request (Section 150): genuinely CANNOT be attacked at all (plain attack or jutsu-based), matching the exact same real "protected and cannot be attacked" refusal already used for shopkeepers/gamblers/teachers -- not just a huge HP pool
 }
+
+
+def _canonical_flag(typed: str, valid_flags) -> Optional[str]:
+    """Accept either the saved flag spelling or its joined builder spelling."""
+    joined = typed.lower().replace("_", "")
+    return next((flag for flag in valid_flags
+                 if flag.lower().replace("_", "") == joined), None)
 
 
 def cmd_astat(session, args: List[str]) -> None:
@@ -1187,12 +1194,12 @@ def cmd_rset(session, args: List[str]) -> None:
 
     if sub == "flags":
         if not rest:
-            session.send(f"Usage: rset flags <flagname>  (toggles the flag on this room)\nValid: {', '.join(sorted(VALID_ROOM_FLAGS))}")
+            session.send(f"Usage: rset flags <flagname>  (toggles the flag on this room)\nValid: {', '.join(sorted(f.replace('_', '') for f in VALID_ROOM_FLAGS))}")
             return
         typed = rest[0]
-        canonical = next((f for f in VALID_ROOM_FLAGS if f.lower() == typed.lower()), None)
+        canonical = _canonical_flag(typed, VALID_ROOM_FLAGS)
         if canonical is None:
-            session.send(f"'{typed}' isn't a recognized room flag. Valid: {', '.join(sorted(VALID_ROOM_FLAGS))}")
+            session.send(f"'{typed}' isn't a recognized room flag. Valid: {', '.join(sorted(f.replace('_', '') for f in VALID_ROOM_FLAGS))}")
             return
         if canonical in room.flags:
             room.flags.remove(canonical)
@@ -1304,14 +1311,33 @@ MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defe
 MOB_ATTR_FIELDS = {"str", "int", "wis", "dex", "con", "cha", "luck"}
 MOB_BOOL_FIELDS = {"shopkeeper", "gambler", "respawns", "enabled"}
 
+# Builder input uses short, readable names. The stored prototype keys stay
+# unchanged so existing saves and programs continue to load unchanged.
+MOB_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
+                   "primary_class": "class", "act_flags": "flags"}
+OBJECT_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
+                      "extra_flags": "flags", "wear_flags": "wear",
+                      "wear_loc": "wearloc"}
+PLAYER_FIELD_NAMES = {"primary_class": "class", "village_rank": "rank"}
+
+
+def _builder_field(typed: str, fields, preferred, old_aliases=None) -> str:
+    """Resolve display names, joined spellings, and legacy field names."""
+    typed = typed.lower()
+    if typed in fields:
+        return typed
+    aliases = {name.replace("_", ""): name for name in fields}
+    aliases.update({short: long for long, short in preferred.items()})
+    aliases.update(old_aliases or {})
+    return aliases.get(typed, typed)
+
 
 def _field_list(title: str, fields, aliases=None) -> str:
     """Wrap an editor field category for ordinary 80-column MUD clients."""
     import textwrap
 
     aliases = aliases or {}
-    names = [f"{name} ({aliases[name]})" if name in aliases else name
-             for name in sorted(fields)]
+    names = [aliases.get(name, name.replace("_", "")) for name in sorted(fields)]
     return f"&W{title}&x\n" + textwrap.fill(
         ", ".join(names), width=76, initial_indent="  ", subsequent_indent="  "
     )
@@ -1321,26 +1347,24 @@ def _mset_field_reference(player: bool = False) -> str:
     if player:
         return "\n".join([
             "&CPLAYER FIELDS&x  mset <player> <field> <value>",
-            _field_list("Text", PLAYER_STRING_FIELDS, {"village_rank": "rank"}),
+            _field_list("Text", PLAYER_STRING_FIELDS, PLAYER_FIELD_NAMES),
             _field_list("Numbers", PLAYER_INT_FIELDS),
             _field_list("On / off", PLAYER_BOOL_FIELDS),
             "&DPlayer edits require administrator access.&x",
-            "&DSee 'mset fields mob' for mob prototypes.&x",
+            "&DOlder underscore spellings still work. See 'mset fields mob'.&x",
         ])
     return "\n".join([
         "&CMOB FIELDS&x  mset <vnum> <field> <value>",
-        _field_list("Text", MOB_STRING_FIELDS, {
-            "short_desc": "short", "long_desc": "long", "primary_class": "class",
-        }),
+        _field_list("Text", MOB_STRING_FIELDS, MOB_FIELD_NAMES),
         _field_list("Numbers", MOB_INT_FIELDS),
         _field_list("On / off", MOB_BOOL_FIELDS),
         _field_list("Lists (add a value; prefix with - to remove)", MOB_LIST_FIELDS,
-                    {"act_flags": "act"}),
+                    MOB_FIELD_NAMES),
         _field_list("Attributes (numbers)", MOB_ATTR_FIELDS),
-        "&DExample: mset 9001 class ninjutsu  |  mset 9001 act Wander&x",
+        "&DExample: mset 9001 class ninjutsu  |  mset 9001 flags Wander&x",
         "&DUse 'mset <vnum> <field>' for its current value and valid options.&x",
         "&DShop stock: mset additem <mob vnum> <object vnum>. XP comes from mob level.&x",
-        "&DUse 'mset fields player' for player fields.&x",
+        "&DOlder underscore spellings still work; use 'mset fields player' for players.&x",
     ])
 
 
@@ -1545,8 +1569,8 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
         session.send("Usage: mset <player name> <field> <value...>")
         return
     value_text = " ".join(value_args)
-    if field == "rank":
-        field = "village_rank"  # shorter alias for the same field
+    field = _builder_field(field, PLAYER_STRING_FIELDS | PLAYER_INT_FIELDS |
+                           PLAYER_BOOL_FIELDS, PLAYER_FIELD_NAMES)
 
     if field in PLAYER_STRING_FIELDS:
         if field == "village" and value_text.lower() not in world_villages():
@@ -1600,12 +1624,7 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
         _finish_player_edit(session, target, live_session, field, value_text)
         return
 
-    session.send(
-        f"Unknown field '{field}'.\n"
-        f"String fields: {', '.join(sorted(PLAYER_STRING_FIELDS))}\n"
-        f"Number fields: {', '.join(sorted(PLAYER_INT_FIELDS))}\n"
-        f"On/off fields: {', '.join(sorted(PLAYER_BOOL_FIELDS))}"
-    )
+    session.send(f"Unknown player field '{field}'. Use 'mset fields player' for the full list.")
 
 
 def _finish_player_edit(session, target, live_session, field: str, value_text) -> None:
@@ -1876,17 +1895,12 @@ def cmd_mset(session, args: List[str]) -> None:
     if len(args) < 2:
         session.send("Usage: mset <vnum> <field> <value...>\nUse 'mset fields' to see every field, or 'mset <vnum> <field>' to see one field's options.")
         return
-    field_name = args[1].lower()
-    field_display_name = field_name
-    if field_name == "act":
-        field_name = "act_flags"  # shorter alias for the same field
-        field_display_name = field_name  # this alias's own established design: hint text shows the real field name
-    if field_name == "short":
-        field_name = "short_desc"  # per direct request -- "short" is the command word, short_desc is the underlying field
-    if field_name == "long":
-        field_name = "long_desc"  # per direct request -- "long" is the command word, long_desc is the underlying field
-    if field_name == "class":
-        field_name = "primary_class"  # per direct request -- "class" is the command word, primary_class is the underlying field
+    field_display_name = args[1].lower()
+    field_name = _builder_field(field_display_name, MOB_STRING_FIELDS | MOB_INT_FIELDS |
+                                MOB_LIST_FIELDS | MOB_ATTR_FIELDS | MOB_BOOL_FIELDS,
+                                MOB_FIELD_NAMES, {"act": "act_flags"})
+    if field_display_name == "act":
+        field_display_name = "act_flags"  # preserve the established act hint
     if field_name in {"exp", "experience", "experience_reward"}:
         session.send(
             "Mob experience is calculated automatically from its level and the player's level. "
@@ -1903,6 +1917,7 @@ def cmd_mset(session, args: List[str]) -> None:
     field, value_args = field_name, args[2:]
     t = combat.MOB_TEMPLATES[vnum]
     value_text = " ".join(value_args)
+    shown = MOB_FIELD_NAMES.get(field, field.replace("_", ""))
 
     if field in MOB_ATTR_FIELDS:
         if not value_text.lstrip("-").isdigit():
@@ -1943,7 +1958,7 @@ def cmd_mset(session, args: List[str]) -> None:
                     if mob.template_vnum == vnum:
                         mob.primary_class = value_text
         _log(session.player.name, "mobile", vnum, f"{field} set to '{value_text}'")
-        session.send(f"{field_display_name} set.")
+        session.send(f"{shown} set.")
         return
 
     if field in MOB_BOOL_FIELDS:
@@ -1973,19 +1988,21 @@ def cmd_mset(session, args: List[str]) -> None:
                 )
                 return
         if field == "act_flags" and not value_text.startswith("-"):
-            canonical = next((f for f in VALID_MOB_ACT_FLAGS if f.lower() == value_text.lower()), None)
+            canonical = _canonical_flag(value_text, VALID_MOB_ACT_FLAGS)
             if canonical is None:
                 session.send(f"'{value_text}' isn't a recognized mob flag. Valid: {', '.join(sorted(VALID_MOB_ACT_FLAGS))}")
                 return
             value_text = canonical
         if value_text.startswith("-"):
             removed = value_text[1:].strip().lower()
+            if field == "act_flags":
+                removed = (_canonical_flag(removed, VALID_MOB_ACT_FLAGS) or removed).lower()
             t[field] = [v for v in t[field] if v.lower() != removed]
-            session.send(f"'{removed}' removed from {field}.")
+            session.send(f"'{removed}' removed from {shown}.")
         else:
             if value_text.lower() not in [v.lower() for v in t[field]]:
                 t[field].append(value_text.lower() if field == "shop_buys_categories" else value_text)
-            session.send(f"'{value_text}' added to {field}.")
+            session.send(f"'{value_text}' added to {shown}.")
         _log(session.player.name, "mobile", vnum, f"{field} updated")
         return
 
@@ -2387,26 +2404,27 @@ OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent"
 OBJECT_LIST_FIELDS = {"keywords", "extra_flags", "wear_flags", "set_vnums"}
 
 
-def _object_field_hint(field: str, o: dict) -> Optional[str]:
+def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Optional[str]:
     """Builds a field-specific hint for 'oset <vnum> <field>' with no
     value given. Returns None if `field` isn't a recognized object
     field at all, so the caller can fall through to the normal
     "unknown field" refusal."""
+    display = display or OBJECT_FIELD_NAMES.get(field, field.replace("_", ""))
     if field == "item_type":
-        return f"'item_type' is free text -- commonly: weapon, armor, tool, scroll, material, trash. Current: '{o.get('item_type', '')}'.\nUsage: oset <vnum> item_type <text>"
+        return f"'{display}' is free text -- commonly: weapon, armor, tool, scroll, material, trash. Current: '{o.get('item_type', '')}'.\nUsage: oset <vnum> {display} <text>"
     if field == "weapon_type":
         import data_weapons
-        return f"'weapon_type' should be one of: {', '.join(sorted(data_weapons.WEAPON_TYPES.keys()))}. Current: '{o.get('weapon_type', '')}'.\nUsage: oset <vnum> weapon_type <type>"
+        return f"'{display}' should be one of: {', '.join(sorted(data_weapons.WEAPON_TYPES.keys()))}. Current: '{o.get('weapon_type', '')}'.\nUsage: oset <vnum> {display} <type>"
     if field == "rarity":
         import data_rarity
         return f"'rarity' should be one of: {', '.join(data_rarity.RARITY_ORDER)}. Current: '{o.get('rarity', '')}'.\nUsage: oset <vnum> rarity <tier>"
     if field == "wear_loc":
-        return f"'wear_loc' is where this can be equipped -- head/body/legs/feet/hands/waist/finger (armor), or wielded/tool. Current: '{o.get('wear_loc', '')}'.\nUsage: oset <vnum> wear_loc <slot>\nLeave it blank on a weapon/tool item_type and it auto-fills."
+        return f"'{display}' is where this can be equipped -- head/body/legs/feet/hands/waist/finger (armor), or wielded/tool. Current: '{o.get('wear_loc', '')}'.\nUsage: oset <vnum> {display} <slot>\nLeave it blank on a weapon/tool itemtype and it auto-fills."
     if field == "extra_flags":
-        return f"'extra_flags' accepts: {', '.join(sorted(VALID_ITEM_EXTRA_FLAGS))}. Current: {', '.join(o.get('extra_flags', [])) or '(empty)'}\nUsage: oset <vnum> extra_flags <flag>   (or -<flag> to remove)"
+        return f"'{display}' accepts: {', '.join(sorted(f.replace('_', '') for f in VALID_ITEM_EXTRA_FLAGS))}. Current: {', '.join(o.get('extra_flags', [])) or '(empty)'}\nUsage: oset <vnum> {display} <flag>   (or -<flag> to remove)"
     if field == "set_vnums":
         current = o.get("set_vnums", [])
-        return f"'set_vnums' lists the OTHER object vnums that must also be worn to complete this item's armor set. Current: {', '.join(str(v) for v in current) if current else '(empty)'}\nUsage: oset <vnum> set_vnums <other vnum>   (or -<vnum> to remove)"
+        return f"'{display}' lists the OTHER object vnums that must also be worn to complete this item's armor set. Current: {', '.join(str(v) for v in current) if current else '(empty)'}\nUsage: oset <vnum> {display} <other vnum>   (or -<vnum> to remove)"
     if field == "statbonus":
         if o.get("wear_loc") == "wielded":
             return f"'statbonus' sets a per-instance stat perk applied to every instance of this item once equipped -- for a weapon, 'hitroll' and 'damroll' are the ones that usually matter most. Valid stats: {', '.join(sorted(STAT_BONUS_KEYS))}. Current: {o.get('stat_bonuses', {}) or '(none)'}\nUsage: oset <vnum> statbonus hitroll <number>\n       oset <vnum> statbonus damroll <number>   (0 clears either)"
@@ -2414,13 +2432,13 @@ def _object_field_hint(field: str, o: dict) -> Optional[str]:
     if field == "value":
         return f"'value' sets one of 4 raw numeric slots for anything not covered by a named field. Current: {o.get('values', [0, 0, 0, 0])}\nUsage: oset <vnum> value <index 0-3> <number>"
     if field in OBJECT_INT_FIELDS:
-        return f"'{field}' is a number. Current: {o.get(field, 0)}.\nUsage: oset <vnum> {field} <number>"
+        return f"'{display}' is a number. Current: {o.get(field, 0)}.\nUsage: oset <vnum> {display} <number>"
     if field in OBJECT_LIST_FIELDS:
         current = o.get(field, [])
         current_text = ", ".join(str(v) for v in current) if current else "(empty)"
-        return f"'{field}' is a list -- add one value at a time. Current: {current_text}\nUsage: oset <vnum> {field} <value>   (or -<value> to remove one)"
+        return f"'{display}' is a list -- add one value at a time. Current: {current_text}\nUsage: oset <vnum> {display} <value>   (or -<value> to remove one)"
     if field in OBJECT_STRING_FIELDS:
-        return f"'{field}' is free text. Current: '{o.get(field, '')}'.\nUsage: oset <vnum> {field} <text>"
+        return f"'{display}' is free text. Current: '{o.get(field, '')}'.\nUsage: oset <vnum> {display} <text>"
     return None
 
 
@@ -2447,14 +2465,16 @@ def cmd_oset(session, args: List[str]) -> None:
     sub = args[0].lower()
 
     if sub == "fields":
-        session.send(
-            f"String fields: {', '.join(sorted(OBJECT_STRING_FIELDS))}\n"
-            f"Number fields: {', '.join(sorted(OBJECT_INT_FIELDS))}\n"
-            f"List fields: {', '.join(sorted(OBJECT_LIST_FIELDS))}\n"
-            "Armor sets: 'oset <vnum> set_vnums <other vnum>' lists what else must be worn "
-            "at the same time to complete this item's set; 'oset <vnum> set_bonus_percent <n>' "
-            "sets the bonus (default 25) each qualifying piece adds to derived combat stats once complete."
-        )
+        session.send("\n".join([
+            "&COBJECT FIELDS&x  oset <vnum> <field> <value>",
+            _field_list("Text", OBJECT_STRING_FIELDS, OBJECT_FIELD_NAMES),
+            _field_list("Numbers", OBJECT_INT_FIELDS),
+            _field_list("Lists (add a value; prefix with - to remove)",
+                        OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
+            "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
+            "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
+            "&DOlder underscore spellings still work.&x",
+        ]))
         return
 
     if sub == "list":
@@ -2565,16 +2585,20 @@ def cmd_oset(session, args: List[str]) -> None:
     if len(args) < 2:
         session.send("Usage: oset <vnum> <field> <value...>\nUse 'oset fields' to see every field, or 'oset <vnum> <field>' to see one field's options.")
         return
+    display = args[1].lower()
+    field = _builder_field(display, OBJECT_STRING_FIELDS | OBJECT_INT_FIELDS |
+                           OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES)
     if len(args) == 2:
-        hint = _object_field_hint(args[1].lower(), OBJECT_TEMPLATES[vnum])
+        hint = _object_field_hint(field, OBJECT_TEMPLATES[vnum], display)
         if hint:
             session.send(hint)
         else:
             session.send(f"Unknown field '{args[1]}'. Use 'oset fields' to see every valid field.")
         return
-    field, value_args = args[1].lower(), args[2:]
+    value_args = args[2:]
     o = OBJECT_TEMPLATES[vnum]
     value_text = " ".join(value_args)
+    shown = OBJECT_FIELD_NAMES.get(field, field.replace("_", ""))
 
     if field == "value":
         if len(value_args) != 2 or not value_args[0].isdigit() or not value_args[1].lstrip("-").isdigit():
@@ -2599,7 +2623,8 @@ def cmd_oset(session, args: List[str]) -> None:
                 "though Armor Class itself always displays as lower-is-better."
             )
             return
-        stat_key, amount_text = value_args[0].lower(), value_args[1]
+        stat_key = _builder_field(value_args[0], STAT_BONUS_KEYS, {})
+        amount_text = value_args[1]
         if stat_key not in STAT_BONUS_KEYS:
             session.send(f"'{stat_key}' isn't a known stat. Valid: {', '.join(sorted(STAT_BONUS_KEYS))}")
             return
@@ -2654,39 +2679,41 @@ def cmd_oset(session, args: List[str]) -> None:
             elif value_text == "tool":
                 o["wear_loc"] = "tool"
         _log(session.player.name, "object", vnum, f"{field} set to '{value_text}'")
-        session.send(f"{field} set.")
+        session.send(f"{shown} set.")
         return
 
     if field in OBJECT_INT_FIELDS:
         if not value_text.lstrip("-").isdigit():
-            session.send(f"{field} must be a number.")
+            session.send(f"{shown} must be a number.")
             return
         o[field] = int(value_text)
         _log(session.player.name, "object", vnum, f"{field} set to {value_text}")
-        session.send(f"{field} set to {value_text}.")
+        session.send(f"{shown} set to {value_text}.")
         return
 
     if field in OBJECT_LIST_FIELDS:
         if field == "set_vnums" and not value_text.startswith("-"):
             if not value_text.isdigit():
-                session.send("set_vnums entries must be object vnums (numbers).")
+                session.send("setvnums entries must be object vnums (numbers).")
                 return
             if int(value_text) not in OBJECT_TEMPLATES:
                 session.send(f"Note: object {value_text} doesn't exist yet -- add it anyway once it's created.")
         if field == "extra_flags" and not value_text.startswith("-"):
-            canonical = next((f for f in VALID_ITEM_EXTRA_FLAGS if f.lower() == value_text.lower()), None)
+            canonical = _canonical_flag(value_text, VALID_ITEM_EXTRA_FLAGS)
             if canonical is None:
-                session.send(f"'{value_text}' isn't a recognized item flag. Valid: {', '.join(sorted(VALID_ITEM_EXTRA_FLAGS))}")
+                session.send(f"'{value_text}' isn't a recognized item flag. Valid: {', '.join(sorted(f.replace('_', '') for f in VALID_ITEM_EXTRA_FLAGS))}")
                 return
             value_text = canonical
         if value_text.startswith("-"):
             removed = value_text[1:].strip().lower()
+            if field == "extra_flags":
+                removed = (_canonical_flag(removed, VALID_ITEM_EXTRA_FLAGS) or removed).lower()
             o[field] = [v for v in o[field] if v.lower() != removed]
-            session.send(f"'{removed}' removed from {field}.")
+            session.send(f"'{removed}' removed from {shown}.")
         else:
             if value_text.lower() not in [v.lower() for v in o[field]]:
                 o[field].append(value_text)
-            session.send(f"'{value_text}' added to {field}.")
+            session.send(f"'{value_text}' added to {shown}.")
         _log(session.player.name, "object", vnum, f"{field} updated")
         return
 

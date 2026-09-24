@@ -372,4 +372,7 @@ CHANGELOG = [
     ("15.219", "Replaced the flat leveling requirement with a progressive cumulative curve: (level - 1)^3 x 1,000. Existing characters migrate once while retaining their level and percentage of progress."),
     ("15.220", "Mob kill experience is now calculated from mob level and each player's level: an even-level mob awards 5% of that level's XP band, easier enemies decline to zero, harder enemies rise to a 130% cap, and group members are calculated individually. mset exp is retired because rewards are automatic."),
     ("15.221", "Made 'mset fields' readable on standard MUD clients: grouped mob fields, wrapped lines, visible aliases and examples, and a separate 'mset fields player' reference. Updated 'help mset' to show both forms."),
+    ("15.222", "Simplified builder field names: mset/oset flags, oset wear and wearloc, and underscore-free names for other mob, item, and player fields. The old names remain usable and saved data is unchanged. Train now accepts str, wis, con, int, dex, luk, per, wil, and cc abbreviations."),
+    ("15.223", "Say chat now appears in bright green to the speaker and other players in the room, with the usual color reset after the message."),
+    ("15.224", "The eq/equipment command now lists all wear locations, including empty slots, so builders and players can see every available slot."),
 ]

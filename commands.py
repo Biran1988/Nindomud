@@ -73,6 +73,12 @@ TRAINABLE_ATTRIBUTES = [
     "strength", "wisdom", "constitution", "intelligence", "dexterity",
     "luck", "perception", "willpower", "chakra_control",
 ]
+TRAIN_ATTRIBUTE_NAMES = {
+    "str": "strength", "wis": "wisdom", "con": "constitution",
+    "int": "intelligence", "dex": "dexterity", "luk": "luck",
+    "per": "perception", "wil": "willpower", "cc": "chakra_control",
+    "chakractrl": "chakra_control", "chakracontrol": "chakra_control",
+}
 
 
 BARE_NAME_JUTSU_CATEGORIES = ("taijutsu", "bukijutsu")  # physical, not chakra-incantation
@@ -982,8 +988,8 @@ def cmd_say(session, args: List[str]) -> None:
         return
     message = chat_moderation.censor(" ".join(args))
     player = session.player
-    session.send(f"You say, '{message}'")
-    session.broadcast_room(f"{player.name} says, '{message}'", exclude_self=True)
+    session.send(f"&gYou say, '{message}'&x")
+    session.broadcast_room(f"&g{player.name} says, '{message}'&x", exclude_self=True)
 
     village_rooms = content._VILLAGE_ROOMS.get(player.village)
     if village_rooms and player.room_vnum == village_rooms["kage"] and "mission" in message.lower():
@@ -2074,12 +2080,15 @@ def cmd_inventory(session, args: List[str]) -> None:
 
 def cmd_equipment(session, args: List[str]) -> None:
     player = session.player
-    if not player.equipment:
-        session.send("You aren't wearing or wielding anything.")
-        return
     lines = ["You are using:"]
-    for slot, item in player.equipment.items():
-        lines.append(f"  <{slot}> {rarity_colored_name(item)}")
+    preferred_order = ("head", "neck", "piercing", "body", "back", "hands",
+                       "finger", "waist", "legs", "feet", "chakra aura",
+                       "wielded", "tool")
+    slots = [slot for slot in preferred_order if slot in olc.WEAR_LOCATIONS]
+    slots.extend(sorted((olc.WEAR_LOCATIONS | player.equipment.keys()) - set(slots)))
+    for slot in slots:
+        item = player.equipment.get(slot)
+        lines.append(f"  <{slot}> {rarity_colored_name(item) if item else '&D(nothing)&x'}")
     session.send("\n".join(lines))
 
 
@@ -3629,13 +3638,14 @@ def cmd_request(session, args: List[str]) -> None:
 
 def cmd_train(session, args: List[str]) -> None:
     player = session.player
-    if not args or args[0].lower() not in TRAINABLE_ATTRIBUTES:
-        session.send("Usage: train <" + "|".join(TRAINABLE_ATTRIBUTES) + ">")
+    typed = args[0].lower() if len(args) == 1 else ""
+    attr = TRAIN_ATTRIBUTE_NAMES.get(typed, typed)
+    if attr not in TRAINABLE_ATTRIBUTES:
+        session.send("Usage: train <attribute> (str, wis, con, int, dex, luk, per, wil, cc)")
         return
     if player.training_points <= 0:
         session.send("You have no training points left.")
         return
-    attr = args[0].lower()
     current = getattr(player, attr)
     if current >= config.MAX_ATTRIBUTE_VALUE:
         session.send(f"Your {attr.replace('_', ' ')} is already at its maximum ({config.MAX_ATTRIBUTE_VALUE}).")

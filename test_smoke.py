@@ -7476,9 +7476,9 @@ def test_rset_oset_flags_helpfiles():
 
     oset_entry = next(e for e in entries if e["primary_keyword"] == "oset")
     assert "statbonus" in oset_entry["body"]
-    assert "wear_loc" in oset_entry["body"]
-    assert "extra_flags" in oset_entry["body"]
-    assert "no_sac" in oset_entry["body"]
+    assert "wearloc" in oset_entry["body"]
+    assert "flags" in oset_entry["body"]
+    assert "nosac" in oset_entry["body"]
 
     flags_entry = next(e for e in entries if e["primary_keyword"] == "flags")
     assert "CapturePoint" in flags_entry["body"]
@@ -10590,14 +10590,14 @@ def test_travel_mode_removed_wander_is_act_flag():
     s.handle_line(f"mset {vnum} act_flags Wander")
     text_add = "".join(out)
     out.clear()
-    assert "added to act_flags" in text_add.lower()
+    assert "added to flags" in text_add.lower()
     assert combat.is_wandering(mob) is True
 
     # Removing the flag uses the existing, generic "-<value>" removal syntax act_flags already has.
     s.handle_line(f"mset {vnum} act_flags -Wander")
     text_remove = "".join(out)
     out.clear()
-    assert "removed from act_flags" in text_remove.lower()
+    assert "removed from flags" in text_remove.lower()
     assert combat.is_wandering(mob) is False
 
     print("TRAVEL MODE REMOVED WANDER IS ACT FLAG TEST PASSED")
@@ -10727,14 +10727,14 @@ def test_mset_act_shorthand():
     s.handle_line(f"mset {vnum} act Wander")
     text_add = "".join(out)
     out.clear()
-    assert "added to act_flags" in text_add.lower()
+    assert "added to flags" in text_add.lower()
     assert "Wander" in combat.MOB_TEMPLATES[vnum]["act_flags"]
 
     # --- Remove via shorthand, same "-<value>" syntax the long form uses ---
     s.handle_line(f"mset {vnum} act -Wander")
     text_remove = "".join(out)
     out.clear()
-    assert "removed from act_flags" in text_remove.lower()
+    assert "removed from flags" in text_remove.lower()
     assert "Wander" not in combat.MOB_TEMPLATES[vnum]["act_flags"]
 
     # --- 2-arg hint form (no value) ---
@@ -10748,7 +10748,7 @@ def test_mset_act_shorthand():
     s.handle_line(f"mset {vnum} act_flags Sentinel")
     text_long = "".join(out)
     out.clear()
-    assert "added to act_flags" in text_long.lower()
+    assert "added to flags" in text_long.lower()
     assert "Sentinel" in combat.MOB_TEMPLATES[vnum]["act_flags"]
 
     print("MSET ACT SHORTHAND TEST PASSED")
@@ -13518,7 +13518,7 @@ def test_mset_short_long_aliases():
     s.handle_line("mset 66700 short_desc still works via the long form")
     text_old_form = "".join(out)
     out.clear()
-    assert "short_desc set." in text_old_form.lower()
+    assert "short set." in text_old_form.lower()
     assert combat.MOB_TEMPLATES[66700]["short_desc"] == "still works via the long form"
 
     # --- The PRE-EXISTING "act" shorthand's own hint is unaffected -- still echoes act_flags, not act ---
