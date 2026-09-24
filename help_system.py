@@ -1803,7 +1803,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: wear <item>  |  wear all\n"
             "\n"
-            "Description: Equips a piece of armor from your inventory into its own slot (head/body/legs/feet/hands/waist/finger/neck/piercing/back/chakra aura, depending on the item) -- only accepts items actually meant to be worn, so a weapon or tool is refused here (see 'wield'/'hold' instead). 'wear all' equips every wearable item in your inventory at once, each into its own slot, skipping any slot that's already occupied.\n"
+            "Description: Equips armor or a weapon from your inventory into its own slot. 'wear kunai' wields the kunai, just like 'wield kunai'. Use 'hold' for tools. 'wear all' equips armor, weapons, and tools into their own free slots, skipping any occupied slot.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -1910,7 +1910,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Picks up an item lying on the ground in the current room, subject to the same inventory stacking limits as everything else. A small number of items -- cosmetic room decoration like furniture, signs, or plants -- are flagged not to be picked up at all (see 'help flags', the 'no_take' item flag) and will refuse instead.\n"
             "\n"
-            "'get <item> from <container>' instead takes an item OUT of a real container (a backpack or anything else set up with a real capacity via 'oset container_capacity') and back into your ordinary inventory -- see 'help put' and 'help containers'.\n"
+            "'get <item> from <container>' instead takes an item OUT of a real container (a backpack or anything else set up with a real capacity via 'oset <vnum> concap <n>') and back into your ordinary inventory -- see 'help put' and 'help containers'.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -1929,7 +1929,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "If you're carrying more than one container with the exact same name, use the same real 'N.keyword' targeting every other command in the game supports -- 'put kunai in 2.backpack' means the SECOND backpack, not the first. Two identically-named containers never share contents; each one's own real, separate storage is tracked independently, no matter how many you're carrying.\n"
             "\n"
-            "A container that's genuinely full refuses further items until something's taken back out. Staff sets a real item's own container capacity with 'oset <vnum> container_capacity <n>' -- 0 (the default) means that item isn't a container at all; any positive number makes it one, holding up to that many items.\n"
+            "A container that's genuinely full refuses further items until something's taken back out. Staff sets a real item's own container capacity with 'oset <vnum> concap <n>' -- 0 (the default) means that item isn't a container at all; any positive number makes it one, holding up to that many items.\n"
             "\n"
             "Date: 2026-09-13"
         ),
@@ -3105,12 +3105,12 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "&WText fields:&x short, long, description, itemtype, weapontype, scrolljutsu, rarity, wearloc\n"
             "  itemtype      -- category (weapon/armor/tool/trash/scroll/material/etc.); drives shop pricing and more\n"
-            "  weapontype    -- kunai/sword/shuriken/blunt/polearm/exotic\n"
+            "  weapontype    -- kunai/sword/shuriken/blunt/polearm/exotic; sets itemtype weapon and wearloc wielded automatically. Use 'none' to clear it before changing itemtype\n"
             "  wearloc       -- where this item can be equipped (head/body/legs/feet/hands/waist/finger/neck/piercing/back/chakra aura for armor, or wielded/tool). itemtype weapon/tool auto-fills this if left blank\n"
             "  rarity         -- common/uncommon/rare/epic/legendary; drives display color everywhere the item's name is shown\n"
             "  scrolljutsu   -- set alongside itemtype scroll to make this item teach a jutsu on 'read'\n"
             "\n"
-            "&WNumber fields:&x weight, cost, level, condition, setbonuspercent, containercapacity\n"
+            "&WNumber fields:&x weight, cost, level, condition, setbonuspercent, concap\n"
             "\n"
             "&WList fields:&x keywords, flags, wear, setvnums\n"
             "  flags          -- item flags such as 'nosac' or 'notake'; see 'help flags'\n"

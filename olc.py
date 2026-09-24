@@ -1317,7 +1317,7 @@ MOB_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
                    "primary_class": "class", "act_flags": "flags"}
 OBJECT_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
                       "extra_flags": "flags", "wear_flags": "wear",
-                      "wear_loc": "wearloc"}
+                      "wear_loc": "wearloc", "container_capacity": "concap"}
 PLAYER_FIELD_NAMES = {"primary_class": "class", "village_rank": "rank"}
 
 
@@ -2414,7 +2414,7 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
         return f"'{display}' is free text -- commonly: weapon, armor, tool, scroll, material, trash. Current: '{o.get('item_type', '')}'.\nUsage: oset <vnum> {display} <text>"
     if field == "weapon_type":
         import data_weapons
-        return f"'{display}' should be one of: {', '.join(sorted(data_weapons.WEAPON_TYPES.keys()))}. Current: '{o.get('weapon_type', '')}'.\nUsage: oset <vnum> {display} <type>"
+        return f"'{display}' should be one of: {', '.join(sorted(data_weapons.WEAPON_TYPES.keys()))}. Current: '{o.get('weapon_type', '')}'. Setting one makes the item a wielded weapon; 'none' clears it.\nUsage: oset <vnum> {display} <type|none>"
     if field == "rarity":
         import data_rarity
         return f"'rarity' should be one of: {', '.join(data_rarity.RARITY_ORDER)}. Current: '{o.get('rarity', '')}'.\nUsage: oset <vnum> rarity <tier>"
@@ -2468,7 +2468,7 @@ def cmd_oset(session, args: List[str]) -> None:
         session.send("\n".join([
             "&COBJECT FIELDS&x  oset <vnum> <field> <value>",
             _field_list("Text", OBJECT_STRING_FIELDS, OBJECT_FIELD_NAMES),
-            _field_list("Numbers", OBJECT_INT_FIELDS),
+            _field_list("Numbers", OBJECT_INT_FIELDS, OBJECT_FIELD_NAMES),
             _field_list("Lists (add a value; prefix with - to remove)",
                         OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
             "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
@@ -2640,11 +2640,18 @@ def cmd_oset(session, args: List[str]) -> None:
         return
 
     if field in OBJECT_STRING_FIELDS:
-        if field == "weapon_type" and value_text and value_text.lower() not in data_weapons.WEAPON_TYPES:
+        if field == "weapon_type" and value_text.lower() not in data_weapons.WEAPON_TYPES and value_text.lower() not in {"none", "off"}:
             session.send(
                 f"'{value_text}' isn't a known weapon type. Valid: "
-                + ", ".join(sorted(data_weapons.WEAPON_TYPES.keys()))
+                + ", ".join(sorted(data_weapons.WEAPON_TYPES.keys())) + ", none (clear)"
             )
+            return
+        if field == "weapon_type":
+            value_text = "" if value_text.lower() in {"none", "off"} else value_text.lower()
+        if field == "item_type":
+            value_text = value_text.lower()
+        if field == "item_type" and value_text.lower() != "weapon" and o.get("weapon_type"):
+            session.send("Clear weapontype with 'oset <vnum> weapontype none' before changing a weapon's itemtype.")
             return
         if field == "wear_loc" and value_text and value_text.lower() not in WEAR_LOCATIONS:
             session.send(
@@ -2655,6 +2662,9 @@ def cmd_oset(session, args: List[str]) -> None:
             return
         if field == "wear_loc":
             value_text = value_text.lower()
+            if o.get("weapon_type") and value_text != "wielded":
+                session.send("An item with weapontype set must have wearloc wielded. Clear weapontype first to change its slot.")
+                return
         if field == "scroll_jutsu":
             if value_text and value_text.lower() not in data_jutsu.JUTSU:
                 session.send(
@@ -2673,6 +2683,11 @@ def cmd_oset(session, args: List[str]) -> None:
                 return
             value_text = value_text.lower()
         o[field] = value_text
+        if field == "weapon_type" and value_text:
+            o["item_type"] = "weapon"
+            o["wear_loc"] = "wielded"
+        if field == "item_type" and value_text != "weapon" and o.get("wear_loc") == "wielded":
+            o["wear_loc"] = ""
         if field == "item_type" and not o.get("wear_loc"):
             if value_text == "weapon":
                 o["wear_loc"] = "wielded"

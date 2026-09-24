@@ -34,6 +34,6 @@ See `docs/RELEASE_NOTES.md` for the files and checks that verify this release.
 Builders can use `mset fields` for a wrapped mob field list and
 `mset fields player` for the separate player field list.
 Builder field names also accept compact forms such as `mset flags`,
-`oset flags`, `oset wear`, `oset wearloc`, and `oset containercapacity`.
+`oset flags`, `oset wear`, `oset wearloc`, and `oset concap`.
 The original underscore spellings still work. Player training accepts
 short forms such as `train str` and `train con`.

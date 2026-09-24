@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import colors
 import combat
 import commands
+import data_weapons
 import olc
 import world
 from models import Player
@@ -40,7 +41,12 @@ class BuilderShortcutTests(unittest.TestCase):
         olc.cmd_oset(self.session, ["9003", "wear", "head"])
         olc.cmd_oset(self.session, ["9003", "wearloc", "head"])
         olc.cmd_oset(self.session, ["9003", "flags", "nosac"])
-        olc.cmd_oset(self.session, ["9003", "containercapacity", "8"])
+        olc.cmd_oset(self.session, ["9003", "concap", "8"])
+        olc.cmd_oset(self.session, ["9003", "concap"])
+        self.assertIn("concap", self.session.send.call_args.args[0])
+        olc.cmd_oset(self.session, ["9003", "containercapacity", "9"])
+        self.assertEqual(self.item["container_capacity"], 9)
+        olc.cmd_oset(self.session, ["9003", "container_capacity", "8"])
         olc.cmd_oset(self.session, ["9003", "statbonus", "armorclass", "4"])
         self.assertIn("head", self.item["wear_flags"])
         self.assertEqual(self.item["wear_loc"], "head")
@@ -56,8 +62,30 @@ class BuilderShortcutTests(unittest.TestCase):
         self.assertIn("wearloc", shown)
         self.assertIn("wear", shown)
         self.assertIn("flags", shown)
+        self.assertIn("concap", shown)
+        self.assertNotIn("containercapacity", shown)
         self.assertNotIn("wear_flags", shown)
         self.assertTrue(all(len(line) <= 80 for line in shown.splitlines()))
+
+    def test_weapon_type_sets_item_type_and_wear_slot(self):
+        self.assertEqual(self.item["item_type"], "trash")
+        olc.cmd_oset(self.session, ["9003", "weapontype", "kunai"])
+        self.assertEqual((self.item["weapon_type"], self.item["item_type"],
+                          self.item["wear_loc"]), ("kunai", "weapon", "wielded"))
+        olc.cmd_ostat(self.session, ["9003"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Item Type: Weapon", shown)
+        self.assertIn("Weapon Type: Kunai", shown)
+        self.assertIn("Damage:", shown)
+        olc.cmd_oset(self.session, ["9003", "itemtype", "material"])
+        self.assertEqual(self.item["item_type"], "weapon")
+        olc.cmd_oset(self.session, ["9003", "wearloc", "body"])
+        self.assertEqual(self.item["wear_loc"], "wielded")
+        olc.cmd_oset(self.session, ["9003", "weapontype", "none"])
+        olc.cmd_oset(self.session, ["9003", "itemtype", "material"])
+        self.assertEqual((self.item["weapon_type"], self.item["item_type"]),
+                         ("", "material"))
+        self.assertEqual(self.item["wear_loc"], "")
 
     def test_room_flag_and_player_stat_joined_names(self):
         olc.cmd_rset(self.session, ["flags", "acceleratedhealing"])
@@ -110,6 +138,47 @@ class EquipmentSlotsTests(unittest.TestCase):
         populated_view = colors.render(session.send.call_args.args[0], False)
         self.assertIn("<wielded> Training Sword", populated_view)
         self.assertIn("<head> (nothing)", populated_view)
+
+    def test_wear_weapon_and_wear_all_use_wield_slot_and_learn_skill(self):
+        weapon = olc.default_object(9004, "A Practice Kunai")
+        builder = NS(account=NS(staff_level="implementor"),
+                     player=NS(name="Builder"), send=Mock())
+        player = NS(inventory=["A Practice Kunai"], equipment={},
+                    learned_skills=[], skill_proficiencies={})
+        session = NS(player=player, send=Mock())
+        with patch.object(olc, "OBJECT_TEMPLATES", {9004: weapon}), \
+             patch.object(olc, "_log"), \
+             patch.object(commands, "_fire_item_trigger"):
+            olc.cmd_oset(builder, ["9004", "weapontype", "kunai"])
+            self.assertEqual(data_weapons.skill_for_item("A Practice Kunai"), "Kunai")
+            commands.cmd_wear(session, ["kunai"])
+            self.assertEqual(player.equipment["wielded"], "A Practice Kunai")
+            self.assertNotIn("A Practice Kunai", player.inventory)
+            self.assertEqual(player.learned_skills, ["Kunai"])
+            player.inventory.append(player.equipment.pop("wielded"))
+            player.learned_skills.clear()
+            player.skill_proficiencies.clear()
+            commands.cmd_wear(session, ["all"])
+            self.assertEqual(player.equipment["wielded"], "A Practice Kunai")
+            self.assertEqual(player.learned_skills, ["Kunai"])
+
+    def test_exact_prototype_controls_skill_even_when_name_suggests_another_type(self):
+        generic = olc.default_object(9004, "A Basic Kunai")
+        generic.update(item_type="weapon", weapon_type="kunai", wear_loc="wielded")
+        custom = olc.default_object(9005, "Kunai")
+        builder = NS(account=NS(staff_level="implementor"),
+                     player=NS(name="Builder"), send=Mock())
+        player = NS(inventory=["Kunai"], equipment={},
+                    learned_skills=[], skill_proficiencies={})
+        session = NS(player=player, send=Mock())
+        with patch.object(olc, "OBJECT_TEMPLATES", {9004: generic, 9005: custom}), \
+             patch.object(olc, "_log"), \
+             patch.object(commands, "_fire_item_trigger"):
+            olc.cmd_oset(builder, ["9005", "weapontype", "sword"])
+            self.assertEqual(data_weapons.skill_for_item("Kunai"), "Sword")
+            commands.cmd_wear(session, ["Kunai"])
+            self.assertEqual(player.equipment["wielded"], "Kunai")
+            self.assertEqual(player.learned_skills, ["Sword"])
 
 
 if __name__ == "__main__":

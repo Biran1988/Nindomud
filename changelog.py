@@ -375,4 +375,6 @@ CHANGELOG = [
     ("15.222", "Simplified builder field names: mset/oset flags, oset wear and wearloc, and underscore-free names for other mob, item, and player fields. The old names remain usable and saved data is unchanged. Train now accepts str, wis, con, int, dex, luk, per, wil, and cc abbreviations."),
     ("15.223", "Say chat now appears in bright green to the speaker and other players in the room, with the usual color reset after the message."),
     ("15.224", "The eq/equipment command now lists all wear locations, including empty slots, so builders and players can see every available slot."),
+    ("15.225", "Added 'oset <vnum> concap <number>' as the short name for container capacity; containercapacity and container_capacity remain valid too."),
+    ("15.226", "Setting oset weapontype now makes the item a wielded weapon automatically, with the matching weapon skill shown in ostat and learned when equipped. A weapon type cannot be paired with another item type or wear slot; set weapontype none to clear it. 'wear <weapon>' now wields it, and 'wear all' also grants its weapon skill. Exact object names take priority when finding a prototype's weapon skill."),
 ]

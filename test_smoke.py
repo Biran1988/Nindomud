@@ -6629,8 +6629,8 @@ def test_wear_loc_and_wear_all_remove_all():
     armor. Items now declare their own wear_loc (olc.py's new item
     prototype field, validated against olc.WEAR_LOCATIONS), and each
     equip command only accepts the wear_locs that make sense for it
-    (armor slots for 'wear', "wielded" for 'wield', "tool" for
-    'hold') -- so a sword is refused by 'wear' and a shirt by 'wield'.
+    (armor slots or "wielded" for 'wear', "wielded" for 'wield', "tool" for
+    'hold') -- so 'wear sword' wields it and a shirt is refused by 'wield'.
 
     A genuine pre-existing bug found and fixed along the way: shirt,
     pants, and sandals ALL used to go into the same hardcoded 'body'
@@ -6675,7 +6675,7 @@ def test_wear_loc_and_wear_all_remove_all():
     # touches inventory items at all (confirmed design: ground only).
     feed_local("drop kunai")
 
-    # The core bug fix: a sword genuinely cannot be worn on the body.
+    # A sword worn through 'wear' goes to its wielded slot, never body.
     starting_equipment = dict(s.player.equipment)
     feed_local("remove sword")
     assert any(item.lower() == "a basic ninja sword" for item in s.player.inventory)
@@ -6683,10 +6683,12 @@ def test_wear_loc_and_wear_all_remove_all():
     s.handle_line("wear sword")
     text_wear_sword = "".join(out)
     out.clear()
-    assert "can't wear" in text_wear_sword.lower()
+    assert "you wield" in text_wear_sword.lower()
     assert s.player.equipment.get("body") != "A Basic Ninja Sword"
+    assert s.player.equipment.get("wielded") == "A Basic Ninja Sword"
 
-    # But wielding it still works fine, into the wielded slot specifically.
+    # The explicit wield command also works into the same slot.
+    feed_local("remove sword")
     s.handle_line("wield sword")
     out.clear()
     assert s.player.equipment.get("wielded") == "A Basic Ninja Sword"

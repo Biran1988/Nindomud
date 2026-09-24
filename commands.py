@@ -2096,7 +2096,7 @@ def cmd_wear(session, args: List[str]) -> None:
     if args and " ".join(args).lower() == "all":
         _wear_all(session)
         return
-    _equip_item(session, args, accepted_locs=olc.ARMOR_WEAR_LOCATIONS, verb="wear")
+    _equip_item(session, args, accepted_locs=olc.ARMOR_WEAR_LOCATIONS | {"wielded"}, verb="wear")
 
 
 def cmd_wield(session, args: List[str]) -> None:
@@ -2188,11 +2188,8 @@ def _apply_equipment_stat_bonuses(player, item_name: str, sign: int) -> None:
 def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
     """Equips an item into ITS OWN wear_loc (an item's own prototype
     field, not a slot forced by which command the player typed) --
-    provided that wear_loc is one this command actually accepts, e.g.
-    'wear' only accepts armor slots, so 'wear sword' is refused since
-    a sword's wear_loc is "wielded", not an armor slot. Per direct
-    request: previously ANY item could go into ANY slot, since the
-    slot was hardcoded per-command rather than read from the item."""
+    provided that wear_loc is one this command actually accepts.
+    'wear' accepts both armor and weapons; 'wield' accepts weapons."""
     player = session.player
     if not args:
         session.send(f"{verb.capitalize()} what?")
@@ -2269,6 +2266,12 @@ def _wear_all(session) -> None:
         player.inventory.remove(item)
         player.equipment[wear_loc] = item
         _apply_equipment_stat_bonuses(player, item, sign=1)
+        if wear_loc == "wielded":
+            weapon_type = data_weapons.weapon_type_for_item(item)
+            if weapon_type:
+                learn_msg = _learn_weapon_skill_if_new(player, weapon_type)
+                if learn_msg:
+                    session.send(learn_msg)
         _fire_item_trigger(session, item, "wear")
         equipped_count += 1
     if equipped_count:
@@ -5725,6 +5728,9 @@ def _find_object_prototype_by_name(item_name: str):
     corresponds to (for scroll_jutsu, etc.) we match on short_desc --
     same substring-match convention used everywhere else in this file."""
     query = item_name.lower()
+    for proto in olc.OBJECT_TEMPLATES.values():
+        if query == proto["short_desc"].lower():
+            return proto
     for proto in olc.OBJECT_TEMPLATES.values():
         if query in proto["short_desc"].lower() or proto["short_desc"].lower() in query:
             return proto

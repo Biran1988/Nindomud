@@ -128,12 +128,16 @@ def weapon_type_for_item(item_name: str) -> Optional[str]:
     the rare case no prototype exists for the item at all."""
     import olc
     query = item_name.lower()
+    # The exact prototype wins over broader names such as "A Basic Kunai"
+    # matching a builder's distinct item named "Kunai".
+    for proto in olc.OBJECT_TEMPLATES.values():
+        if query == proto["short_desc"].lower():
+            weapon_type = proto.get("weapon_type")
+            return weapon_type if weapon_type in WEAPON_TYPES else None
     for proto in olc.OBJECT_TEMPLATES.values():
         if query in proto["short_desc"].lower() or proto["short_desc"].lower() in query:
             weapon_type = proto.get("weapon_type")
-            if weapon_type and weapon_type in WEAPON_TYPES:
-                return weapon_type
-            break
+            return weapon_type if weapon_type in WEAPON_TYPES else None
 
     name = item_name.lower()
     for keyword, weapon_type in ITEM_KEYWORD_TO_WEAPON_TYPE.items():
