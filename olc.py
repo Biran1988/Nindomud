@@ -71,7 +71,11 @@ ARMOR_WEAR_LOCATIONS = {"head", "body", "legs", "feet", "hands", "waist", "finge
 
 DEFAULT_OBJECT_FIELDS = {
     "keywords": [], "short_desc": "", "long_desc": "", "description": "",
+    "previous_short_descs": [],  # resolve older player-shop stock after a prototype rename
     "item_type": "trash", "weapon_type": "", "extra_flags": [], "wear_flags": ["take"],
+    # None uses the weapon type's legacy base damage; an explicit number
+    # overrides that default for this particular item.
+    "damage": None,
     # Where this item can actually be equipped -- "" means not
     # equippable at all (food, materials, misc). Set explicitly per
     # item rather than inferred from item_type or name, per explicit
@@ -417,9 +421,9 @@ def cmd_ostat(session, args: List[str]) -> None:
         ),
         (
             f"&WHitroll:&x {o.get('stat_bonuses', {}).get('hitroll', 0):+d}   "
-            f"&WDamroll:&x {o.get('stat_bonuses', {}).get('damroll', 0):+d}   "
-            f"&WDamage:&x {data_weapons.weapon_damage_bonus(o.get('weapon_type', ''))} "
-            f"(from weapon_type '{o.get('weapon_type') or 'none'}')"
+            f"&WDamageroll:&x {o.get('stat_bonuses', {}).get('damroll', 0):+d}   "
+            f"&WDamage:&x {data_weapons.item_base_damage(o)} "
+            f"({'set on item' if o.get('damage') is not None else 'default for weapontype ' + repr(o.get('weapon_type') or 'none')})"
             if o.get("wear_loc") == "wielded" else None
         ),
         (
@@ -2400,7 +2404,7 @@ def cmd_awaken(session, args: List[str]) -> None:
 # ===========================================================================
 
 OBJECT_STRING_FIELDS = {"short_desc", "long_desc", "description", "item_type", "weapon_type", "scroll_jutsu", "rarity", "wear_loc"}
-OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent", "container_capacity"}
+OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent", "container_capacity", "hitroll", "damageroll", "damage"}
 OBJECT_LIST_FIELDS = {"keywords", "extra_flags", "wear_flags", "set_vnums"}
 
 
@@ -2415,6 +2419,11 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
     if field == "weapon_type":
         import data_weapons
         return f"'{display}' should be one of: {', '.join(sorted(data_weapons.WEAPON_TYPES.keys()))}. Current: '{o.get('weapon_type', '')}'. Setting one makes the item a wielded weapon; 'none' clears it.\nUsage: oset <vnum> {display} <type|none>"
+    if field in {"hitroll", "damageroll"}:
+        key = "hitroll" if field == "hitroll" else "damroll"
+        return f"'{display}' is this item's equipped combat bonus. Current: {o.get('stat_bonuses', {}).get(key, 0):+d}.\nUsage: oset <vnum> {display} <number>   (0 clears it)"
+    if field == "damage":
+        return f"'damage' is this item's fixed base weapon damage. Current: {data_weapons.item_base_damage(o)}.\nUsage: oset <vnum> damage <nonnegative number>   (overrides the weapon type default)"
     if field == "rarity":
         import data_rarity
         return f"'rarity' should be one of: {', '.join(data_rarity.RARITY_ORDER)}. Current: '{o.get('rarity', '')}'.\nUsage: oset <vnum> rarity <tier>"
@@ -2587,7 +2596,8 @@ def cmd_oset(session, args: List[str]) -> None:
         return
     display = args[1].lower()
     field = _builder_field(display, OBJECT_STRING_FIELDS | OBJECT_INT_FIELDS |
-                           OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES)
+                           OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES,
+                           {"damroll": "damageroll", "damage_roll": "damageroll", "hit_roll": "hitroll"})
     if len(args) == 2:
         hint = _object_field_hint(field, OBJECT_TEMPLATES[vnum], display)
         if hint:
@@ -2623,7 +2633,7 @@ def cmd_oset(session, args: List[str]) -> None:
                 "though Armor Class itself always displays as lower-is-better."
             )
             return
-        stat_key = _builder_field(value_args[0], STAT_BONUS_KEYS, {})
+        stat_key = _builder_field(value_args[0], STAT_BONUS_KEYS, {}, {"damageroll": "damroll", "damage_roll": "damroll", "hit_roll": "hitroll"})
         amount_text = value_args[1]
         if stat_key not in STAT_BONUS_KEYS:
             session.send(f"'{stat_key}' isn't a known stat. Valid: {', '.join(sorted(STAT_BONUS_KEYS))}")
@@ -2682,6 +2692,10 @@ def cmd_oset(session, args: List[str]) -> None:
                 )
                 return
             value_text = value_text.lower()
+        if field == "short_desc" and value_text != o.get("short_desc"):
+            old_name = o.get("short_desc")
+            if old_name and old_name not in o.setdefault("previous_short_descs", []):
+                o["previous_short_descs"].append(old_name)
         o[field] = value_text
         if field == "weapon_type" and value_text:
             o["item_type"] = "weapon"
@@ -2701,7 +2715,18 @@ def cmd_oset(session, args: List[str]) -> None:
         if not value_text.lstrip("-").isdigit():
             session.send(f"{shown} must be a number.")
             return
-        o[field] = int(value_text)
+        amount = int(value_text)
+        if field == "damage" and amount < 0:
+            session.send("damage must be zero or greater.")
+            return
+        if field in {"hitroll", "damageroll"}:
+            key = "hitroll" if field == "hitroll" else "damroll"
+            if amount == 0:
+                o["stat_bonuses"].pop(key, None)
+            else:
+                o["stat_bonuses"][key] = amount
+        else:
+            o[field] = amount
         _log(session.player.name, "object", vnum, f"{field} set to {value_text}")
         session.send(f"{shown} set to {value_text}.")
         return

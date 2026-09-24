@@ -16,7 +16,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.226: `changelog.py`.
+- The in-game change history through version 15.228: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,
@@ -29,6 +29,11 @@ existing server installation, keeping the server's `data/` directory intact.
   its matching skill shows in `ostat` and is learned when equipped.
   `wear <weapon>` and `wear all` wield weapons: `olc.py`, `commands.py`,
   `data_weapons.py`.
+- `oset` accepts direct `hitroll`, `damageroll`, and fixed base `damage`
+  values; explicit damage replaces the weapon type default in combat.
+- Shops reflect live item prototype edits by VNUM. Player shop stock links
+  prototype items to their VNUM so name edits carry through to listings and
+  purchases; older stock follows stored prototype name history.
 
 Verification: `python3 -m unittest discover -p 'test_*.py'` and
 `python3 test_smoke.py`. The tests cover damage tiers, shop persistence,

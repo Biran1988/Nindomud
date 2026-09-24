@@ -95,6 +95,12 @@ def weapon_damage_bonus(weapon_type: str) -> int:
     return WEAPON_TYPE_DAMAGE_BONUS.get(weapon_type, 0)
 
 
+def item_base_damage(proto: dict) -> int:
+    """An explicit item damage value replaces its weapon type's default."""
+    damage = proto.get("damage")
+    return damage if damage is not None else weapon_damage_bonus(proto.get("weapon_type", ""))
+
+
 # Substring-matched against an item's (lowercased) name. First match wins,
 # so put more specific keywords before generic ones if that ever matters.
 ITEM_KEYWORD_TO_WEAPON_TYPE = {

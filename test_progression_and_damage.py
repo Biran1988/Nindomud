@@ -5,9 +5,11 @@ from unittest.mock import Mock, patch
 
 import colors
 import combat
+import commands
 import damage_messages
 import leveling
 import olc
+import playershops
 import spawn_points
 import storage
 import world
@@ -96,6 +98,56 @@ class BuilderPersistenceTests(unittest.TestCase):
         spawn_points.restore_custom_templates()
         self.assertEqual(combat.MOB_TEMPLATES[9100]["shop_items"], [9200])
         self.assertEqual(olc.OBJECT_TEMPLATES[9200]["cost"], 777)
+
+    def test_shopkeeper_uses_current_item_vnum_for_list_and_purchase(self):
+        template = combat.default_template(9100, "shopkeeper")
+        template.update(shopkeeper=True, shop_items=[9200])
+        combat.MOB_TEMPLATES[9100] = template
+        olc.OBJECT_TEMPLATES[9200] = olc.default_object(9200, "old kunai")
+        shopkeeper = combat.spawn_mob(9100, 9000)
+        player = Player("Buyer", "Buyer")
+        player.room_vnum = 9000
+        player.ryo = 100
+        session = SimpleNamespace(player=player, send=Mock())
+        builder = SimpleNamespace(account=SimpleNamespace(staff_level="builder"),
+                                  player=SimpleNamespace(name="Builder", room_vnum=9000), send=Mock())
+        olc.cmd_oset(builder, ["9200", "short", "new", "kunai"])
+        olc.cmd_oset(builder, ["9200", "cost", "30"])
+        olc.cmd_oset(builder, ["9200", "weapontype", "kunai"])
+        olc.cmd_oset(builder, ["9200", "damage", "11"])
+        self.assertIn(9200, combat.mob_shop_items(shopkeeper))
+        commands.cmd_list(session, [])
+        shown = colors.render(session.send.call_args.args[0], False)
+        self.assertIn("new kunai - 30 ryo", shown)
+        self.assertNotIn("old kunai", shown)
+        with patch.object(commands, "_fire_item_trigger"):
+            commands.cmd_buy(session, ["new", "kunai"])
+        self.assertIn("new kunai", player.inventory)
+        self.assertEqual(player.ryo, 70)
+        player.equipment["wielded"] = player.inventory.pop()
+        self.assertEqual(commands.equipped_weapon_type_damage_bonus(player), 11)
+
+    def test_player_shop_stock_tracks_prototype_vnum_after_rename(self):
+        olc.OBJECT_TEMPLATES[9200] = olc.default_object(9200, "old kunai")
+        owner = Player("Owner", "Owner")
+        owner.shop_stock = [{"item_name": "old kunai", "price": 20,
+                             "item_vnum": playershops.item_vnum_for_stock("old kunai")},
+                            {"item_name": "old kunai", "price": 20}]
+        shopkeeper = SimpleNamespace(player_shop_owner="Owner", name="shopkeeper")
+        builder = SimpleNamespace(account=SimpleNamespace(staff_level="builder"),
+                                  player=SimpleNamespace(name="Builder"), send=Mock())
+        olc.cmd_oset(builder, ["9200", "short", "new", "kunai"])
+        buyer = Player("Buyer", "Buyer")
+        buyer.ryo = 50
+        with patch.object(playershops, "_find_owner_player", return_value=(owner, True)):
+            self.assertEqual([row["item_name"] for row in playershops.stock_for_display(shopkeeper)],
+                             ["new kunai", "new kunai"])
+            ok, item, price = playershops.buy_from_shop(shopkeeper, buyer, "new kunai")
+            self.assertEqual(playershops.stock_for_display(shopkeeper)[0]["item_name"], "new kunai")
+        self.assertTrue(ok)
+        self.assertEqual((item, price, buyer.ryo), ("new kunai", 20, 30))
+        self.assertEqual(buyer.inventory, ["new kunai"])
+        self.assertEqual(len(owner.shop_stock), 1)
 
     def test_smaug_builder_convenience_commands(self):
         session = SimpleNamespace(

@@ -36,6 +36,28 @@ choice, not sold back as a fixed asset.
 SHOPKEEPER_TEMPLATE_VNUM = 9800  # the one generic "Shopkeeper" mob template every player shop reuses
 
 
+def item_vnum_for_stock(item_name: str):
+    """Link an exact, unique prototype name when an item enters a shop."""
+    import olc
+    matches = [vnum for vnum, proto in olc.OBJECT_TEMPLATES.items()
+               if proto.get("short_desc", "").lower() == item_name.lower()]
+    return matches[0] if len(matches) == 1 else None
+
+
+def stock_item_name(entry: dict) -> str:
+    """Use the current prototype name for stock linked to an item VNUM."""
+    import olc
+    proto = olc.OBJECT_TEMPLATES.get(entry.get("item_vnum"))
+    if proto is None and not entry.get("item_vnum"):
+        # Older saved shop stock has only a name. A builder rename records
+        # that name on the prototype, so existing stock still follows it.
+        matches = [candidate for candidate in olc.OBJECT_TEMPLATES.values()
+                   if entry["item_name"].lower() in
+                   (name.lower() for name in candidate.get("previous_short_descs", []))]
+        proto = matches[0] if len(matches) == 1 else None
+    return proto["short_desc"] if proto else entry["item_name"]
+
+
 def _find_owner_player(owner_name: str):
     """Returns (player_obj, is_online). If online, player_obj IS the
     live session's own object (mutations apply immediately, nothing
@@ -59,7 +81,8 @@ def stock_for_display(shopkeeper_mob) -> list:
     uses to complete a purchase. Empty list if the owner can't be
     found at all."""
     owner, _ = _find_owner_player(shopkeeper_mob.player_shop_owner)
-    return owner.shop_stock if owner else []
+    return [{**entry, "item_name": stock_item_name(entry)}
+            for entry in owner.shop_stock] if owner else []
 
 
 def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
@@ -75,7 +98,7 @@ def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
 
     match = next(
         (entry for entry in owner.shop_stock
-         if entry["price"] is not None and item_query in entry["item_name"].lower()),
+         if entry["price"] is not None and item_query in stock_item_name(entry).lower()),
         None,
     )
     if not match:
@@ -84,9 +107,10 @@ def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
         return False, "You can't afford that.", None
 
     import inventory
-    ok, reason = inventory.add_item(buyer.inventory, match["item_name"])
+    item_name = stock_item_name(match)
+    ok, reason = inventory.add_item(buyer.inventory, item_name)
     if not ok:
-        return False, inventory.full_message(reason, match["item_name"]), None
+        return False, inventory.full_message(reason, item_name), None
 
     price = match["price"]
     buyer.ryo -= price
@@ -95,7 +119,7 @@ def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
     if not owner_online:
         import storage
         storage.save_player(owner)
-    return True, match["item_name"], price
+    return True, item_name, price
 
 
 def close_shop(player) -> list:
@@ -112,7 +136,7 @@ def close_shop(player) -> list:
     room = world.WORLD.get(player.shop_room_vnum) if player.shop_room_vnum else None
 
     for entry in player.shop_stock:
-        item_name = entry["item_name"]
+        item_name = stock_item_name(entry)
         ok, _reason = inventory.add_item(player.inventory, item_name)
         if ok:
             results.append((item_name, "inventory"))

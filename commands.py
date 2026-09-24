@@ -5415,7 +5415,8 @@ def cmd_give(session, args: List[str]) -> None:
                 session.send("You aren't carrying that.")
                 return
             player.inventory.remove(match)
-            player.shop_stock.append({"item_name": match, "price": None})
+            player.shop_stock.append({"item_name": match, "price": None,
+                                      "item_vnum": playershops.item_vnum_for_stock(match)})
             session.send(
                 f"You give {rarity_colored_name(match)} to your shopkeeper. "
                 f"Use 'price {match.split()[-1]} <amount>' to set what it sells for."
@@ -5460,16 +5461,16 @@ def cmd_price(session, args: List[str]) -> None:
     item_query = " ".join(args[:-1]).lower()
 
     matches = [entry for entry in player.shop_stock
-               if entry["price"] is None and _item_matches(item_query, entry["item_name"])]
+               if entry["price"] is None and _item_matches(item_query, playershops.stock_item_name(entry))]
     if not matches:
-        matches = [entry for entry in player.shop_stock if _item_matches(item_query, entry["item_name"])]
+        matches = [entry for entry in player.shop_stock if _item_matches(item_query, playershops.stock_item_name(entry))]
     if not matches:
         session.send("You don't have that in your shop's stock.")
         return
 
     for entry in matches:
         entry["price"] = amount
-    session.send(f"You set the price of {matches[0]['item_name']} to {amount:,} ryo.")
+    session.send(f"You set the price of {playershops.stock_item_name(matches[0])} to {amount:,} ryo.")
 
 
 def cmd_shop(session, args: List[str]) -> None:
@@ -5488,7 +5489,7 @@ def cmd_shop(session, args: List[str]) -> None:
         lines = ["&WYour shop's stock:&x"]
         for entry in player.shop_stock:
             price_str = f"{entry['price']:,} ryo" if entry["price"] is not None else "no price set"
-            lines.append(f"  {rarity_colored_name(entry['item_name'])} - {price_str}")
+            lines.append(f"  {rarity_colored_name(playershops.stock_item_name(entry))} - {price_str}")
         session.send("\n".join(lines))
         return
 
@@ -5898,14 +5899,13 @@ def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
 
 
 def equipped_weapon_type_damage_bonus(player) -> int:  # player: Player or combat.Mob
-    """The wielded weapon's own intrinsic damage contribution by type
-    (data_weapons.WEAPON_TYPE_DAMAGE_BONUS) -- 0 for an unarmed/
-    unrecognized weapon. This is the piece that makes WHAT you wield
-    matter mechanically, not just cosmetically: previously every
-    weapon type dealt identical damage."""
+    """The wielded item's set base damage, or the weapon type default."""
     wielded = player.equipment.get("wielded", "")
     if not wielded:
         return 0
+    proto = _find_object_prototype_by_name(wielded)
+    if proto:
+        return data_weapons.item_base_damage(proto)
     weapon_type = data_weapons.weapon_type_for_item(wielded)
     return data_weapons.weapon_damage_bonus(weapon_type) if weapon_type else 0
 

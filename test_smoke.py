@@ -10830,12 +10830,8 @@ def test_wielded_item_shows_hitroll_damroll_damage():
     should show more fields like hitroll/damroll number fields and
     damage") and a follow-up scope confirmation: hitroll/damroll
     already existed (via the generic 'oset statbonus' mechanism) but
-    weren't weapon-specific; "damage" doesn't exist as a per-item
-    field at all -- every weapon's base damage bonus is derived
-    entirely from weapon_type via a shared lookup table (data_weapons.
-    WEAPON_TYPE_DAMAGE_BONUS), not a per-item number -- so the
-    confirmed scope was surfacing the EXISTING hitroll/damroll fields
-    more prominently for weapons, not inventing new ones.
+    weren't weapon-specific. The original display used the weapon-type
+    damage default; newer items can override it with 'oset damage'.
 
     Covers: 'ostat' shows a new, dedicated Hitroll/Damroll/Damage line
     only when wear_loc is "wielded" -- completely absent for a non-
@@ -10882,7 +10878,7 @@ def test_wielded_item_shows_hitroll_damroll_damage():
     text_fresh = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
     hitroll_line = next(line for line in text_fresh.split("\n") if "Hitroll" in line)
-    assert "+0" in hitroll_line and "Damroll" in hitroll_line and "Damage" in hitroll_line
+    assert "+0" in hitroll_line and "Damageroll" in hitroll_line and "Damage" in hitroll_line
     expected_kunai_damage = data_weapons.weapon_damage_bonus("kunai")
     assert f"Damage: {expected_kunai_damage}" in hitroll_line
 

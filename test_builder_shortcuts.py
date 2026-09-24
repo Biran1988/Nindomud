@@ -87,6 +87,51 @@ class BuilderShortcutTests(unittest.TestCase):
                          ("", "material"))
         self.assertEqual(self.item["wear_loc"], "")
 
+    def test_direct_weapon_stats_set_combat_values_and_keep_old_aliases(self):
+        olc.cmd_oset(self.session, ["9003", "weapontype", "kunai"])
+        olc.cmd_oset(self.session, ["9003", "hitroll", "4"])
+        olc.cmd_oset(self.session, ["9003", "damageroll", "7"])
+        olc.cmd_oset(self.session, ["9003", "damage", "12"])
+        self.assertEqual(self.item["stat_bonuses"], {"hitroll": 4, "damroll": 7})
+        self.assertEqual(self.item["damage"], 12)
+        player = NS(equipment={"wielded": "training kunai"})
+        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 4)
+        self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 7)
+        self.assertEqual(commands.equipped_weapon_type_damage_bonus(player), 12)
+        olc.cmd_ostat(self.session, ["9003"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Hitroll: +4", shown)
+        self.assertIn("Damageroll: +7", shown)
+        self.assertIn("Damage: 12", shown)
+        olc.cmd_oset(self.session, ["9003", "hit_roll", "5"])
+        olc.cmd_oset(self.session, ["9003", "damage_roll", "8"])
+        self.assertEqual(self.item["stat_bonuses"], {"hitroll": 5, "damroll": 8})
+        olc.cmd_oset(self.session, ["9003", "statbonus", "damroll", "3"])
+        self.assertEqual(self.item["stat_bonuses"]["damroll"], 3)
+        olc.cmd_oset(self.session, ["9003", "damage", "-1"])
+        self.assertEqual(self.item["damage"], 12)
+        olc.cmd_oset(self.session, ["9003", "hitroll", "0"])
+        self.assertNotIn("hitroll", self.item["stat_bonuses"])
+        olc.cmd_oset(self.session, ["fields"])
+        fields = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("hitroll", fields)
+        self.assertIn("damageroll", fields)
+        self.assertIn("damage", fields)
+        self.assertTrue(all(len(line) <= 80 for line in fields.splitlines()))
+
+    def test_set_damage_replaces_type_default_in_attacks_and_jutsu(self):
+        olc.cmd_oset(self.session, ["9003", "weapontype", "sword"])
+        player = Player("Student", "Student")
+        player.equipment["wielded"] = "training kunai"
+        with patch("combat.random.randint", return_value=5):
+            before_attack = combat._player_attack_damage(player)
+        before_jutsu = combat._jutsu_damage_bonus(player)
+        olc.cmd_oset(self.session, ["9003", "damage", "14"])
+        difference = 14 - 3  # sword's default base damage
+        with patch("combat.random.randint", return_value=5):
+            self.assertEqual(combat._player_attack_damage(player), before_attack + difference)
+        self.assertEqual(combat._jutsu_damage_bonus(player), before_jutsu + difference)
+
     def test_room_flag_and_player_stat_joined_names(self):
         olc.cmd_rset(self.session, ["flags", "acceleratedhealing"])
         self.assertIn("accelerated_healing", world.WORLD.get(9001).flags)
