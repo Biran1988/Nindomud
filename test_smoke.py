@@ -15298,13 +15298,13 @@ def test_tailed_beasts_complete_system():
     """Per direct request/confirmation (Section 127): "Tailed beast...
     they are super strong mobs that would take many high level ninja
     to defeat...they are released in a random by immortals with the
-    release beast command that will randomly select a tailed beast
+    unleash beast command that will randomly select a tailed beast
     that hasn't been captured by a player using sealing jutsu so only
     1 per player sealing." Every real mechanic confirmed directly
     across 3 build stages, covered here:
 
     Stage 1 (release/roam/despawn): all 9 real canon beasts
-    (Shukaku-Kurama); 'release beast' (staff-only) picks randomly
+    (Shukaku-Kurama); 'unleash beast' (staff-only) picks randomly
     among beasts not currently sealed into any player; roams every
     10-15 real minutes, pausing during combat; despawns after 2 real
     hours; attacks any player found in its room unprompted.
@@ -15361,13 +15361,13 @@ def test_tailed_beasts_complete_system():
         out.clear()
 
     # Ordinary player denied.
-    imm_s.handle_line("release beast")
+    imm_s.handle_line("unleash beast")
     text_denied = "".join(out)
     out.clear()
     assert "builder access" in text_denied.lower()
 
     imm_s.account.staff_level = "builder"
-    imm_s.handle_line("release beast")
+    imm_s.handle_line("unleash beast")
     out.clear()
     beasts_live = [m for room_mobs in combat.MOBS_BY_ROOM.values() for m in room_mobs if getattr(m, "tailed_beast_key", None)]
     assert len(beasts_live) == 1
@@ -15636,7 +15636,7 @@ def test_release_beast_global_announcement():
     same established real broadcast pattern already used for Sealing
     Jutsu and Release Jutsu (commands._broadcast_globally) -- fires
     for every connected, playing session, not just the staff member
-    who used 'release beast', and names the specific beast that was
+    who used 'unleash beast', and names the specific beast that was
     randomly selected."""
     out = []
     imm_s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
@@ -15667,7 +15667,7 @@ def test_release_beast_global_announcement():
     session_module.ACTIVE_SESSIONS = [imm_s, bystander_s]
     try:
         imm_s.account.staff_level = "builder"
-        imm_s.handle_line("release beast")
+        imm_s.handle_line("unleash beast")
         out.clear()
         text_bystander = "".join(bystander_out)
         bystander_out.clear()
@@ -15702,7 +15702,7 @@ def test_tailed_beast_safe_spawn_and_roaming_cap():
     exempt from this same cap, since it's a different real situation.
 
     Covers: release_beast never spawning in a real safe room across
-    many trials; 'release beast' correctly refusing a second release
+    many trials; 'unleash beast' correctly refusing a second release
     while one beast is already loose, with a real, human-readable
     message; and Release Jutsu succeeding regardless, genuinely
     producing 2 live beasts at once when the cap would otherwise have
@@ -15738,12 +15738,12 @@ def test_tailed_beast_safe_spawn_and_roaming_cap():
         out.clear()
     s.account.staff_level = "builder"
 
-    s.handle_line("release beast")
+    s.handle_line("unleash beast")
     out.clear()
     beasts_after_first = [m for room_mobs in combat.MOBS_BY_ROOM.values() for m in room_mobs if getattr(m, "tailed_beast_key", None)]
     assert len(beasts_after_first) == 1
 
-    s.handle_line("release beast")
+    s.handle_line("unleash beast")
     text_second = "".join(out)
     out.clear()
     assert "already loose" in text_second.lower(), "a second release must be genuinely refused while one beast is already roaming"

@@ -6,7 +6,7 @@ immortals with the release beast command that will randomly select a
 tailed beast that hasn't been captured by a player using sealing
 jutsu." Every real mechanic confirmed directly before building:
 
-- 'release beast' (a new staff command, see commands.py) picks ONE
+- 'unleash beast' (the staff command, see commands.py) picks ONE
   random beast from data_tailed_beasts.TAILED_BEASTS that is
   genuinely NOT currently sealed into any player (see
   is_beast_available below) -- if every single beast is currently
@@ -94,7 +94,7 @@ def any_beast_currently_roaming(combat_module) -> bool:
     confirmation: "if a beast has been spawned only 1 of that tail
     can be out at a time," confirmed as a genuine, global cap of ONE
     roaming beast total, regardless of which specific beast. Checked
-    by 'release beast' as a real refusal case -- a second beast can't
+    by 'unleash beast' as a real refusal case -- a second beast can't
     be released while one is already loose, whether or not it's
     currently downed-and-awaiting-sealing (that's still the same
     live mob instance, not yet resolved one way or the other)."""

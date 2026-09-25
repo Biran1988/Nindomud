@@ -1021,11 +1021,11 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
-        "primary_keyword": "release beast",
-        "keywords": ["release beast"],
-        "title": "Release Beast (staff)",
+        "primary_keyword": "unleash beast",
+        "keywords": ["unleash beast", "unleash"],
+        "title": "Unleash Beast (staff)",
         "body": (
-            "Syntax: release beast\n"
+            "Syntax: unleash beast\n"
             "\n"
             "Description: (Staff only.) Releases a random Tailed Beast into the world -- picked from whichever of the 9 real beasts (Shukaku through Kurama) isn't currently sealed into some player, online or offline. A released beast spawns somewhere random (never in a safe room), roams on its own every 10-15 minutes, attacks any player it encounters, and despawns after 2 hours if nobody defeats or seals it. Announces globally which beast was released, so every player knows one is loose.\n"
             "\n"
@@ -1944,7 +1944,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: buy <item>\n"
             "\n"
-            "Description: Purchases an item from a shopkeeper in the room. Use 'list' first to see what's for sale.\n"
+            "Description: Purchases an item from a shopkeeper in the room. Your level must be at least the item's level; if it is too low, the purchase is refused without charging you. Use 'list' to see prices and item level requirements.\n"
             "\n"
             "'buy apartment' and 'buy room <type> <direction>' are special cases -- see 'help apartment' for details. At your own village's Kage chamber, 'buy' also purchases village-wide perks and legendary items from the Kage instead -- see 'help legendary items'.\n"
             "\n"
@@ -3555,6 +3555,21 @@ def seed_default_help() -> None:
     for entry in DEFAULT_HELP_ENTRIES:
         if not os.path.isfile(_path(entry["primary_keyword"])):
             save_entry(entry)
+    # Earlier releases seeded a separate help file for the old, conflicting
+    # staff command. Redirect the stock entry without overwriting staff edits.
+    old_path = _path("release beast")
+    if os.path.isfile(old_path):
+        with open(old_path, "r", encoding="utf-8") as f:
+            old_entry = json.load(f)
+        if (old_entry.get("updated_by") == "System" and
+                old_entry.get("body", "").startswith("Syntax: release beast\n")):
+            old_entry["title"] = "Release Beast (renamed)"
+            old_entry["body"] = (
+                "Syntax: unleash beast\n\n"
+                "The staff command for releasing a random Tailed Beast is now "
+                "'unleash beast'. 'release <player>' frees your own Illusion Walk target."
+            )
+            save_entry(old_entry)
 
 
 def delete_entry(primary_keyword: str) -> bool:

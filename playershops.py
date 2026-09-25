@@ -44,18 +44,33 @@ def item_vnum_for_stock(item_name: str):
     return matches[0] if len(matches) == 1 else None
 
 
-def stock_item_name(entry: dict) -> str:
-    """Use the current prototype name for stock linked to an item VNUM."""
+def stock_prototype(entry: dict):
+    """Resolve a stocked item's current prototype, including older name-only stock."""
     import olc
     proto = olc.OBJECT_TEMPLATES.get(entry.get("item_vnum"))
     if proto is None and not entry.get("item_vnum"):
         # Older saved shop stock has only a name. A builder rename records
         # that name on the prototype, so existing stock still follows it.
         matches = [candidate for candidate in olc.OBJECT_TEMPLATES.values()
-                   if entry["item_name"].lower() in
+                   if candidate.get("short_desc", "").lower() == entry["item_name"].lower()
+                   or entry["item_name"].lower() in
                    (name.lower() for name in candidate.get("previous_short_descs", []))]
         proto = matches[0] if len(matches) == 1 else None
+    return proto
+
+
+def stock_item_name(entry: dict) -> str:
+    """Use the current prototype name for stock linked to an item VNUM."""
+    proto = stock_prototype(entry)
     return proto["short_desc"] if proto else entry["item_name"]
+
+
+def purchase_level_error(buyer, proto, item_name: str):
+    """A higher-level item cannot be bought by a lower-level player."""
+    required = proto.get("level", 0) if proto else 0
+    if buyer.level < required:
+        return f"You must be level {required} to buy {item_name} (you are level {buyer.level})."
+    return None
 
 
 def _find_owner_player(owner_name: str):
@@ -103,11 +118,14 @@ def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
     )
     if not match:
         return False, f"{shopkeeper_mob.name.capitalize()} doesn't sell that.", None
+    item_name = stock_item_name(match)
+    level_error = purchase_level_error(buyer, stock_prototype(match), item_name)
+    if level_error:
+        return False, level_error, None
     if buyer.ryo < match["price"]:
         return False, "You can't afford that.", None
 
     import inventory
-    item_name = stock_item_name(match)
     ok, reason = inventory.add_item(buyer.inventory, item_name)
     if not ok:
         return False, inventory.full_message(reason, item_name), None

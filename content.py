@@ -649,7 +649,7 @@ def populate() -> None:
 
     # Tailed Beasts (Section 127, per direct request/confirmation) --
     # registers all 9 real beast mob templates so they're ready the
-    # instant an immortal uses 'release beast', matching every other
+    # instant an immortal uses 'unleash beast', matching every other
     # hardcoded mob's own registration convention.
     import tailed_beasts
     tailed_beasts.register_all_beast_templates(combat)

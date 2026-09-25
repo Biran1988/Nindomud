@@ -15,7 +15,7 @@ Chomei (7), Gyuki (8), Kurama (9). Verified via direct research rather
 than assumed.
 
 Confirmed design, locked in directly across many turns:
-- Released by an immortal via a real 'release beast' command, which
+- Released by an immortal via the 'unleash beast' command, which
   randomly picks ONE beast that hasn't currently been sealed into any
   player (see tailed_beasts.py for the actual selection/lifecycle
   logic -- this module is data only).

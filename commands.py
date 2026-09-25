@@ -688,38 +688,7 @@ def cmd_release(session, args: List[str]) -> None:
     confirmed as a deliberate future gap). Only the actual caster of
     a given Illusion Walk can release it -- releasing someone else's
     victim, or someone not actually under the effect at all, is
-    refused.
-
-    'release beast' (Section 127, per direct request/confirmation) is
-    a genuinely separate, staff-only special case checked FIRST, so
-    it can never collide with a player who happens to be named
-    "Beast" -- releases a real, random Tailed Beast into the world.
-    Picks among every beast not currently sealed into any player
-    (online OR offline, confirmed directly since sealing persists
-    through death) -- refuses cleanly if every single beast is
-    already held by someone."""
-    if args and args[0].lower() == "beast" and len(args) == 1:
-        if not olc._require_builder(session):
-            return
-        import tailed_beasts
-        import storage
-        import world as world_module
-        if tailed_beasts.any_beast_currently_roaming(combat):
-            session.send("A Tailed Beast is already loose in the world -- it must be sealed, killed, or despawn before another can be released.")
-            return
-        online_players = [s.player for s in session.active_sessions() if s.player]
-        online_names = {p.name for p in online_players}
-        offline_players = [p for p in storage.all_players() if p.name not in online_names]
-        all_players = online_players + offline_players
-        beast = tailed_beasts.pick_random_available_beast(all_players)
-        if beast is None:
-            session.send("Every Tailed Beast is already sealed into a player -- there's nothing left to release.")
-            return
-        mob = tailed_beasts.release_beast(beast, world_module, combat)
-        session.send(f"&RYou release {beast['display_name']} into the world at room {mob.room_vnum}!&x")
-        _broadcast_globally(f"&R{beast['display_name']} has been unleashed upon the world!&x")
-        return
-
+    refused."""
     player = session.player
     if not args:
         session.send("Release who from Illusion Walk?")
@@ -739,6 +708,31 @@ def cmd_release(session, args: List[str]) -> None:
     target_session.player.illusion_walk_steps_taken = 0
     session.send(f"&YYou release {target_session.player.name} from the illusion.&x")
     target_session.send(f"&YThe illusion around you shatters -- you're back in reality.&x")
+
+
+def cmd_unleash(session, args: List[str]) -> None:
+    """'unleash beast' releases a random unsealed Tailed Beast for staff."""
+    if [arg.lower() for arg in args] != ["beast"]:
+        session.send("Usage: unleash beast")
+        return
+    if not olc._require_builder(session):
+        return
+    import tailed_beasts
+    import storage
+    import world as world_module
+    if tailed_beasts.any_beast_currently_roaming(combat):
+        session.send("A Tailed Beast is already loose in the world -- it must be sealed, killed, or despawn before another can be released.")
+        return
+    online_players = [s.player for s in session.active_sessions() if s.player]
+    online_names = {p.name for p in online_players}
+    offline_players = [p for p in storage.all_players() if p.name not in online_names]
+    beast = tailed_beasts.pick_random_available_beast(online_players + offline_players)
+    if beast is None:
+        session.send("Every Tailed Beast is already sealed into a player -- there's nothing left to release.")
+        return
+    mob = tailed_beasts.release_beast(beast, world_module, combat)
+    session.send(f"&RYou unleash {beast['display_name']} into the world at room {mob.room_vnum}!&x")
+    _broadcast_globally(f"&R{beast['display_name']} has been unleashed upon the world!&x")
 
 
 def cmd_rest(session, args: List[str]) -> None:
@@ -4158,9 +4152,12 @@ def cmd_list(session, args: List[str]) -> None:
         lines.append(f"&W{kage.kage_title(player.village)} also offers these legendary items:&x")
         owned_names = {item.lower() for item in list(player.inventory) + [slot for slot in player.equipment.values() if slot]}
         for key, data in legendary_items.LEGENDARY_ITEMS.items():
-            already_owned = data["short_desc"].lower() in owned_names
+            proto = olc.OBJECT_TEMPLATES.get(data["vnum"])
+            item_name = proto["short_desc"] if proto else data["short_desc"]
+            already_owned = item_name.lower() in owned_names
             status = "&D(already owned)&x" if already_owned else f"{data['cost_mission_points']:,} mission point(s)"
-            lines.append(f"  {rarity_colored_name(data['short_desc'])} - {status}")
+            level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
+            lines.append(f"  {rarity_colored_name(item_name)} - {status}{level_text}")
         lines.append("&D('examine' one to see its full stats.)&x")
         session.send("\n".join(lines))
         return
@@ -4174,7 +4171,9 @@ def cmd_list(session, args: List[str]) -> None:
             if entry["price"] is None:
                 continue
             priced_any = True
-            lines.append(f"  {rarity_colored_name(entry['item_name'])} - {entry['price']:,} ryo")
+            proto = playershops.stock_prototype(entry)
+            level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
+            lines.append(f"  {rarity_colored_name(entry['item_name'])} - {entry['price']:,} ryo{level_text}")
         if not priced_any:
             lines.append("  (nothing in stock right now)")
         session.send("\n".join(lines))
@@ -4187,7 +4186,8 @@ def cmd_list(session, args: List[str]) -> None:
         for obj_vnum in shop_items:
             obj = olc.OBJECT_TEMPLATES.get(obj_vnum)
             if obj:
-                lines.append(f"  {rarity_colored_name(obj['short_desc'])} - {obj['cost']} ryo")
+                level_text = f" (level {obj['level']})" if obj.get("level", 0) > 0 else ""
+                lines.append(f"  {rarity_colored_name(obj['short_desc'])} - {obj['cost']} ryo{level_text}")
         if not shop_items:
             lines.append("  (nothing in stock right now)")
         if buys_categories:
@@ -4204,7 +4204,9 @@ def cmd_list(session, args: List[str]) -> None:
     shop_info = data_shops.SHOP_TYPES[shop["type"]]
     lines = [f"&W{shop_info['display_name']} -- for sale:&x"]
     for item in shop["items"]:
-        lines.append(f"  {rarity_colored_name(item['name'])} - {item['price']} ryo")
+        proto = _find_object_prototype_by_name(item["name"])
+        level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
+        lines.append(f"  {rarity_colored_name(item['name'])} - {item['price']} ryo{level_text}")
     if shop["type"] == "general":
         lines.append("&D(Buys any item, but at a lower price than a specialty shop.)&x")
     else:
@@ -4332,27 +4334,41 @@ def cmd_buy(session, args: List[str]) -> None:
         query = " ".join(args).lower()
 
         legendary_key, legendary_data = legendary_items.find_by_query(query)
+        if not legendary_key:
+            legendary_key = next(
+                (key for key, data in legendary_items.LEGENDARY_ITEMS.items()
+                 if (proto := olc.OBJECT_TEMPLATES.get(data["vnum"]))
+                 and query in proto["short_desc"].lower()), None)
+            if legendary_key:
+                legendary_data = legendary_items.LEGENDARY_ITEMS[legendary_key]
         if legendary_key:
             vnum = legendary_data["vnum"]
             cost = legendary_data["cost_mission_points"]
+            proto = olc.OBJECT_TEMPLATES.get(vnum)
+            item_name = proto["short_desc"] if proto else legendary_data["short_desc"]
+            level_error = playershops.purchase_level_error(
+                player, proto, item_name)
+            if level_error:
+                session.send(level_error)
+                return
             already_owned = any(
-                item.lower() == legendary_data["short_desc"].lower()
+                item.lower() == item_name.lower()
                 for item in list(player.inventory) + [slot for slot in player.equipment.values() if slot]
             )
             if already_owned:
-                session.send(f"You already own {rarity_colored_name(legendary_data['short_desc'])} -- there's only one to a customer.")
+                session.send(f"You already own {rarity_colored_name(item_name)} -- there's only one to a customer.")
                 return
             if player.mission_points < cost:
                 session.send(f"You need {cost:,} mission point(s) for that -- you have {player.mission_points:,}.")
                 return
-            ok, reason = inventory.add_item(player.inventory, legendary_data["short_desc"])
+            ok, reason = inventory.add_item(player.inventory, item_name)
             if not ok:
-                session.send(inventory.full_message(reason, legendary_data["short_desc"]))
+                session.send(inventory.full_message(reason, item_name))
                 return
             player.mission_points -= cost
             session.send(
                 f"You spend {cost:,} mission point(s). {kage.kage_title(player.village)} presents you with "
-                f"{rarity_colored_name(legendary_data['short_desc'])}!"
+                f"{rarity_colored_name(item_name)}!"
             )
             return
 
@@ -4406,6 +4422,10 @@ def cmd_buy(session, args: List[str]) -> None:
             session.send(f"{shopkeeper.name.capitalize()} doesn't sell that.")
             return
         obj = olc.OBJECT_TEMPLATES[obj_vnum]
+        level_error = playershops.purchase_level_error(player, obj, obj["short_desc"])
+        if level_error:
+            session.send(level_error)
+            return
         if player.ryo < obj["cost"]:
             session.send("You can't afford that.")
             return
@@ -4429,6 +4449,11 @@ def cmd_buy(session, args: List[str]) -> None:
     match = next((item for item in shop["items"] if query in item["name"].lower()), None)
     if not match:
         session.send("They don't sell that here.")
+        return
+    level_error = playershops.purchase_level_error(
+        player, _find_object_prototype_by_name(match["name"]), match["name"])
+    if level_error:
+        session.send(level_error)
         return
     if player.ryo < match["price"]:
         session.send("You can't afford that.")
@@ -7229,6 +7254,7 @@ COMMANDS = {
     "flee": cmd_flee,
     "yes": cmd_finish_downed_yes,
     "release": cmd_release,
+    "unleash": cmd_unleash,
     "no": cmd_finish_downed_no,
     "auction": cmd_auction,
     "price": cmd_price,

@@ -1,4 +1,5 @@
 import unittest
+import tempfile
 from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
 
@@ -6,6 +7,7 @@ import colors
 import combat
 import commands
 import data_weapons
+import help_system
 import olc
 import world
 from models import Player
@@ -224,6 +226,41 @@ class EquipmentSlotsTests(unittest.TestCase):
             commands.cmd_wear(session, ["Kunai"])
             self.assertEqual(player.equipment["wielded"], "Kunai")
             self.assertEqual(player.learned_skills, ["Sword"])
+
+
+class TailedBeastCommandTests(unittest.TestCase):
+    def test_release_beast_targets_illusion_victim_instead_of_staff_action(self):
+        caster = NS(player=NS(name="Caster"), send=Mock())
+        victim = NS(player=NS(name="Beast", illusion_walk_caster="Caster",
+                              illusion_walk_real_room_vnum=10,
+                              illusion_walk_range=3, illusion_walk_steps_taken=2), send=Mock())
+        caster.active_sessions = lambda: [caster, victim]
+        commands.cmd_release(caster, ["beast"])
+        self.assertIsNone(victim.player.illusion_walk_caster)
+        self.assertIsNone(victim.player.illusion_walk_real_room_vnum)
+        self.assertIn("release Beast", caster.send.call_args.args[0])
+        self.assertIs(commands.COMMANDS["unleash"], commands.cmd_unleash)
+        commands.cmd_unleash(caster, [])
+        caster.send.assert_called_with("Usage: unleash beast")
+
+    def test_existing_system_help_redirects_without_overwriting_staff_help(self):
+        new_entry = next(e for e in help_system.DEFAULT_HELP_ENTRIES
+                         if e["primary_keyword"] == "unleash beast")
+        old = {"primary_keyword": "release beast", "keywords": ["release beast"],
+               "title": "Release Beast (staff)", "body": "Syntax: release beast\nold instructions",
+               "updated_by": "System"}
+        with tempfile.TemporaryDirectory() as tmp, \
+             patch.object(help_system, "HELP_DIR", tmp), \
+             patch.object(help_system, "DEFAULT_HELP_ENTRIES", [new_entry]):
+            help_system.save_entry(old)
+            help_system.seed_default_help()
+            self.assertIn("unleash beast", help_system.find_by_keyword("release beast")["body"])
+            self.assertEqual(help_system.find_by_keyword("unleash")["primary_keyword"], "unleash beast")
+            old["updated_by"] = "Builder"
+            old["body"] = "Custom help written by staff"
+            help_system.save_entry(old)
+            help_system.seed_default_help()
+            self.assertEqual(help_system.find_by_keyword("release beast")["body"], old["body"])
 
 
 if __name__ == "__main__":
