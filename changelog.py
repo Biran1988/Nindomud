@@ -382,4 +382,7 @@ CHANGELOG = [
     ("15.229", "Renamed the staff Tailed Beast command to 'unleash beast' so it no longer overlaps with 'release <player>' for Illusion Walk, including players named Beast. Existing system help for the old command directs staff to the new syntax."),
     ("15.230", "Buying an item now requires the player's level to meet or exceed that item's level. NPC shops, player shops, static shops, and Kage legendary items refuse underleveled purchases before taking payment; shop listings show item level requirements."),
     ("15.231", "Added mcopy <source vnum> <new vnum> and ocopy <source vnum> <new vnum>. Builders can duplicate a complete mob or object prototype into an unused VNUM; nested fields are independent, and copying does not spawn or stock the copy automatically."),
+    ("15.232", "Armor can now resist each weapon type separately via oset resist; worn pieces reduce matching weapon damage in combat while AC still affects hit chance."),
+    ("15.233", "Medical items now restore configured Health, Chakra, or Stamina over time, including in combat and after reconnect. Set per-item heal, healtime, and healflags; existing salves and soldier pills now recover gradually."),
+    ("15.234", "Farming requires a held Copper Hoe, now registered at item VNUM 2802; general stores also offer a Copper Chisel at VNUM 2803 for the Gemcutter trade. Gemcutting recipes are still pending."),
 ]

@@ -1751,6 +1751,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
     is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
     if is_crit:
         dmg = int(dmg * 1.5)
+    dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
     mob.health -= dmg
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
@@ -1787,6 +1788,7 @@ def _clone_attack_mob_once(session, player, mob) -> None:
         session.send(f"Your shadow clone {attack_verb}s at {mob.name} but misses!")
         return
     dmg = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE)
+    dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
     mob.health -= dmg
     session.send(f"Your shadow clone {attack_verb}s {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
     if "bleeding" in mob.active_status_effects:
@@ -1973,6 +1975,7 @@ def resolve_pulse(session) -> None:
                 dmg = reduced
             else:
                 session.send("&RYou weren't fast enough to counter!&x")
+        dmg = commands_module.reduce_weapon_damage(player, data_weapons.weapon_type_for_item(mob.equipment.get("wielded", "")), dmg)
         player.health -= dmg
         session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage.")
 
@@ -2727,6 +2730,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         else:
             target_session.send("&RYou weren't fast enough to counter!&x")
 
+    dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
     target.health -= dmg
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage.")

@@ -81,7 +81,8 @@ _ITEM_VNUMS = {
     "pot_chakra_steel": 20503, "pot_blacksteel": 20504, "pot_diamond_studded": 20505,
     "cooked_minnow": 9762, "cooked_sardine": 9763, "cooked_trout": 9764, "cooked_bass": 9765,
     "cooked_salmon": 9766, "cooked_swordfish": 9767, "cooked_koi": 9768, "leviathan_fillet": 9769,
-    "hoe_copper": 20300, "hoe_iron": 20301, "hoe_steel": 20302,
+    "hoe_copper": 2802, "chisel_copper": 2803,
+    "hoe_iron": 20301, "hoe_steel": 20302,
     "hoe_chakra_steel": 20303, "hoe_blacksteel": 20304, "hoe_diamond_bladed": 20305,
     "gem_quartz": 9790, "gem_jade": 9791, "gem_amber": 9792, "gem_garnet": 9793,
     "gem_amethyst": 9794, "gem_topaz": 9795, "gem_sapphire": 9796, "gem_emerald": 9797,
@@ -273,6 +274,9 @@ def _register_shared_items() -> None:
     # Farming tools
     # Farming tools -- just one hoe for now (crafting revamp).
     make(_ITEM_VNUMS["hoe_copper"], "A Copper Hoe", "tool", 50)
+    # The Gemcutter job has no active recipes yet; register its first
+    # hand tool so players can acquire and hold it.
+    make(_ITEM_VNUMS["chisel_copper"], "A Copper Chisel", "tool", 50)
 
     # Farming finds (farming.FIND_TABLE) -- single, non-tiered items.
     _CROP_COST = [2, 2, 15, 15, 100, 100, 1000, 10000]
@@ -455,7 +459,7 @@ def populate() -> None:
         _make_shopkeeper(
             6000 + idx * 10 + 1, f"a {short} general store shopkeeper", rooms["shop"],
             ["kunai", "shuriken", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
-             "rod_kindling", "axe_copper", "pickaxe_copper", "pot_copper", "hoe_copper"],
+             "rod_kindling", "axe_copper", "pickaxe_copper", "pot_copper", "hoe_copper", "chisel_copper"],
             buys_categories=[],
         )
         _make_shopkeeper(

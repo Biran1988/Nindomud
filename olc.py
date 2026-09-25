@@ -129,6 +129,10 @@ DEFAULT_OBJECT_FIELDS = {
     # live on the prototype, set once by a builder via 'oset <vnum>
     # statbonus <stat> <value>'. Valid keys: STAT_BONUS_KEYS below.
     "stat_bonuses": {},
+    # Damage reduction by weapon type, in percent, while worn as armor.
+    "weapon_resistances": {},
+    # Medical items restore this much HP over this many real seconds.
+    "heal_amount": 0, "heal_duration": 30, "heal_flags": [],
     # Declarative programs (see programs.py) -- wear/get triggers only,
     # no arbitrary code. Each entry: {"trigger", "action", "args"}.
     "item_programs": [],
@@ -443,6 +447,12 @@ def cmd_ostat(session, args: List[str]) -> None:
             + (", ".join(f"{k.replace('_', ' ').title()} {v:+d}" for k, v in o.get("stat_bonuses", {}).items())
                or "&D(none)&x")
         ),
+        "&WWeapon Resistances:&x " + (
+            ", ".join(f"{data_weapons.display_name(key)} {value}%"
+                      for key, value in sorted(o.get("weapon_resistances", {}).items()))
+            or "&D(none)&x"
+        ),
+        f"&WMedical Healing:&x {o.get('heal_amount', 0)} per resource over {o.get('heal_duration', 30)} seconds   &WHealflags:&x {_fmt_list(o.get('heal_flags', []))}",
         f"&WFlags:&x {_fmt_list(o['extra_flags'])}",
         f"&WWear:&x {_fmt_list(o['wear_flags'])}",
         f"&WValues:&x {' '.join(str(v) for v in o['values'])}",
@@ -1360,7 +1370,8 @@ MOB_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
                    "primary_class": "class", "act_flags": "flags"}
 OBJECT_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
                       "extra_flags": "flags", "wear_flags": "wear",
-                      "wear_loc": "wearloc", "container_capacity": "concap"}
+                      "wear_loc": "wearloc", "container_capacity": "concap",
+                      "heal_amount": "heal", "heal_duration": "healtime", "heal_flags": "healflags"}
 PLAYER_FIELD_NAMES = {"primary_class": "class", "village_rank": "rank"}
 
 
@@ -2443,8 +2454,8 @@ def cmd_awaken(session, args: List[str]) -> None:
 # ===========================================================================
 
 OBJECT_STRING_FIELDS = {"short_desc", "long_desc", "description", "item_type", "weapon_type", "scroll_jutsu", "rarity", "wear_loc"}
-OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent", "container_capacity", "hitroll", "damageroll", "damage"}
-OBJECT_LIST_FIELDS = {"keywords", "extra_flags", "wear_flags", "set_vnums"}
+OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent", "container_capacity", "hitroll", "damageroll", "damage", "heal_amount", "heal_duration"}
+OBJECT_LIST_FIELDS = {"keywords", "extra_flags", "wear_flags", "set_vnums", "heal_flags"}
 
 
 def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Optional[str]:
@@ -2463,6 +2474,12 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
         return f"'{display}' is this item's equipped combat bonus. Current: {o.get('stat_bonuses', {}).get(key, 0):+d}.\nUsage: oset <vnum> {display} <number>   (0 clears it)"
     if field == "damage":
         return f"'damage' is this item's fixed base weapon damage. Current: {data_weapons.item_base_damage(o)}.\nUsage: oset <vnum> damage <nonnegative number>   (overrides the weapon type default)"
+    if field == "heal_amount":
+        return f"'heal' is the total HP this medical item restores gradually. Current: {o.get('heal_amount', 0)}.\nUsage: oset <vnum> heal <0-100000>"
+    if field == "heal_duration":
+        return f"'healtime' is how many seconds this medical item's healing takes. Current: {o.get('heal_duration', 30)}.\nUsage: oset <vnum> healtime <1-3600>"
+    if field == "heal_flags":
+        return f"'healflags' selects the resources restored by this medical item. Current: {', '.join(o.get('heal_flags', [])) or 'none'}.\nUsage: oset <vnum> healflags <health|chakra|stamina>   (prefix - to remove)"
     if field == "rarity":
         import data_rarity
         return f"'rarity' should be one of: {', '.join(data_rarity.RARITY_ORDER)}. Current: '{o.get('rarity', '')}'.\nUsage: oset <vnum> rarity <tier>"
@@ -2477,6 +2494,11 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
         if o.get("wear_loc") == "wielded":
             return f"'statbonus' sets a per-instance stat perk applied to every instance of this item once equipped -- for a weapon, 'hitroll' and 'damroll' are the ones that usually matter most. Valid stats: {', '.join(sorted(STAT_BONUS_KEYS))}. Current: {o.get('stat_bonuses', {}) or '(none)'}\nUsage: oset <vnum> statbonus hitroll <number>\n       oset <vnum> statbonus damroll <number>   (0 clears either)"
         return f"'statbonus' sets a per-instance stat perk applied to every instance of this item once equipped. Valid stats: {', '.join(sorted(STAT_BONUS_KEYS))}. Current: {o.get('stat_bonuses', {}) or '(none)'}\nUsage: oset <vnum> statbonus <stat> <number>   (0 clears it)"
+    if field == "resist":
+        current = ", ".join(f"{key} {value}%" for key, value in sorted(o.get("weapon_resistances", {}).items())) or "none"
+        return (f"'resist' reduces damage from a weapon type while armor is worn. "
+                f"Current: {current}. Valid: {', '.join(sorted(data_weapons.WEAPON_TYPES))}.\n"
+                "Usage: oset <vnum> resist <weapon type> <0-100>   (0 clears it)")
     if field == "value":
         return f"'value' sets one of 4 raw numeric slots for anything not covered by a named field. Current: {o.get('values', [0, 0, 0, 0])}\nUsage: oset <vnum> value <index 0-3> <number>"
     if field in OBJECT_INT_FIELDS:
@@ -2501,6 +2523,8 @@ def cmd_oset(session, args: List[str]) -> None:
             "       oset <vnum> <field> -<value>       (remove one item from a list field)\n"
             "       oset <vnum> value <index> <number>  (set one of the 4 value slots)\n"
             f"       oset <vnum> statbonus <stat> <number>  (0 clears it; valid: {', '.join(sorted(STAT_BONUS_KEYS))})\n"
+            "       oset <vnum> resist <weapon type> <0-100>  (0 clears it)\n"
+            "       oset <vnum> heal <amount>  |  healtime <seconds>  |  healflags <health|chakra|stamina>\n"
             "       oset addprogram <vnum> <trigger> <action> <args...>\n"
             "       oset removeprogram <vnum> <index>\n"
             "       oset list\n"
@@ -2520,6 +2544,8 @@ def cmd_oset(session, args: List[str]) -> None:
             _field_list("Lists (add a value; prefix with - to remove)",
                         OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
             "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
+            "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
+            "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health  |  oset 9002 heal 100  |  oset 9002 healtime 20&x",
             "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
             "&DOlder underscore spellings still work.&x",
         ]))
@@ -2688,6 +2714,23 @@ def cmd_oset(session, args: List[str]) -> None:
             session.send(f"{stat_key.replace('_', ' ').title()} bonus set to {amount:+d} on object {vnum}.")
         return
 
+    if field == "resist":
+        if (len(value_args) != 2 or value_args[0].lower() not in data_weapons.WEAPON_TYPES
+                or not value_args[1].isdigit() or not 0 <= int(value_args[1]) <= 100):
+            session.send(
+                "Usage: oset <vnum> resist <weapon type> <0-100>   (0 clears it)\n"
+                f"Valid types: {', '.join(sorted(data_weapons.WEAPON_TYPES))}"
+            )
+            return
+        weapon_type, percent = value_args[0].lower(), int(value_args[1])
+        if percent:
+            o.setdefault("weapon_resistances", {})[weapon_type] = percent
+        else:
+            o.setdefault("weapon_resistances", {}).pop(weapon_type, None)
+        _log(session.player.name, "object", vnum, f"{weapon_type} resistance set to {percent}%")
+        session.send(f"{data_weapons.display_name(weapon_type)} resistance set to {percent}% on object {vnum}.")
+        return
+
     if field in OBJECT_STRING_FIELDS:
         if field == "weapon_type" and value_text.lower() not in data_weapons.WEAPON_TYPES and value_text.lower() not in {"none", "off"}:
             session.send(
@@ -2758,6 +2801,12 @@ def cmd_oset(session, args: List[str]) -> None:
         if field == "damage" and amount < 0:
             session.send("damage must be zero or greater.")
             return
+        if field == "heal_amount" and not 0 <= amount <= 100000:
+            session.send("heal must be between 0 and 100000 HP.")
+            return
+        if field == "heal_duration" and not 1 <= amount <= 3600:
+            session.send("healtime must be between 1 and 3600 seconds.")
+            return
         if field in {"hitroll", "damageroll"}:
             key = "hitroll" if field == "hitroll" else "damroll"
             if amount == 0:
@@ -2771,6 +2820,12 @@ def cmd_oset(session, args: List[str]) -> None:
         return
 
     if field in OBJECT_LIST_FIELDS:
+        if field == "heal_flags":
+            flag = value_text.lstrip("-").lower()
+            if flag not in {"health", "chakra", "stamina"}:
+                session.send("healflags accepts health, chakra, or stamina (prefix - to remove).")
+                return
+            value_text = ("-" if value_text.startswith("-") else "") + flag
         if field == "set_vnums" and not value_text.startswith("-"):
             if not value_text.isdigit():
                 session.send("setvnums entries must be object vnums (numbers).")

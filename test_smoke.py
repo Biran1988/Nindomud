@@ -29,6 +29,13 @@ help_system.AUDIT_LOG_PATH = storage.DATA_DIR + "/help_audit.log"
 
 import combat              # noqa: E402
 import olc                 # noqa: E402
+assert content._ITEM_VNUMS["hoe_copper"] == 2802
+assert content._ITEM_VNUMS["chisel_copper"] == 2803
+for _tool_key in ("hoe_copper", "chisel_copper"):
+    _tool_proto = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS[_tool_key]]
+    assert _tool_proto["item_type"] == "tool" and _tool_proto["wear_loc"] == "tool"
+assert content._ITEM_VNUMS["hoe_copper"] in combat.MOB_TEMPLATES[6001]["shop_items"]
+assert content._ITEM_VNUMS["chisel_copper"] in combat.MOB_TEMPLATES[6001]["shop_items"]
 from session import Session, State  # noqa: E402
 
 OUTPUT = []
@@ -416,7 +423,14 @@ def main():
     p.health = 50
     before_health = p.health
     feed(session, "use healing salve")
-    assert p.health > before_health
+    assert p.health == before_health
+    assert p.medical_healing and p.medical_healing[-1]["resources"] == ["health"]
+    import consumables as consumables_module
+    started = p.medical_healing[-1]["started_at"]
+    consumables_module.tick_medical_healing(p, now=started + 15)
+    assert before_health < p.health < before_health + 35
+    consumables_module.tick_medical_healing(p, now=started + 30)
+    assert p.health == before_health + 35 and not p.medical_healing
     assert "bleeding" not in p.active_status_effects
 
     feed(session, "quit")

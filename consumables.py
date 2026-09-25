@@ -1,14 +1,15 @@
 """
 Consumable items: food, drinks, and medical supplies.
 
-These are immediate-effect items (eat food -> restore stamina, drink a
-drink -> restore chakra, use a medical item -> restore health and cure
-certain status effects) -- NOT a hunger/thirst survival meter, which
+Food and drink restore their resource immediately. Medical items restore
+configured resources over time and may cure certain status effects.
+This is NOT a hunger/thirst survival meter, which
 Section 48 explicitly reserves for later. Each item is data-driven here
 so adding new consumables later is just a new dict entry; nothing in
 commands.py needs to change.
 """
 
+import time
 from typing import Optional, Tuple
 
 CONSUMABLES = {
@@ -30,11 +31,13 @@ CONSUMABLES = {
     },
     "a healing salve": {
         "category": "medical", "restore": "health", "amount": 35,
+        "heal_duration": 30,
         "cures": ["bleeding"],
         "message": "You apply {item}. Your wounds begin to close.",
     },
     "a soldier pill": {
         "category": "medical", "restore": "chakra", "amount": 40,
+        "heal_duration": 30,
         "cures": ["silenced"],
         "message": "You swallow {item}. A surge of chakra floods through you.",
     },
@@ -90,6 +93,40 @@ def find_consumable(item_name: str) -> Tuple[Optional[str], Optional[dict]]:
     return None, None
 
 
+def _medical_prototype(item_name: str) -> Optional[dict]:
+    import olc
+    query = item_name.lower()
+    for proto in olc.OBJECT_TEMPLATES.values():
+        if proto.get("short_desc", "").lower() == query:
+            return proto
+    return None
+
+
+def tick_medical_healing(player, now: Optional[float] = None) -> dict:
+    """Pay each dose in proportion to elapsed time, including time offline."""
+    now = time.time() if now is None else now
+    gained = {}
+    remaining = []
+    for effect in player.medical_healing:
+        duration = max(1, effect["duration"])
+        elapsed = max(0, min(duration, now - effect["started_at"]))
+        target = int(effect["amount"] * elapsed / duration)
+        delta = max(0, target - effect["applied"])
+        effect["applied"] = target
+        for resource in effect["resources"]:
+            if resource not in {"health", "chakra", "stamina"}:
+                continue
+            current = getattr(player, resource)
+            healed = min(delta, max(0, getattr(player, f"maximum_{resource}") - current))
+            setattr(player, resource, current + healed)
+            if healed:
+                gained[resource] = gained.get(resource, 0) + healed
+        if elapsed < duration:
+            remaining.append(effect)
+    player.medical_healing = remaining
+    return gained
+
+
 def consume(session, verb: str, query: str) -> None:
     player = session.player
     if not query:
@@ -111,6 +148,12 @@ def consume(session, verb: str, query: str) -> None:
         return
 
     _name, data = find_consumable(match)
+    proto = _medical_prototype(match)
+    if proto and proto.get("item_type") == "medical":
+        if data:
+            data = {**data, "category": "medical"}
+        else:
+            data = {"category": "medical", "message": "You use {item}. Its effects begin to take hold."}
     if not data:
         session.send(f"You can't {verb} {match}.")
         return
@@ -121,17 +164,39 @@ def consume(session, verb: str, query: str) -> None:
         session.send(f"You can't {verb} that. Try '{right_verb}' instead.")
         return
 
-    resource = data["restore"]
-    amount = data["amount"]
-    current = getattr(player, resource)
-    maximum = getattr(player, f"maximum_{resource}")
-    new_value = min(maximum, current + amount)
-    actual_gain = new_value - current
-    setattr(player, resource, new_value)
+    if expected_category == "medical":
+        amount = proto.get("heal_amount", 0) if proto else 0
+        if amount:
+            resources = list(proto.get("heal_flags", []))
+            duration = proto.get("heal_duration", 30)
+        elif data.get("restore"):
+            resources = [data["restore"]]
+            amount = data["amount"]
+            duration = data.get("heal_duration", 30)
+        else:
+            session.send("This medical item has no healing configured. Set heal, healtime, and healflags first.")
+            return
+        resources = [r for r in resources if r in {"health", "chakra", "stamina"}]
+        if not resources or amount <= 0 or duration <= 0:
+            session.send("This medical item needs a heal amount, healtime, and at least one healflag.")
+            return
+        player.medical_healing.append({
+            "resources": resources, "amount": amount, "duration": duration,
+            "started_at": time.time(), "applied": 0,
+        })
+    else:
+        resource = data["restore"]
+        amount = data["amount"]
+        current = getattr(player, resource)
+        maximum = getattr(player, f"maximum_{resource}")
+        actual_gain = min(maximum, current + amount) - current
+        setattr(player, resource, current + actual_gain)
 
     player.inventory.remove(match)
     session.send(data["message"].format(item=match))
-    if actual_gain > 0:
+    if expected_category == "medical":
+        session.send(f"Healing begins: {amount} {', '.join(resources)} over {duration} seconds.")
+    elif actual_gain > 0:
         session.send(f"You recover {actual_gain} {resource}.")
     else:
         session.send(f"You were already at full {resource}.")

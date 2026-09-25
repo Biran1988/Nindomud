@@ -5095,10 +5095,8 @@ COOK_DELAY_SECONDS = 6.0
 def cmd_farm(session, args: List[str]) -> None:
     """Farming (farming.py) -- a new gathering job on jobs.py's
     framework, structured identically to cmd_fish/cmd_mine/cmd_chop.
-    Needs a hoe actually HELD and a "plains" biome; the hoe's tier
-    gates both what's reachable and shifts the odds toward rarer
-    crops, alongside the player's own Farming job level. Same real
-    chance to come up with nothing as the other gathering jobs."""
+    Needs a hoe actually HELD and a "plains" biome. Farming level
+    unlocks crops; gathering can still fail."""
     player = session.player
 
     if session.is_busy():
@@ -5921,6 +5919,26 @@ def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
         prototype_bonus = proto.get("stat_bonuses", {}).get("armor_class", 0) if proto else 0
         total += prototype_bonus + parse_crafted_bonus(item_name, "armor_class")
     return total
+
+
+def reduce_weapon_damage(defender, weapon_type: str, damage: int) -> int:
+    """Apply each worn armor piece's resistance to the incoming weapon type.
+
+    Multiplying the remaining fractions lets armor stack without simple
+    addition exceeding 100%. AC still handles the chance to be hit.
+    """
+    if not weapon_type or weapon_type not in data_weapons.WEAPON_TYPES or damage <= 0:
+        return damage
+    remaining, divisor = damage, 1
+    for slot, item_name in defender.equipment.items():
+        if slot not in olc.ARMOR_WEAR_LOCATIONS or not item_name:
+            continue
+        proto = _find_object_prototype_by_name(item_name)
+        percent = proto.get("weapon_resistances", {}).get(weapon_type, 0) if proto else 0
+        if percent:
+            remaining *= 100 - max(0, min(100, percent))
+            divisor *= 100
+    return remaining // divisor
 
 
 def equipped_weapon_type_damage_bonus(player) -> int:  # player: Player or combat.Mob
