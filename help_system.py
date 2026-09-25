@@ -2827,11 +2827,12 @@ DEFAULT_HELP_ENTRIES = [
         "title": "SMAUG Builder Commands (staff)",
         "body": (
             "Syntax: mcreate <vnum> <name>  |  ocreate <vnum> <name>  |  rcreate <vnum> <name>\n"
+            "        mcopy <source vnum> <new vnum>  |  ocopy <source vnum> <new vnum>\n"
             "        minvoke <mob vnum>  |  oinvoke <object vnum>\n"
             "        mfind/ofind/rfind <keyword>\n"
             "        mlist/olist/rlist [first vnum] [last vnum]\n"
             "\n"
-            "Description: Familiar SMAUG-style shortcuts for creating, finding, listing, and invoking prototypes. The create commands use the same validated prototypes as mset/oset/rset. Invoke places a mob or object in your current room. Find searches names and keywords and always displays matching vnums. List optionally limits output to an inclusive vnum range.\n"
+            "Description: Familiar SMAUG-style shortcuts for creating, copying, finding, listing, and invoking prototypes. 'mcopy'/'ocopy' duplicate every prototype field into a free VNUM, including flags, stats, programs, and shop stock, without spawning an instance or sharing mutable lists with the source. The create commands use the same validated prototypes as mset/oset/rset. Invoke places a mob or object in your current room. Find searches names and keywords and always displays matching vnums. List optionally limits output to an inclusive vnum range.\n"
             "\n"
             "Use mstat, ostat, or rstat to inspect the result. Changes become reboot-safe when an Implementor runs 'save world'. Mob experience is calculated automatically from level and cannot be set on a prototype.\n"
             "\n"
@@ -2842,6 +2843,28 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "mcopy",
+        "keywords": ["mcopy"],
+        "title": "Mcopy (staff)",
+        "body": (
+            "Syntax: mcopy <source mob vnum> <new mob vnum>\n\n"
+            "Description: Copies a mob prototype, including its stats, flags, shop stock, and programs, to an unused VNUM. The copy is independent of the original. It is not spawned or given a spawn point; use 'minvoke' or 'spawnpoint add mob' when ready. Inspect it with 'mstat'.\n\n"
+            "Date: 2026-09-25"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "ocopy",
+        "keywords": ["ocopy"],
+        "title": "Ocopy (staff)",
+        "body": (
+            "Syntax: ocopy <source object vnum> <new object vnum>\n\n"
+            "Description: Copies an object prototype, including its stats, flags, and programs, to an unused VNUM. The copy is independent of the original. It is not placed or stocked automatically; use 'oinvoke' or 'mset additem' when ready. Inspect it with 'ostat'.\n\n"
+            "Date: 2026-09-25"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "experience",

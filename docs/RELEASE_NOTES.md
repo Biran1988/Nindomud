@@ -16,7 +16,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.230: `changelog.py`.
+- The in-game change history through version 15.231: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,
@@ -39,6 +39,8 @@ existing server installation, keeping the server's `data/` directory intact.
 - Shop purchases require a player level at least equal to the item's level;
   listings show level requirements and rejected buys leave funds unchanged.
   Kage legendary item listings and purchases also follow prototype name edits.
+- `mcopy <source> <new>` and `ocopy <source> <new>` copy complete prototypes
+  to unused VNUMs, with independent nested fields and no automatic spawn.
 
 Verification: `python3 -m unittest discover -p 'test_*.py'` and
 `python3 test_smoke.py`. The tests cover damage tiers, shop persistence,

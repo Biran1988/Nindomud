@@ -216,6 +216,58 @@ class BuilderPersistenceTests(unittest.TestCase):
         self.assertEqual(len(combat.mobs_in_room(9000)), 1)
         self.assertIn("wooden kunai", world.WORLD.get(9000).ground_items)
 
+    def test_copy_commands_duplicate_independent_prototypes_and_save(self):
+        builder = SimpleNamespace(account=SimpleNamespace(staff_level="builder"),
+                                  player=SimpleNamespace(name="Builder", room_vnum=9000), send=Mock())
+        combat.MOB_TEMPLATES[9101] = combat.default_template(9101, "academy shopkeeper")
+        combat.MOB_TEMPLATES[9101]["shopkeeper"] = True
+        combat.MOB_TEMPLATES[9101]["shop_items"] = [9201]
+        combat.MOB_TEMPLATES[9101]["attributes"]["str"] = 25
+        combat.MOB_TEMPLATES[9101]["mob_programs"].append(
+            {"trigger": "greet", "action": "say", "args": "Welcome"})
+        olc.OBJECT_TEMPLATES[9201] = olc.default_object(9201, "academy kunai")
+        olc.OBJECT_TEMPLATES[9201]["stat_bonuses"]["hitroll"] = 5
+        olc.OBJECT_TEMPLATES[9201]["item_programs"].append(
+            {"trigger": "wear", "action": "say", "args": "Ready"})
+        self.assertIs(commands.COMMANDS["mcopy"], olc.cmd_mcopy)
+        self.assertIs(commands.COMMANDS["ocopy"], olc.cmd_ocopy)
+        olc.cmd_mcopy(builder, ["9101", "9102"])
+        olc.cmd_ocopy(builder, ["9201", "9202"])
+        self.assertEqual(combat.MOB_TEMPLATES[9102], combat.MOB_TEMPLATES[9101])
+        self.assertEqual(olc.OBJECT_TEMPLATES[9202], olc.OBJECT_TEMPLATES[9201])
+        combat.MOB_TEMPLATES[9102]["shop_items"].append(9202)
+        combat.MOB_TEMPLATES[9102]["attributes"]["str"] = 10
+        combat.MOB_TEMPLATES[9102]["mob_programs"][0]["args"] = "Greetings"
+        olc.OBJECT_TEMPLATES[9202]["stat_bonuses"]["hitroll"] = 8
+        olc.OBJECT_TEMPLATES[9202]["item_programs"][0]["args"] = "Fight"
+        self.assertEqual(combat.MOB_TEMPLATES[9101]["shop_items"], [9201])
+        self.assertEqual(combat.MOB_TEMPLATES[9101]["attributes"]["str"], 25)
+        self.assertEqual(combat.MOB_TEMPLATES[9101]["mob_programs"][0]["args"], "Welcome")
+        self.assertEqual(olc.OBJECT_TEMPLATES[9201]["stat_bonuses"]["hitroll"], 5)
+        self.assertEqual(olc.OBJECT_TEMPLATES[9201]["item_programs"][0]["args"], "Ready")
+        self.assertFalse(combat.MOBS_BY_ROOM)
+        self.assertFalse(world.WORLD.get(9000).ground_items)
+        before = dict(combat.MOB_TEMPLATES)
+        olc.cmd_mcopy(builder, ["9101", "9102"])
+        olc.cmd_ocopy(builder, ["9201", "9202"])
+        self.assertEqual(combat.MOB_TEMPLATES, before)
+        self.assertEqual(olc.OBJECT_TEMPLATES[9202]["stat_bonuses"]["hitroll"], 8)
+        olc.cmd_mcopy(builder, ["9999", "9103"])
+        olc.cmd_ocopy(builder, ["9999", "9203"])
+        self.assertNotIn(9103, combat.MOB_TEMPLATES)
+        self.assertNotIn(9203, olc.OBJECT_TEMPLATES)
+        olc.cmd_mcopy(builder, ["bad", "9103"])
+        self.assertIn("Usage: mcopy", builder.send.call_args.args[0])
+        builder.account.staff_level = "player"
+        olc.cmd_mcopy(builder, ["9101", "9103"])
+        olc.cmd_ocopy(builder, ["9201", "9203"])
+        self.assertNotIn(9103, combat.MOB_TEMPLATES)
+        self.assertNotIn(9203, olc.OBJECT_TEMPLATES)
+        world_persistence.save_world()
+        snapshot = storage.load_world_state()
+        self.assertIn("9102", snapshot["mobs"])
+        self.assertIn("9202", snapshot["items"])
+
     def test_ostat_unique_name_and_ambiguity(self):
         session = SimpleNamespace(
             account=SimpleNamespace(staff_level="builder"),

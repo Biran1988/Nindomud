@@ -381,4 +381,5 @@ CHANGELOG = [
     ("15.228", "Shop stock now follows the current item prototype by VNUM: item edits show immediately in NPC shop listings and purchases; player shops link stocked prototypes by VNUM, including older name-only stock when a builder renames its prototype. Updated names and combat stats carry through when bought."),
     ("15.229", "Renamed the staff Tailed Beast command to 'unleash beast' so it no longer overlaps with 'release <player>' for Illusion Walk, including players named Beast. Existing system help for the old command directs staff to the new syntax."),
     ("15.230", "Buying an item now requires the player's level to meet or exceed that item's level. NPC shops, player shops, static shops, and Kage legendary items refuse underleveled purchases before taking payment; shop listings show item level requirements."),
+    ("15.231", "Added mcopy <source vnum> <new vnum> and ocopy <source vnum> <new vnum>. Builders can duplicate a complete mob or object prototype into an unused VNUM; nested fields are independent, and copying does not spawn or stock the copy automatically."),
 ]

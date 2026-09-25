@@ -23,6 +23,7 @@ inherited unchanged from the old `redit`.
 import os
 import time
 import random
+import copy
 from typing import List, Optional
 
 import colors
@@ -478,6 +479,44 @@ def cmd_ocreate(session, args: List[str]) -> None:
         session.send("Usage: ocreate <vnum> <name...>")
         return
     cmd_oset(session, ["create", *args])
+
+
+def cmd_mcopy(session, args: List[str]) -> None:
+    """Copy a mob prototype to a free VNUM without spawning an instance."""
+    if not _require_builder(session):
+        return
+    if len(args) != 2 or not all(arg.isdigit() for arg in args):
+        session.send("Usage: mcopy <source vnum> <new vnum>")
+        return
+    source, target = map(int, args)
+    if source not in combat.MOB_TEMPLATES:
+        session.send(f"No mobile prototype {source} exists.")
+        return
+    if target in combat.MOB_TEMPLATES:
+        session.send(f"Mobile prototype {target} already exists. Choose a free vnum.")
+        return
+    combat.MOB_TEMPLATES[target] = copy.deepcopy(combat.MOB_TEMPLATES[source])
+    _log(session.player.name, "mobile", target, f"copied prototype from {source}")
+    session.send(f"Copied mobile {source} to {target} ({combat.MOB_TEMPLATES[target]['short_desc']}). Edit with 'mset {target} <field> <value>'.")
+
+
+def cmd_ocopy(session, args: List[str]) -> None:
+    """Copy an item prototype to a free VNUM without placing an item."""
+    if not _require_builder(session):
+        return
+    if len(args) != 2 or not all(arg.isdigit() for arg in args):
+        session.send("Usage: ocopy <source vnum> <new vnum>")
+        return
+    source, target = map(int, args)
+    if source not in OBJECT_TEMPLATES:
+        session.send(f"No object prototype {source} exists.")
+        return
+    if target in OBJECT_TEMPLATES:
+        session.send(f"Object prototype {target} already exists. Choose a free vnum.")
+        return
+    OBJECT_TEMPLATES[target] = copy.deepcopy(OBJECT_TEMPLATES[source])
+    _log(session.player.name, "object", target, f"copied prototype from {source}")
+    session.send(f"Copied object {source} to {target} ({OBJECT_TEMPLATES[target]['short_desc']}). Edit with 'oset {target} <field> <value>'.")
 
 
 def cmd_rcreate(session, args: List[str]) -> None:
