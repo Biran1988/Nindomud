@@ -500,8 +500,8 @@ DEFAULT_HELP_ENTRIES = [
             "&CArmorsmith&x - Crafting-only, same as Weaponsmith -- turns Mining's ore into forged armor.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&CGemcutter&x - A Copper Chisel (VNUM 2803) is available at general stores. Gemcutting recipes are pending.\n"
-            "  &Y[Recipes pending]&x\n"
+            "&CGemcutter&x - Hold a Copper Chisel (VNUM 20803) and use 'gemcut <raw gem>' to cut mining gems.\n"
+            "  &G[Active]&x\n"
             "\n"
             "See 'craft' with no arguments for the full recipe list across every crafting-capable job at once.\n"
             "\n"
@@ -2091,7 +2091,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: fish\n"
             "\n"
-            "Description: Casts a line for the Fishing job. Needs a fishing rod held and a water biome (river/ocean/lake/swamp) to stand in. Costs 1-2 Stamina. Takes a few seconds to resolve.\n"
+            "Description: Casts a line for the Fishing job. Needs a fishing rod held and a water biome (river/ocean/lake/swamp) to stand in. Costs 1-2 Stamina. Takes a few seconds to resolve. A held rod loses one use per attempt and breaks after 250 uses by default.\n"
             "\n"
             "There are 6 rods (Kindling, Birch, Oak, Ironwood, Masterwork Oak, Heartwood -- required levels 1/20/40/60/80/99), one for each Lumberjack log type. Every fish species has a full Common-through-Legendary tier ladder; your rod is built around a specific tier and shifts the odds sharply toward it, so a better rod always matters more than levels alone. Only the Heartwood rod gives a real (though still not guaranteed) shot at Legendary catches -- every other rod can land one, but it's nearly never.\n"
             "\n"
@@ -2108,7 +2108,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: mine\n"
             "\n"
-            "Description: Swings a pickaxe for the Mining job. Needs a pickaxe held and a mountain biome to stand in. Costs 1-2 Stamina. Same tiered-tool, delayed-resolution treatment as fishing.\n"
+            "Description: Swings a pickaxe for the Mining job. Needs a pickaxe held and a mountain biome to stand in. Costs 1-2 Stamina and takes a few seconds. A held pickaxe loses one use per attempt and breaks after 250 uses by default.\n"
             "\n"
             "There are 6 pickaxes (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Tipped -- required levels 1/20/40/60/80/99). Rock Salt, Copper, Tin, and Silver ore each have a full Common-through-Legendary tier ladder, built around your pickaxe's own tier -- a better pickaxe always matters more than levels alone, and only the Diamond-Tipped pickaxe gives a real (though still not guaranteed) shot at Legendary ore. Iron/Steel/Chakra Steel ore (see 'help smelt') and raw gems (feeding Weaponsmith/Armorsmith/Gemcutter) are still findable at their usual fixed rarity alongside the tiered ore.\n"
             "\n"
@@ -2146,7 +2146,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: chop\n"
             "\n"
-            "Description: Swings an axe for the Lumberjack job. Needs an axe held and a forest biome to stand in. Costs 1-2 Stamina. Same tiered-tool, delayed-resolution treatment as fishing.\n"
+            "Description: Swings an axe for the Lumberjack job. Needs an axe held and a forest biome to stand in. Costs 1-2 Stamina and takes a few seconds. A held axe loses one use per attempt and breaks after 250 uses by default.\n"
             "\n"
             "There are 6 axes (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Edged -- required levels 1/20/40/60/80/99). Pine, Maple, Redwood, and Ebony wood each have a full Common-through-Legendary tier ladder, built around your axe's own tier -- a better axe always matters more than levels alone, and only the Diamond-Edged axe gives a real (though still not guaranteed) shot at Legendary wood. Kindling, Birch, Oak, Ironwood, Masterwork Oak, and Heartwood logs (feeding Fishing's own rod crafting) are still findable at their usual fixed rarity alongside the tiered wood.\n"
             "\n"
@@ -2165,7 +2165,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: cook <fish>\n"
             "\n"
-            "Description: Cooks a raw fish (from Fishing) into a dish for the Cooking job. Needs one of 6 tiered cooking pots held (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Studded -- required levels 1/20/40/60/80/99), or standing in your own apartment kitchen (no pot needed there, treated as the lowest tier) -- no biome required, unlike the gathering jobs. Costs 1-2 Stamina. Takes a few seconds to resolve, with a real chance to burn the dish entirely; a successful dish shows a quality tier (Common/Uncommon/Rare/Epic/Legendary) that also scales its sell price -- a Legendary dish is worth far more than a Common one, not just a different label. Your pot's own tier shifts the odds toward better quality, the same way a rod/pickaxe/axe/hoe shifts catch rarity -- only the Diamond-Studded pot gives a real (though still not guaranteed) shot at a Legendary dish. Cooked dishes are also edible, restoring Stamina like other food.\n"
+            "Description: Cooks a raw fish into a dish for the Cooking job. Hold a Copper Cooking Pot, or stand in your own apartment kitchen to cook without one. Costs 1-2 Stamina and takes a few seconds. Meals can burn. Each pot used loses one use per attempt, even when a meal burns, and breaks after 250 uses by default. Cooking in your own kitchen without a pot uses no tool.\n"
             "\n"
             "Cooking also raises your Max Chakra -- each Cooking level adds its own level number, stacking cumulatively, same math as Farming uses for Max Stamina. See 'help farm' for the exact math.\n"
             "\n"
@@ -2182,7 +2182,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: farm\n"
             "\n"
-            "Description: Tends crops for the Farming job. Hold a Copper Hoe (VNUM 2802) with 'hold hoe' first; carrying it is not enough. Farm in a plains biome. Costs 1-2 Stamina and takes a few seconds; harvests can fail. The Copper Hoe is sold in general stores.\n"
+            "Description: Tends crops for the Farming job. Hold a Copper Hoe (VNUM 20802) with 'hold hoe' first; carrying it is not enough. Farm in a plains biome. Costs 1-2 Stamina and takes a few seconds; harvests can fail. The Copper Hoe is sold in general stores. Each attempt wears the hoe by one use; it breaks after 250 uses by default.\n"
             "\n"
             "Farming level unlocks eight crop types, from Carrot and Potato at level 1 through Pepper at level 80. Crops are standalone sellable goods.\n"
             "\n"
@@ -2193,6 +2193,17 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "gemcut",
+        "keywords": ["gemcut", "gemcutting"],
+        "title": "Gemcut",
+        "body": (
+            "Syntax: gemcut <raw gem>\n\n"
+            "Description: Hold a Copper Chisel (item VNUM 20803), then cut a Rough Quartz, Raw Sapphire, Raw Ruby, or Raw Diamond found while mining. Gemcutter levels 1, 25, 55, and 80 unlock them respectively. Quartz is Uncommon (+2 Hitroll and +2 Damageroll), Sapphire and Ruby are Epic (+5 each), and Diamond is Legendary (+8 each). The cut gems store these stats for future weapon upgrades; carrying them does not yet boost combat. Cutting costs 1-2 Stamina and takes a few seconds. Each completed cut wears the chisel by one use; it breaks after 250 uses by default. Other job tools wear on every completed attempt, including failed gathers and burned meals. Remaining uses appear in inventory and eq.\n"
+            "\nDate: 2026-09-25"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "craft",
@@ -3133,10 +3144,11 @@ DEFAULT_HELP_ENTRIES = [
             "  rarity         -- common/uncommon/rare/epic/legendary; drives display color everywhere the item's name is shown\n"
             "  scrolljutsu   -- set alongside itemtype scroll to make this item teach a jutsu on 'read'\n"
             "\n"
-            "&WNumber fields:&x weight, cost, level, condition, setbonuspercent, concap, hitroll, damageroll, damage, heal, healtime\n"
+            "&WNumber fields:&x weight, cost, level, condition, setbonuspercent, concap, hitroll, damageroll, damage, heal, healtime, uses\n"
             "  hitroll/damageroll -- bonuses while wielded; 0 clears the bonus\n"
             "  damage        -- fixed base damage for this item, overriding the weapontype default (0 or higher)\n"
             "  heal/healtime -- total restoration per healflag, delivered over this many seconds for a medical item\n"
+            "  uses          -- number of attempts before each copy of a job tool breaks (default 250)\n"
             "\n"
             "&WList fields:&x keywords, flags, wear, setvnums, healflags\n"
             "  healflags      -- add health, chakra, or stamina; prefix - to remove one (e.g. -health)\n"
@@ -3580,8 +3592,14 @@ DEFAULT_HELP_ENTRIES = [
 
 def seed_default_help() -> None:
     for entry in DEFAULT_HELP_ENTRIES:
-        if not os.path.isfile(_path(entry["primary_keyword"])):
+        path = _path(entry["primary_keyword"])
+        if not os.path.isfile(path):
             save_entry(entry)
+        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset"}:
+            with open(path, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            if existing.get("updated_by") == "System" and existing.get("body") != entry["body"]:
+                save_entry(entry)
     # Earlier releases seeded a separate help file for the old, conflicting
     # staff command. Redirect the stock entry without overwriting staff edits.
     old_path = _path("release beast")

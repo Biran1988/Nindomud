@@ -29,6 +29,7 @@ import jobs
 import lumberjack
 import cooking
 import farming
+import tool_durability
 import gems
 import mining
 import armorsmith
@@ -2063,7 +2064,7 @@ def cmd_inventory(session, args: List[str]) -> None:
     counts = inventory.slot_counts(player.inventory)
     lines = []
     for name, count in counts.items():
-        colored = rarity_colored_name(name)
+        colored = rarity_colored_name(tool_durability.display_name(name))
         shown = f"{colored} (x{count})" if count > 1 else colored
         lines.append(f"{shown}{_staff_vnum_suffix(session, item_name=name)}")
     session.send(
@@ -2082,7 +2083,7 @@ def cmd_equipment(session, args: List[str]) -> None:
     slots.extend(sorted((olc.WEAR_LOCATIONS | player.equipment.keys()) - set(slots)))
     for slot in slots:
         item = player.equipment.get(slot)
-        lines.append(f"  <{slot}> {rarity_colored_name(item) if item else '&D(nothing)&x'}")
+        lines.append(f"  <{slot}> {rarity_colored_name(tool_durability.display_name(item)) if item else '&D(nothing)&x'}")
     session.send("\n".join(lines))
 
 
@@ -2233,7 +2234,7 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
         else:
             session.send(f"You wield {rarity_colored_name(match)}.")
     elif wear_loc == "tool":
-        session.send(f"You hold {rarity_colored_name(match)}.")
+        session.send(f"You hold {rarity_colored_name(tool_durability.display_name(match))}.")
     else:
         session.send(f"You wear {rarity_colored_name(match)}.")
     _fire_item_trigger(session, match, "wear")
@@ -3918,6 +3919,9 @@ def cmd_examine(session, args: List[str]) -> None:
     if proto:
         if proto.get("weapon_type"):
             lines.append(f"&WWeapon Type:&x {data_weapons.display_name(proto['weapon_type'])}")
+        if proto.get("gem_bonuses"):
+            bonuses = proto["gem_bonuses"]
+            lines.append(f"&WFuture Weapon Gem Bonus:&x Hitroll +{bonuses.get('hitroll', 0)}, Damageroll +{bonuses.get('damroll', 0)}")
         lines.append(f"&WCost:&x {proto.get('cost', 0):,} ryo   &WWeight:&x {proto.get('weight', 1)}")
 
     if appraisal_pct < 80:
@@ -4810,6 +4814,32 @@ def cmd_roulette(session, args: List[str]) -> None:
 FISHING_DELAY_SECONDS = 6.0
 
 
+def _use_held_job_tool(session, held_tool: str) -> bool:
+    """Spend one use when a delayed job attempt actually resolves.
+
+    A switched or removed tool cancels the attempt. The tool breaks on
+    its final use, after which the current attempt still finishes.
+    """
+    player = session.player
+    if player.equipment.get("tool") != held_tool:
+        session.send("You stopped holding the tool before finishing the job.")
+        return False
+    remaining, _total = tool_durability.uses_left(held_tool)
+    if remaining <= 0:
+        session.send("That tool is broken.")
+        return False
+    updated = tool_durability.spend_use(held_tool)
+    if updated is None:
+        _apply_equipment_stat_bonuses(player, held_tool, sign=-1)
+        del player.equipment["tool"]
+        session.send(f"&R{tool_durability.base_name(held_tool)} breaks after its final use!&x")
+    else:
+        player.equipment["tool"] = updated
+        if remaining <= 11 or remaining in {101, 51, 26}:
+            session.send(f"&YYour tool has {remaining - 1} uses left.&x")
+    return True
+
+
 def cmd_fish(session, args: List[str]) -> None:
     """Fishing (fishing.py) -- the first job on jobs.py's generic
     leveling framework, entirely separate from ninja level/experience.
@@ -4854,6 +4884,8 @@ def cmd_fish(session, args: List[str]) -> None:
         return
 
     def resolve() -> None:
+        if not _use_held_job_tool(session, held_tool):
+            return
         catch = fishing.attempt_catch(job_level, rod_name.lower())
         if catch["failed"]:
             session.send("You feel a tug, but come up with nothing. The fish got away.")
@@ -4920,6 +4952,8 @@ def cmd_mine(session, args: List[str]) -> None:
         return
 
     def resolve() -> None:
+        if not _use_held_job_tool(session, held_tool):
+            return
         find = mining.attempt_mine(job_level, tool_name.lower())
         if find["failed"]:
             session.send("Your pickaxe glances off the rock. Nothing comes loose.")
@@ -5067,6 +5101,8 @@ def cmd_chop(session, args: List[str]) -> None:
         return
 
     def resolve() -> None:
+        if not _use_held_job_tool(session, held_tool):
+            return
         find = lumberjack.attempt_chop(job_level, tool_name.lower())
         if find["failed"]:
             session.send("Your axe bites into bark, but nothing worth taking comes free.")
@@ -5128,6 +5164,8 @@ def cmd_farm(session, args: List[str]) -> None:
         return
 
     def resolve() -> None:
+        if not _use_held_job_tool(session, held_tool):
+            return
         find = farming.attempt_farm(job_level, tool_name.lower())
         if find["failed"]:
             session.send("You till the soil, but come up with nothing usable.")
@@ -5218,6 +5256,8 @@ def cmd_cook(session, args: List[str]) -> None:
         if ingredient_name not in player.inventory:
             session.send(f"You no longer have {ingredient_name} to cook.")
             return
+        if pot_name is not None and not _use_held_job_tool(session, held_tool):
+            return
         player.inventory.remove(ingredient_name)
 
         result = cooking.attempt_cook(job_level, ingredient_name.lower(), effective_pot)
@@ -5240,6 +5280,61 @@ def cmd_cook(session, args: List[str]) -> None:
 
     session.send(f"You start cooking {ingredient_name}...")
     session.start_timed_action("cooking", COOK_DELAY_SECONDS, resolve)
+
+
+def cmd_gemcut(session, args: List[str]) -> None:
+    """Cut one raw mining gem using a held chisel and its durability."""
+    player = session.player
+    if session.is_busy():
+        session.send("You're already busy with something.")
+        return
+    held_tool = player.equipment.get("tool", "")
+    if strip_crafted_suffix(held_tool).lower() not in gemcutter.CHISELS:
+        session.send("You need to hold a copper chisel to cut gems.")
+        return
+    if not args:
+        session.send("Usage: gemcut <raw gem>  (rough quartz, raw sapphire, raw ruby, raw diamond)")
+        return
+    raw_gems = [item for item in player.inventory if item.lower() in gemcutter.RECIPES]
+    raw_gem = find_indexed_item(" ".join(args).lower(), raw_gems)
+    if not raw_gem:
+        session.send("You aren't carrying that raw gem.")
+        return
+    result_name, required_level, xp = gemcutter.RECIPES[raw_gem.lower()]
+    job_level = jobs.get_job_level(player, "gemcutter")
+    if job_level < required_level:
+        session.send(f"Cutting {raw_gem} requires Gemcutter level {required_level} (yours: {job_level}).")
+        return
+    if not jobs.try_deduct_action_stamina(player):
+        session.send("You don't have enough stamina.")
+        return
+
+    def resolve() -> None:
+        if raw_gem not in player.inventory:
+            session.send(f"You no longer have {raw_gem} to cut.")
+            return
+        if not _use_held_job_tool(session, held_tool):
+            return
+        player.inventory.remove(raw_gem)
+        ok, reason = inventory.add_item(player.inventory, result_name)
+        if not ok:
+            player.inventory.append(raw_gem)
+            session.send(inventory.full_message(reason, result_name))
+            session.send(f"You keep {raw_gem} for another attempt.")
+            return
+        gem_proto = _find_object_prototype_by_name(result_name)
+        bonuses = gem_proto.get("gem_bonuses", {}) if gem_proto else {}
+        session.send(
+            f"You cut {raw_gem} into {result_name}! "
+            f"Its {gem_proto.get('rarity', 'common') if gem_proto else 'common'} quality stores "
+            f"Hitroll +{bonuses.get('hitroll', 0)} and Damageroll +{bonuses.get('damroll', 0)} "
+            "for future weapon upgrades."
+        )
+        for message in jobs.add_job_xp(player, "gemcutter", xp):
+            session.send(message)
+
+    session.send(f"You carefully start cutting {raw_gem}...")
+    session.start_timed_action("gemcutting", COOK_DELAY_SECONDS, resolve)
 
 
 CRAFT_DELAY_SECONDS = 20.0
@@ -5838,7 +5933,7 @@ def strip_crafted_suffix(item_name: str) -> str:
     know the plain recipe output name and have no reason to know
     about every possible bonus suffix a crafted instance might carry,
     so a suffixed name would otherwise never match at all."""
-    return re.sub(r" \(\+\d+ [A-Za-z ]+\)$", "", item_name)
+    return re.sub(r" \(\+\d+ [A-Za-z ]+\)$", "", tool_durability.base_name(item_name))
 
 
 def craft_stat_bonus_suffix(bonus: int, stat: str = "hitroll") -> str:
@@ -7309,6 +7404,7 @@ COMMANDS = {
     "chop": cmd_chop,
     "cook": cmd_cook,
     "farm": cmd_farm,
+    "gemcut": cmd_gemcut,
     "craft": cmd_craft,
     "give": cmd_give,
     "drop": cmd_drop,

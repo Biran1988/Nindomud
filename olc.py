@@ -88,6 +88,7 @@ DEFAULT_OBJECT_FIELDS = {
     "wear_loc": "",
     "values": [0, 0, 0, 0], "weight": 1, "cost": 0, "level": 0,
     "condition": 100, "enabled": True,  # immortal-only toggle
+    "max_uses": 250,  # individual job tools break after this many attempts
     # Scroll system -- set item_type to "scroll" and scroll_jutsu to a
     # data_jutsu.JUTSU key (blank = not yet inscribed) so a player can
     # 'read' it to learn that jutsu (see commands.cmd_read). Lets a
@@ -129,6 +130,9 @@ DEFAULT_OBJECT_FIELDS = {
     # live on the prototype, set once by a builder via 'oset <vnum>
     # statbonus <stat> <value>'. Valid keys: STAT_BONUS_KEYS below.
     "stat_bonuses": {},
+    # Cut gems carry future weapon upgrade values. Merely carrying a
+    # gem does not equip or apply these bonuses to combat yet.
+    "gem_bonuses": {},
     # Damage reduction by weapon type, in percent, while worn as armor.
     "weapon_resistances": {},
     # Medical items restore this much HP over this many real seconds.
@@ -419,6 +423,7 @@ def cmd_ostat(session, args: List[str]) -> None:
         _rule(),
         f"&WVnum:&x {vnum}   &WItem Type:&x {o['item_type'].title()}   &WLevel:&x {o['level']}",
         f"&WWeight:&x {o['weight']}   &WCost:&x {o['cost']}   &WCondition:&x {o['condition']}%",
+        f"&WTool Uses:&x {o.get('max_uses', 250)}" if o.get("item_type") == "tool" else None,
         (
             f"&WWeapon Type:&x {data_weapons.display_name(o['weapon_type'])}   "
             f"&WSkill:&x {data_weapons.WEAPON_TYPES.get(o['weapon_type'], {}).get('skill', 'None')}"
@@ -447,6 +452,9 @@ def cmd_ostat(session, args: List[str]) -> None:
             + (", ".join(f"{k.replace('_', ' ').title()} {v:+d}" for k, v in o.get("stat_bonuses", {}).items())
                or "&D(none)&x")
         ),
+        ("&WGem Bonuses (future weapon upgrade):&x " +
+         ", ".join(f"{key.title()} {value:+d}" for key, value in o.get("gem_bonuses", {}).items())
+         if o.get("gem_bonuses") else None),
         "&WWeapon Resistances:&x " + (
             ", ".join(f"{data_weapons.display_name(key)} {value}%"
                       for key, value in sorted(o.get("weapon_resistances", {}).items()))
@@ -1371,7 +1379,8 @@ MOB_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
 OBJECT_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
                       "extra_flags": "flags", "wear_flags": "wear",
                       "wear_loc": "wearloc", "container_capacity": "concap",
-                      "heal_amount": "heal", "heal_duration": "healtime", "heal_flags": "healflags"}
+                      "heal_amount": "heal", "heal_duration": "healtime", "heal_flags": "healflags",
+                      "max_uses": "uses"}
 PLAYER_FIELD_NAMES = {"primary_class": "class", "village_rank": "rank"}
 
 
@@ -2454,7 +2463,7 @@ def cmd_awaken(session, args: List[str]) -> None:
 # ===========================================================================
 
 OBJECT_STRING_FIELDS = {"short_desc", "long_desc", "description", "item_type", "weapon_type", "scroll_jutsu", "rarity", "wear_loc"}
-OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent", "container_capacity", "hitroll", "damageroll", "damage", "heal_amount", "heal_duration"}
+OBJECT_INT_FIELDS = {"weight", "cost", "level", "condition", "set_bonus_percent", "container_capacity", "hitroll", "damageroll", "damage", "heal_amount", "heal_duration", "max_uses"}
 OBJECT_LIST_FIELDS = {"keywords", "extra_flags", "wear_flags", "set_vnums", "heal_flags"}
 
 
@@ -2478,6 +2487,8 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
         return f"'heal' is the total HP this medical item restores gradually. Current: {o.get('heal_amount', 0)}.\nUsage: oset <vnum> heal <0-100000>"
     if field == "heal_duration":
         return f"'healtime' is how many seconds this medical item's healing takes. Current: {o.get('heal_duration', 30)}.\nUsage: oset <vnum> healtime <1-3600>"
+    if field == "max_uses":
+        return f"'uses' is how many completed job attempts each new copy of this tool survives. Current: {o.get('max_uses', 250)}.\nUsage: oset <vnum> uses <1-100000>"
     if field == "heal_flags":
         return f"'healflags' selects the resources restored by this medical item. Current: {', '.join(o.get('heal_flags', [])) or 'none'}.\nUsage: oset <vnum> healflags <health|chakra|stamina>   (prefix - to remove)"
     if field == "rarity":
@@ -2525,6 +2536,7 @@ def cmd_oset(session, args: List[str]) -> None:
             f"       oset <vnum> statbonus <stat> <number>  (0 clears it; valid: {', '.join(sorted(STAT_BONUS_KEYS))})\n"
             "       oset <vnum> resist <weapon type> <0-100>  (0 clears it)\n"
             "       oset <vnum> heal <amount>  |  healtime <seconds>  |  healflags <health|chakra|stamina>\n"
+            "       oset <vnum> uses <1-100000>  (durability of each new job tool)\n"
             "       oset addprogram <vnum> <trigger> <action> <args...>\n"
             "       oset removeprogram <vnum> <index>\n"
             "       oset list\n"
@@ -2806,6 +2818,9 @@ def cmd_oset(session, args: List[str]) -> None:
             return
         if field == "heal_duration" and not 1 <= amount <= 3600:
             session.send("healtime must be between 1 and 3600 seconds.")
+            return
+        if field == "max_uses" and not 1 <= amount <= 100000:
+            session.send("uses must be between 1 and 100000.")
             return
         if field in {"hitroll", "damageroll"}:
             key = "hitroll" if field == "hitroll" else "damroll"

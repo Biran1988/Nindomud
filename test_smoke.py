@@ -29,8 +29,8 @@ help_system.AUDIT_LOG_PATH = storage.DATA_DIR + "/help_audit.log"
 
 import combat              # noqa: E402
 import olc                 # noqa: E402
-assert content._ITEM_VNUMS["hoe_copper"] == 2802
-assert content._ITEM_VNUMS["chisel_copper"] == 2803
+assert content._ITEM_VNUMS["hoe_copper"] == 20802
+assert content._ITEM_VNUMS["chisel_copper"] == 20803
 for _tool_key in ("hoe_copper", "chisel_copper"):
     _tool_proto = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS[_tool_key]]
     assert _tool_proto["item_type"] == "tool" and _tool_proto["wear_loc"] == "tool"

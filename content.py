@@ -27,6 +27,7 @@ import data_headbands
 import data_villages
 import territory
 import farming
+import gemcutter
 import fishing
 import lumberjack
 import mining
@@ -81,7 +82,7 @@ _ITEM_VNUMS = {
     "pot_chakra_steel": 20503, "pot_blacksteel": 20504, "pot_diamond_studded": 20505,
     "cooked_minnow": 9762, "cooked_sardine": 9763, "cooked_trout": 9764, "cooked_bass": 9765,
     "cooked_salmon": 9766, "cooked_swordfish": 9767, "cooked_koi": 9768, "leviathan_fillet": 9769,
-    "hoe_copper": 2802, "chisel_copper": 2803,
+    "hoe_copper": 20802, "chisel_copper": 20803,
     "hoe_iron": 20301, "hoe_steel": 20302,
     "hoe_chakra_steel": 20303, "hoe_blacksteel": 20304, "hoe_diamond_bladed": 20305,
     "gem_quartz": 9790, "gem_jade": 9791, "gem_amber": 9792, "gem_garnet": 9793,
@@ -225,10 +226,20 @@ def _register_shared_items() -> None:
 
     # Gems -- each a single, non-tiered item, level-gated by
     # mining.FIND_TABLE rather than a rarity roll (Section 79 revamp).
-    make(_ITEM_VNUMS["rough_quartz"], "A Rough Quartz", "material", 50)
-    make(_ITEM_VNUMS["raw_sapphire"], "A Raw Sapphire", "material", 800)
-    make(_ITEM_VNUMS["raw_ruby"], "A Raw Ruby", "material", 1200)
-    make(_ITEM_VNUMS["raw_diamond"], "A Raw Diamond", "material", 50000)
+    for raw_key, raw_name, cut_key, cut_name, rarity, raw_cost in (
+        ("rough_quartz", "A Rough Quartz", "cut_quartz", "A Cut Quartz", "uncommon", 50),
+        ("raw_sapphire", "A Raw Sapphire", "cut_sapphire", "A Cut Sapphire", "epic", 800),
+        ("raw_ruby", "A Raw Ruby", "cut_ruby", "A Cut Ruby", "epic", 1200),
+        ("raw_diamond", "A Raw Diamond", "cut_diamond", "A Cut Diamond", "legendary", 50000),
+    ):
+        make(_ITEM_VNUMS[raw_key], raw_name, "material", raw_cost, rarity=rarity)
+        make(_ITEM_VNUMS[cut_key], cut_name, "material", raw_cost * 3 // 2, rarity=rarity)
+        strength = gemcutter.BONUS_BY_RARITY[rarity]
+        # Reserved for a later weapon upgrade action; these are
+        # intrinsic gem stats, not bonuses from holding the gem.
+        olc.OBJECT_TEMPLATES[_ITEM_VNUMS[cut_key]]["gem_bonuses"] = {
+            "hitroll": strength, "damroll": strength,
+        }
 
     # Lumberjack loot table
     make(_ITEM_VNUMS["kindling"], "A Bundle of Kindling", "material", 1, rarity="common")
@@ -274,8 +285,7 @@ def _register_shared_items() -> None:
     # Farming tools
     # Farming tools -- just one hoe for now (crafting revamp).
     make(_ITEM_VNUMS["hoe_copper"], "A Copper Hoe", "tool", 50)
-    # The Gemcutter job has no active recipes yet; register its first
-    # hand tool so players can acquire and hold it.
+    # The chisel is worn by the Gemcutter job's gemcut action.
     make(_ITEM_VNUMS["chisel_copper"], "A Copper Chisel", "tool", 50)
 
     # Farming finds (farming.FIND_TABLE) -- single, non-tiered items.

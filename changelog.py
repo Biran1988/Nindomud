@@ -385,4 +385,5 @@ CHANGELOG = [
     ("15.232", "Armor can now resist each weapon type separately via oset resist; worn pieces reduce matching weapon damage in combat while AC still affects hit chance."),
     ("15.233", "Medical items now restore configured Health, Chakra, or Stamina over time, including in combat and after reconnect. Set per-item heal, healtime, and healflags; existing salves and soldier pills now recover gradually."),
     ("15.234", "Farming requires a held Copper Hoe, now registered at item VNUM 2802; general stores also offer a Copper Chisel at VNUM 2803 for the Gemcutter trade. Gemcutting recipes are still pending."),
+    ("15.235", "Corrected Copper Hoe and Chisel VNUMs to 20802 and 20803. Gemcut produces rarity-scaled cut gems with Hitroll and Damageroll stats reserved for later weapon upgrades. All held job tools last 250 completed uses by default, then break; oset uses changes a tool's lifespan."),
 ]
