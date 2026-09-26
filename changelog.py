@@ -400,4 +400,5 @@ CHANGELOG = [
     ("15.247", "Sharingan now costs twice as much to maintain: six Chakra per idle tick, 6-12 Chakra per combat round by tomoe, and six Stamina per combat round."),
     ("15.248", "Ninja Arts/Bukijutsu gained multi-shuriken and multi-kunai throws, Demon Wind Shuriken, four delayed consumable traps, Trap Disabling, permanent item-bound weapon poison/enchantments, wind-only fan attacks, and Water Release: Glue Technique. New supplies are sold by general and weapon shopkeepers."),
     ("15.249", "Fan Techniques can now push a surviving target through an open exit. Use 'fan techniques <target> <direction>' while wielding a Mighty Fan; closed doors and hidden exits block the gust."),
+    ("15.250", "Bukijutsu level 25+ can craft Antidote and Medicinal Pills from new Medicinal Herbs. Choose a pill level up to your own; examine reveals its saved level. Antidotes cure poison; the strongest medicine heals Health, Chakra, and Stamina."),
 ]

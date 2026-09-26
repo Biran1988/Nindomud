@@ -4086,6 +4086,12 @@ def cmd_examine(session, args: List[str]) -> None:
 
     lines = [f"You examine {_examine_rarity_colored_name(match)}."]
     lines.append(f"&WRarity:&x {data_rarity.display_name(rarity)}")
+    import pill_crafting
+    pill_info = pill_crafting.pill_data(match)
+    if pill_info:
+        lines.append(f"&WPill Level:&x {pill_info['level']}")
+        lines.append(f"&WHealing:&x {pill_info['amount']} {', '.join(pill_info['resources'])} over {pill_info['heal_duration']} seconds")
+        lines.append(f"&WCures:&x {', '.join(pill_info['cures'])}")
 
     if appraisal_pct < 40:
         lines.append("&D(Train Examine further to learn more about this item.)&x")
@@ -5578,6 +5584,51 @@ def cmd_craft(session, args: List[str]) -> None:
     import data_crafting
 
     player = session.player
+    if args and args[0].lower() == "pill":
+        import pill_crafting
+        if player.primary_class != "bukijutsu" or player.level < pill_crafting.MIN_CRAFTER_LEVEL:
+            session.send(f"Pill crafting is Bukijutsu-only and unlocks at level {pill_crafting.MIN_CRAFTER_LEVEL}.")
+            return
+        if len(args) != 3 or args[1].lower() not in ("antidote", "medicine") or not args[2].isdigit():
+            session.send("Usage: craft pill antidote <level>  |  craft pill medicine <level>")
+            return
+        chosen_level = int(args[2])
+        if not 1 <= chosen_level <= min(player.level, 100):
+            session.send(f"Choose a pill level from 1 to your current level ({player.level}).")
+            return
+        herb = next((item for item in player.inventory if item.lower() == pill_crafting.HERB_NAME.lower()), None)
+        if herb is None:
+            session.send("You need Medicinal Herbs to craft a pill.")
+            return
+        if session.is_busy():
+            session.send("You're already busy with something.")
+            return
+        kind = "Antidote" if args[1].lower() == "antidote" else "Medicinal"
+        result = pill_crafting.encode_pill(kind, chosen_level)
+        if not jobs.try_deduct_action_stamina(player):
+            session.send("You don't have enough stamina.")
+            return
+
+        def finish_pill() -> None:
+            if player.primary_class != "bukijutsu" or player.level < max(pill_crafting.MIN_CRAFTER_LEVEL, chosen_level):
+                session.send("You no longer qualify to finish this pill.")
+                return
+            available = next((item for item in player.inventory if item.lower() == pill_crafting.HERB_NAME.lower()), None)
+            if available is None:
+                session.send("You no longer have Medicinal Herbs. The pill is not made.")
+                return
+            player.inventory.remove(available)
+            ok, reason = inventory.add_item(player.inventory, result)
+            if not ok:
+                player.inventory.append(available)
+                session.send(inventory.full_message(reason, result))
+                return
+            session.send(f"&WYou craft {result} from Medicinal Herbs!&x")
+
+        session.send(f"You begin crafting {result} from Medicinal Herbs...")
+        session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, finish_pill)
+        return
+
     if not data_crafting.can_craft(player):
         session.send(
             f"You need to be a Bukijutsu user of level {data_crafting.CRAFTING_BUKIJUTSU_MIN_LEVEL}+, "
@@ -5586,7 +5637,7 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft weapon <type> <name>  |  craft armor <slot> <name>")
+        session.send("Usage: craft weapon <type> <name>  |  craft armor <slot> <name>  |  craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()

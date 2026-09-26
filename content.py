@@ -103,6 +103,7 @@ _ITEM_VNUMS = {
     "demon_wind": 9802, "exploding_note": 9803, "smoke_bomb": 9804,
     "poison_gas_bomb": 9805, "exploding_clay": 9806, "mighty_fan": 9807,
     "glue_pot": 9808,
+    "medicinal_herbs": 9809,
 }
 
 
@@ -139,6 +140,7 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["exploding_clay"], "A Wad of Exploding Clay", "misc", 150)
     make(_ITEM_VNUMS["mighty_fan"], "A Mighty Fan", "weapon", 180, weapon_type="exotic")
     make(_ITEM_VNUMS["glue_pot"], "A Pot of Glue", "misc", 50)
+    make(_ITEM_VNUMS["medicinal_herbs"], "Medicinal Herbs", "misc", 150)
     if had_shared_items:
         return  # old templates are registered; only backfill the new Art stock
     make(_ITEM_VNUMS["war_club"], "A Wooden War Club", "weapon", 35, weapon_type="blunt")
@@ -480,7 +482,7 @@ def populate() -> None:
         idx = village_index[village]
         _make_shopkeeper(
             6000 + idx * 10 + 1, f"a {short} general store shopkeeper", rooms["shop"],
-            ["kunai", "shuriken", "exploding_note", "smoke_bomb", "poison_gas_bomb", "exploding_clay", "glue_pot", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
+            ["kunai", "shuriken", "exploding_note", "smoke_bomb", "poison_gas_bomb", "exploding_clay", "glue_pot", "medicinal_herbs", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
              "rod_kindling", "axe_copper", "pickaxe_copper", "pot_copper", "hoe_copper", "chisel_copper"],
             buys_categories=[],
         )
@@ -645,6 +647,16 @@ def populate() -> None:
     # registered spawn disappear after reboot.
     spawn_points.restore_custom_templates()
     spawn_points.apply_all()
+
+    # Existing installations restore saved general-store templates over
+    # built-in stock. Add this new ingredient after that reconciliation too.
+    from data_villages import VILLAGES as _villages_for_herbs
+    for village_index_for_herbs in range(len(_villages_for_herbs)):
+        general_store = combat.MOB_TEMPLATES.get(6000 + village_index_for_herbs * 10 + 1)
+        if general_store is not None:
+            stock = general_store.setdefault("shop_items", [])
+            if _ITEM_VNUMS["medicinal_herbs"] not in stock:
+                stock.append(_ITEM_VNUMS["medicinal_herbs"])
 
     # Persistent Teams (Section 82, per explicit request) -- loads
     # whatever teams already exist in teams.json back into memory.

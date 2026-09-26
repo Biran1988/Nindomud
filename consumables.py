@@ -86,6 +86,10 @@ VERB_CATEGORY = {"eat": "food", "drink": "drink", "use": "medical"}
 
 
 def find_consumable(item_name: str) -> Tuple[Optional[str], Optional[dict]]:
+    from pill_crafting import pill_data
+    crafted_pill = pill_data(item_name.strip())
+    if crafted_pill:
+        return item_name, crafted_pill
     query = item_name.strip().lower()
     for name, data in CONSUMABLES.items():
         if query in name or name in query:
@@ -169,8 +173,8 @@ def consume(session, verb: str, query: str) -> None:
         if amount:
             resources = list(proto.get("heal_flags", []))
             duration = proto.get("heal_duration", 30)
-        elif data.get("restore"):
-            resources = [data["restore"]]
+        elif data and (data.get("restore") or data.get("resources")):
+            resources = list(data.get("resources") or [data["restore"]])
             amount = data["amount"]
             duration = data.get("heal_duration", 30)
         else:

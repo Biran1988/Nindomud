@@ -462,7 +462,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Bukijutsu techniques center on weapons and thrown items -- like Taijutsu, no hand signs and no casting delay. Some genuinely consume an inventory item on use.\n"
             "\n"
-            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken (35), wind-only Fan Techniques and Poison Gas Bomb (40), Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted.\n"
+            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken (35), wind-only Fan Techniques and Poison Gas Bomb (40), Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). At level 25, Bukijutsu can also craft Antidote and Medicinal Pills from Medicinal Herbs; see 'help craft'. Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -2267,6 +2267,8 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: craft weapon <type> <name>\n"
             "       craft armor <slot> <name>\n"
+            "       craft pill antidote <level>\n"
+            "       craft pill medicine <level>\n"
             "\n"
             "Description: A real Bukijutsu skill -- unlocked at Bukijutsu level 25+, or any class at level 70+. Combines exactly 2 materials (see 'help materials') into a brand-new item you name yourself. Their own individual stat values simply add together: a weapon gets that combined number as both bonus Hit Roll and bonus Damage Roll; armor gets it as Armor Class (better defense).\n"
             "\n"
@@ -2274,6 +2276,8 @@ DEFAULT_HELP_ENTRIES = [
             "<slot> is one of: head, body, legs, feet, hands, waist, finger, neck, piercing, back, chakra aura.\n"
             "\n"
             "After naming your item, you'll be asked which 2 materials to combine (e.g. 'iron ingot, yew log') -- the same material can be used twice for a weaker but simpler craft. Takes a short delay to resolve, and re-checks you still have both materials at that point.\n"
+            "\n"
+            "Pill crafting is Bukijutsu-only from level 25 (the level-70 general weapon/armor unlock does not apply). Each pill uses one Medicinal Herbs, sold at village general stores, and takes a short crafting delay. Choose any pill level from 1 through your own current level. The plain item name does not reveal its strength: use 'examine <pill>' to see its level and effect. 'use <pill>' consumes it. Antidote Pill cures poison and heals Health (50 + twice its level); Medicinal Pill cures bleeding and silence and restores Health, Chakra, and Stamina (100 + six times its level), each over 30 seconds. These herbs make the strongest medical restorative in the game. Medicinal Herbs are separate from the two-material weapon/armor recipes.\n"
             "\n"
             "Date: 2026-09-07"
         ),

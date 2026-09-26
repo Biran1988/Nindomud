@@ -150,6 +150,10 @@ class Session:
     # --- Output helpers ---------------------------------------------------
 
     def send(self, text: str) -> None:
+        # Per-unit crafted pill metadata lives in legacy item strings but is
+        # never part of a player's visible item name; examine shows its level.
+        from pill_crafting import display_name
+        text = display_name(text)
         rendered = colors.render(text, self.color_enabled)
         self.send_raw(rendered + "\r\n")
 
