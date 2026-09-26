@@ -2519,11 +2519,17 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "ambush":
         if session.combat_target is not None or session.pvp_target is not None:
-            session.send("You can't use Ushiro Shishou mid-fight. They already know you're there!")
+            session.send(f"You can't use {jutsu_data['display_name']} mid-fight. They already know you're there!")
             return
         if not target_words:
-            session.send("Sneak up on whom? Usage: perform ushiro shishou <target>.")
+            session.send(f"Sneak up on whom? Usage: perform {jutsu_key} <target>.")
             return
+    if jutsu_data.get("jutsu_type") == "buff":
+        combat.use_barrier(session)
+        return
+    if jutsu_data.get("jutsu_type") == "elemental_clone":
+        combat.use_elemental_clone_jutsu(session, jutsu_key)
+        return
     if jutsu_data.get("jutsu_type") == "summon":
         if jutsu_key == "shadow clone jutsu":
             combat.use_shadow_clone_jutsu(session)
@@ -2913,7 +2919,12 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     if jutsu_data.get("jutsu_type") in ("counter", "silent_genjutsu_passive"):
         session.send(f"{jutsu_data['display_name']} is a passive ability -- it triggers automatically, you don't use it directly.")
         return
-    if target_words:
+    if jutsu_data.get("jutsu_type") == "area" and not target_words and session.combat_target is None:
+        mob = next((m for m in combat.mobs_in_room(player.room_vnum)
+                    if m.health > 0 and not combat.is_shadow_clone(m)
+                    and not (combat.is_shopkeeper(m) or combat.is_gambler(m)
+                             or combat.is_teacher(m) or combat.is_immortal_mob(m))), None)
+    elif target_words:
         mob = combat.find_mob(player.room_vnum, " ".join(target_words))
     else:
         mob = session.combat_target
@@ -6219,7 +6230,7 @@ _CHAKRA_PAPER_REACTIONS = {
 }
 
 
-CHAKRA_NATURE_MIN_LEVEL = 50
+CHAKRA_NATURE_MIN_LEVEL = 25
 CHAKRA_NATURE_SECONDARY_MIN_LEVEL = 100
 
 
@@ -6236,7 +6247,7 @@ def cmd_channel(session, args: List[str]) -> None:
 
     PRIMARY nature (rolled once, secretly, at character creation --
     see session.py's _create_player, and biomes.roll_chakra_nature's
-    own docstring): gated to CHAKRA_NATURE_MIN_LEVEL (50), per a
+    own docstring): gated to CHAKRA_NATURE_MIN_LEVEL (25), per a
     direct follow-up request -- confirmed the paper is REFUSED, not
     consumed, below that level, so a player who bought one early can
     simply hold onto it and try again once they've actually reached

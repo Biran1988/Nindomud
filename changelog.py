@@ -391,4 +391,8 @@ CHANGELOG = [
     ("15.238", "Removed the Sharingan Genjutsu jutsu. 'shar' now toggles Sharingan. Staff can set an awakened Sharingan user's Mangekyo with 'bloodset <player> mangekyo yes' or 'mset <player> mangekyo on', assigning two distinct random eye techniques."),
     ("15.239", "Scan unlocks as a General Skill at level 3. Use 'scan <direction>' to see visible players, mobs, corpses, and ground items in the adjacent room; invis targets stay hidden."),
     ("15.240", "Taijutsu gained Kihon, Neko Ashi, and Sanchin stances plus Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Kumade, and Tamashiwara. Ninjutsu gained the opening attack Ushiro Shishou. Class members unlock these by level; stances persist and cannot be changed mid-fight."),
+    ("15.241", "The first chakra nature can now be revealed with Chakra Paper at level 25 (was 50); the second nature remains a level-100 discovery."),
+    ("15.242", "Ninjutsu gained Chakra Ball, Rasengan, Oodama Rasengan, elemental Rasengans for all five natures, Suigadan, Juuha Shou, Karyuu Endan, Retsudotensho, Chishin, Raikiri, and four Lightning Chidori techniques. Nature-specific jutsu require the matching element."),
+    ("15.243", "Raiton Kage Bunshin, Mizu Bunshin, Deido Bunshin, and Suna Bunshin now summon combat-capable elemental clones. Reach 100% mastery in Shadow Clone Jutsu first; an elemental clone replaces your active clones and has the usual chakra upkeep."),
+    ("15.244", "Barrier now unlocks for every class as a General Skill at level 35. It costs 30 Chakra and improves Armor Class by 8 for five pulses."),
 ]

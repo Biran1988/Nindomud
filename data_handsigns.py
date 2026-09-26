@@ -59,6 +59,28 @@ ALL_SIGNS = ["Rat", "Ox", "Tiger", "Hare", "Dragon", "Snake", "Horse", "Ram", "M
 # thematically-appropriate invented sequence for jutsu original to
 # this MUD (everything else below).
 JUTSU_HANDSIGNS = {
+    "chakra ball": ["Ram", "Tiger"],
+    "rasengan": ["Ram", "Tiger", "Hare"],
+    "oodama rasengan": ["Ram", "Tiger", "Hare", "Dragon"],
+    "fire rasengan": ["Tiger", "Horse", "Ram"],
+    "water rasengan": ["Dragon", "Ram", "Hare"],
+    "wind rasengan": ["Tiger", "Hare", "Dog"],
+    "earth rasengan": ["Snake", "Boar", "Dog"],
+    "lightning rasengan": ["Ox", "Hare", "Monkey"],
+    "suigadan": ["Ox", "Monkey", "Dragon"],
+    "juuha shou": ["Tiger", "Hare", "Ram"],
+    "karyuu endan": ["Snake", "Ram", "Tiger"],
+    "retsudotensho": ["Snake", "Boar", "Dog"],
+    "chishin": ["Snake", "Dog", "Tiger"],
+    "chidori": ["Ox", "Hare", "Monkey"],
+    "dual chidori": ["Ox", "Hare", "Monkey", "Tiger"],
+    "full body chidori": ["Ox", "Hare", "Monkey", "Dragon"],
+    "maximum chidori": ["Ox", "Hare", "Monkey", "Dragon", "Tiger"],
+    "raikiri": ["Ox", "Hare", "Monkey"],
+    "raiton kage bunshin": ["Ram", "Snake", "Tiger", "Ox"],
+    "mizu bunshin": ["Ram", "Snake", "Tiger", "Dragon"],
+    "deido bunshin": ["Ram", "Snake", "Tiger", "Boar"],
+    "suna bunshin": ["Ram", "Snake", "Tiger", "Dog"],
     "shadow shuriken technique": ["Dog", "Boar", "Ram"],
     "shadow clone jutsu": ["Ram", "Snake", "Tiger"],
     "fireball jutsu": ["Snake", "Ram", "Monkey", "Boar", "Horse", "Tiger"],  # the real canon sequence
@@ -85,7 +107,9 @@ def has_handsigns(jutsu: dict) -> bool:
     genuinely passive jutsu (never cast directly at all -- checked by
     its own jutsu_type, e.g. "counter" or "silent_genjutsu_passive")
     never uses hand signs either, regardless of its class."""
-    if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive", "ambush", "stance"):
+    if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive", "stance", "buff", "elemental_clone"):
+        return False
+    if jutsu.get("jutsu_type") == "ambush" and jutsu.get("jutsu_id") != "ninjutsu_raikiri":
         return False
     return jutsu.get("class_requirement") in ("ninjutsu", "genjutsu")
 

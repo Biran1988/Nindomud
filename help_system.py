@@ -15,6 +15,7 @@ import time
 from typing import List, Optional
 
 import storage
+import data_jutsu
 
 HELP_DIR = os.path.join(storage.DATA_DIR, "help")
 AUDIT_LOG_PATH = os.path.join(storage.DATA_DIR, "help_audit.log")
@@ -2124,7 +2125,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: channel <chakra paper>\n"
             "\n"
-            "Description: Reveals your own chakra nature -- one of the five elements (Fire, Water, Wind, Earth, Lightning), secretly decided the moment your character was created and never shown to you before now. Requires level 50 -- below that, the paper simply doesn't react and is NOT consumed, so you can hold onto it and try again once you're ready. Once it does react, the paper is consumed.\n"
+            "Description: Reveals your own chakra nature -- one of the five elements (Fire, Water, Wind, Earth, Lightning), secretly decided the moment your character was created and never shown to you before now. Requires level 25 -- below that, the paper simply doesn't react and is NOT consumed, so you can hold onto it and try again once you're ready. Once it does react, the paper is consumed.\n"
             "\n"
             "At level 100, a second Chakra Paper reveals a genuinely SECOND chakra nature -- a completely independent, freshly-rolled element, guaranteed different from your first but otherwise picked with no regard for whether the two make thematic sense together (fire and water can both be yours at once). You must have already revealed your first nature before the second can be revealed, even if you're already well past level 100.\n"
             "\n"
@@ -3643,13 +3644,45 @@ DEFAULT_HELP_ENTRIES = [
     },
 ]
 
+# The selected Ninjutsu expansion is data-driven, so every new technique
+# gets an in-game help page with its actual unlock, nature, and cost.
+_EXPANSION_HELP_KEYS = (
+    "chakra ball", "rasengan", "oodama rasengan", "suigadan", "juuha shou",
+    "karyuu endan", "retsudotensho", "chishin", "chidori", "dual chidori",
+    "full body chidori", "maximum chidori", "raikiri", "fire rasengan",
+    "water rasengan", "wind rasengan", "earth rasengan", "lightning rasengan",
+    "raiton kage bunshin", "mizu bunshin", "deido bunshin", "suna bunshin",
+    "barrier",
+)
+for _key in _EXPANSION_HELP_KEYS:
+    _jutsu = data_jutsu.JUTSU[_key]
+    _type = _jutsu.get("jutsu_type")
+    _syntax = f"perform {_key}" if _type in ("buff", "elemental_clone") else f"perform {_key} <target>"
+    _details = {
+        "buff": "Raises a defensive barrier for five pulses (+8 Armor Class).",
+        "elemental_clone": "Summons one living clone that fights alongside you and costs 25 Chakra per round. Requires 100% Shadow Clone Jutsu mastery; recasting any clone replaces the existing clones.",
+        "ambush": "An opening attack with 50% extra damage; cannot be used mid-fight or against a wounded target.",
+        "area": "An earthquake that damages other attackable mobs in the room as well.",
+    }.get(_type, "A damaging combat jutsu.")
+    _nature = (f" Requires {_jutsu['element'].capitalize()} chakra nature."
+               if _jutsu["element"] != "none" else " Usable with any chakra nature.")
+    if _jutsu.get("requires_water"):
+        _nature += " Requires water in the room (ocean, river, lake, or swamp)."
+    _effect = f" Can inflict {_jutsu['effect'].replace('_', ' ')}." if _jutsu["effect"] else ""
+    DEFAULT_HELP_ENTRIES.append({
+        "primary_keyword": _key, "keywords": [_key], "title": _jutsu["display_name"],
+        "body": (f"Syntax: {_syntax}\n\nDescription: {_details}{_nature}{_effect} "
+                 f"Unlocks at level {_jutsu['level_requirement']}; costs {_jutsu['chakra_cost']} Chakra.\n\nDate: 2026-09-26"),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    })
+
 
 def seed_default_help() -> None:
     for entry in DEFAULT_HELP_ENTRIES:
         path = _path(entry["primary_keyword"])
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset"}:
+        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel"}:
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if existing.get("updated_by") == "System" and existing.get("body") != entry["body"]:

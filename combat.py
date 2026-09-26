@@ -179,6 +179,7 @@ class Mob:
     # _shadow_clone_template_vnum) so the clone's name/description
     # genuinely match that specific player, not a shared generic one.
     shadow_clone_owner: Optional[str] = None
+    clone_element: str = "none"
     # Summoning contracts (Section 118, per direct request/
     # confirmation) -- which player this summon belongs to, if any,
     # and which real tier (data_summons.CONTRACT_TIERS, e.g.
@@ -1186,7 +1187,7 @@ def is_shadow_clone(mob) -> bool:
     return bool(mob.shadow_clone_owner)
 
 
-def spawn_shadow_clones(player, count: int) -> List["Mob"]:
+def spawn_shadow_clones(player, count: int, element: str = "none") -> List["Mob"]:
     """Spawns `count` real, independently-attackable Mob instances in
     the CASTER's own current room, each a genuine copy of the
     caster's name/description via _register_shadow_clone_template,
@@ -1203,9 +1204,12 @@ def spawn_shadow_clones(player, count: int) -> List["Mob"]:
         clone = spawn_mob(vnum, player.room_vnum)
         if clone is None:
             continue
-        clone.health = clone_hp
-        clone.max_health = clone_hp
+        clone.health = clone_hp * (2 if element == "sand" else 1)
+        clone.max_health = clone.health
         clone.shadow_clone_owner = player.name
+        clone.clone_element = element
+        if element != "none":
+            clone.name = f"{player.name}'s {element} clone"
         clone.respawns = False  # a popped clone never comes back on its own -- only a fresh cast makes more
         clones.append(clone)
     return clones
@@ -1767,7 +1771,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
 SHADOW_CLONE_DAMAGE_SCALE = 0.5  # a clone hits for half what the player's own attack would
 
 
-def _clone_attack_mob_once(session, player, mob) -> None:
+def _clone_attack_mob_once(session, player, mob, clone=None) -> None:
     """One single attack from ONE shadow clone against mob -- same
     to-hit math and weapon as the player's own attack (confirmed
     design: "using the player's own stats/weapon"), but damage scaled
@@ -1785,13 +1789,21 @@ def _clone_attack_mob_once(session, player, mob) -> None:
     to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
+    element = getattr(clone, "clone_element", "none")
+    clone_label = f"{element} clone" if element != "none" else "shadow clone"
     if random.randint(1, 100) > to_hit:
-        session.send(f"Your shadow clone {attack_verb}s at {mob.name} but misses!")
+        session.send(f"Your {clone_label} {attack_verb}s at {mob.name} but misses!")
         return
     dmg = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE)
+    if element == "earth":
+        dmg = round(dmg * 1.25)
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
     mob.health -= dmg
-    session.send(f"Your shadow clone {attack_verb}s {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
+    session.send(f"Your {clone_label} {attack_verb}s {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
+    clone_effect = {"lightning": "paralyzed", "water": "drained", "sand": "entangled"}.get(element)
+    if clone_effect and random.randint(1, 100) <= 20:
+        status_effects.apply_effect(mob.active_status_effects, clone_effect, source=f"{element} clone", duration_override=2)
+        session.send(status_effects.EFFECT_DEFS[clone_effect]["message"].format(target=mob.name))
     if "bleeding" in mob.active_status_effects:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
@@ -1930,10 +1942,11 @@ def resolve_pulse(session) -> None:
                 if mob.health <= 0:
                     break
                 _player_attack_mob_once(session, player, mob)
-        for _ in active_shadow_clones(player):
+        for clone in active_shadow_clones(player):
             if mob.health <= 0:
                 break
-            _clone_attack_mob_once(session, player, mob)
+            if clone.room_vnum == player.room_vnum:
+                _clone_attack_mob_once(session, player, mob, clone)
         _resolve_summon_round(session, player, mob)
 
     if mob.health <= 0:
@@ -2018,6 +2031,13 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     mechanism's own eligibility elsewhere) -- checked here so even a
     copied or Kekkei-Genkai-gated elemental jutsu would still need a
     real matching nature (though no jutsu combines both gates today)."""
+    if jutsu.get("jutsu_type") == "elemental_clone" and player.skill_proficiencies.get("Shadow Clone Jutsu", 0) < 100:
+        return False
+    if jutsu.get("requires_water"):
+        import fishing
+        room = world.WORLD.get(player.room_vnum)
+        if room is None or not fishing.can_fish_here(room.biome):
+            return False
     if jutsu.get("element", "none") != "none":
         if jutsu["element"] not in (player.chakra_nature, player.chakra_nature_secondary):
             return False
@@ -2097,6 +2117,70 @@ def use_shadow_clone_jutsu(session) -> None:
     )
 
 
+def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
+    """One elemental clone, sharing the existing live-clone cap and upkeep."""
+    player = session.player
+    jutsu = data_jutsu.JUTSU[jutsu_key]
+    if player.skill_proficiencies.get("Shadow Clone Jutsu", 0) < 100:
+        session.send("Master Shadow Clone Jutsu to 100% before creating elemental clones.")
+        return
+    if not _can_use_jutsu(player, jutsu, jutsu_key):
+        session.send(f"You need {jutsu['element'].capitalize()} chakra nature and must know {jutsu['display_name']}.")
+        return
+    if _is_action_blocked(player) or getattr(session, "pending_cast", None) is not None:
+        session.send("You are unable to form the clone right now.")
+        return
+    if status_effects.has_effect(player.active_status_effects, "silenced"):
+        session.send("You are silenced and cannot use jutsu right now!")
+        return
+    now = time.time()
+    if now < player.cooldowns.get(jutsu_key, 0):
+        session.send(f"{jutsu['display_name']} is still recovering.")
+        return
+    cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
+    if player.chakra < cost:
+        session.send("You don't have enough chakra.")
+        return
+    player.chakra -= cost
+    player.cooldowns[jutsu_key] = now + jutsu["cooldown"]
+    dismiss_shadow_clones(player)
+    spawned = spawn_shadow_clones(player, 1, element=jutsu["clone_element"])
+    if not spawned:
+        player.chakra += cost
+        player.cooldowns.pop(jutsu_key, None)
+        session.send("There is no space to summon a clone here.")
+        return
+    grow_skill_from_usage(player, jutsu["display_name"])
+    session.send(f"&CYou form hand signs and create {spawned[0].name}!&x (Upkeep: {SHADOW_CLONE_UPKEEP_PER_CLONE} chakra/round.)")
+
+
+def use_barrier(session) -> None:
+    """Level-35 general defensive buff, active for five combat pulses."""
+    player = session.player
+    jutsu = data_jutsu.JUTSU["barrier"]
+    if not _can_use_jutsu(player, jutsu, "barrier"):
+        session.send("You don't know Barrier.")
+        return
+    if _is_action_blocked(player) or getattr(session, "pending_cast", None) is not None:
+        session.send("You are unable to raise a barrier right now.")
+        return
+    if status_effects.has_effect(player.active_status_effects, "silenced"):
+        session.send("You are silenced and cannot use jutsu right now!")
+        return
+    now = time.time()
+    if now < player.cooldowns.get("barrier", 0):
+        session.send("Barrier is still recovering.")
+        return
+    if player.chakra < jutsu["chakra_cost"]:
+        session.send("You don't have enough chakra.")
+        return
+    player.chakra -= jutsu["chakra_cost"]
+    player.cooldowns["barrier"] = now + jutsu["cooldown"]
+    status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier")
+    grow_skill_from_usage(player, "Barrier")
+    session.send("&CA chakra barrier rises around you, improving your Armor Class by 8 for five pulses.&x")
+
+
 def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
     player = session.player
     if _is_action_blocked(player):
@@ -2107,6 +2191,9 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
 
     if jutsu is None or not _can_use_jutsu(player, jutsu, jutsu_key):
         session.send("You don't know that jutsu.")
+        return
+    if jutsu.get("jutsu_type") == "ambush" and mob.health < mob.max_health:
+        session.send(f"{mob.name} is hurt and alert; you cannot sneak up on them.")
         return
     if status_effects.has_effect(player.active_status_effects, "silenced"):
         session.send("You are silenced and cannot use jutsu right now!")
@@ -2199,6 +2286,18 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
         status_effects.apply_effect(mob.active_status_effects, jutsu["effect"], source=jutsu_key)
         session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=mob.name))
 
+    if jutsu.get("jutsu_type") == "area":
+        for other in list(mobs_in_room(player.room_vnum)):
+            if other is mob or other.health <= 0 or is_shadow_clone(other):
+                continue
+            if (is_shopkeeper(other) or is_gambler(other)
+                    or is_teacher(other) or is_immortal_mob(other)):
+                continue
+            other.health -= dmg
+            session.send(f"{jutsu['display_name']} also strikes {other.name} for {damage_messages.describe_damage(dmg)} damage!")
+            if other.health <= 0:
+                handle_mob_defeat(session, other)
+
     if mob.health <= 0:
         handle_mob_defeat(session, mob)
 
@@ -2235,6 +2334,9 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         return
 
     target = target_session.player
+    if jutsu.get("jutsu_type") == "ambush" and target.health < target.maximum_health:
+        session.send(f"{target.name} is hurt and alert; you cannot sneak up on them.")
+        return
     if target.izanami_trapped:
         session.send(f"{target.name} is lost in a loop, untouched by reality -- you cannot reach them.")
         return
@@ -2741,6 +2843,36 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg)} damage.")
 
 
+def _clone_attack_target_once(session, player, target_session, target, clone) -> None:
+    """A live clone assists in PvP under the same safety and defense rules."""
+    import commands as commands_module
+    import weather
+    element = clone.clone_element
+    label = f"{element} clone" if element != "none" else "shadow clone"
+    to_hit = derived_stats.to_hit_chance(
+        derived_stats.hit_roll(player),
+        derived_stats.armor_class(target) - commands_module.equipped_armor_class_bonus(target),
+    ) + weather.combat_accuracy_modifier() - _accuracy_penalty_from_effects(player)
+    if random.randint(1, 100) > max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit)):
+        session.send(f"Your {label} attacks {target.name} but misses!")
+        return
+    if target.kamui_intangibility_rounds_left > 0:
+        target.kamui_intangibility_rounds_left -= 1
+        return
+    if random.randint(1, 100) <= derived_stats.dodge_chance(target) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target):
+        target_session.send(f"&CYou dodge {player.name}'s {label}!&x")
+        return
+    damage = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE * (1.25 if element == "earth" else 1))
+    damage = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), damage)
+    target.health -= damage
+    session.send(f"Your {label} strikes {target.name} for {damage_messages.describe_damage(damage)} damage.")
+    target_session.send(f"{player.name}'s {label} strikes you for {damage_messages.describe_damage(damage)} damage.")
+    clone_effect = {"lightning": "paralyzed", "water": "drained", "sand": "entangled"}.get(element)
+    if clone_effect and random.randint(1, 100) <= 20:
+        status_effects.apply_effect(target.active_status_effects, clone_effect, source=f"{element} clone", duration_override=2)
+        target_session.send(status_effects.EFFECT_DEFS[clone_effect]["message"].format(target="you"))
+
+
 def _resolve_ninken_flee_lock(session, player, target_session, target) -> None:
     """The Ninken pack's own real, PvP-only mechanic (Section 118) --
     a hard flee-lock against the SUMMONER's own chosen opponent,
@@ -2824,6 +2956,11 @@ def resolve_pvp_pulse(session) -> None:
             if target.health <= 0:
                 break
             _player_attack_target_once(session, player, target_session, target)
+    for clone in active_shadow_clones(player):
+        if target.health <= 0:
+            break
+        if clone.room_vnum == player.room_vnum:
+            _clone_attack_target_once(session, player, target_session, target, clone)
 
     if target.health <= 0:
         if try_trigger_izanagi(target_session):

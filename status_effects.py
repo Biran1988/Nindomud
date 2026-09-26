@@ -12,6 +12,11 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    "barrier": {
+        "display_name": "Barrier", "duration": 5,
+        "message": "A chakra barrier surrounds {target}.",
+        "armor_class_bonus": 8,
+    },
     "blinded": {
         "display_name": "Blinded", "duration": 2,
         "message": "Blinding pain disrupts {target}!",

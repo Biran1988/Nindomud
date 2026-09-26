@@ -473,6 +473,65 @@ JUTSU = {
     },
 }
 
+# New Ninjutsu follows the game's 1-100 progression. Elemental entries
+# require the corresponding revealed chakra nature at cast time.
+def _ninjutsu(name, level, cost, damage, element="none", **options):
+    return {
+        "jutsu_id": "ninjutsu_" + name.lower().replace(" ", "_"),
+        "display_name": name, "class_requirement": "ninjutsu",
+        "level_requirement": level, "chakra_cost": cost, "stamina_cost": 0,
+        "cooldown": options.pop("cooldown", 5.0), "damage": damage,
+        "damage_type": "chakra", "effect": options.pop("effect", None),
+        "tier": 1 if level < 25 else 2 if level < 50 else 3,
+        "element": element, **options,
+    }
+
+
+JUTSU.update({
+    "chakra ball": _ninjutsu("Chakra Ball", 3, 9, (9, 16), cooldown=2.5),
+    "rasengan": _ninjutsu("Rasengan", 25, 24, (27, 43)),
+    "oodama rasengan": _ninjutsu("Oodama Rasengan", 45, 42, (48, 72), cooldown=8.0),
+    "suigadan": _ninjutsu("Suigadan", 30, 28, (28, 46), "water", requires_water=True),
+    "juuha shou": _ninjutsu("Juuha Shou", 30, 28, (28, 46), "wind", effect="off_balance", effect_chance_pct=25),
+    "karyuu endan": _ninjutsu("Karyuu Endan", 40, 36, (41, 65), "fire", effect="burning", effect_chance_pct=40),
+    "retsudotensho": _ninjutsu("Retsudotensho", 40, 36, (45, 69), "earth"),
+    "chishin": _ninjutsu("Chishin", 50, 44, (52, 76), "earth", jutsu_type="area", cooldown=9.0),
+    "chidori": _ninjutsu("Chidori", 30, 30, (33, 50), "lightning", effect="paralyzed", effect_chance_pct=15),
+    "dual chidori": _ninjutsu("Dual Chidori", 45, 42, (49, 70), "lightning", effect="paralyzed", effect_chance_pct=20),
+    "full body chidori": _ninjutsu("Full Body Chidori", 60, 56, (65, 90), "lightning", effect="paralyzed", effect_chance_pct=25),
+    "maximum chidori": _ninjutsu("Maximum Chidori", 75, 72, (83, 115), "lightning", effect="paralyzed", effect_chance_pct=30),
+    "raikiri": _ninjutsu("Raikiri", 60, 58, (70, 100), "lightning", jutsu_type="ambush", ambush_multiplier=1.5, cooldown=10.0),
+})
+
+# A focused Rasengan variant for each of the five base chakra natures.
+for _element, _effect in (("fire", "burning"), ("water", "drained"),
+                          ("wind", "off_balance"), ("earth", None),
+                          ("lightning", "paralyzed")):
+    _name = f"{_element.capitalize()} Rasengan"
+    JUTSU[_name.lower()] = _ninjutsu(
+        _name, 40, 38, (52, 76) if _element == "earth" else (42, 65),
+        _element, effect=_effect, effect_chance_pct=25 if _effect else 0,
+        cooldown=7.0,
+    )
+
+for _element, _name in (("lightning", "Raiton Kage Bunshin"),
+                        ("water", "Mizu Bunshin"),
+                        ("earth", "Deido Bunshin"),
+                        ("earth", "Suna Bunshin")):
+    JUTSU[_name.lower()] = _ninjutsu(
+        _name, 45, 55, None, _element, jutsu_type="elemental_clone",
+        clone_element="sand" if _name == "Suna Bunshin" else _element,
+        cooldown=10.0,
+    )
+
+JUTSU["barrier"] = {
+    "jutsu_id": "general_barrier", "display_name": "Barrier",
+    "class_requirement": "general", "level_requirement": 35,
+    "chakra_cost": 30, "stamina_cost": 0, "cooldown": 12.0,
+    "damage": None, "damage_type": None, "effect": None,
+    "jutsu_type": "buff", "tier": 2, "element": "none",
+}
+
 # The universal starting kit -- every player gets exactly these,
 # regardless of class. Used by both session.py's chargen AND
 # leveling.sync_universal_skills() (the login update-check), so the two
@@ -542,6 +601,11 @@ JUTSU_ALIASES = {
     "tamashiware": "tamashiwara",  # common spelling of the new Taijutsu strike
     "n": "narakumi",  # preserve the existing perform-n shorthand after adding Neko Ashi Dachi
     "c": "counter kunai",  # preserve the existing shorthand after adding Choku Zuki
+    "doton rasengan": "earth rasengan",
+    "katon rasengan": "fire rasengan",
+    "suiton rasengan": "water rasengan",
+    "fuuton rasengan": "wind rasengan",
+    "raiton rasengan": "lightning rasengan",
 }
 
 
@@ -562,9 +626,10 @@ def match_prefix(lower_words):
 
     Returns (jutsu_key, word_count_consumed) or (None, 0).
     """
-    if lower_words and lower_words[0] in JUTSU_ALIASES:
-        return JUTSU_ALIASES[lower_words[0]], 1
     joined = " ".join(lower_words)
+    for alias in sorted(JUTSU_ALIASES, key=lambda name: -len(name.split())):
+        if joined == alias or joined.startswith(alias + " "):
+            return JUTSU_ALIASES[alias], len(alias.split())
     for key in sorted(JUTSU.keys(), key=lambda k: -len(k.split())):
         if joined == key or joined.startswith(key + " "):
             return key, len(key.split())
@@ -607,7 +672,7 @@ def jutsu_for_class_at_level(class_name: str, level: int):
     assumed."""
     return [
         key for key, data in JUTSU.items()
-        if data["class_requirement"] == class_name and data["level_requirement"] == level
+        if data["class_requirement"] in (class_name, "general") and data["level_requirement"] == level
     ]
 
 
@@ -625,5 +690,5 @@ def all_jutsu_keys():
 def all_unlocked_for_class(class_name: str, level: int):
     return [
         key for key, data in JUTSU.items()
-        if data["class_requirement"] == class_name and data["level_requirement"] <= level
+        if data["class_requirement"] in (class_name, "general") and data["level_requirement"] <= level
     ]

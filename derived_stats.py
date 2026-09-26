@@ -61,6 +61,7 @@ def armor_class(character: Character, bonus_percent: int = 0) -> int:
     """Lower (more negative) is better, matching ROM convention."""
     base = 10 - (character.dexterity * 2)
     stance_ac = {"kihon dachi": 2, "neko ashi dachi": 4}.get(getattr(character, "taijutsu_stance", ""), 0)
+    stance_ac += 8 if "barrier" in getattr(character, "active_status_effects", {}) else 0
     if not bonus_percent:
         return base - stance_ac
     # Additive improvement (never a sign-flipping multiply) -- 10 AC
