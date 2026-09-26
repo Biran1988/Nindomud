@@ -34,6 +34,8 @@ EFFECT_DEFS = {
         "message": "{target} is bleeding.",
         "damage_per_tick": (2, 4),
     },
+    "poisoned": {"display_name": "Poisoned", "duration": 3,
+                 "message": "{target} is poisoned.", "damage_per_tick": (3, 5)},
     "confused": {
         "display_name": "Confused",
         "duration": 2,

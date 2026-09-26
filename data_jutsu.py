@@ -288,6 +288,34 @@ JUTSU = {
         # consumption as Throw Kunai (this is thematically the same
         # basic kunai, just occasionally rigged to detonate).
     },
+    **{
+        name.lower(): {
+            "jutsu_id": "arts_" + name.replace(" ", "_"), "display_name": name.title(),
+            "class_requirement": category, "level_requirement": level,
+            "chakra_cost": chakra, "stamina_cost": stamina, "cooldown": cooldown,
+            "damage": damage, "damage_type": "physical" if category == "bukijutsu" else "chakra",
+            "effect": effect, "tier": 1 if level < 25 else 2 if level < 50 else 3,
+            "element": element, "jutsu_type": kind,
+            **({"requires_item": item} if item else {}),
+            **({"requires_item_count": 3} if name.startswith("Multi-") else {}),
+            **({"effect_chance_pct": chance} if chance else {}),
+        }
+        for name, category, level, chakra, stamina, cooldown, damage, effect, element, kind, item, chance in [
+            ("Multi-Shuriken Throw", "bukijutsu", 10, 0, 12, 4.0, (18, 32), None, "none", "thrown", "shuriken", 0),
+            ("Multi-Kunai Throw", "bukijutsu", 20, 0, 16, 4.5, (26, 42), None, "none", "thrown", "kunai", 0),
+            ("Demon Wind Shuriken", "bukijutsu", 35, 20, 22, 7.0, (36, 58), "bleeding", "none", "thrown", "demon wind shuriken", 35),
+            ("Toxin Binding", "bukijutsu", 30, 45, 15, 8.0, None, None, "none", "weapon_art", None, 0),
+            ("Exploding Note", "bukijutsu", 25, 25, 12, 6.0, None, None, "none", "trap", "exploding note", 0),
+            ("Smoke Bomb", "bukijutsu", 30, 30, 12, 7.0, None, None, "none", "trap", "smoke bomb", 0),
+            ("Poison Gas Bomb", "bukijutsu", 40, 40, 15, 8.0, None, None, "none", "trap", "poison gas bomb", 0),
+            ("Exploding Clay", "bukijutsu", 50, 50, 20, 9.0, None, None, "none", "trap", "exploding clay", 0),
+            ("Trap Disabling", "bukijutsu", 25, 15, 10, 5.0, None, None, "none", "trap_disable", None, 0),
+            ("Weapon Enchantment", "bukijutsu", 55, 60, 20, 10.0, None, None, "none", "weapon_art", None, 0),
+            ("Disenchantment", "bukijutsu", 45, 30, 12, 7.0, None, None, "none", "weapon_art", None, 0),
+            ("Fan Techniques", "bukijutsu", 40, 35, 20, 7.0, (30, 48), "off_balance", "wind", "fan_art", None, 35),
+            ("Water Release: Glue Technique", "ninjutsu", 35, 35, 0, 7.0, None, None, "water", "weapon_art", None, 0),
+        ]
+    },
     "fireball jutsu": {
         "jutsu_id": "ninjutsu_fireball", "display_name": "Fireball Jutsu",
         "class_requirement": "ninjutsu", "level_requirement": 20,
@@ -635,6 +663,8 @@ MIN_MATCH_PREFIX_LENGTH = {
 }
 
 JUTSU_ALIASES = {
+    "ex": "explosive tag kunai",  # preserve the established two-letter shortcut
+    "explosive": "explosive tag kunai",  # preserve it despite new Exploding Note/Clay
     "tamashiware": "tamashiwara",  # common spelling of the new Taijutsu strike
     "n": "narakumi",  # preserve the existing perform-n shorthand after adding Neko Ashi Dachi
     "c": "counter kunai",  # preserve the existing shorthand after adding Choku Zuki

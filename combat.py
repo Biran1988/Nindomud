@@ -53,6 +53,7 @@ import world
 import dice
 import inventory
 import status_effects
+import ninja_arts
 import teams
 from data_villages import VILLAGES
 from models import Player
@@ -1032,6 +1033,16 @@ def tick_effects_pulse(session) -> None:
         dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
         player.health = max(0, player.health - dmg)
         session.send(f"&RThe fire burns you for {damage_messages.describe_damage(dmg)} damage!&x")
+    if "poisoned" in player.active_status_effects:
+        dmg = status_effects.reduce_incoming_damage(player.active_status_effects, random.randint(3, 5))
+        player.health = max(0, player.health - dmg)
+        session.send(f"&GPoison hurts you for {damage_messages.describe_damage(dmg)} damage!&x")
+    for trap in ninja_arts.TRAPS:
+        state = player.active_status_effects.get(trap)
+        if state and state["duration"] <= 1:
+            player.active_status_effects.pop(trap)
+            dmg = ninja_arts.detonate_trap(player, trap)
+            session.send(f"&R{trap.title()} detonates for {damage_messages.describe_damage(dmg)} damage!&x")
     if "drained" in player.active_status_effects:
         loss = min(player.chakra, status_effects.drained_chakra_loss())
         player.chakra -= loss
@@ -1048,24 +1059,45 @@ def tick_effects_pulse(session) -> None:
             player.chakra = min(player.chakra, player.maximum_chakra)
             player.chisei_chakra_bonus = 0
         session.send(f"You are no longer {status_effects.EFFECT_DEFS[name]['display_name'].lower()}.")
+    if player.health <= 0:
+        if not try_trigger_izanagi(session) and not is_immortal_immune_to_defeat(session):
+            handle_player_defeat(session)
 
 
-def tick_all_mob_effects() -> None:
+def tick_all_mob_effects(sessions=None) -> None:
     """Tick every spawned mob's status effects, once per pulse, regardless
     of whether anyone is currently fighting them. Also applies the 3
     elemental damage/drain-over-time effects (mirroring
     tick_effects_pulse's own player-side logic) -- now that mobs have
     real chakra/stamina fields (Section 86) for Drained/Off Balance to
     meaningfully act on, not just players."""
-    for room_mobs in MOBS_BY_ROOM.values():
-        for mob in room_mobs:
+    for room_mobs in list(MOBS_BY_ROOM.values()):
+        for mob in list(room_mobs):
             if "burning" in mob.active_status_effects:
                 mob.health = max(0, mob.health - status_effects.burning_damage())
+            if "poisoned" in mob.active_status_effects:
+                mob.health = max(0, mob.health - random.randint(3, 5))
             if "drained" in mob.active_status_effects:
                 mob.chakra = max(0, mob.chakra - status_effects.drained_chakra_loss())
             if "off_balance" in mob.active_status_effects:
                 mob.stamina = max(0, mob.stamina - status_effects.off_balance_stamina_loss())
+            for trap in ninja_arts.TRAPS:
+                state = mob.active_status_effects.get(trap)
+                if state and state["duration"] <= 1:
+                    mob.active_status_effects.pop(trap)
+                    dmg = ninja_arts.detonate_trap(mob, trap)
+                    if sessions:
+                        for owner in sessions:
+                            if owner.player and owner.player.name == state["source"]:
+                                owner.send(f"&R{trap.title()} detonates on {mob.name} for {damage_messages.describe_damage(dmg)} damage!&x")
+                                if mob.health <= 0 and mob in room_mobs:
+                                    handle_mob_defeat(owner, mob)
+                                break
             status_effects.tick_effects(mob.active_status_effects)
+            if mob.health <= 0 and sessions and mob in room_mobs:
+                owner = next((s for s in sessions if s.player and s.combat_target is mob), None)
+                if owner:
+                    handle_mob_defeat(owner, mob)
 
 
 PASSIVE_GROWTH_CHANCE_PCT = 20  # per combat round
@@ -1788,6 +1820,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
     if is_crit:
         dmg = int(dmg * 1.5)
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
+    dmg = ninja_arts.weapon_hit(player, mob, dmg)
     mob.health -= dmg
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
@@ -2073,6 +2106,8 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
         room = world.WORLD.get(player.room_vnum)
         if room is None or not fishing.can_fish_here(room.biome):
             return False
+    if jutsu.get("jutsu_type") == "fan_art" and "mighty fan" not in player.equipment.get("wielded", "").lower():
+        return False
     if jutsu.get("element", "none") != "none":
         if jutsu["element"] not in (player.chakra_nature, player.chakra_nature_secondary):
             return False
@@ -2255,10 +2290,13 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
         return
 
     if jutsu.get("requires_item"):
-        held_kunai = next((item for item in player.inventory if jutsu["requires_item"] in item.lower()), None)
-        if not held_kunai:
-            session.send(f"You don't have a {jutsu['requires_item']} to throw.")
+        held_items = [item for item in player.inventory if jutsu["requires_item"] in item.lower()]
+        if len(held_items) < jutsu.get("requires_item_count", 1):
+            session.send(f"You don't have a {jutsu['requires_item']} to throw. You need {jutsu.get('requires_item_count', 1)}.")
             return
+    if jutsu.get("jutsu_type") == "trap" and jutsu_key in mob.active_status_effects:
+        session.send("That target already has this trap attached.")
+        return
 
     player.chakra -= chakra_cost
     player.stamina -= stamina_cost
@@ -2268,10 +2306,11 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
     player.cooldowns[jutsu_key] = now + jutsu["cooldown"]
 
     if jutsu.get("requires_item"):
-        player.inventory.remove(held_kunai)
+        for held_item in held_items[:jutsu.get("requires_item_count", 1)]:
+            player.inventory.remove(held_item)
         room = world.WORLD.get(player.room_vnum)
-        if room:
-            room.ground_items.append(held_kunai)
+        if room and jutsu.get("jutsu_type") == "thrown":
+            room.ground_items.extend(held_items[:jutsu.get("requires_item_count", 1)])
 
     import weather
     import data_personality
@@ -2284,6 +2323,12 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {mob.name}, but it misses!")
+        return
+
+    if jutsu.get("jutsu_type") == "trap":
+        ninja_arts.attach_trap(mob, jutsu_key, player.name)
+        grow_skill_from_usage(player, jutsu["display_name"])
+        session.send(f"You attach {jutsu['display_name']} to {mob.name}. It will detonate in two rounds unless disabled.")
         return
 
     dmg, was_explosive = roll_jutsu_damage(jutsu)
@@ -2405,10 +2450,13 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         return
 
     if jutsu.get("requires_item"):
-        held_kunai = next((item for item in player.inventory if jutsu["requires_item"] in item.lower()), None)
-        if not held_kunai:
-            session.send(f"You don't have a {jutsu['requires_item']} to throw.")
+        held_items = [item for item in player.inventory if jutsu["requires_item"] in item.lower()]
+        if len(held_items) < jutsu.get("requires_item_count", 1):
+            session.send(f"You don't have a {jutsu['requires_item']} to throw. You need {jutsu.get('requires_item_count', 1)}.")
             return
+    if jutsu.get("jutsu_type") == "trap" and jutsu_key in target.active_status_effects:
+        session.send("That target already has this trap attached.")
+        return
 
     caster_chakra_cost = jutsu["chakra_cost"]  # the jutsu's real cost -- NOT chakra_cost above, which may be a discounted copied-cast price
     player.chakra -= chakra_cost
@@ -2419,10 +2467,11 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     player.cooldowns[jutsu_key] = now + jutsu["cooldown"]
 
     if jutsu.get("requires_item"):
-        player.inventory.remove(held_kunai)
+        for held_item in held_items[:jutsu.get("requires_item_count", 1)]:
+            player.inventory.remove(held_item)
         room = world.WORLD.get(player.room_vnum)
-        if room:
-            room.ground_items.append(held_kunai)
+        if room and jutsu.get("jutsu_type") == "thrown":
+            room.ground_items.extend(held_items[:jutsu.get("requires_item_count", 1)])
 
     import weather
     import data_personality
@@ -2453,6 +2502,13 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         return
 
     if jutsu.get("jutsu_type") == "thrown" and _try_counter_kunai(session, target_session, target, player.name, jutsu["display_name"]):
+        return
+
+    if jutsu.get("jutsu_type") == "trap":
+        ninja_arts.attach_trap(target, jutsu_key, player.name)
+        grow_skill_from_usage(player, jutsu["display_name"])
+        session.send(f"You attach {jutsu['display_name']} to {target.name}. It will detonate in two rounds unless disabled.")
+        target_session.send(f"&R{player.name} attaches {jutsu['display_name']} to you! Use Trap Disabling before it detonates.&x")
         return
 
     dmg, was_explosive = roll_jutsu_damage(jutsu)
@@ -2878,6 +2934,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
             target_session.send("&RYou weren't fast enough to counter!&x")
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
+    dmg = ninja_arts.weapon_hit(player, target, dmg)
     dmg = status_effects.reduce_incoming_damage(target.active_status_effects, dmg)
     target.health -= dmg
     if is_crit:

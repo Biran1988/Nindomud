@@ -30,9 +30,10 @@ commands, and Mangekyo attacks. Damage is shown as a colored word from
 TRIVIAL to EXTINCTION-LEVEL (10,000+). It also includes persistent shopkeeper
 stock and item prototypes, 15-minute area resets, the restore and respawn
 commands, SMAUG-style builder commands, and progressive leveling and mob XP.
-The latest update adds 21 Genjutsu techniques, changes Barrier to reduce
-incoming damage by 10%, and doubles active Sharingan upkeep in and out of
-combat.
+The latest update adds Ninja Arts/Bukijutsu throws, traps, trap disabling,
+permanent item-bound weapon properties, wind-only fan attacks, and Water
+Release: Glue Technique. It also includes the 21 Genjutsu techniques,
+Barrier's 10% damage reduction, and doubled Sharingan upkeep.
 See `docs/RELEASE_NOTES.md` for the files and checks that verify this release.
 Builders can use `mset fields` for a wrapped mob field list and
 `mset fields player` for the separate player field list.

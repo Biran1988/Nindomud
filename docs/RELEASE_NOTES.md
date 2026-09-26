@@ -5,6 +5,13 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Ninja Arts/Bukijutsu adds multi-throws, Demon Wind Shuriken, four delayed
+  consumable traps, Trap Disabling, weapon poison/enchantment/disenchantment,
+  wind-only Fan Techniques, and Water Release: Glue Technique. New item
+  prototypes are stocked by village shopkeeper templates. Enchantments are
+  attached permanently to individual weapon names, surviving normal saves.
+- Puppet/Sanshōuo techniques were not included: uploaded C sources contain
+  references to three puppet states but not their command implementations.
 - Genjutsu gained 21 level-gated techniques, including Henge, object illusions,
   Chisei, Insect Eyes, Kokuangyō, and Nehan Shōja. Disguises and item decoys
   affect appearances without duplicating real items or player identities.
@@ -24,7 +31,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.247: `changelog.py`.
+- The in-game change history through version 15.248: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

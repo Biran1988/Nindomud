@@ -2515,6 +2515,36 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") == "weapon_art":
+        import ninja_arts
+        if jutsu_key == "water release: glue technique" and hasattr(session, "start_timed_action"):
+            import data_handsigns
+            if session.is_busy():
+                session.send("You're already busy with something.")
+                return
+            if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
+                session.send("You don't know this Water Release technique or lack the water element.")
+                return
+            signs = data_handsigns.sequence_for(jutsu_key)
+            session.send(f"&WYou begin forming hand signs: {' -> '.join(signs)}...&x")
+            session.broadcast_room(f"&W{player.name} forms hand signs: {' -> '.join(signs)}...&x", exclude_self=True)
+            session.start_timed_action(jutsu_key, data_handsigns.casting_delay_seconds(player.skill_proficiencies.get("Handsigns", 0)),
+                                       lambda: ninja_arts.use_weapon_art(session, jutsu_key, target_words))
+            return
+        ninja_arts.use_weapon_art(session, jutsu_key, target_words)
+        return
+    if jutsu_data.get("jutsu_type") == "trap_disable":
+        import ninja_arts
+        query = " ".join(target_words).lower()
+        mob = combat.find_mob(player.room_vnum, query) if query else session.combat_target
+        target_session = next((s for s in session.active_sessions() if s is not session and s.player
+                               and s.player.room_vnum == player.room_vnum and query in s.player.name.lower()), None) if query else session.pvp_target
+        target = mob or (target_session.player if target_session else player if not query else None)
+        if target is None:
+            session.send("There is nobody here by that name.")
+            return
+        ninja_arts.use_disable(session, target)
+        return
     if jutsu_data.get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
         import genjutsu
         genjutsu.begin_cast(session, jutsu_key, target_words)
@@ -3483,6 +3513,9 @@ def cmd_trade(session, args: List[str]) -> None:
         match = next((item for item in player.inventory if item_query in item.lower()), None)
         if not match:
             session.send(f"You aren't carrying anything like '{item_query}'.")
+            return
+        if match.endswith(" [glued]"):
+            session.send("That item is glued to you and cannot be traded.")
             return
         my_offer = active_trade.my_offer(session)
         if match in my_offer["items"]:
@@ -4710,6 +4743,9 @@ def cmd_sell(session, args: List[str]) -> None:
         if not match:
             session.send(f"You aren't carrying anything like '{query}'.")
             return
+        if match.endswith(" [glued]"):
+            session.send("That item is glued to you and cannot be sold.")
+            return
         category = item_types.classify_item(match)
         buys_categories = combat.mob_shop_buys_categories(shopkeeper)
         if buys_categories and category not in buys_categories:
@@ -4735,6 +4771,9 @@ def cmd_sell(session, args: List[str]) -> None:
     match = find_indexed_item(query, player.inventory)
     if not match:
         session.send(f"You aren't carrying anything like '{query}'.")
+        return
+    if match.endswith(" [glued]"):
+        session.send("That item is glued to you and cannot be sold.")
         return
 
     category = item_types.classify_item(match)
@@ -5679,6 +5718,9 @@ def cmd_give(session, args: List[str]) -> None:
             if not match:
                 session.send("You aren't carrying that.")
                 return
+            if match.endswith(" [glued]"):
+                session.send("That item is glued to you and cannot be given away.")
+                return
             player.inventory.remove(match)
             player.shop_stock.append({"item_name": match, "price": None,
                                       "item_vnum": playershops.item_vnum_for_stock(match)})
@@ -5693,6 +5735,9 @@ def cmd_give(session, args: List[str]) -> None:
     match = find_indexed_item(item_query, player.inventory)
     if not match:
         session.send("You aren't carrying that.")
+        return
+    if match.endswith(" [glued]"):
+        session.send("That item is glued to you and cannot be given away.")
         return
 
     ok, reason = inventory.add_item(target_session.player.inventory, match)
@@ -5791,6 +5836,9 @@ def cmd_drop(session, args: List[str]) -> None:
     retrieve what you dropped would be a dead end, not a feature."""
     player = session.player
     room = WORLD.get(player.room_vnum)
+    if any(item.endswith(" [glued]") for item in player.inventory) and (not args or args[0].lower() == "all"):
+        session.send("Remove your glued items before dropping everything.")
+        return
 
     if not args or args[0].lower() == "all":
         if not player.inventory:
@@ -5810,6 +5858,9 @@ def cmd_drop(session, args: List[str]) -> None:
     match = find_indexed_item(query, player.inventory)
     if not match:
         session.send("You aren't carrying that.")
+        return
+    if match.endswith(" [glued]"):
+        session.send("That item is glued to you and cannot be dropped.")
         return
 
     player.inventory.remove(match)
@@ -5906,6 +5957,9 @@ def cmd_put(session, args: List[str]) -> None:
         return
     item_position = item_matches[item_index - 1]
     match = player.inventory[item_position]
+    if match.endswith(" [glued]"):
+        session.send("That item is glued to you and cannot be stored.")
+        return
     if item_position == position:
         session.send("You can't put a container inside itself.")
         return

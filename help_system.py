@@ -462,7 +462,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Bukijutsu techniques center on weapons and thrown items -- like Taijutsu, no hand signs and no casting delay. Some genuinely consume an inventory item on use.\n"
             "\n"
-            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30).\n"
+            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken (35), wind-only Fan Techniques and Poison Gas Bomb (40), Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted.\n"
             "\n"
             "Date: 2026-08-26"
         ),

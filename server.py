@@ -155,7 +155,7 @@ async def pulse_loop() -> None:
         # combat state -- this used to only happen inside resolve_pulse()
         # (i.e. only while actively fighting), which left effects frozen
         # outside combat or after the fight that applied them ended.
-        combat.tick_all_mob_effects()
+        combat.tick_all_mob_effects(list(ACTIVE_SESSIONS))
         combat.tick_pending_casts()
         for session in list(ACTIVE_SESSIONS):
             if session.state == State.PLAYING:

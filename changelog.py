@@ -398,4 +398,5 @@ CHANGELOG = [
     ("15.245", "Genjutsu gained 21 techniques: Henge disguises, item and decoy illusions, Chisei, mental attacks, clone illusions, blindness, paralysis, and the room-wide Nehan Shōja sleep technique. Class members unlock them from levels 5-65."),
     ("15.246", "Barrier now reduces incoming damage by 10% for five pulses instead of granting Armor Class. The reduction applies to ordinary attacks, jutsu, burns, and major techniques."),
     ("15.247", "Sharingan now costs twice as much to maintain: six Chakra per idle tick, 6-12 Chakra per combat round by tomoe, and six Stamina per combat round."),
+    ("15.248", "Ninja Arts/Bukijutsu gained multi-shuriken and multi-kunai throws, Demon Wind Shuriken, four delayed consumable traps, Trap Disabling, permanent item-bound weapon poison/enchantments, wind-only fan attacks, and Water Release: Glue Technique. New supplies are sold by general and weapon shopkeepers."),
 ]

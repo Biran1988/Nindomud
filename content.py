@@ -100,14 +100,17 @@ _ITEM_VNUMS = {
     "genin_study_scroll": 9750,
     "track_scroll": 9771,
     "chakra_paper": 9801,
+    "demon_wind": 9802, "exploding_note": 9803, "smoke_bomb": 9804,
+    "poison_gas_bomb": 9805, "exploding_clay": 9806, "mighty_fan": 9807,
+    "glue_pot": 9808,
 }
 
 
 def _register_shared_items() -> None:
-    if _ITEM_VNUMS["kunai"] in olc.OBJECT_TEMPLATES:
-        return  # already registered (e.g. populate() called twice)
-
+    had_shared_items = _ITEM_VNUMS["kunai"] in olc.OBJECT_TEMPLATES
     def make(vnum, name, item_type, cost, weapon_type="", rarity="", wear_loc=None):
+        if vnum in olc.OBJECT_TEMPLATES:
+            return  # preserve builder edits while adding newly introduced stock
         obj = olc.default_object(vnum, name)
         obj["item_type"] = item_type
         obj["cost"] = cost
@@ -129,6 +132,15 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["kunai"], "A Basic Kunai", "weapon", 15, weapon_type="kunai")
     make(_ITEM_VNUMS["sword"], "A Basic Ninja Sword", "weapon", 40, weapon_type="sword")
     make(_ITEM_VNUMS["shuriken"], "A Throwing Shuriken", "weapon", 10, weapon_type="shuriken")
+    make(_ITEM_VNUMS["demon_wind"], "A Demon Wind Shuriken", "weapon", 120, weapon_type="shuriken")
+    make(_ITEM_VNUMS["exploding_note"], "An Exploding Note", "misc", 60)
+    make(_ITEM_VNUMS["smoke_bomb"], "A Smoke Bomb", "misc", 70)
+    make(_ITEM_VNUMS["poison_gas_bomb"], "A Poison Gas Bomb", "misc", 100)
+    make(_ITEM_VNUMS["exploding_clay"], "A Wad of Exploding Clay", "misc", 150)
+    make(_ITEM_VNUMS["mighty_fan"], "A Mighty Fan", "weapon", 180, weapon_type="exotic")
+    make(_ITEM_VNUMS["glue_pot"], "A Pot of Glue", "misc", 50)
+    if had_shared_items:
+        return  # old templates are registered; only backfill the new Art stock
     make(_ITEM_VNUMS["war_club"], "A Wooden War Club", "weapon", 35, weapon_type="blunt")
     make(_ITEM_VNUMS["spear"], "A Bamboo Spear", "weapon", 45, weapon_type="polearm")
     make(_ITEM_VNUMS["chain_sickle"], "A Chain Sickle", "weapon", 60, weapon_type="exotic")
@@ -468,13 +480,13 @@ def populate() -> None:
         idx = village_index[village]
         _make_shopkeeper(
             6000 + idx * 10 + 1, f"a {short} general store shopkeeper", rooms["shop"],
-            ["kunai", "shuriken", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
+            ["kunai", "shuriken", "exploding_note", "smoke_bomb", "poison_gas_bomb", "exploding_clay", "glue_pot", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
              "rod_kindling", "axe_copper", "pickaxe_copper", "pot_copper", "hoe_copper", "chisel_copper"],
             buys_categories=[],
         )
         _make_shopkeeper(
             6000 + idx * 10 + 2, f"a {short} weapons shopkeeper", rooms["weapons_shop"],
-            ["kunai", "sword", "shuriken", "war_club", "spear", "chain_sickle"],
+            ["kunai", "sword", "shuriken", "demon_wind", "mighty_fan", "war_club", "spear", "chain_sickle"],
             buys_categories=["weapon"],
         )
         _make_shopkeeper(
