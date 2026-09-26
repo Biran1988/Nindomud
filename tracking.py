@@ -249,5 +249,6 @@ def tick_tracking(session) -> None:
         return
 
     player.chakra -= TRACK_UPKEEP_PER_PULSE
+    session.send(f"&CTracking uses {TRACK_UPKEEP_PER_PULSE} chakra to remain active.&x")
     direction = path[0]
     commands_module.cmd_move(session, direction)

@@ -41,6 +41,12 @@ existing server installation, keeping the server's `data/` directory intact.
   Kage legendary item listings and purchases also follow prototype name edits.
 - `mcopy <source> <new>` and `ocopy <source> <new>` copy complete prototypes
   to unused VNUMs, with independent nested fields and no automatic spawn.
+- Natural regeneration runs at 75% of its former pace, without a full recovery
+  announcement; Sharingan's idle upkeep remains on its original 10-second timer.
+- Sharingan, shadow clone, Kamui, and tracking upkeep report their real resource
+  cost whenever charged. Sharingan Genjutsu is retired; `shar` toggles Sharingan.
+- Staff can use `mset <player> mangekyo on` or `bloodset <player> mangekyo yes`
+  for an awakened Sharingan to roll two distinct eye techniques and save them.
 
 Verification: `python3 -m unittest discover -p 'test_*.py'` and
 `python3 test_smoke.py`. The tests cover damage tiers, shop persistence,

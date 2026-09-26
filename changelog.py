@@ -386,4 +386,7 @@ CHANGELOG = [
     ("15.233", "Medical items now restore configured Health, Chakra, or Stamina over time, including in combat and after reconnect. Set per-item heal, healtime, and healflags; existing salves and soldier pills now recover gradually."),
     ("15.234", "Farming requires a held Copper Hoe, now registered at item VNUM 2802; general stores also offer a Copper Chisel at VNUM 2803 for the Gemcutter trade. Gemcutting recipes are still pending."),
     ("15.235", "Corrected Copper Hoe and Chisel VNUMs to 20802 and 20803. Gemcut produces rarity-scaled cut gems with Hitroll and Damageroll stats reserved for later weapon upgrades. All held job tools last 250 completed uses by default, then break; oset uses changes a tool's lifespan."),
+    ("15.236", "Natural Health, Chakra, and Stamina regeneration now runs at 75% of its previous pace; reaching full resources no longer prints a recovery message."),
+    ("15.237", "Active Sharingan, shadow clones, Kamui pocket dimensions, and tracking now report their actual Chakra and Stamina upkeep as it is spent."),
+    ("15.238", "Removed the Sharingan Genjutsu jutsu. 'shar' now toggles Sharingan. Staff can set an awakened Sharingan user's Mangekyo with 'bloodset <player> mangekyo yes' or 'mset <player> mangekyo on', assigning two distinct random eye techniques."),
 ]

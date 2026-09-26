@@ -427,7 +427,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Genjutsu techniques deal mental damage and often carry a lingering status effect, and (like Ninjutsu) require hand signs and a real casting delay before they land.\n"
             "\n"
-            "Jutsu granted automatically as a Genjutsu character levels: Demonic Illusion: Hell Viewing Technique (1), Narakumi (15). Sharingan Genjutsu is a separate, bloodline-gated technique -- see 'help sharingan' -- not something every Genjutsu character has access to.\n"
+            "Jutsu granted automatically as a Genjutsu character levels: Demonic Illusion: Hell Viewing Technique (1), Narakumi (15).\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -1003,10 +1003,10 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "sharingan",
-        "keywords": ["sharingan", "tomoe"],
+        "keywords": ["sharingan", "shar", "tomoe"],
         "title": "Sharingan",
         "body": (
-            "Syntax: sharingan\n"
+            "Syntax: sharingan  |  shar\n"
             "\n"
             "Description: Toggles the 1-tomoe Sharingan's first ability: reading an opponent's attacks well enough to dodge them, a real bonus on top of your normal dodge chance while it's active. Costs chakra and stamina every combat round it stays on, and a smaller amount of chakra even while you're not fighting -- having it active costs something at all times, more so mid-combat -- and turns itself off automatically if you can't afford the upkeep anymore, rather than draining you into the negatives. Costs nothing to toggle off. At 2 tomoe, the chakra cost drops -- the technique becomes less taxing with more eyes open; the dodge bonus itself doesn't change.\n"
             "\n"
@@ -3028,9 +3028,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["bloodset"],
         "title": "Bloodset (staff)",
         "body": (
-            "Syntax: bloodset <player> bloodline <kkg_id|none>  |  bloodset <player> potential <0-100>  |  bloodset <player> talent <0-100>  |  bloodset <player> awakened <yes|no>  |  bloodset <player> mastery <int>  |  bloodset <player> tomoe <int>  (Sharingan-specific)  |  bloodset <player> awaken\n"
+            "Syntax: bloodset <player> bloodline <kkg_id|none>  |  bloodset <player> potential <0-100>  |  bloodset <player> talent <0-100>  |  bloodset <player> awakened <yes|no>  |  bloodset <player> mangekyo <yes|no>  |  bloodset <player> mastery <int>  |  bloodset <player> tomoe <int>  |  bloodset <player> awaken\n"
             "\n"
-            "Description: Force-edits a player's hidden Kekkei Genkai state, for testing. 'awaken' is a shortcut that calls the real awakening framework function (the same one a future awakening quest would call) rather than just flipping a flag -- same effect as the standalone 'awaken' command, see 'help awaken'. 'tomoe' only matters for a Sharingan -- see 'help sharingan'. Assigning a bloodline that doesn't already have Potential/Talent set rolls both automatically, same range as the real inheritance roll.\n"
+            "Description: Force-edits a player's hidden Kekkei Genkai state, for testing. 'awaken' calls the real awakening framework. 'mangekyo yes' requires an awakened Sharingan and assigns two distinct random eye techniques from the normal pool; repeating it preserves existing eyes. 'mangekyo no' disables Mangekyo but keeps the assigned eyes. You can also use 'mset <player> mangekyo on|off'. 'tomoe' only matters for a Sharingan. Assigning a bloodline with no Potential/Talent rolls both automatically.\n"
             "\n"
             "&D(Staff only -- requires administrator access or higher.)&x\n"
             "\n"

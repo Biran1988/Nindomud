@@ -1388,6 +1388,7 @@ def tick_shadow_clone_upkeep(player) -> list:
         cost = len(clones) * SHADOW_CLONE_UPKEEP_PER_CLONE
         if player.chakra >= cost:
             player.chakra -= cost
+            messages.append(f"&CYour {len(clones)} shadow clone{'s' if len(clones) != 1 else ''} use {cost} chakra to remain active.&x")
             return messages
         popped = clones.pop()
         room_mobs = MOBS_BY_ROOM.get(popped.room_vnum, [])
@@ -1423,7 +1424,7 @@ def tick_sharingan_upkeep(player) -> list:
         return ["&RYour chakra and stamina give out -- your Sharingan fades back to black.&x"]
     player.chakra -= chakra_cost
     player.stamina -= commands.SHARINGAN_STAMINA_UPKEEP
-    return []
+    return [f"&CYour Sharingan uses {chakra_cost} chakra and {commands.SHARINGAN_STAMINA_UPKEEP} stamina to remain active.&x"]
 
 
 def tick_sharingan_mastery_gain(player) -> list:
@@ -1995,8 +1996,7 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     """Whether player is allowed to cast jutsu at all right now, before
     any cooldown/resource checks. Every normal jutsu requires it to be
     in player.learned_skills (granted automatically at level-up, see
-    leveling.py) -- but a jutsu carrying a "kkg_gate" key (currently
-    only Sharingan Genjutsu, gated "sharingan_tomoe_4") bypasses that
+    leveling.py) -- but a jutsu carrying a "kkg_gate" key bypasses that
     entirely and checks the named Kekkei Genkai condition instead,
     since data_jutsu.py's own docstring confirms jutsu are no longer
     class-gated at all and every player already knows every normal
@@ -2024,8 +2024,6 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     if jutsu_key is not None and player.copied_jutsu_key == jutsu_key:
         return True
     gate = jutsu.get("kkg_gate")
-    if gate == "sharingan_tomoe_4":
-        return bool(player.sharingan_active and player.bloodline_tomoe >= 4)
     if gate == "mangekyo_technique":
         # Genuinely generic (Section 140): checks the jutsu's own real
         # "mangekyo_roster_key" (falling back to jutsu_key itself for

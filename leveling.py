@@ -245,6 +245,9 @@ def sync_universal_skills(player: Player) -> List[str]:
     freshly-created character already has everything, so this is a
     harmless no-op for them."""
     lines = []
+    player.learned_skills = [skill for skill in player.learned_skills
+                             if skill.lower() != "sharingan genjutsu"]
+    player.skill_proficiencies.pop("Sharingan Genjutsu", None)
 
     for old_name, new_name in data_jutsu.SKILL_RENAMES.items():
         if old_name in player.learned_skills:
@@ -297,7 +300,7 @@ def sync_universal_skills(player: Player) -> List[str]:
     for jutsu_key in data_jutsu.all_unlocked_for_class(player.primary_class, player.level):
         jutsu_data = data_jutsu.JUTSU[jutsu_key]
         if jutsu_data.get("kkg_gate"):
-            # A Kekkei Genkai-gated jutsu (e.g. Sharingan Genjutsu) is
+            # A Kekkei Genkai-gated jutsu (e.g. Mangekyo techniques) is
             # deliberately excluded from learned_skills entirely, per
             # its own real, existing design -- gated by the bloodline
             # ability itself, not a normal class/level unlock.

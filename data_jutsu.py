@@ -282,18 +282,6 @@ JUTSU = {
         # upfront damage" per direct confirmation, rather than a
         # lingering effect.
     },
-    "sharingan genjutsu": {
-        "jutsu_id": "sharingan_genjutsu", "display_name": "Sharingan Genjutsu",
-        "class_requirement": "genjutsu", "level_requirement": 1,
-        "chakra_cost": 19, "stamina_cost": 0, "cooldown": 4.0,
-        "damage": (12, 24), "damage_type": "mental", "effect": "genjutsu_locked",
-        "tier": 1, "element": "none",
-        # Per direct design confirmation -- gated by the 4-tomoe
-        # Sharingan being actively toggled on, NOT the normal
-        # learned_skills check every other jutsu uses (see
-        # combat.use_jutsu's special-cased handling of this key).
-        "kkg_gate": "sharingan_tomoe_4",
-    },
     "tsukuyomi": {
         "jutsu_id": "mangekyo_tsukuyomi", "display_name": "Tsukuyomi",
         "class_requirement": "genjutsu", "level_requirement": 1,

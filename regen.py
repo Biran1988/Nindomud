@@ -93,20 +93,8 @@ def _regen_amount(maximum: int, resource: str, multiplier: float) -> int:
     return max(1, min(raw, REGEN_FLAT_CAP[resource]))
 
 
-def tick_player(player) -> list:
-    """Apply one regen tick to a non-fighting player, plus the
-    Sharingan's idle upkeep if it's active (per direct request "make
-    sharingan cost upkeep at all times" -- this function already only
-    runs for a player with no combat_target/pvp_target, see server.py's
-    caller, so hooking the idle drain in here is what makes it apply
-    "at all times, including outside combat" without a third, separate
-    always-on loop). Returns a list of messages (possibly empty) --
-    the one-time 'fully recovered' message the moment all three
-    resources cap out, and/or the Sharingan-fading message if idle
-    upkeep just turned it off -- rather than the single Optional[str]
-    this used to return, matching the for-message-in-tick_x pattern
-    already used throughout combat.py for the same kind of multi-
-    source per-tick messaging."""
+def tick_sharingan_idle(player) -> list:
+    """Charge idle Sharingan upkeep on its own 10-second timer."""
     messages = []
     if player.sharingan_active:
         import commands
@@ -115,17 +103,15 @@ def tick_player(player) -> list:
             messages.append("&RYour chakra gives out -- your Sharingan fades back to black.&x")
         else:
             player.chakra -= commands.SHARINGAN_IDLE_CHAKRA_UPKEEP
+            messages.append(f"&CYour Sharingan uses {commands.SHARINGAN_IDLE_CHAKRA_UPKEEP} chakra to remain active.&x")
 
+    return messages
+
+
+def tick_player(player) -> list:
+    """Apply a natural regeneration tick silently outside combat."""
     if player.health <= 0:
-        return messages
-
-    was_full = (
-        player.health >= player.maximum_health
-        and player.chakra >= player.maximum_chakra
-        and player.stamina >= player.maximum_stamina
-    )
-    if was_full:
-        return messages
+        return []
 
     multiplier = POSITION_MULTIPLIER.get(player.position, 1.0)
     room = world.WORLD.get(player.room_vnum)
@@ -139,11 +125,4 @@ def tick_player(player) -> list:
     player.stamina = min(player.maximum_stamina,
                           player.stamina + _regen_amount(player.maximum_stamina, "stamina", multiplier))
 
-    now_full = (
-        player.health >= player.maximum_health
-        and player.chakra >= player.maximum_chakra
-        and player.stamina >= player.maximum_stamina
-    )
-    if now_full:
-        messages.append("&GYou feel fully recovered.&x")
-    return messages
+    return []

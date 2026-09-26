@@ -68,7 +68,6 @@ JUTSU_HANDSIGNS = {
     "earth wall crusher": ["Snake", "Boar", "Dog", "Tiger"],
     "demonic illusion hell viewing technique": ["Ram", "Rat", "Boar"],
     "narakumi": ["Snake", "Ram", "Ox", "Tiger"],
-    "sharingan genjutsu": ["Ram", "Snake"],
     "illusion walk": ["Tiger", "Ram", "Ox"],
     "amaterasu": ["Tiger", "Snake", "Ram", "Boar"],
     "tsukuyomi": ["Snake", "Ram", "Ox"],

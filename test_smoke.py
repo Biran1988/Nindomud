@@ -387,6 +387,13 @@ def main():
     assert hospital_gain > sleeping_gain
     p.room_vnum = saved_room
 
+    p.health = p.maximum_health - 1
+    p.chakra = p.maximum_chakra - 1
+    p.stamina = p.maximum_stamina - 1
+    assert regen_module.tick_player(p) == []
+    assert (p.health, p.chakra, p.stamina) == (
+        p.maximum_health, p.maximum_chakra, p.maximum_stamina)
+
     assert p.position == "sleeping"
     feed(session, "north")  # any move auto-wakes/stands the player
     feed(session, "south")
@@ -9816,25 +9823,21 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
     during an actual combat round (combat.tick_sharingan_upkeep,
     called only from resolve_pulse/resolve_pvp_pulse) -- completely
     free to keep toggled on while just standing around. Now
-    regen.tick_player (server.py's own "player has no combat_target/
-    pvp_target" tick) also drains a flat, low chakra amount every
-    regen cycle, so having it active costs something at all times, not
+    regen.tick_sharingan_idle (server.py's own "player has no combat_target/
+    pvp_target" tick) drains a flat, low chakra amount every 10 seconds,
+    so having it active costs something at all times, not
     only mid-fight.
 
     "Increases during combat" holds on two independent axes at once,
     both verified here: the per-tick amount itself (SHARINGAN_
     CHAKRA_UPKEEP_BY_TOMOE's combat rates are all >= the flat idle
     rate, SHARINGAN_IDLE_CHAKRA_UPKEEP) AND the tick frequency
-    (combat rounds fire every COMBAT_ROUND_SECONDS=2.5s, regen ticks
-    every config.REGEN_INTERVAL_SECONDS=10s -- 4x less often).
+    (combat rounds fire every COMBAT_ROUND_SECONDS=2.5s, idle ticks
+    every 10s -- 4x less often).
 
-    Also covers: tick_player's new list-based return (a real signature
-    change from the old single Optional[str]) still correctly reports
-    both the ordinary "fully recovered" message and a Sharingan-fading
-    message in the same tick if both apply; the idle drain genuinely
-    applies every tick, not just when regen itself has nothing to
-    give (verified against a player with a large max chakra where
-    regen's own gain can't fully mask the drain); and auto-
+    Also covers: the idle tick reports Sharingan upkeep and fading,
+    while natural recovery stays silent; upkeep applies every idle tick,
+    independently of natural regeneration; and auto-
     deactivation with the correct, distinct message when chakra runs
     out specifically from idle drain (not the combat path's own
     message)."""
@@ -9852,23 +9855,22 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
     s.player.bloodline_id = "sharingan"
     s.player.bloodline_awakened = True
 
-    # --- The drain genuinely applies every idle tick, not masked by regen ---
+    # --- Idle drain is independent of the slower natural regeneration timer ---
     s.player.sharingan_active = True
     s.player.maximum_chakra = 1000
     s.player.chakra = 500
     s.player.health = s.player.maximum_health
     s.player.stamina = s.player.maximum_stamina
     before = s.player.chakra
-    regen.tick_player(s.player)
+    idle_messages = regen.tick_sharingan_idle(s.player)
     after = s.player.chakra
-    natural_gain = regen._regen_amount(s.player.maximum_chakra, "chakra", 1.0)
-    assert after == before + natural_gain - commands.SHARINGAN_IDLE_CHAKRA_UPKEEP, \
-        "idle upkeep must genuinely subtract from whatever regen would otherwise have given"
+    assert any(f"uses {commands.SHARINGAN_IDLE_CHAKRA_UPKEEP} chakra" in m for m in idle_messages)
+    assert after == before - commands.SHARINGAN_IDLE_CHAKRA_UPKEEP
 
     # --- Auto-deactivation with the correct, idle-specific message ---
     s.player.sharingan_active = True
     s.player.chakra = 0
-    messages = regen.tick_player(s.player)
+    messages = regen.tick_sharingan_idle(s.player)
     assert s.player.sharingan_active is False
     assert any("fades back to black" in m for m in messages)
     assert any("chakra gives out" in m for m in messages)
@@ -9880,15 +9882,15 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
             f"tomoe {tomoe}'s combat rate ({combat_rate}) must never be cheaper than the idle rate ({commands.SHARINGAN_IDLE_CHAKRA_UPKEEP})"
 
     # --- Combat ticks fire more often than idle ticks (the frequency axis of "increases during combat") ---
-    assert server.COMBAT_ROUND_SECONDS < config.REGEN_INTERVAL_SECONDS, \
+    assert server.COMBAT_ROUND_SECONDS < config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS, \
         "combat rounds must fire more often than idle regen ticks for upkeep to genuinely 'increase during combat'"
 
-    # --- tick_player's new list return still reports both message kinds together ---
+    # --- Idle tick's list return still reports the fade message ---
     s.player.sharingan_active = True
     s.player.chakra = 0
-    s.player.health = 1  # nearly dead, so the "fully recovered" path can't also fire here
+    s.player.health = 1
     s.player.stamina = s.player.maximum_stamina
-    messages2 = regen.tick_player(s.player)
+    messages2 = regen.tick_sharingan_idle(s.player)
     assert isinstance(messages2, list)
     assert any("fades back to black" in m for m in messages2)
 
@@ -9896,47 +9898,11 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
 
 
 def test_sharingan_tomoe_four_five_six():
-    """Per direct follow-up request to finish the remaining Sharingan
-    tomoe levels, and three design confirmations along the way:
-    genjutsu resistance reduces (not fully negates) an incoming
-    effect's duration; Sharingan Genjutsu is a real jutsu gated by
-    tomoe instead of class; and Copy Jutsu ("make jutsu pvp enabled
-    and sharingan copy has a chance to copy the other users jutsu when
-    toggled on but has a cost of double the other users chakra to
-    copy").
+    """PvP jutsu, Genjutsu resistance, Copy Jutsu, and higher tomoe.
 
-    "Make jutsu pvp enabled" was the foundational piece this all sits
-    on -- combat.use_jutsu_on_player is a genuinely new PvP subsystem
-    (jutsu could previously only ever target mobs), built to mirror
-    use_jutsu's exact structure with PvP's own dodge/Prediction/
-    messaging layered in. A related real discovery while building
-    this: data_jutsu.py's own docstring confirms jutsu are no longer
-    class-gated at all -- every player already knows every normal
-    jutsu regardless of class -- so Sharingan Genjutsu needed its own
-    distinct access gate (the new "kkg_gate" jutsu field) rather than
-    the normal learned_skills check, or it would have been available
-    to everyone, defeating the point of it being tomoe-locked.
-
-    Tomoe 6 amplifies the existing dodge/hitroll/Prediction-chance
-    bonuses rather than adding a wholly separate mechanic, per the
-    fuller progression table's "major perception/combat bonus"
-    description for the capstone stage, and reaches the lowest chakra
-    upkeep in the whole progression (0).
-
-    Covers: PvP jutsu casting genuinely deals damage and can defeat a
-    target; Sharingan Genjutsu is refused without tomoe 4, castable
-    with it; genjutsu resistance genuinely shortens an incoming
-    effect's duration (verified against a real baseline, not just the
-    reduction formula in isolation); Copy Jutsu is granted at the
-    exact correct doubled cost (pegged to the ORIGINAL caster's real
-    cost, not the copier's own price for that jutsu) when triggered,
-    and grants access to a jutsu the copier could never normally cast
-    (Sharingan Genjutsu on a non-Sharingan character); a copied cast
-    is consumed after exactly one use; tomoe 6's amplified bonuses
-    exceed tomoe 3/5's; and -- re-verified directly again given how
-    much new state this turn added (a new jutsu, a new status effect,
-    two new Player fields) -- that none of it leaks through score or
-    look self."""
+    The retired Sharingan Genjutsu is rejected. Existing mechanics are
+    exercised with Demonic Illusion instead.
+    """
     import combat
     import commands
     import data_kekkei_genkai as kkg
@@ -9987,9 +9953,11 @@ def test_sharingan_tomoe_four_five_six():
     assert "vision darkens" in text_pvp_damage.lower() or victim.player.health < before_victim_health, \
         "the low-health victim must either be genuinely defeated or have taken real damage"
 
-    # --- Sharingan Genjutsu: refused without tomoe 4, castable with it ---
-    victim.player.health = victim.player.maximum_health = 100000
-    attacker.player.cooldowns.clear()
+    # The retired technique is gone even for a fully awakened Sharingan.
+    attacker.player.learned_skills.append("Demonic Illusion: Hell Viewing Technique")
+    attacker.handle_line("perform sharingan genjutsu pvpjutsufinalvic")
+    assert attacker.pending_cast is None
+    out.clear()
 
     no_tomoe_target = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
@@ -9999,34 +9967,10 @@ def test_sharingan_tomoe_four_five_six():
         out.clear()
     no_tomoe_target.player.room_vnum = outskirts_vnum
     no_tomoe_target.player.health = no_tomoe_target.player.maximum_health = 100000
-
-    attacker.player.sharingan_active = False  # attacker themselves has no bloodline
-    attacker.handle_line("perform sharingan genjutsu notomoetargetfinal")
-    text_no_tomoe = "".join(out)
-    out.clear()
-    assert "don't know that jutsu" in text_no_tomoe.lower()
-
     attacker.player.bloodline_id = "sharingan"
     attacker.player.bloodline_awakened = True
     attacker.player.sharingan_active = True
     attacker.player.bloodline_tomoe = 4
-    text_with_tomoe = ""
-    for _ in range(20):  # the to-hit roll can miss -- retry rather than assume a single attempt always lands
-        attacker.player.chakra = attacker.player.maximum_chakra
-        attacker.player.stamina = attacker.player.maximum_stamina
-        attacker.player.cooldowns.clear()
-        attacker.handle_line("perform sharingan genjutsu notomoetargetfinal")
-        out.clear()
-        for _ in range(10):
-            if attacker.pending_cast is None:
-                break
-            combat.tick_pending_casts()
-        text_with_tomoe = "".join(out)
-        out.clear()
-        if "misses" not in text_with_tomoe.lower() and "dodges" not in text_with_tomoe.lower() and "don't have enough chakra" not in text_with_tomoe.lower():
-            break
-    assert "sharingan genjutsu" in text_with_tomoe.lower()
-    assert "trapped in a genjutsu" in text_with_tomoe.lower()
 
     def cast_until_hit(caster_session, perform_command, max_tries=20):
         """Retries a jutsu cast up to max_tries times, since the
@@ -10041,7 +9985,7 @@ def test_sharingan_tomoe_four_five_six():
         chakra/stamina before every attempt -- this test casts the
         same jutsu many times in a row, and without this, the
         caster's chakra can genuinely run dry partway through (each
-        Sharingan Genjutsu costs 15, plus ongoing Sharingan upkeep
+        Genjutsu costs chakra, plus ongoing Sharingan upkeep
         draining alongside it), silently turning a real cast into a
         "not enough chakra" refusal that isn't a miss at all, so the
         old retry-on-miss-only logic wouldn't catch it and the test
@@ -10078,8 +10022,8 @@ def test_sharingan_tomoe_four_five_six():
     baseline_session.player.room_vnum = outskirts_vnum
     baseline_session.player.health = baseline_session.player.maximum_health = 100000
 
-    cast_until_hit(attacker, "perform sharingan genjutsu baselinegenjfinal")
-    baseline_duration = baseline_session.player.active_status_effects.get("genjutsu_locked", {}).get("duration")
+    cast_until_hit(attacker, "perform demonic illusion hell viewing technique baselinegenjfinal")
+    baseline_duration = baseline_session.player.active_status_effects.get("frightened", {}).get("duration")
     assert baseline_duration is not None
 
     no_tomoe_target.player.active_status_effects.clear()
@@ -10087,8 +10031,8 @@ def test_sharingan_tomoe_four_five_six():
     no_tomoe_target.player.bloodline_awakened = True
     no_tomoe_target.player.sharingan_active = True
     no_tomoe_target.player.bloodline_tomoe = 4
-    cast_until_hit(attacker, "perform sharingan genjutsu notomoetargetfinal")
-    resisted_duration = no_tomoe_target.player.active_status_effects.get("genjutsu_locked", {}).get("duration")
+    cast_until_hit(attacker, "perform demonic illusion hell viewing technique notomoetargetfinal")
+    resisted_duration = no_tomoe_target.player.active_status_effects.get("frightened", {}).get("duration")
     assert resisted_duration is not None
     assert resisted_duration < baseline_duration, \
         "genjutsu resistance must genuinely shorten the incoming effect's duration compared to an undefended target"
@@ -10108,27 +10052,16 @@ def test_sharingan_tomoe_four_five_six():
         copier.player.bloodline_id = "sharingan"
         copier.player.bloodline_awakened = True
         copier.player.sharingan_active = True
-        copier.player.bloodline_tomoe = 5  # no Sharingan Genjutsu access of their own -- only via a copy
+        copier.player.bloodline_tomoe = 5
 
-        cast_until_hit(attacker, "perform sharingan genjutsu copierfinaltest")
-        assert copier.player.copied_jutsu_key == "sharingan genjutsu"
-        assert copier.player.copied_jutsu_cost == data_jutsu.JUTSU["sharingan genjutsu"]["chakra_cost"] * 2, \
+        cast_until_hit(attacker, "perform demonic illusion hell viewing technique copierfinaltest")
+        assert copier.player.copied_jutsu_key == "demonic illusion hell viewing technique"
+        assert copier.player.copied_jutsu_cost == data_jutsu.JUTSU["demonic illusion hell viewing technique"]["chakra_cost"] * 2, \
             "Copy Jutsu's cost must be exactly double the ORIGINAL caster's real cost for that jutsu"
-        # Being the TARGET of that cast also lands genjutsu_locked directly
-        # on the copier -- now that blocks_action is genuinely enforced
-        # (Section 87), that would otherwise prevent them from acting at
-        # all on their very next command. Clear it here since this test's
-        # actual purpose is the COPY mechanic itself, not re-testing
-        # genjutsu_locked's own (separately, already-tested) blocking
-        # behavior.
+        # Clear the landed status effect before testing the copied cast.
         copier.player.active_status_effects.clear()
 
-        # Toggle the Sharingan OFF before using the copy -- _can_use_jutsu's
-        # normal kkg_gate check requires BOTH sharingan_active AND tomoe>=4,
-        # so this removes the copier's own normal path to Sharingan Genjutsu
-        # entirely while the one-time copied_jutsu_key grant (which doesn't
-        # check sharingan_active at all) still works, genuinely isolating
-        # that the COPY is what's granting access here, not some other path.
+        # The copy's doubled cost is charged even for a normally learned jutsu.
         copier.player.sharingan_active = False
         copier.player.chakra = copier.player.maximum_chakra = 1000
         copy_target_mob_vnum = 5001
@@ -10152,7 +10085,7 @@ def test_sharingan_tomoe_four_five_six():
         combat.random.randint = lambda a, b: 1  # forces every roll (to-hit, dodge, Prediction) to its minimum -- a guaranteed hit that also can't be dodged or reduced
         try:
             copier.player.chakra = copier.player.maximum_chakra = 1000
-            copier.handle_line("perform sharingan genjutsu bandit")
+            copier.handle_line("perform demonic illusion hell viewing technique bandit")
             out.clear()
             for _ in range(10):
                 if copier.pending_cast is None:
@@ -10167,12 +10100,8 @@ def test_sharingan_tomoe_four_five_six():
             "the copied cast must cost exactly the copied (doubled) price"
         assert copier.player.copied_jutsu_key is None, "a copied jutsu must be consumed after exactly one use"
 
-        copier.player.cooldowns.clear()  # clear so this genuinely tests the access-gate check, not an unrelated cooldown refusal
-        copier.handle_line("perform sharingan genjutsu bandit")
-        text_after_consumed = "".join(out)
-        out.clear()
-        assert "don't know that jutsu" in text_after_consumed.lower(), \
-            "after the copy is consumed, casting it again must be refused (Sharingan toggled off removes the copier's own normal path)"
+        # This ordinary Genjutsu can also be learned normally; the copied
+        # charge and its doubled price have already been consumed above.
     finally:
         commands.SHARINGAN_COPY_JUTSU_CHANCE_PERCENT = original_copy_chance
 
@@ -10204,7 +10133,7 @@ def test_sharingan_tomoe_four_five_six():
 
     # --- SECURITY: none of this turn's large addition leaks anything ---
     solo_session.player.bloodline_tomoe = 6
-    solo_session.player.copied_jutsu_key = "sharingan genjutsu"
+    solo_session.player.copied_jutsu_key = "demonic illusion hell viewing technique"
     solo_session.player.copied_jutsu_cost = 30
 
     leak_words = ["bloodline", "kekkei", "genkai", "sharingan", "byakugan", "potential", "talent", "tomoe", "mastery", "copied"]
@@ -11336,6 +11265,7 @@ def test_shadow_clone_jutsu():
     before_outside_combat_chakra = s.player.chakra
     messages = combat.tick_shadow_clone_upkeep(s.player)
     assert s.player.chakra == before_outside_combat_chakra - 3 * combat.SHADOW_CLONE_UPKEEP_PER_CLONE
+    assert any("75 chakra" in m and "shadow clones" in m for m in messages)
     assert len(combat.active_shadow_clones(s.player)) == 3, "clones must still be alive after one affordable tick"
 
     # --- Insufficient chakra dismisses clones one at a time, not all at once ---
@@ -11345,7 +11275,8 @@ def test_shadow_clone_jutsu():
     assert s.player.chakra < two_clones_cost, "sanity check -- this amount must genuinely be unaffordable for 2 clones"
     messages = combat.tick_shadow_clone_upkeep(s.player)
     assert len(combat.active_shadow_clones(s.player)) == 1
-    assert len(messages) == 2
+    assert len(messages) == 3
+    assert any("25 chakra" in m and "shadow clone" in m for m in messages)
     assert s.player.chakra == 10
 
     # --- Another player (or mob) can attack a clone directly, and defeating it gives GENUINELY zero reward, no corpse ---
@@ -12714,7 +12645,7 @@ def test_handsigns_and_casting_delay():
         ineligible.handle_line(line)
         out.clear()
     ineligible.player.sharingan_active = False
-    ineligible.handle_line(f"perform sharingan genjutsu {dummy.name}")
+    ineligible.handle_line(f"perform narakumi {dummy.name}")
     text_ineligible = "".join(out)
     out.clear()
     assert "don't know that jutsu" in text_ineligible.lower(), \
@@ -16443,6 +16374,7 @@ def test_mangekyo_techniques_complete_system():
     before_chakra = caster_s.player.chakra
     mangekyo.process_kamui_pocket_dimensions(combat, world_module, session_module)
     assert before_chakra - caster_s.player.chakra == data_mangekyo.KAMUI_UPKEEP_WITH_TARGET_PER_TICK
+    assert any("Kamui pocket dimension uses 35 chakra" in m for m in caster_out)
 
     # --- Kamui: Intangibility, a guaranteed miss window ---
     assert combat._is_action_blocked is not None  # sanity: module loaded
@@ -17149,8 +17081,8 @@ def test_immortal_mob_flag():
 
     # A jutsu-based attack is also refused.
     s.player.chakra = 500
-    s.player.learned_skills.append("Sharingan Genjutsu")
-    s.handle_line("perform sharingan genjutsu immortal perm test mob")
+    s.player.learned_skills.append("Shadow Shuriken Technique")
+    s.handle_line("perform shadow shuriken technique immortal perm test mob")
     text2 = "".join(out)
     out.clear()
     assert "is protected and cannot be attacked" in text2

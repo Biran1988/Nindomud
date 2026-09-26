@@ -188,6 +188,7 @@ def process_kamui_pocket_dimensions(combat_module, world_module, session_module)
             leave_pocket_dimension(s, world_module)
             continue
         s.player.chakra -= cost
+        s.send(f"&CYour Kamui pocket dimension uses {cost} chakra to remain active.&x")
 
 
 def process_amaterasu_room_fires(combat_module, world_module) -> None:

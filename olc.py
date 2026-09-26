@@ -1439,7 +1439,24 @@ PLAYER_INT_FIELDS = {
     "training_points", "practice_points", "mission_points", "age",
     "player_kills", "player_deaths", "room_vnum",
 }
-PLAYER_BOOL_FIELDS = {"color_enabled", "auto_loot_ryo", "auto_loot_gear", "auto_sac_corpse"}
+PLAYER_BOOL_FIELDS = {"color_enabled", "auto_loot_ryo", "auto_loot_gear", "auto_sac_corpse", "mangekyo"}
+
+
+def _set_player_mangekyo(target, enabled: bool) -> str:
+    """Grant Mangekyo with the normal distinct random eye pair."""
+    if enabled and (target.bloodline_id != "sharingan" or not target.bloodline_awakened):
+        return "Mangekyo requires an awakened Sharingan bloodline."
+    if enabled:
+        import data_mangekyo
+        roster = data_mangekyo.TECHNIQUE_ROSTER
+        if (target.mangekyo_eye_1 not in roster or target.mangekyo_eye_2 not in roster
+                or target.mangekyo_eye_1 == target.mangekyo_eye_2):
+            target.mangekyo_eye_1, target.mangekyo_eye_2 = data_mangekyo.roll_two_eye_techniques()
+        target.bloodline_mangekyo = True
+        return (f"Mangekyo awakened: {roster[target.mangekyo_eye_1]['display_name']} "
+                f"and {roster[target.mangekyo_eye_2]['display_name']}.")
+    target.bloodline_mangekyo = False
+    return "Mangekyo disabled; assigned eyes are preserved."
 
 
 def _find_target_player(name: str):
@@ -1682,6 +1699,13 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
     if field in PLAYER_BOOL_FIELDS:
         if value_text.lower() not in ("on", "off", "true", "false"):
             session.send(f"{field} must be on/off.")
+            return
+        if field == "mangekyo":
+            status = _set_player_mangekyo(target, value_text.lower() in ("on", "true"))
+            if not status.startswith("Mangekyo requires"):
+                _finish_player_edit(session, target, live_session, field, status)
+            else:
+                session.send(status)
             return
         setattr(target, field, value_text.lower() in ("on", "true"))
         _finish_player_edit(session, target, live_session, field, value_text)
@@ -2081,7 +2105,7 @@ def cmd_mset(session, args: List[str]) -> None:
 # (_require_admin), not the lower builder tier -- this is sensitive,
 # player-specific data, not a world-content prototype.
 
-BLOODSET_FIELDS = {"bloodline", "potential", "talent", "awakened", "mastery", "tomoe"}
+BLOODSET_FIELDS = {"bloodline", "potential", "talent", "awakened", "mastery", "tomoe", "mangekyo"}
 
 
 def cmd_bloodstat(session, args: List[str]) -> None:
@@ -2127,6 +2151,12 @@ def cmd_bloodstat(session, args: List[str]) -> None:
         tomoe_cap = data_kekkei_genkai.max_tomoe_for_potential(target.bloodline_potential)
         lines.append(f"  Tomoe: {target.bloodline_tomoe}/{tomoe_cap} (Potential-based cap)")
         lines.append(f"  Sharingan active: {'Yes' if target.sharingan_active else 'No'}")
+        lines.append(f"  Mangekyo: {'Yes' if target.bloodline_mangekyo else 'No'}")
+        if target.bloodline_mangekyo:
+            import data_mangekyo
+            roster = data_mangekyo.TECHNIQUE_ROSTER
+            eyes = (target.mangekyo_eye_1, target.mangekyo_eye_2)
+            lines.append("  Eyes: " + ", ".join(roster.get(eye, {}).get("display_name", str(eye)) for eye in eyes))
         if target.copied_jutsu_key:
             lines.append(f"  Copied jutsu ready: {target.copied_jutsu_key} (costs {target.copied_jutsu_cost} chakra)")
     session.send("\n".join(lines))
@@ -2329,6 +2359,7 @@ def cmd_bloodset(session, args: List[str]) -> None:
             "       bloodset <player> awakened <yes|no>\n"
             "       bloodset <player> mastery <int>\n"
             "       bloodset <player> tomoe <int>   (Sharingan-specific)\n"
+            "       bloodset <player> mangekyo <yes|no>   (rolls two eyes on yes)\n"
             "       bloodset <player> awaken   (calls the real awakening framework function)\n"
             f"Known kekkei genkai: {', '.join(sorted(data_kekkei_genkai.KEKKEI_GENKAI.keys()))}"
         )
@@ -2410,6 +2441,14 @@ def cmd_bloodset(session, args: List[str]) -> None:
             return
         target.bloodline_awakened = value_text.lower() in ("yes", "true")
         session.send(f"{target.name}'s awakened status set to {target.bloodline_awakened}.")
+    elif field == "mangekyo":
+        if value_text.lower() not in ("yes", "no", "true", "false", "on", "off"):
+            session.send("Usage: bloodset <player> mangekyo <yes|no>")
+            return
+        result = _set_player_mangekyo(target, value_text.lower() in ("yes", "true", "on"))
+        session.send(result)
+        if result.startswith("Mangekyo requires"):
+            return
     elif field == "mastery":
         if not value_text.lstrip("-").isdigit():
             session.send(f"'{value_text}' isn't a number.")
@@ -2557,7 +2596,8 @@ def cmd_oset(session, args: List[str]) -> None:
                         OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
             "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
             "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
-            "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health  |  oset 9002 heal 100  |  oset 9002 healtime 20&x",
+            "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
+            "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
             "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
             "&DOlder underscore spellings still work.&x",
         ]))

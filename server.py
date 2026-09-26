@@ -93,6 +93,7 @@ async def pulse_loop() -> None:
     from session import ACTIVE_SESSIONS, State
 
     elapsed_since_regen = 0.0
+    elapsed_since_idle_upkeep = 0.0
     elapsed_since_autosave = 0.0
     elapsed_since_weather = 0.0
     elapsed_since_time_of_day = 0.0
@@ -111,6 +112,7 @@ async def pulse_loop() -> None:
     while True:
         await asyncio.sleep(PULSE_SECONDS)
         elapsed_since_regen += PULSE_SECONDS
+        elapsed_since_idle_upkeep += PULSE_SECONDS
         elapsed_since_autosave += PULSE_SECONDS
         elapsed_since_weather += PULSE_SECONDS
         elapsed_since_time_of_day += PULSE_SECONDS
@@ -189,13 +191,21 @@ async def pulse_loop() -> None:
                     session.send_prompt()
 
         if elapsed_since_regen >= config.REGEN_INTERVAL_SECONDS:
-            elapsed_since_regen = 0.0
+            elapsed_since_regen -= config.REGEN_INTERVAL_SECONDS
             for session in list(ACTIVE_SESSIONS):
                 if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
                     messages = regen.tick_player(session.player)
                     if messages:
                         for message in messages:
                             session.send(message)
+                        session.send_prompt()
+
+        if elapsed_since_idle_upkeep >= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS:
+            elapsed_since_idle_upkeep -= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS
+            for session in list(ACTIVE_SESSIONS):
+                if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
+                    for message in regen.tick_sharingan_idle(session.player):
+                        session.send(message)
                         session.send_prompt()
 
         if elapsed_since_autosave >= config.AUTOSAVE_INTERVAL_SECONDS:

@@ -1285,8 +1285,7 @@ SHARINGAN_PREDICTION_CHANCE_PERCENT = 25  # chance to reduce damage on a failed 
 SHARINGAN_PREDICTION_CHANCE_PERCENT_TOMOE_6 = 40  # the tomoe-6 capstone's amplified version -- "predictive counter" per the table
 SHARINGAN_PREDICTION_DAMAGE_REDUCTION_PERCENT = 40  # how much damage a successful Prediction cuts -- unchanged by tomoe count, tomoe 3's own specific perk
 
-# 4-tomoe perks: genjutsu resistance and Sharingan Genjutsu, per the
-# fuller progression table and two design confirmations. Genjutsu
+# 4-tomoe perk: genjutsu resistance. Genjutsu
 # resistance reduces (not fully negates) the duration of any incoming
 # genjutsu-sourced status effect -- built correctly wired even though
 # no jutsu can currently target a player at all (see combat.
@@ -3848,6 +3847,8 @@ def cmd_skills(session, args: List[str]) -> None:
         key=lambda name: (_skill_unlock_level(name) is None, _skill_unlock_level(name) or 0),
     )
     for skill in ordered_skills:
+        if skill.lower() == "sharingan genjutsu":
+            continue  # old saved characters may still contain the retired skill
         level = _skill_unlock_level(skill)
         prefix = f"[Level {level}] " if level is not None else ""
         color = PRAC_CATEGORY_COLOR[_category_for_skill(skill)]
@@ -7336,7 +7337,7 @@ COMMANDS = {
     "ask": cmd_ask,
     "who": cmd_who,
     "whois": cmd_whois,
-    "sharingan": cmd_sharingan,
+    "sharingan": cmd_sharingan, "shar": cmd_sharingan,
     "beastmode": cmd_tailed_beast_mode,
     "izanagi": cmd_izanagi,
     "guess": cmd_guess,
