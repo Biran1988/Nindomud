@@ -10,6 +10,8 @@ existing server installation, keeping the server's `data/` directory intact.
   wind-only Fan Techniques, and Water Release: Glue Technique. New item
   prototypes are stocked by village shopkeeper templates. Enchantments are
   attached permanently to individual weapon names, surviving normal saves.
+  With a Mighty Fan equipped and wind chakra nature, use
+  `fan techniques <target> <direction>` to push through an open exit.
 - Puppet/Sanshōuo techniques were not included: uploaded C sources contain
   references to three puppet states but not their command implementations.
 - Genjutsu gained 21 level-gated techniques, including Henge, object illusions,
@@ -31,7 +33,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.248: `changelog.py`.
+- The in-game change history through version 15.249: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

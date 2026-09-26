@@ -11,6 +11,7 @@ import time
 import data_jutsu
 import data_weapons
 import status_effects
+import world
 
 PROPERTIES = ("flaming", "frost", "life", "sharp", "vorpal", "shocking", "poison")
 TRAPS = {
@@ -170,3 +171,32 @@ def weapon_hit(attacker, victim, damage):
     elif prop == "vorpal":
         return damage + max(1, damage // 6)
     return damage
+
+
+def fan_push(session, target, direction, target_session=None):
+    """Drive a target through a real open exit; never bypass doors or hidden exits."""
+    room = world.WORLD.get(target.room_vnum)
+    if not room or direction not in room.exits or world.WORLD.get(room.exits[direction]) is None:
+        session.send("The slicing wind strikes, but there is nowhere to push the target.")
+        return False
+    flags = room.exit_flags.get(direction, [])
+    if "hidden" in flags or ("door" in flags and not room.exit_door_open.get(direction, False)):
+        session.send("The gust cannot carry the target through that exit.")
+        return False
+    old = target.room_vnum
+    target.room_vnum = room.exits[direction]
+    if target_session:
+        if session.pvp_target is target_session:
+            session.pvp_target = None
+        if target_session.pvp_target is session:
+            target_session.pvp_target = None
+        target_session.send(f"&CThe fan's gust sends you {direction}!&x")
+    else:
+        import combat
+        if target in combat.MOBS_BY_ROOM.get(old, []):
+            combat.MOBS_BY_ROOM[old].remove(target)
+            combat.MOBS_BY_ROOM.setdefault(target.room_vnum, []).append(target)
+        if session.combat_target is target:
+            session.combat_target = None
+    session.send(f"&CThe fan's gust sends {target.name} {direction}!&x")
+    return True

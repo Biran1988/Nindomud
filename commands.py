@@ -2515,6 +2515,14 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    fan_direction = None
+    if jutsu_data.get("jutsu_type") == "fan_art" and target_words:
+        for idx in (0, len(target_words) - 1):
+            direction = world.normalize_direction(target_words[idx].lower())
+            if direction:
+                fan_direction = direction
+                target_words = target_words[:idx] + target_words[idx + 1:]
+                break
     if jutsu_data.get("jutsu_type") == "weapon_art":
         import ninja_arts
         if jutsu_key == "water release: glue technique" and hasattr(session, "start_timed_action"):
@@ -3003,7 +3011,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             if starting_fresh:
                 _wake_and_stand(session)
                 combat.start_attack(session, mob)
-            combat.use_jutsu(session, jutsu_key, mob)
+            if fan_direction:
+                combat.use_jutsu(session, jutsu_key, mob, fan_direction=fan_direction)
+            else:
+                combat.use_jutsu(session, jutsu_key, mob)
         return
 
     # No mob matched -- per direct request ("make jutsu pvp enabled"),
@@ -3054,7 +3065,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if starting_fresh:
             _wake_and_stand(session)
             combat.start_pvp_attack(session, target_session)
-        combat.use_jutsu_on_player(session, jutsu_key, target_session)
+        if fan_direction:
+            combat.use_jutsu_on_player(session, jutsu_key, target_session, fan_direction=fan_direction)
+        else:
+            combat.use_jutsu_on_player(session, jutsu_key, target_session)
 
 
 def cmd_perform(session, args: List[str]) -> None:

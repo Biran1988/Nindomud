@@ -399,4 +399,5 @@ CHANGELOG = [
     ("15.246", "Barrier now reduces incoming damage by 10% for five pulses instead of granting Armor Class. The reduction applies to ordinary attacks, jutsu, burns, and major techniques."),
     ("15.247", "Sharingan now costs twice as much to maintain: six Chakra per idle tick, 6-12 Chakra per combat round by tomoe, and six Stamina per combat round."),
     ("15.248", "Ninja Arts/Bukijutsu gained multi-shuriken and multi-kunai throws, Demon Wind Shuriken, four delayed consumable traps, Trap Disabling, permanent item-bound weapon poison/enchantments, wind-only fan attacks, and Water Release: Glue Technique. New supplies are sold by general and weapon shopkeepers."),
+    ("15.249", "Fan Techniques can now push a surviving target through an open exit. Use 'fan techniques <target> <direction>' while wielding a Mighty Fan; closed doors and hidden exits block the gust."),
 ]

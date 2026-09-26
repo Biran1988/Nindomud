@@ -64,6 +64,22 @@ class NinjaArtsTests(unittest.TestCase):
         for name in ("An Exploding Note", "A Smoke Bomb", "A Poison Gas Bomb", "A Wad of Exploding Clay", "A Mighty Fan", "A Pot of Glue"):
             self.assertTrue(any(proto["short_desc"] == name for proto in olc.OBJECT_TEMPLATES.values()))
 
+    def test_fan_push_respects_open_exits_and_moves_mob(self):
+        source = world.Room(1, "source", "source")
+        destination = world.Room(2, "destination", "destination")
+        source.exits["north"] = 2
+        target = combat.Mob(4, 444, "Target", 20, 200, 200, 1, 0, 0)
+        self.session.combat_target = target
+        with patch.object(world.WORLD, "get", side_effect={1: source, 2: destination}.get), \
+             patch.object(combat, "MOBS_BY_ROOM", {1: [target], 2: []}):
+            source.exit_flags["north"] = ["door"]
+            self.assertFalse(ninja_arts.fan_push(self.session, target, "north"))
+            self.assertEqual(target.room_vnum, 1)
+            source.exit_door_open["north"] = True
+            self.assertTrue(ninja_arts.fan_push(self.session, target, "north"))
+            self.assertEqual(target.room_vnum, 2)
+            self.assertIsNone(self.session.combat_target)
+
     def test_multi_throw_consumes_three_and_drops_them(self):
         self.player.inventory = ["A Throwing Shuriken"] * 3
         target = combat.Mob(2, 222, "Target", 20, 200, 200, 1, 0, 0)

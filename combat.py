@@ -2251,7 +2251,7 @@ def use_barrier(session) -> None:
     session.send("&CA chakra barrier rises around you, reducing incoming damage by 10% for five pulses.&x")
 
 
-def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
+def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> None:
     player = session.player
     if _is_action_blocked(player):
         session.send("You are unable to act!")
@@ -2382,11 +2382,14 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
             if other.health <= 0:
                 handle_mob_defeat(session, other)
 
+    if jutsu.get("jutsu_type") == "fan_art" and fan_direction and mob.health > 0:
+        ninja_arts.fan_push(session, mob, fan_direction)
+
     if mob.health <= 0:
         handle_mob_defeat(session, mob)
 
 
-def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multiplier: float = 1.0) -> None:
+def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multiplier: float = 1.0, fan_direction: str = None) -> None:
     """PvP-enabled jutsu casting, per direct request ("make jutsu pvp
     enabled"). Mirrors use_jutsu's structure (gate/cooldown/resource
     checks, to-hit, damage, effect application) but against another
@@ -2572,6 +2575,9 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key, duration_override=effect_duration)
         target_session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
         session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
+
+    if jutsu.get("jutsu_type") == "fan_art" and fan_direction and target.health > 0:
+        ninja_arts.fan_push(session, target, fan_direction, target_session)
 
     # 5-tomoe Copy Jutsu, per exact direct design confirmation
     # ("sharingan copy has a chance to copy the other users jutsu when
