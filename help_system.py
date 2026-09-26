@@ -573,6 +573,21 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "scan",
+        "keywords": ["scan"],
+        "title": "Scan",
+        "body": (
+            "Syntax: scan <direction>  (n, s, e, w, ne, nw, se, sw, u, d also work)\n"
+            "\n"
+            "Description: General Skill learned at level 3. See the visible players, mobs, corpses, and ground items in one adjacent room. Invisible targets do not appear. Closed doors and hidden exits block scanning.\n"
+            "\n"
+            "Date: 2026-09-26"
+        ),
+        "created_by": "System",
+        "updated_by": "System",
+        "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "open",
         "keywords": ["open"],
         "title": "Open",

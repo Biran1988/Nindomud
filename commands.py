@@ -870,7 +870,7 @@ def cmd_look(session, args: List[str]) -> None:
             return
         for other in session.active_sessions():
             if other.player and other is not session and other.player.room_vnum == player.room_vnum \
-                    and query in other.player.name.lower():
+                    and query in other.player.name.lower() and not _is_invisible_player(other.player):
                 if player.illusion_walk_caster is not None:
                     session.send("You don't see anyone here by that name.")
                     return
@@ -880,7 +880,7 @@ def cmd_look(session, args: List[str]) -> None:
                 session.send("\n".join(lines))
                 return
         mob = combat.find_mob(player.room_vnum, query)
-        if mob:
+        if mob and not _is_invisible_mob(mob):
             mob_template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
             mob_description = mob_template.get("description")
             lines = [f"&C{mob.name}&x"]
@@ -892,7 +892,7 @@ def cmd_look(session, args: List[str]) -> None:
             session.send(f"{rarity_colored_name(inv_match)}\nYou are carrying it.")
             return
         ground_match = find_indexed_item(query, room.ground_items)
-        if ground_match:
+        if ground_match and not _is_invisible_item(ground_match):
             session.send(f"{rarity_colored_name(ground_match)}\nIt's lying here on the ground.")
             return
         session.send("You don't see that here.")
@@ -919,11 +919,13 @@ def cmd_look(session, args: List[str]) -> None:
     lines.extend(_format_exits(room, is_staff))
     lines.append("")
     for other in session.active_sessions():
-        if other.player and other is not session and other.player.room_vnum == player.room_vnum:
+        if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _is_invisible_player(other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
             lines.append(f"  &G{other.player.name}&x is here.{afk_tag}")
     mobs = combat.mobs_in_room(player.room_vnum)
     for mob in mobs:
+        if _is_invisible_mob(mob):
+            continue
         if combat.is_shadow_clone(mob):
             lines.append(f"  {mob.name} is here.")
             continue
@@ -939,6 +941,8 @@ def cmd_look(session, args: List[str]) -> None:
     if room.ground_items:
         ground_counts = inventory.slot_counts(room.ground_items)
         for name, count in ground_counts.items():
+            if _is_invisible_item(name):
+                continue
             proto = _find_object_prototype_by_name(name)
             long_desc = proto.get("long_desc") if proto else None
             if long_desc:
@@ -947,6 +951,72 @@ def cmd_look(session, args: List[str]) -> None:
             else:
                 shown = f"{rarity_colored_name(name)} (x{count})" if count > 1 else rarity_colored_name(name)
                 lines.append(f"  {shown} is lying here.{_staff_vnum_suffix(session, item_name=name)}")
+    session.send("\n".join(lines))
+
+
+SCAN_LEVEL = leveling.SCAN_LEVEL
+
+
+def _is_invisible_player(player) -> bool:
+    return bool(getattr(player, "invisible", False) or
+                "invisible" in getattr(player, "active_status_effects", {}))
+
+
+def _is_invisible_mob(mob) -> bool:
+    template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
+    return bool(getattr(mob, "invisible", False) or
+                "invisible" in mob.active_status_effects or
+                "Invis" in template.get("act_flags", []) or
+                "invis" in template.get("affected_by", []))
+
+
+def _is_invisible_item(name: str) -> bool:
+    proto = _find_object_prototype_by_name(name)
+    return bool(proto and "invis" in proto.get("extra_flags", []))
+
+
+def cmd_scan(session, args: List[str]) -> None:
+    player = session.player
+    if player.level < SCAN_LEVEL or "Scan" not in player.learned_skills:
+        session.send("You learn Scan at level 3.")
+        return
+    if len(args) != 1:
+        session.send("Scan which direction? Usage: scan <direction>.")
+        return
+    direction = world.normalize_direction(args[0])
+    if not direction:
+        session.send("That isn't a direction.")
+        return
+    room = WORLD.get(player.room_vnum)
+    is_staff = session.account is not None and session.account.staff_level != "player"
+    if not room or direction not in room.exits or (
+        "hidden" in room.exit_flags.get(direction, []) and not is_staff
+    ):
+        session.send("You can't scan that way.")
+        return
+    if "door" in room.exit_flags.get(direction, []) and not room.exit_door_open.get(direction, False):
+        session.send(f"The door to the {direction} is closed.")
+        return
+    target = WORLD.get(room.exits[direction])
+    if not target or (not is_staff and (not target.enabled or
+        (target.apartment and target.owner and target.owner != player.name))):
+        session.send("You can't scan that way.")
+        return
+    lines = [f"&CScanning {direction}: {target.name}&x"]
+    for other in session.active_sessions():
+        if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player):
+            lines.append(f"  &G{other.player.name}&x is here.")
+    for mob in combat.mobs_in_room(target.vnum):
+        if not _is_invisible_mob(mob):
+            lines.append(f"  {mob.name} is here.")
+    for corpse in corpses.corpses_in_room(target.vnum):
+        lines.append(f"  &D{corpse.name}&x is here.")
+    for name, count in inventory.slot_counts(target.ground_items).items():
+        if not _is_invisible_item(name):
+            suffix = f" (x{count})" if count > 1 else ""
+            lines.append(f"  {rarity_colored_name(name)}{suffix} is lying here.")
+    if len(lines) == 1:
+        lines.append("  Nothing visible is there.")
     session.send("\n".join(lines))
 
 
@@ -3831,6 +3901,8 @@ def _skill_unlock_level(skill_name: str) -> Optional[int]:
         return data_handsigns.HANDSIGNS_MIN_LEVEL
     if skill_name == "Examine":
         return data_jutsu.APPRAISAL_LEVEL_REQUIREMENT
+    if skill_name == "Scan":
+        return SCAN_LEVEL
     import data_weapons
     if skill_name in {info["skill"] for info in data_weapons.WEAPON_TYPES.values()}:
         return 1
@@ -3977,6 +4049,7 @@ def _skill_catalog_for_category(category: str) -> list:
             entries.append((weapon_info["skill"], None))
         entries.append(("Strong Fist Style", 1))
         entries.append(("Examine", data_jutsu.APPRAISAL_LEVEL_REQUIREMENT))
+        entries.append(("Scan", SCAN_LEVEL))
         import data_handsigns
         entries.append(("Handsigns", data_handsigns.HANDSIGNS_MIN_LEVEL))
         entries.append(("Anki", 1))  # confirmed directly: no real level requirement at all, shown as level 1 like every other level-1-effectively skill (matches how UNIVERSAL_STARTING_SKILLS is handled elsewhere)
@@ -7330,6 +7403,7 @@ COMMANDS = {
     "restore": cmd_restore, "respawn": cmd_respawn,
     "emotes": cmd_emotes, "emojis": cmd_emotes,
     "look": cmd_look, "l": cmd_look,
+    "scan": cmd_scan,
     "say": cmd_say,
     "ooc": cmd_ooc,
     "chatlog": cmd_chatlog,

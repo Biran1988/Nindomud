@@ -712,10 +712,12 @@ VALID_ROOM_FLAGS = {
     "accelerated_healing",  # regen.py -- faster regen in this room
 }
 VALID_ITEM_EXTRA_FLAGS = {
+    "invis",  # commands.py -- hidden from room look and directional scan
     "no_sac",  # commands.py -- protects this item from 'sacrifice'
     "no_take", # commands.py -- protects this item from 'get' -- for cosmetic room decoration (furniture, signs, plants) that's meant to stay put, placed via 'oset load'/spawn points and never picked up
 }
 VALID_MOB_ACT_FLAGS = {
+    "Invis",  # commands.py -- hidden from room look and directional scan
     "Banker",       # commands.py -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob
     "BountyOffice", # commands.py -- lets a player claim a bounty in person at this mob
     "Npc",          # content.py -- base flag every non-player mob carries; no mechanical check yet

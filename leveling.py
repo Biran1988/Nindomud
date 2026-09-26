@@ -14,6 +14,7 @@ import storage
 from models import Player
 
 MAX_LEVEL = 100
+SCAN_LEVEL = 3
 EXPERIENCE_CURVE_VERSION = 2
 SAME_LEVEL_MOB_REWARD_PERCENT = 5
 EASIER_MOB_PENALTY_PER_LEVEL = 0.10
@@ -203,6 +204,11 @@ def grant_experience(player: Player, amount: int) -> List[str]:
             player.skill_proficiencies["Examine"] = 0
             lines.append("You have unlocked:\n  Examine")
 
+        if player.level >= SCAN_LEVEL and "Scan" not in player.learned_skills:
+            player.learned_skills.append("Scan")
+            player.skill_proficiencies["Scan"] = 0
+            lines.append("You have unlocked:\n  Scan")
+
         import data_handsigns
         if player.level >= data_handsigns.HANDSIGNS_MIN_LEVEL and "Handsigns" not in player.learned_skills:
             player.learned_skills.append("Handsigns")
@@ -275,6 +281,11 @@ def sync_universal_skills(player: Player) -> List[str]:
         player.learned_skills.append("Examine")
         player.skill_proficiencies["Examine"] = 0
         lines.append("&Y(New since your last login: you have learned Examine!)&x")
+
+    if player.level >= SCAN_LEVEL and "Scan" not in player.learned_skills:
+        player.learned_skills.append("Scan")
+        player.skill_proficiencies["Scan"] = 0
+        lines.append("&Y(New since your last login: you have learned Scan!)&x")
 
     for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
         if required_class and player.primary_class != required_class:
