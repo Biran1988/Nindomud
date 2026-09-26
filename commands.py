@@ -1654,6 +1654,8 @@ def cmd_aff(session, args: List[str]) -> None:
     concern the way raw mastery/tomoe numbers would be."""
     player = session.player
     lines = ["&WActive effects:&x " + _format_active_effects(player.active_status_effects)]
+    if player.taijutsu_stance:
+        lines.append(f"&YTaijutsu stance: {data_jutsu.JUTSU[player.taijutsu_stance]['display_name']}&x")
     if player.sharingan_active:
         lines.append("&RYour Sharingan is active.&x")
     session.send("\n".join(lines))
@@ -2493,6 +2495,35 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") == "stance":
+        if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
+            session.send("You don't know that stance.")
+            return
+        if session.combat_target is not None or session.pvp_target is not None:
+            session.send("You cannot change stance while fighting.")
+            return
+        if combat._is_action_blocked(player):
+            session.send("You are unable to act!")
+            return
+        if player.taijutsu_stance == jutsu_key:
+            player.taijutsu_stance = ""
+            session.send(f"You leave {jutsu_data['display_name']} and return to a normal stance.")
+            return
+        if player.stamina < jutsu_data["stamina_cost"]:
+            session.send("You don't have enough stamina.")
+            return
+        player.stamina -= jutsu_data["stamina_cost"]
+        player.taijutsu_stance = jutsu_key
+        combat.grow_skill_from_usage(player, jutsu_data["display_name"])
+        session.send(f"You enter {jutsu_data['display_name']} stance.")
+        return
+    if jutsu_data.get("jutsu_type") == "ambush":
+        if session.combat_target is not None or session.pvp_target is not None:
+            session.send("You can't use Ushiro Shishou mid-fight. They already know you're there!")
+            return
+        if not target_words:
+            session.send("Sneak up on whom? Usage: perform ushiro shishou <target>.")
+            return
     if jutsu_data.get("jutsu_type") == "summon":
         if jutsu_key == "shadow clone jutsu":
             combat.use_shadow_clone_jutsu(session)
@@ -2887,6 +2918,9 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     else:
         mob = session.combat_target
     if mob:
+        if jutsu_data.get("jutsu_type") == "ambush" and mob.health < mob.max_health:
+            session.send(f"{mob.name} is hurt and alert; you cannot sneak up on them.")
+            return
         if combat.is_shopkeeper(mob) or combat.is_gambler(mob) or combat.is_teacher(mob) or combat.is_immortal_mob(mob):
             session.send(f"{mob.name.capitalize()} is protected and cannot be attacked.")
             return
@@ -2936,6 +2970,9 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if target_session.player.health <= 0:
         session.send(f"{target_session.player.name} is already down.")
+        return
+    if jutsu_data.get("jutsu_type") == "ambush" and target_session.player.health < target_session.player.maximum_health:
+        session.send(f"{target_session.player.name} is hurt and alert; you cannot sneak up on them.")
         return
     if session.pending_cast is not None:
         session.send("You're already in the middle of forming hand signs for another jutsu!")
@@ -6742,6 +6779,8 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
         lines.append(" &WActive effects:&x " + _format_active_effects(p.active_status_effects))
     else:
         lines.append(" &WActive effects:&x &Gnone&x")
+    if p.taijutsu_stance:
+        lines.append(f" &YTaijutsu stance: {data_jutsu.JUTSU[p.taijutsu_stance]['display_name']}&x")
 
     if p.active_missions:
         mission_strs = []

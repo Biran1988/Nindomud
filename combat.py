@@ -2165,6 +2165,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
 
     dmg, was_explosive = roll_jutsu_damage(jutsu)
     dmg += _jutsu_damage_bonus(player)
+    if jutsu.get("jutsu_type") == "ambush":
+        dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
     import village_perks
     dmg_mult = village_perks.damage_multiplier(player.village)
     if dmg_mult != 1.0:
@@ -2314,6 +2316,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
 
     dmg, was_explosive = roll_jutsu_damage(jutsu)
     dmg += _jutsu_damage_bonus(player)
+    if jutsu.get("jutsu_type") == "ambush":
+        dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
     import village_perks
     dmg_mult = village_perks.damage_multiplier(player.village)
     if dmg_mult != 1.0:
@@ -2362,7 +2366,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
         import data_kekkei_genkai
         effect_duration = status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"]
-        if data_kekkei_genkai.sharingan_genjutsu_resistant(target):
+        if jutsu["class_requirement"] == "genjutsu" and data_kekkei_genkai.sharingan_genjutsu_resistant(target):
             effect_duration = data_kekkei_genkai.reduced_genjutsu_duration(effect_duration)
         status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key, duration_override=effect_duration)
         target_session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))

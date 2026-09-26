@@ -146,6 +146,7 @@ class Player:
     silenced_until: float = 0.0
     jailed_until: float = 0.0
     active_status_effects: Dict = field(default_factory=dict)
+    taijutsu_stance: str = ""  # one active stance; persists across reconnects
     # Each dose tracks elapsed real time and HP already paid out so saving
     # and reconnecting cannot restart or duplicate a course of healing.
     medical_healing: List[dict] = field(default_factory=list)

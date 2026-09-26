@@ -1673,6 +1673,45 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "taijutsu stances",
+        "keywords": ["taijutsu stances", "kihon dachi", "neko ashi dachi", "sanchin dachi"],
+        "title": "Taijutsu Stances",
+        "body": (
+            "Syntax: kihon dachi | neko ashi dachi | sanchin dachi\n\n"
+            "Description: Taijutsu class unlocks Kihon Dachi at level 5 (+2 damage roll, -2 AC), "
+            "Neko Ashi Dachi at level 15 (+2 hit roll, -4 AC), and Sanchin Dachi at level 30 "
+            "(+4 damage roll). Only one stance can be active. Change or leave a stance outside "
+            "combat; using the active stance again returns to normal. Activation costs stamina. "
+            "Your stance remains active across reconnects. See 'aff' or 'score'.\n\nDate: 2026-09-26"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "taijutsu strikes",
+        "keywords": ["taijutsu strikes", "choku zuki", "mae geri", "oi zuki", "sokuto", "kumade", "tamashiwara"],
+        "title": "Taijutsu Strikes",
+        "body": (
+            "Syntax: <technique> [target]\n\n"
+            "Description: Taijutsu unlocks Choku Zuki (level 3), Mae Geri (5), Oi Zuki (10), "
+            "Sokuto (15), Kumade (25), and Tamashiwara (35). Type the technique "
+            "name directly, with a target or during combat. Kumade may blind the target "
+            "and reduce accuracy; Tamashiwara may cause bleeding. Each costs stamina.\n\nDate: 2026-09-26"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "ushiro shishou",
+        "keywords": ["ushiro shishou", "ushiro"],
+        "title": "Ushiro Shishou",
+        "body": (
+            "Syntax: perform ushiro shishou <target>\n\n"
+            "Description: A level 30 Ninjutsu opening strike. Sneak up on an unhurt target before "
+            "combat starts for increased damage. It costs chakra and cannot be used "
+            "mid-fight or against an already hurt target.\n\nDate: 2026-09-26"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "inventory",
         "keywords": ["inventory", "i"],
         "title": "Inventory",

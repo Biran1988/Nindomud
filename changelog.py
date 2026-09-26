@@ -390,4 +390,5 @@ CHANGELOG = [
     ("15.237", "Active Sharingan, shadow clones, Kamui pocket dimensions, and tracking now report their actual Chakra and Stamina upkeep as it is spent."),
     ("15.238", "Removed the Sharingan Genjutsu jutsu. 'shar' now toggles Sharingan. Staff can set an awakened Sharingan user's Mangekyo with 'bloodset <player> mangekyo yes' or 'mset <player> mangekyo on', assigning two distinct random eye techniques."),
     ("15.239", "Scan unlocks as a General Skill at level 3. Use 'scan <direction>' to see visible players, mobs, corpses, and ground items in the adjacent room; invis targets stay hidden."),
+    ("15.240", "Taijutsu gained Kihon, Neko Ashi, and Sanchin stances plus Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Kumade, and Tamashiwara. Ninjutsu gained the opening attack Ushiro Shishou. Class members unlock these by level; stances persist and cannot be changed mid-fight."),
 ]

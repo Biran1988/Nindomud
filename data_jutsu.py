@@ -50,6 +50,77 @@ JUTSU = {
         "damage": (10, 18), "damage_type": "physical", "effect": None,
         "tier": 1, "element": "none",
     },
+    "choku zuki": {
+        "jutsu_id": "taijutsu_choku_zuki", "display_name": "Choku Zuki",
+        "class_requirement": "taijutsu", "level_requirement": 3,
+        "chakra_cost": 0, "stamina_cost": 5, "cooldown": 2.0,
+        "damage": (8, 15), "damage_type": "physical", "effect": None,
+        "tier": 1, "element": "none",
+    },
+    "mae geri": {
+        "jutsu_id": "taijutsu_mae_geri", "display_name": "Mae Geri",
+        "class_requirement": "taijutsu", "level_requirement": 5,
+        "chakra_cost": 0, "stamina_cost": 7, "cooldown": 2.5,
+        "damage": (12, 20), "damage_type": "physical", "effect": None,
+        "tier": 1, "element": "none",
+    },
+    "oi zuki": {
+        "jutsu_id": "taijutsu_oi_zuki", "display_name": "Oi Zuki",
+        "class_requirement": "taijutsu", "level_requirement": 10,
+        "chakra_cost": 0, "stamina_cost": 8, "cooldown": 3.0,
+        "damage": (16, 25), "damage_type": "physical", "effect": None,
+        "tier": 1, "element": "none",
+    },
+    "sokuto": {
+        "jutsu_id": "taijutsu_sokuto", "display_name": "Sokuto",
+        "class_requirement": "taijutsu", "level_requirement": 15,
+        "chakra_cost": 0, "stamina_cost": 10, "cooldown": 3.5,
+        "damage": (22, 34), "damage_type": "physical", "effect": None,
+        "tier": 2, "element": "none",
+    },
+    "kumade": {
+        "jutsu_id": "taijutsu_kumade", "display_name": "Kumade",
+        "class_requirement": "taijutsu", "level_requirement": 25,
+        "chakra_cost": 0, "stamina_cost": 13, "cooldown": 5.0,
+        "damage": (27, 41), "damage_type": "physical", "effect": "blinded", "effect_chance_pct": 35,
+        "tier": 2, "element": "none",
+    },
+    "tamashiwara": {
+        "jutsu_id": "taijutsu_tamashiwara", "display_name": "Tamashiwara",
+        "class_requirement": "taijutsu", "level_requirement": 35,
+        "chakra_cost": 0, "stamina_cost": 17, "cooldown": 6.0,
+        "damage": (34, 50), "damage_type": "physical", "effect": "bleeding", "effect_chance_pct": 40,
+        "tier": 3, "element": "none",
+    },
+    "kihon dachi": {
+        "jutsu_id": "taijutsu_kihon_dachi", "display_name": "Kihon Dachi",
+        "class_requirement": "taijutsu", "level_requirement": 5,
+        "chakra_cost": 0, "stamina_cost": 10, "cooldown": 0.0,
+        "jutsu_type": "stance", "damage": None, "damage_type": None, "effect": None,
+        "tier": 1, "element": "none",
+    },
+    "neko ashi dachi": {
+        "jutsu_id": "taijutsu_neko_ashi_dachi", "display_name": "Neko Ashi Dachi",
+        "class_requirement": "taijutsu", "level_requirement": 15,
+        "chakra_cost": 0, "stamina_cost": 12, "cooldown": 0.0,
+        "jutsu_type": "stance", "damage": None, "damage_type": None, "effect": None,
+        "tier": 2, "element": "none",
+    },
+    "sanchin dachi": {
+        "jutsu_id": "taijutsu_sanchin_dachi", "display_name": "Sanchin Dachi",
+        "class_requirement": "taijutsu", "level_requirement": 30,
+        "chakra_cost": 0, "stamina_cost": 14, "cooldown": 0.0,
+        "jutsu_type": "stance", "damage": None, "damage_type": None, "effect": None,
+        "tier": 3, "element": "none",
+    },
+    "ushiro shishou": {
+        "jutsu_id": "ninjutsu_ushiro_shishou", "display_name": "Ushiro Shishou",
+        "class_requirement": "ninjutsu", "level_requirement": 30,
+        "chakra_cost": 18, "stamina_cost": 0, "cooldown": 8.0,
+        "jutsu_type": "ambush", "ambush_multiplier": 1.5,
+        "damage": (28, 44), "damage_type": "physical", "effect": None,
+        "tier": 2, "element": "none",
+    },
     "demonic illusion hell viewing technique": {
         "jutsu_id": "genjutsu_starter", "display_name": "Demonic Illusion: Hell Viewing Technique",
         "class_requirement": "genjutsu", "level_requirement": 1,
@@ -467,6 +538,12 @@ MIN_MATCH_PREFIX_LENGTH = {
     "explosive tag kunai": 2,
 }
 
+JUTSU_ALIASES = {
+    "tamashiware": "tamashiwara",  # common spelling of the new Taijutsu strike
+    "n": "narakumi",  # preserve the existing perform-n shorthand after adding Neko Ashi Dachi
+    "c": "counter kunai",  # preserve the existing shorthand after adding Choku Zuki
+}
+
 
 def match_prefix(lower_words):
     """Match a jutsu from the given lowercased word list. Two things
@@ -485,6 +562,8 @@ def match_prefix(lower_words):
 
     Returns (jutsu_key, word_count_consumed) or (None, 0).
     """
+    if lower_words and lower_words[0] in JUTSU_ALIASES:
+        return JUTSU_ALIASES[lower_words[0]], 1
     joined = " ".join(lower_words)
     for key in sorted(JUTSU.keys(), key=lambda k: -len(k.split())):
         if joined == key or joined.startswith(key + " "):

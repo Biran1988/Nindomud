@@ -85,7 +85,7 @@ def has_handsigns(jutsu: dict) -> bool:
     genuinely passive jutsu (never cast directly at all -- checked by
     its own jutsu_type, e.g. "counter" or "silent_genjutsu_passive")
     never uses hand signs either, regardless of its class."""
-    if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive"):
+    if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive", "ambush", "stance"):
         return False
     return jutsu.get("class_requirement") in ("ninjutsu", "genjutsu")
 

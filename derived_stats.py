@@ -60,19 +60,21 @@ def _with_bonus(value: int, bonus_percent: int) -> int:
 def armor_class(character: Character, bonus_percent: int = 0) -> int:
     """Lower (more negative) is better, matching ROM convention."""
     base = 10 - (character.dexterity * 2)
+    stance_ac = {"kihon dachi": 2, "neko ashi dachi": 4}.get(getattr(character, "taijutsu_stance", ""), 0)
     if not bonus_percent:
-        return base
+        return base - stance_ac
     # Additive improvement (never a sign-flipping multiply) -- 10 AC
     # points per 100% bonus is the tuning constant here.
-    return base - round(bonus_percent / 100 * 10)
+    return base - round(bonus_percent / 100 * 10) - stance_ac
 
 
 def hit_roll(character: Character, bonus_percent: int = 0) -> int:
-    return _with_bonus(character.dexterity - 10, bonus_percent)
+    return _with_bonus(character.dexterity - 10, bonus_percent) + (2 if getattr(character, "taijutsu_stance", "") == "neko ashi dachi" else 0)
 
 
 def damage_roll(character: Character, bonus_percent: int = 0) -> int:
-    return _with_bonus(character.strength - 10, bonus_percent)
+    stance_damage = {"kihon dachi": 2, "sanchin dachi": 4}.get(getattr(character, "taijutsu_stance", ""), 0)
+    return _with_bonus(character.strength - 10, bonus_percent) + stance_damage
 
 
 def initiative(character: Character, bonus_percent: int = 0) -> int:

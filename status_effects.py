@@ -12,6 +12,11 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    "blinded": {
+        "display_name": "Blinded", "duration": 2,
+        "message": "Blinding pain disrupts {target}!",
+        "accuracy_penalty": 25,
+    },
     "stunned": {
         "display_name": "Stunned",
         "duration": 1,
