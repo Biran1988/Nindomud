@@ -142,11 +142,11 @@ def consume(session, verb: str, query: str) -> None:
     # suffix, should still match -- see commands._item_matches for the
     # full reasoning; inlined here rather than imported to avoid a
     # circular import (commands.py imports consumables.py).
-    query_words = query.lower().split()
-    match = next(
-        (item for item in player.inventory if all(w in item.lower() for w in query_words)),
-        None,
-    )
+    import inventory
+    index, item_query = inventory.parse_indexed_query(query)
+    query_words = item_query.lower().split()
+    matches = [item for item in player.inventory if all(w in item.lower() for w in query_words)]
+    match = matches[index - 1] if index <= len(matches) else None
     if not match:
         session.send(f"You aren't carrying anything like '{query}'.")
         return

@@ -71,6 +71,15 @@ class PillCraftingTests(unittest.TestCase):
         self.assertNotIn("poisoned", self.player.active_status_effects)
         self.assertEqual(self.player.medical_healing[0]["amount"], 110)
 
+    def test_indexed_use_selects_individual_pill_level(self):
+        first = pill_crafting.encode_pill("Medicinal", 25)
+        second = pill_crafting.encode_pill("Medicinal", 50)
+        self.player.inventory.extend([first, second])
+        with patch.object(consumables.time, "time", return_value=1000):
+            consumables.consume(self.session, "use", "2.pill")
+        self.assertEqual(self.player.inventory, [first])
+        self.assertEqual(self.player.medical_healing[0]["amount"], 400)
+
 
 if __name__ == "__main__":
     unittest.main()

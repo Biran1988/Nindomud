@@ -10,7 +10,8 @@ existing server installation, keeping the server's `data/` directory intact.
   to the crafter's current level and stored with each pill, visible in
   `examine` but not the item name. Antidotes cure poison and heal Health;
   Medicinal Pills restore Health, Chakra, and Stamina over 30 seconds and
-  cure bleeding/silence. Village general stores sell the herbs. Other classes
+  cure bleeding/silence. Indexed `use 2.pill` selects among different levels.
+  Village general stores sell the herbs. Other classes
   cannot craft these pills, even at the general weapon/armor crafting unlock.
 - Ninja Arts/Bukijutsu adds multi-throws, Demon Wind Shuriken, four delayed
   consumable traps, Trap Disabling, weapon poison/enchantment/disenchantment,
