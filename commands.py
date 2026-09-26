@@ -108,6 +108,9 @@ def dispatch_line(session, line: str) -> None:
     if not words:
         return
     lower_words = [w.lower() for w in words]
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "quit", "save"):
+        session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
+        return
 
     if world.normalize_direction(lower_words[0]):
         dispatch(session, words[0], words[1:])
@@ -831,6 +834,7 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
 
 
 def cmd_look(session, args: List[str]) -> None:
+    import genjutsu
     player = session.player
     if player.illusion_walk_caster is not None and not args:
         import areas
@@ -870,13 +874,19 @@ def cmd_look(session, args: List[str]) -> None:
             return
         for other in session.active_sessions():
             if other.player and other is not session and other.player.room_vnum == player.room_vnum \
-                    and query in other.player.name.lower() and not _is_invisible_player(other.player):
+                    and query in genjutsu.apparent_name(other.player).lower() and not _is_invisible_player(other.player):
                 if player.illusion_walk_caster is not None:
                     session.send("You don't see anyone here by that name.")
                     return
                 target = other.player
-                lines = [f"&C{target.name}&x"]
-                lines.append(target.description if target.description else f"{target.name} hasn't set a description.")
+                apparent = genjutsu.apparent_name(target)
+                lines = [f"&C{apparent}&x"]
+                lines.append(target.description if target.description else f"{apparent} hasn't set a description.")
+                if target.genjutsu_item_illusions:
+                    lines.append("Apparent item: " + ", ".join(
+                        entry["alias"] for item, entry in target.genjutsu_item_illusions.items()
+                        if item in target.inventory
+                    ))
                 session.send("\n".join(lines))
                 return
         mob = combat.find_mob(player.room_vnum, query)
@@ -894,6 +904,9 @@ def cmd_look(session, args: List[str]) -> None:
         ground_match = find_indexed_item(query, room.ground_items)
         if ground_match and not _is_invisible_item(ground_match):
             session.send(f"{rarity_colored_name(ground_match)}\nIt's lying here on the ground.")
+            return
+        if any(query in decoy["name"].lower() for decoy in genjutsu.decoys_in_room(room.vnum)):
+            session.send("It looks real at a glance, but your hand passes through the illusion.")
             return
         session.send("You don't see that here.")
         return
@@ -921,7 +934,7 @@ def cmd_look(session, args: List[str]) -> None:
     for other in session.active_sessions():
         if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _is_invisible_player(other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
-            lines.append(f"  &G{other.player.name}&x is here.{afk_tag}")
+            lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
     mobs = combat.mobs_in_room(player.room_vnum)
     for mob in mobs:
         if _is_invisible_mob(mob):
@@ -951,6 +964,8 @@ def cmd_look(session, args: List[str]) -> None:
             else:
                 shown = f"{rarity_colored_name(name)} (x{count})" if count > 1 else rarity_colored_name(name)
                 lines.append(f"  {shown} is lying here.{_staff_vnum_suffix(session, item_name=name)}")
+    for decoy in genjutsu.decoys_in_room(room.vnum):
+        lines.append(f"  &M{decoy['name']}&x seems to be lying here.")
     session.send("\n".join(lines))
 
 
@@ -976,6 +991,7 @@ def _is_invisible_item(name: str) -> bool:
 
 
 def cmd_scan(session, args: List[str]) -> None:
+    import genjutsu
     player = session.player
     if player.level < SCAN_LEVEL or "Scan" not in player.learned_skills:
         session.send("You learn Scan at level 3.")
@@ -1005,7 +1021,7 @@ def cmd_scan(session, args: List[str]) -> None:
     lines = [f"&CScanning {direction}: {target.name}&x"]
     for other in session.active_sessions():
         if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player):
-            lines.append(f"  &G{other.player.name}&x is here.")
+            lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.")
     for mob in combat.mobs_in_room(target.vnum):
         if not _is_invisible_mob(mob):
             lines.append(f"  {mob.name} is here.")
@@ -1015,6 +1031,8 @@ def cmd_scan(session, args: List[str]) -> None:
         if not _is_invisible_item(name):
             suffix = f" (x{count})" if count > 1 else ""
             lines.append(f"  {rarity_colored_name(name)}{suffix} is lying here.")
+    for decoy in genjutsu.decoys_in_room(target.vnum):
+        lines.append(f"  &M{decoy['name']}&x seems to be lying here.")
     if len(lines) == 1:
         lines.append("  Nothing visible is there.")
     session.send("\n".join(lines))
@@ -1383,20 +1401,20 @@ SHARINGAN_COPY_JUTSU_CHANCE_PERCENT = 20  # chance to copy an opponent's jutsu o
 # Genjutsu has its own separate chakra_cost like any other jutsu, not
 # folded into this upkeep). Tomoe 6 is the lowest COMBAT rate in the
 # whole progression, matching the table's own "lowest upkeep"
-# capstone description -- but never below 1, per a later follow-up
+# capstone description -- but never below idle upkeep, per a later follow-up
 # request ("make sharingan cost upkeep at all times and increases
 # during combat vs its not combat settings") that added a separate,
 # always-on idle rate (SHARINGAN_IDLE_CHAKRA_UPKEEP below): a combat
-# rate of 0 would have been cheaper than simply having the ability on
+# combat rate below idle would have been cheaper than simply having the ability on
 # while idle, backwards from "increases during combat". Falls back to
 # tomoe 1's rate for any tomoe count beyond what's been designed here
 # (there's no tomoe 0, the ability can't be toggled on without at
-# least 1). Stamina upkeep stays flat at 1 regardless of tomoe count
-# -- already at the practical floor, so discounting it further would
+# least 1). Stamina upkeep stays flat regardless of tomoe count;
+# discounting it further would
 # make the ability free of that resource entirely rather than merely
 # cheaper.
-SHARINGAN_CHAKRA_UPKEEP_BY_TOMOE = {1: 6, 2: 3, 3: 6, 4: 3, 5: 3, 6: 3}
-SHARINGAN_STAMINA_UPKEEP = 3
+SHARINGAN_CHAKRA_UPKEEP_BY_TOMOE = {1: 12, 2: 6, 3: 12, 4: 6, 5: 6, 6: 6}
+SHARINGAN_STAMINA_UPKEEP = 6
 
 
 def sharingan_chakra_upkeep(tomoe_count: int) -> int:
@@ -1412,13 +1430,11 @@ def sharingan_chakra_upkeep(tomoe_count: int) -> int:
 # its not combat settings"). Deliberately flat regardless of tomoe
 # count, unlike the combat table above -- the point of this is a
 # simple "having it active costs something, always" baseline, not
-# another tomoe-scaled curve. Genuinely lower than combat both in its
-# own per-tick amount AND because it only ticks once per regen.
-# tick_player call (every config.REGEN_INTERVAL_SECONDS, currently
-# 10s) rather than every combat round (COMBAT_ROUND_SECONDS, 2.5s) --
-# 4x less often on top of a smaller number, so "increases during
-# combat" is true on both axes at once.
-SHARINGAN_IDLE_CHAKRA_UPKEEP = 3
+# another tomoe-scaled curve. This is charged on the separate idle
+# timer, less often than combat rounds. Tomoe 1/3 also cost more
+# Chakra per combat round; the higher tomoe tiers match the idle
+# per-tick amount but drain more frequently in combat.
+SHARINGAN_IDLE_CHAKRA_UPKEEP = 6
 
 
 def _sharingan_eye_description(tomoe_count: int) -> str:
@@ -1500,6 +1516,7 @@ def _tsukuyomi_torture_action(session, command_name: str) -> None:
     lo, hi = spec["hp_damage"]
     if hi > 0:
         dmg = random.randint(lo, hi)
+        dmg = status_effects.reduce_incoming_damage(target.active_status_effects, dmg)
         target.health -= dmg
     else:
         dmg = 0
@@ -2137,6 +2154,9 @@ def cmd_inventory(session, args: List[str]) -> None:
     for name, count in counts.items():
         colored = rarity_colored_name(tool_durability.display_name(name))
         shown = f"{colored} (x{count})" if count > 1 else colored
+        illusion = player.genjutsu_item_illusions.get(name)
+        if illusion:
+            shown += f" &M(appears as {illusion['alias']})&x"
         lines.append(f"{shown}{_staff_vnum_suffix(session, item_name=name)}")
     session.send(
         "You are carrying:\n  " + "\n  ".join(lines)
@@ -2495,6 +2515,10 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
+        import genjutsu
+        genjutsu.begin_cast(session, jutsu_key, target_words)
+        return
     if jutsu_data.get("jutsu_type") == "stance":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
             session.send("You don't know that stance.")
@@ -2675,6 +2699,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             if mob.health <= 0:
                 combat.handle_mob_defeat(session, mob)
         else:
+            dmg = status_effects.reduce_incoming_damage(target_session.player.active_status_effects, dmg)
             target_session.player.health -= dmg
             session.send(f"&RYou unleash a {beast['display_name']} Bomb on {target_session.player.name} for {damage_messages.describe_damage(dmg)} damage!&x")
             target_session.send(f"&R{player.name} unleashes a {beast['display_name']} Bomb on you for {damage_messages.describe_damage(dmg)} damage!&x")

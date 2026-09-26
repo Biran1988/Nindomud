@@ -13,6 +13,7 @@ import time
 
 import data_mangekyo
 import damage_messages
+import status_effects
 
 _NEXT_POCKET_DIMENSION_VNUM = None  # lazily initialized on first real use, see _allocate_pocket_dimension_vnum
 
@@ -229,6 +230,7 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
             if s.player.name == room.amaterasu_fire_caster:
                 continue
             dmg = random.randint(*data_mangekyo.AMATERASU_ROOM_BURN_PER_TICK)
+            dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
             s.player.health -= dmg
             s.send(f"&RThe black flames engulfing this room sear you for {damage_messages.describe_damage(dmg)} damage!&x")
             if s.player.health <= 0:
@@ -254,6 +256,7 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
         if not s.player or not s.player.mangekyo_amaterasu_burning:
             continue
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
+        dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
         s.player.health -= dmg
         s.send(f"&RAmaterasu's black flame burns you for {damage_messages.describe_damage(dmg)} damage -- it will not go out.&x")
         if s.player.health <= 0:

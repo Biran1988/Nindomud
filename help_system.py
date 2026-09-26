@@ -428,7 +428,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Genjutsu techniques deal mental damage and often carry a lingering status effect, and (like Ninjutsu) require hand signs and a real casting delay before they land.\n"
             "\n"
-            "Jutsu granted automatically as a Genjutsu character levels: Demonic Illusion: Hell Viewing Technique (1), Narakumi (15).\n"
+            "Jutsu unlocks expand across levels 5-65: Henge disguises, object illusions, disorientation and control attacks, Chisei, and room-wide Nehan Shōja. Use 'skills' or 'prac' for your complete level-sorted roster; 'help <jutsu name>' explains each technique.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -3653,17 +3653,42 @@ _EXPANSION_HELP_KEYS = (
     "water rasengan", "wind rasengan", "earth rasengan", "lightning rasengan",
     "raiton kage bunshin", "mizu bunshin", "deido bunshin", "suna bunshin",
     "barrier",
+    "henge", "greater henge", "ultimate henge", "kokohi arazu", "niju kokohi arazu",
+    "chisei", "distortion flame", "phantom soldiers", "soundless sound", "kori shinchu",
+    "oboro bunshin", "kanashibari", "snakes embrace", "devils taunt", "insect eyes",
+    "kasumi juusha", "suzu senbon", "nehan shouja", "jubaku satsu", "jigaku gouka",
+    "kokuangyou",
 )
 for _key in _EXPANSION_HELP_KEYS:
     _jutsu = data_jutsu.JUTSU[_key]
     _type = _jutsu.get("jutsu_type")
     _syntax = f"perform {_key}" if _type in ("buff", "elemental_clone") else f"perform {_key} <target>"
+    if _type in ("chisei", "room_sleep"):
+        _syntax = f"perform {_key}"
+    if _type == "item_illusion":
+        _syntax = f"perform {_key} <carried item> as <apparent name>"
+    if _type == "item_decoy":
+        _syntax = f"perform {_key} <carried item>"
     _details = {
-        "buff": "Raises a defensive barrier for five pulses (+8 Armor Class).",
+        "buff": "Raises a defensive barrier for five pulses (10% less incoming damage, no Armor Class bonus).",
         "elemental_clone": "Summons one living clone that fights alongside you and costs 25 Chakra per round. Requires 100% Shadow Clone Jutsu mastery; recasting any clone replaces the existing clones.",
         "ambush": "An opening attack with 50% extra damage; cannot be used mid-fight or against a wounded target.",
         "area": "An earthquake that damages other attackable mobs in the room as well.",
+        "disguise": "Take the appearance of a person in this room. Use without a target to release your disguise; higher Henge tiers last longer.",
+        "item_illusion": "Change how a carried item looks to other players who examine you; its real identity and properties stay intact.",
+        "item_decoy": "Project a false copy of a carried item on the ground. It cannot be picked up, equipped, or sold.",
+        "chisei": "Gain temporary maximum Chakra and +12 accuracy for Genjutsu attacks for six pulses.",
+        "room_sleep": "Put eligible enemies in your room to sleep for two pulses, each with an independent resistance check; no friendly fire or PvP in safe rooms.",
+        "mirror": "Mental damage scales with the opponent's own offensive strength.",
     }.get(_type, "A damaging combat jutsu.")
+    _specific = {
+        "kori shinchu": " Also drains 20 Stamina on hit.",
+        "kanashibari": " Its paralysis can block actions briefly.",
+        "snakes embrace": " Its weakening reduces outgoing damage by 15%.",
+        "oboro bunshin": " Illusory clones lower the victim's accuracy.",
+        "kasumi juusha": " Its haze sharply lowers the victim's accuracy.",
+        "suzu senbon": " Ringing bells impair accuracy.",
+    }.get(_key, "")
     _nature = (f" Requires {_jutsu['element'].capitalize()} chakra nature."
                if _jutsu["element"] != "none" else " Usable with any chakra nature.")
     if _jutsu.get("requires_water"):
@@ -3671,7 +3696,7 @@ for _key in _EXPANSION_HELP_KEYS:
     _effect = f" Can inflict {_jutsu['effect'].replace('_', ' ')}." if _jutsu["effect"] else ""
     DEFAULT_HELP_ENTRIES.append({
         "primary_keyword": _key, "keywords": [_key], "title": _jutsu["display_name"],
-        "body": (f"Syntax: {_syntax}\n\nDescription: {_details}{_nature}{_effect} "
+        "body": (f"Syntax: {_syntax}\n\nDescription: {_details}{_specific}{_nature}{_effect} "
                  f"Unlocks at level {_jutsu['level_requirement']}; costs {_jutsu['chakra_cost']} Chakra.\n\nDate: 2026-09-26"),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     })
@@ -3682,7 +3707,7 @@ def seed_default_help() -> None:
         path = _path(entry["primary_keyword"])
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel"}:
+        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "genjutsu"}:
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if existing.get("updated_by") == "System" and existing.get("body") != entry["body"]:

@@ -562,7 +562,7 @@ def _player_attack_damage(player: Player) -> int:
             dmg = int(dmg * data_passives.damage_multiplier(skill, pct))
     import village_perks
     dmg = int(dmg * village_perks.damage_multiplier(player.village))
-    return dmg
+    return status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
 
 
 def _mob_attack_damage(mob: Mob) -> int:
@@ -570,7 +570,7 @@ def _mob_attack_damage(mob: Mob) -> int:
     base = dice.roll(mob.damage_dice)
     strength_bonus = derived_stats.damage_roll(mob)
     equipment_bonus = commands_module.equipped_weapon_damroll_bonus(mob) + commands_module.equipped_weapon_type_damage_bonus(mob)
-    return max(0, base + strength_bonus + equipment_bonus)
+    return status_effects.reduce_outgoing_damage(mob.active_status_effects, max(0, base + strength_bonus + equipment_bonus))
 
 
 def start_attack(session, mob: Mob) -> None:
@@ -839,6 +839,7 @@ def resolve_kamui_limb_removal_cast(session, target_session) -> None:
     import data_mangekyo
     import random
     dmg = random.randint(*data_mangekyo.KAMUI_LIMB_REMOVAL_DAMAGE)
+    dmg = status_effects.reduce_incoming_damage(target_session.player.active_status_effects, dmg)
     target_session.player.health -= dmg
     session.send(f"&RYour blade tears through space itself, severing {target_session.player.name}'s limb for {damage_messages.describe_damage(dmg)} damage!&x")
     target_session.send(f"&R{player.name}'s Kamui rips your limb away in an instant of pure agony -- {damage_messages.describe_damage(dmg)} damage!&x")
@@ -963,6 +964,11 @@ def tick_pending_casts() -> None:
 
         session.pending_cast = None
         player = session.player
+        if data_jutsu.JUTSU.get(cast.jutsu_key, {}).get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
+            import genjutsu
+            genjutsu.resolve_cast(session, cast.jutsu_key, cast.target)
+            grow_skill_from_usage(player, "Handsigns")
+            continue
         if cast.jutsu_key == "illusion walk":
             resolve_illusion_walk_cast(session, cast.target, grow_handsigns=True)
             continue
@@ -1019,8 +1025,11 @@ def tick_effects_pulse(session) -> None:
     per-round timer, deliberately different from the existing Bleeding
     effect (which only ticks when the target is hit again in combat)."""
     player = session.player
+    import genjutsu
+    genjutsu.tick_player(session)
     if "burning" in player.active_status_effects:
         dmg = status_effects.burning_damage()
+        dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
         player.health = max(0, player.health - dmg)
         session.send(f"&RThe fire burns you for {damage_messages.describe_damage(dmg)} damage!&x")
     if "drained" in player.active_status_effects:
@@ -1034,6 +1043,10 @@ def tick_effects_pulse(session) -> None:
 
     expired = status_effects.tick_effects(player.active_status_effects)
     for name in expired:
+        if name == "chisei" and player.chisei_chakra_bonus:
+            player.maximum_chakra -= player.chisei_chakra_bonus
+            player.chakra = min(player.chakra, player.maximum_chakra)
+            player.chisei_chakra_bonus = 0
         session.send(f"You are no longer {status_effects.EFFECT_DEFS[name]['display_name'].lower()}.")
 
 
@@ -1416,9 +1429,8 @@ def tick_sharingan_upkeep(player) -> list:
     Called once per combat round, same pattern as
     tick_passive_skill_growth above. If the player can't afford the
     upkeep, it turns itself off automatically rather than draining a
-    resource into the negatives -- costs nothing at all while not
-    actively fighting, since this is only ever called from the two
-    per-round combat resolvers."""
+    resource into the negatives. Idle upkeep is charged separately by
+    regen.tick_sharingan_idle."""
     if not player.sharingan_active:
         return []
     import commands
@@ -1545,6 +1557,25 @@ def roll_jutsu_damage(jutsu: dict) -> "tuple[int, bool]":
         return random.randint(lo, hi), True
     lo, hi = jutsu["damage"]
     return random.randint(lo, hi), False
+
+
+def _genjutsu_hit_bonus(player, jutsu):
+    return 12 if jutsu.get("class_requirement") == "genjutsu" and "chisei" in player.active_status_effects else 0
+
+
+def _mirror_illusion_damage(jutsu, target, rolled):
+    """Insect Eyes reflects the opponent's actual offensive strength."""
+    if jutsu.get("jutsu_type") != "mirror":
+        return rolled
+    if isinstance(target, Mob):
+        import dice
+        return max(1, rolled + dice.average(target.damage_dice) * max(1, target.attacks))
+    return max(1, rolled + max(0, derived_stats.damage_roll(target)) + max(1, target.strength // 3))
+
+
+def _genjutsu_impact(jutsu, target):
+    if jutsu.get("stamina_drain"):
+        target.stamina = max(0, target.stamina - jutsu["stamina_drain"])
 
 
 def _try_counter_kunai(session, target_session, target, attacker_name: str, jutsu_display_name: str) -> bool:
@@ -1933,8 +1964,8 @@ def resolve_pulse(session) -> None:
     for message in tick_automatic_bloodline_awakening(player):
         session.send(message)
 
-    if status_effects.has_effect(player.active_status_effects, "stunned"):
-        session.send("You are stunned and can't act this round!")
+    if _is_action_blocked(player):
+        session.send("You are stunned and can't act this round!" if "stunned" in player.active_status_effects else "You cannot act this round!")
     else:
         _player_attack_mob_once(session, player, mob)
         if mob.health > 0:
@@ -1951,6 +1982,9 @@ def resolve_pulse(session) -> None:
 
     if mob.health <= 0:
         handle_mob_defeat(session, mob)
+        return
+    if _is_action_blocked(mob):
+        session.send(f"{mob.name} is trapped in the illusion and cannot attack this round.")
         return
 
     import commands as commands_module
@@ -1990,6 +2024,7 @@ def resolve_pulse(session) -> None:
             else:
                 session.send("&RYou weren't fast enough to counter!&x")
         dmg = commands_module.reduce_weapon_damage(player, data_weapons.weapon_type_for_item(mob.equipment.get("wielded", "")), dmg)
+        dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
         player.health -= dmg
         session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage.")
 
@@ -2178,7 +2213,7 @@ def use_barrier(session) -> None:
     player.cooldowns["barrier"] = now + jutsu["cooldown"]
     status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier")
     grow_skill_from_usage(player, "Barrier")
-    session.send("&CA chakra barrier rises around you, improving your Armor Class by 8 for five pulses.&x")
+    session.send("&CA chakra barrier rises around you, reducing incoming damage by 10% for five pulses.&x")
 
 
 def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
@@ -2245,12 +2280,14 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
+    to_hit += _genjutsu_hit_bonus(player, jutsu)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {mob.name}, but it misses!")
         return
 
     dmg, was_explosive = roll_jutsu_damage(jutsu)
+    dmg = _mirror_illusion_damage(jutsu, mob, dmg)
     dmg += _jutsu_damage_bonus(player)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
@@ -2268,7 +2305,9 @@ def use_jutsu(session, jutsu_key: str, mob: Mob) -> None:
     if biome_mult != 1.0:
         dmg = int(dmg * biome_mult)
 
+    dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
     mob.health -= dmg
+    _genjutsu_impact(jutsu, mob)
     grow_skill_from_usage(player, jutsu["display_name"])
     perk_note = f" &Y(x{dmg_mult:g} village perk)&x" if dmg_mult != 1.0 else ""
     if biome_mult > 1.0:
@@ -2392,7 +2431,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {target.name}, but it misses!")
@@ -2417,6 +2456,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         return
 
     dmg, was_explosive = roll_jutsu_damage(jutsu)
+    dmg = _mirror_illusion_damage(jutsu, target, dmg)
     dmg += _jutsu_damage_bonus(player)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
@@ -2443,7 +2483,10 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         elif not silent_to_target:
             target_session.send("&RYou weren't fast enough to counter!&x")
 
+    dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
+    dmg = status_effects.reduce_incoming_damage(target.active_status_effects, dmg)
     target.health -= dmg
+    _genjutsu_impact(jutsu, target)
     grow_skill_from_usage(player, jutsu["display_name"])
     perk_note = f" &Y(x{dmg_mult:g} village perk)&x" if dmg_mult != 1.0 else ""
     if biome_mult > 1.0:
@@ -2835,6 +2878,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
             target_session.send("&RYou weren't fast enough to counter!&x")
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
+    dmg = status_effects.reduce_incoming_damage(target.active_status_effects, dmg)
     target.health -= dmg
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage.")
@@ -2864,6 +2908,7 @@ def _clone_attack_target_once(session, player, target_session, target, clone) ->
         return
     damage = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE * (1.25 if element == "earth" else 1))
     damage = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), damage)
+    damage = status_effects.reduce_incoming_damage(target.active_status_effects, damage)
     target.health -= damage
     session.send(f"Your {label} strikes {target.name} for {damage_messages.describe_damage(damage)} damage.")
     target_session.send(f"{player.name}'s {label} strikes you for {damage_messages.describe_damage(damage)} damage.")
@@ -2935,8 +2980,8 @@ def resolve_pvp_pulse(session) -> None:
             session.send("&RSomething inside you SNAPS -- the beast's chakra floods your body, and you lose all control!&x")
 
     session.send("")
-    if status_effects.has_effect(player.active_status_effects, "stunned"):
-        session.send("You are stunned and can't act this round!")
+    if _is_action_blocked(player):
+        session.send("You are stunned and can't act this round!" if "stunned" in player.active_status_effects else "You cannot act this round!")
         return
 
     import commands as commands_module

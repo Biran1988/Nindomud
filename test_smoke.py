@@ -10699,35 +10699,18 @@ def test_mset_act_shorthand():
     print("MSET ACT SHORTHAND TEST PASSED")
 
 
-def test_sharingan_upkeep_tripled():
-    """Per direct request ("triple sharingan base upkeep") and
-    confirmation that this meant every number in the upkeep system,
-    not just one of the two ("Both -- triple every number in the
-    whole upkeep system") -- the per-tomoe combat chakra table, the
-    flat stamina upkeep, and the always-on idle chakra rate were all
-    multiplied by exactly 3 from their original values (combat table
-    {1:2, 2:1, 3:2, 4:1, 5:1, 6:1}, stamina 1, idle 1).
+def test_sharingan_upkeep_doubled_again():
+    """The newest request doubles the previous costs in combat and idle.
 
-    Unlike the existing Sharingan tests, which mostly check RELATIVE
-    relationships (tomoe 2 cheaper than tomoe 1, combat rate >= idle
-    rate) and would still pass even if the absolute numbers were
-    wrong, this test asserts the exact tripled values directly, so a
-    future accidental revert or partial edit would be caught here
-    specifically. Also verified the full live drain amount through
-    both real paths (a genuine combat round via resolve_pulse, and an
-    isolated idle-tick drain), not just the constants in isolation --
-    confirming the tripling actually reaches the player's resources,
-    not just the numbers sitting in the source file."""
+    Exercise a real combat round and the idle drain as well as the
+    constants, so both active upkeep paths stay in sync."""
     import combat
     import regen
     import commands
 
-    assert commands.SHARINGAN_CHAKRA_UPKEEP_BY_TOMOE == {1: 6, 2: 3, 3: 6, 4: 3, 5: 3, 6: 3}, \
-        f"the combat upkeep table must be exactly tripled from its original values, got {commands.SHARINGAN_CHAKRA_UPKEEP_BY_TOMOE}"
-    assert commands.SHARINGAN_STAMINA_UPKEEP == 3, \
-        f"stamina upkeep must be exactly tripled (1 -> 3), got {commands.SHARINGAN_STAMINA_UPKEEP}"
-    assert commands.SHARINGAN_IDLE_CHAKRA_UPKEEP == 3, \
-        f"idle chakra upkeep must be exactly tripled (1 -> 3), got {commands.SHARINGAN_IDLE_CHAKRA_UPKEEP}"
+    assert commands.SHARINGAN_CHAKRA_UPKEEP_BY_TOMOE == {1: 12, 2: 6, 3: 12, 4: 6, 5: 6, 6: 6}
+    assert commands.SHARINGAN_STAMINA_UPKEEP == 6
+    assert commands.SHARINGAN_IDLE_CHAKRA_UPKEEP == 6
 
     # --- The tripled combat rate genuinely drains through a real combat round ---
     out = []
@@ -10754,8 +10737,8 @@ def test_sharingan_upkeep_tripled():
     before_stamina = s.player.stamina
     combat.resolve_pulse(s)
     out.clear()
-    assert before_chakra - s.player.chakra == 6, "a genuine combat round at tomoe 1 must drain exactly the tripled amount (6)"
-    assert before_stamina - s.player.stamina == 3, "a genuine combat round must drain exactly the tripled stamina amount (3)"
+    assert before_chakra - s.player.chakra == 12, "a combat round at tomoe 1 must drain 12 Chakra"
+    assert before_stamina - s.player.stamina == 6, "a combat round must drain 6 Stamina"
 
     # --- The tripled idle rate genuinely drains through an isolated regen tick ---
     s.combat_target = None
@@ -10763,9 +10746,9 @@ def test_sharingan_upkeep_tripled():
     s.player.chakra = 50
     before_idle = s.player.chakra
     s.player.chakra -= commands.SHARINGAN_IDLE_CHAKRA_UPKEEP  # the exact operation regen.tick_player performs
-    assert before_idle - s.player.chakra == 3, "the idle drain must be exactly the tripled amount (3)"
+    assert before_idle - s.player.chakra == 6, "the idle drain must be 6 Chakra"
 
-    print("SHARINGAN UPKEEP TRIPLED TEST PASSED")
+    print("SHARINGAN UPKEEP DOUBLED AGAIN TEST PASSED")
 
 
 def test_wielded_item_shows_hitroll_damroll_damage():
@@ -18506,7 +18489,7 @@ if __name__ == "__main__":
     test_travel_mode_removed_wander_is_act_flag()
     test_aset_shorthand_and_current_area()
     test_mset_act_shorthand()
-    test_sharingan_upkeep_tripled()
+    test_sharingan_upkeep_doubled_again()
     test_wielded_item_shows_hitroll_damroll_damage()
     test_all_helpfiles_use_new_format()
     test_pager_can_be_quit_early()

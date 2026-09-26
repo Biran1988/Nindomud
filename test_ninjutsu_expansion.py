@@ -87,10 +87,12 @@ class NinjutsuExpansionTests(unittest.TestCase):
         s = NS(player=p, pending_cast=None, send=Mock())
         base_ac = derived_stats.armor_class(p)
         commands.cmd_use_jutsu(s, "barrier", [])
-        self.assertEqual(derived_stats.armor_class(p), base_ac - 8)
+        self.assertEqual(derived_stats.armor_class(p), base_ac)
+        self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 90)
         for _ in range(5):
             status_effects.tick_effects(p.active_status_effects)
         self.assertEqual(derived_stats.armor_class(p), base_ac)
+        self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 100)
         a = combat.Mob(1, 100, "one", 50, 1000, 1000, 1, 0, 0)
         b = combat.Mob(2, 101, "two", 50, 1000, 1000, 1, 0, 0)
         with patch.object(combat, "mobs_in_room", return_value=[a, b]), \

@@ -532,6 +532,43 @@ JUTSU["barrier"] = {
     "jutsu_type": "buff", "tier": 2, "element": "none",
 }
 
+
+def _genjutsu(name, level, cost, damage=None, effect=None, **options):
+    return {
+        "jutsu_id": "genjutsu_" + name.lower().replace(" ", "_"),
+        "display_name": name, "class_requirement": "genjutsu",
+        "level_requirement": level, "chakra_cost": cost, "stamina_cost": 0,
+        "cooldown": options.pop("cooldown", 5.0), "damage": damage,
+        "damage_type": "mental" if damage is not None else None,
+        "effect": effect, "tier": 1 if level < 25 else 2 if level < 50 else 3,
+        "element": "none", **options,
+    }
+
+
+JUTSU.update({
+    "henge": _genjutsu("Henge", 5, 12, jutsu_type="disguise", duration=12),
+    "greater henge": _genjutsu("Greater Henge", 25, 25, jutsu_type="disguise", duration=25),
+    "ultimate henge": _genjutsu("Ultimate Henge", 55, 45, jutsu_type="disguise", duration=45),
+    "kokohi arazu": _genjutsu("Kokohi Arazu", 18, 20, jutsu_type="item_illusion", duration=20),
+    "niju kokohi arazu": _genjutsu("Niju Kokohi Arazu", 35, 28, jutsu_type="item_decoy", duration=20),
+    "chisei": _genjutsu("Chisei", 40, 30, jutsu_type="chisei", cooldown=15),
+    "distortion flame": _genjutsu("Distortion Flame", 8, 14, (12, 20)),
+    "phantom soldiers": _genjutsu("Phantom Soldiers", 12, 18, (16, 25)),
+    "soundless sound": _genjutsu("Soundless Sound", 22, 23, (20, 33), "soundless", effect_chance_pct=65),
+    "kori shinchu": _genjutsu("Kori Shinchu", 32, 31, (24, 39), "disoriented", effect_chance_pct=65, stamina_drain=20),
+    "oboro bunshin": _genjutsu("Oboro Bunshin", 17, 18, (9, 17), "confused", effect_chance_pct=80),
+    "kanashibari": _genjutsu("Kanashibari", 28, 26, (4, 9), "paralyzed", effect_chance_pct=50, cooldown=8),
+    "snakes embrace": _genjutsu("Snake's Embrace", 30, 28, (27, 41), "weakened", effect_chance_pct=65),
+    "devils taunt": _genjutsu("Devil's Taunt", 20, 20, (10, 18), "stunned", effect_chance_pct=45),
+    "insect eyes": _genjutsu("Insect Eyes", 50, 43, (15, 30), jutsu_type="mirror", cooldown=9),
+    "kasumi juusha": _genjutsu("Kasumi Jūsha", 43, 34, (12, 22), "haze", effect_chance_pct=75),
+    "suzu senbon": _genjutsu("Suzu Senbon", 36, 32, (29, 46), "ringing", effect_chance_pct=65),
+    "nehan shouja": _genjutsu("Nehan Shōja", 65, 60, jutsu_type="room_sleep", cooldown=20),
+    "jubaku satsu": _genjutsu("Jubaku Satsu", 58, 48, (42, 64), "stunned", effect_chance_pct=60, cooldown=9),
+    "jigaku gouka": _genjutsu("Jigaku Gōka", 52, 44, (48, 72), "narakumi", effect_chance_pct=65),
+    "kokuangyou": _genjutsu("Kokuangyō", 48, 40, (8, 16), "blinded", effect_chance_pct=75),
+})
+
 # The universal starting kit -- every player gets exactly these,
 # regardless of class. Used by both session.py's chargen AND
 # leveling.sync_universal_skills() (the login update-check), so the two

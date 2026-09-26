@@ -5,6 +5,14 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Genjutsu gained 21 level-gated techniques, including Henge, object illusions,
+  Chisei, Insect Eyes, Kokuangyō, and Nehan Shōja. Disguises and item decoys
+  affect appearances without duplicating real items or player identities.
+- Barrier reduces incoming damage by 10% across normal combat, jutsu, and
+  damage-over-time effects. It no longer modifies Armor Class.
+- Active Sharingan upkeep is doubled in and out of combat: 6 Chakra per idle
+  tick, 6-12 Chakra per combat round by tomoe, and 6 Stamina per combat round.
+
 - Colored damage words through 10,000+ damage: `damage_messages.py`, `colors.py`,
   `combat.py`, `commands.py`, and `mangekyo.py`.
 - Shopkeeper stock and item prototypes saved by `save world` and restored after
@@ -16,7 +24,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.231: `changelog.py`.
+- The in-game change history through version 15.247: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

@@ -59,6 +59,11 @@ class Player:
     maximum_health: int = 100
     chakra: int = 75
     maximum_chakra: int = 75
+    chisei_chakra_bonus: int = 0
+    genjutsu_disguise: str = ""
+    genjutsu_disguise_pulses: int = 0
+    genjutsu_item_illusions: dict = field(default_factory=dict)
+    genjutsu_decoys: list = field(default_factory=list)
     stamina: int = 100
     maximum_stamina: int = 100
 

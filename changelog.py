@@ -395,4 +395,7 @@ CHANGELOG = [
     ("15.242", "Ninjutsu gained Chakra Ball, Rasengan, Oodama Rasengan, elemental Rasengans for all five natures, Suigadan, Juuha Shou, Karyuu Endan, Retsudotensho, Chishin, Raikiri, and four Lightning Chidori techniques. Nature-specific jutsu require the matching element."),
     ("15.243", "Raiton Kage Bunshin, Mizu Bunshin, Deido Bunshin, and Suna Bunshin now summon combat-capable elemental clones. Reach 100% mastery in Shadow Clone Jutsu first; an elemental clone replaces your active clones and has the usual chakra upkeep."),
     ("15.244", "Barrier now unlocks for every class as a General Skill at level 35. It costs 30 Chakra and improves Armor Class by 8 for five pulses."),
+    ("15.245", "Genjutsu gained 21 techniques: Henge disguises, item and decoy illusions, Chisei, mental attacks, clone illusions, blindness, paralysis, and the room-wide Nehan Shōja sleep technique. Class members unlock them from levels 5-65."),
+    ("15.246", "Barrier now reduces incoming damage by 10% for five pulses instead of granting Armor Class. The reduction applies to ordinary attacks, jutsu, burns, and major techniques."),
+    ("15.247", "Sharingan now costs twice as much to maintain: six Chakra per idle tick, 6-12 Chakra per combat round by tomoe, and six Stamina per combat round."),
 ]

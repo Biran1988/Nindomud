@@ -15,7 +15,7 @@ EFFECT_DEFS = {
     "barrier": {
         "display_name": "Barrier", "duration": 5,
         "message": "A chakra barrier surrounds {target}.",
-        "armor_class_bonus": 8,
+        "damage_reduction_pct": 10,
     },
     "blinded": {
         "display_name": "Blinded", "duration": 2,
@@ -76,6 +76,21 @@ EFFECT_DEFS = {
         "message": "{target} is trapped in Narakumi's grip, their reflexes dulled.",
         "accuracy_penalty": 20,
     },
+    "soundless": {"display_name": "Soundless", "duration": 3,
+                  "message": "{target} loses focus in the impossible silence.", "accuracy_penalty": 12},
+    "disoriented": {"display_name": "Disoriented", "duration": 2,
+                    "message": "{target} is disoriented and drained.", "accuracy_penalty": 15},
+    "weakened": {"display_name": "Weakened", "duration": 3,
+                 "message": "{target} feels weak in the snakes' grip.", "damage_penalty_pct": 15},
+    "haze": {"display_name": "Haze", "duration": 2,
+             "message": "{target} loses track of the haze clones.", "accuracy_penalty": 35},
+    "ringing": {"display_name": "Ringing", "duration": 2,
+                "message": "{target} staggers at the sound of bells.", "accuracy_penalty": 25,
+                "blocks_action": True},
+    "asleep": {"display_name": "Asleep", "duration": 2,
+                "message": "{target} falls asleep beneath illusory feathers.", "blocks_action": True},
+    "chisei": {"display_name": "Chisei", "duration": 6,
+                "message": "{target}'s eyes shine with heightened focus."},
     "burning": {
         "display_name": "Burning",
         "duration": 3,
@@ -111,6 +126,21 @@ def apply_effect(effects: Dict[str, dict], name: str, source: str = "", duration
 
 def has_effect(effects: Dict[str, dict], name: str) -> bool:
     return name in effects
+
+
+def reduce_incoming_damage(effects: Dict[str, dict], amount: int) -> int:
+    """Barrier mitigates damage after other defenses, for any incoming hit."""
+    if amount <= 0:
+        return amount
+    reduction = max((EFFECT_DEFS.get(name, {}).get("damage_reduction_pct", 0)
+                     for name in effects), default=0)
+    return max(1, amount * (100 - reduction) // 100)
+
+
+def reduce_outgoing_damage(effects: Dict[str, dict], amount: int) -> int:
+    if "weakened" not in effects or amount <= 0:
+        return amount
+    return max(1, amount * (100 - EFFECT_DEFS["weakened"]["damage_penalty_pct"]) // 100)
 
 
 def tick_effects(effects: Dict[str, dict]) -> list:
