@@ -90,6 +90,7 @@ async def pulse_loop() -> None:
     import areas
     import territory
     import tips
+    import sage_mode
     from session import ACTIVE_SESSIONS, State
 
     elapsed_since_regen = 0.0
@@ -162,6 +163,7 @@ async def pulse_loop() -> None:
         for session in list(ACTIVE_SESSIONS):
             if session.state == State.PLAYING:
                 combat.tick_effects_pulse(session)
+                sage_mode.expire(session)
                 # Shadow Clone upkeep, per direct follow-up request
                 # ("Clones can be summoned before combat and persist
                 # until unsigned or chakra runs out") -- same

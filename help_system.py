@@ -1381,9 +1381,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["summon", "summoning", "contract"],
         "title": "Summoning Contracts",
         "body": (
-            "Syntax: (find and sign a summoning contract at its own hidden hideout, then use that family's own jutsu to summon)\n"
+            "Syntax: summon sign [family] (beside a Summon Elder) | summon <toad|snake|slug|ninken|monkey> | summon dismiss\n"
             "\n"
-            "Description: Five real summoning contracts exist -- Toad, Snake, Slug, Ninken, and Monkey -- each tied to its own secret hideout somewhere in the world. Signing a contract unlocks a whole progressive ladder of summons from that family, not just one fixed creature: the summon you actually get scales with your own level, from a modest starting form at level 20 up to that family's own strongest, named summon much later.\n"
+            "Description: Five summoning contracts exist -- Toad, Snake, Slug, Ninken, and Monkey. A builder places a Summon Elder in that family's hideout. At level 20, stand beside it and use 'summon sign' to sign its contract. Calling that family costs 40 Chakra and summons its highest tier allowed by your level.\n"
             "\n"
             "A summon's real strength is your own current level multiplied by that specific tier's own power -- so the same contract gets meaningfully stronger as you level, without needing to re-sign anything. Only one summon can ever be active at a time; summoning a new one dismisses whatever was already out.\n"
             "\n"
@@ -1394,6 +1394,38 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "sage", "keywords": ["sage", "sage mode", "senjutsu"],
+        "title": "Sage Mode",
+        "body": (
+            "Syntax: sage status | sage train [family] | sage activate <family> | sage off\n\n"
+            "Description: Sign a family's contract and reach level 80, then find its living Summon Elder. "
+            "One meditation attempt is allowed per family every 12 real hours. "
+            "Each attempt has a 50% chance of gaining just 1% mastery. "
+            "Failed attempts also consume the interval. Each family has separate progress; "
+            "100% mastery is required to activate its Sage Mode. At least 100 successful sessions are needed.\n\n"
+            "Activation costs 100 Chakra, lasts five real minutes, and starts a 30-minute cooldown. "
+            "All forms boost attack and jutsu damage by 20%, accuracy by 10, and reduce incoming combat damage by 10%. "
+            "Toad adds 5 accuracy; Snake adds 10% jutsu damage; Slug heals 5% maximum health per combat round; "
+            "Ninken adds 10 dodge chance; Monkey adds 10% wielded weapon damage. "
+            "Sage Mode lasts through logout, but its real-time duration and cooldown keep counting down.\n\n"
+            "Date: 2026-09-27"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "summon elder", "keywords": ["summon elder", "summonelder", "summonfamily"],
+        "title": "Summon Elder (builder)",
+        "body": (
+            "Syntax: mset <vnum> flags SummonElder | mset <vnum> summonfamily <toad|snake|slug|ninken|monkey>\n"
+            "Description: Place the mob in the chosen family's hideout with 'mset spawn <vnum> <room vnum>' "
+            "or add a spawn point. Both the flag and a valid family are required. "
+            "The elder must be alive and in the same room for signing contracts and Sage Mode training. "
+            "Summon Elders cannot be attacked. Mstat shows their configured family.\n\n"
+            "Date: 2026-09-27"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "yes",
@@ -3809,7 +3841,7 @@ def seed_default_help() -> None:
         path = _path(entry["primary_keyword"])
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion"}
+        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "summon", "sage", "summon elder"}
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)

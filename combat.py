@@ -109,6 +109,7 @@ DEFAULT_MOB_FIELDS = {
     # teachers can't be attacked. See commands.cmd_practice's own
     # teacher-presence gate.
     "teacher": "",
+    "summon_family": "",
 }
 
 
@@ -401,7 +402,7 @@ def is_immortal_mob(mob: Mob) -> bool:
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if not t:
         return False
-    return "Immortal" in t.get("act_flags", [])
+    return "Immortal" in t.get("act_flags", []) or "SummonElder" in t.get("act_flags", [])
 
 
 def is_wandering(mob: Mob) -> bool:
@@ -563,7 +564,9 @@ def _player_attack_damage(player: Player) -> int:
             dmg = int(dmg * data_passives.damage_multiplier(skill, pct))
     import village_perks
     dmg = int(dmg * village_perks.damage_multiplier(player.village))
-    return status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
+    import sage_mode
+    return sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg),
+                              weapon=bool(player.equipment.get("wielded")))
 
 
 def _mob_attack_damage(mob: Mob) -> int:
@@ -1845,7 +1848,8 @@ def _player_attack_mob_once(session, player, mob) -> None:
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player) + _summon_weapon_buff_hitroll_bonus(player)
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob)
+    import sage_mode
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -2027,6 +2031,8 @@ def resolve_pulse(session) -> None:
             session.send("&RSomething inside you SNAPS -- the beast's chakra floods your body, and you lose all control!&x")
 
     session.send("")  # blank line so each round doesn't blur into the last
+    import sage_mode
+    sage_mode.combat_pulse(session)
 
     for message in tick_passive_skill_growth(player):
         session.send(message)
@@ -2084,7 +2090,7 @@ def resolve_pulse(session) -> None:
         session.send(f"&R{mob.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player):
+    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player) + sage_mode.dodge(player):
         session.send(f"&CYou dodge {mob.name}'s attack!&x")
         return
 
@@ -2099,7 +2105,7 @@ def resolve_pulse(session) -> None:
             else:
                 session.send("&RYou weren't fast enough to counter!&x")
         dmg = commands_module.reduce_weapon_damage(player, data_weapons.weapon_type_for_item(mob.equipment.get("wielded", "")), dmg)
-        dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
+        dmg = sage_mode.incoming(player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg))
         player.health -= dmg
         session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage.")
 
@@ -2363,7 +2369,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob)
+    import sage_mode
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player)
     to_hit += _genjutsu_hit_bonus(player, jutsu) + jutsu.get("accuracy_bonus", 0)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
@@ -2406,7 +2413,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     if biome_mult != 1.0:
         dmg = int(dmg * biome_mult)
 
-    dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
+    dmg = sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg), jutsu=True)
     mob.health -= dmg
     _genjutsu_impact(jutsu, mob)
     grow_skill_from_usage(player, jutsu["display_name"])
@@ -2546,7 +2553,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0)
+    import sage_mode
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0) + sage_mode.accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {target.name}, but it misses!")
@@ -2561,7 +2569,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             target_session.send(f"&R{player.name}'s {colored_name} passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target) + sage_mode.dodge(target)):
         session.send(f"&C{target.name} dodges your {colored_name}!&x")
         if not silent_to_target:
             target_session.send(f"&CYou dodge {player.name}'s {colored_name}!&x")
@@ -2618,7 +2626,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             target_session.send("&RYou weren't fast enough to counter!&x")
 
     dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
-    dmg = status_effects.reduce_incoming_damage(target.active_status_effects, dmg)
+    dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, sage_mode.outgoing(player, dmg, jutsu=True)))
     target.health -= dmg
     _genjutsu_impact(jutsu, target)
     grow_skill_from_usage(player, jutsu["display_name"])
@@ -2986,7 +2994,8 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player) + _summon_weapon_buff_hitroll_bonus(player)
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target)
+    import sage_mode
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
@@ -3010,7 +3019,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         target_session.send(f"&R{player.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target) + sage_mode.dodge(target)):
         session.send(f"&C{target.name} dodges your attack!&x")
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
@@ -3024,7 +3033,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
     dmg = ninja_arts.weapon_hit(player, target, dmg)
-    dmg = status_effects.reduce_incoming_damage(target.active_status_effects, dmg)
+    dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage.")
@@ -3129,6 +3138,8 @@ def resolve_pvp_pulse(session) -> None:
             session.send("&RSomething inside you SNAPS -- the beast's chakra floods your body, and you lose all control!&x")
 
     session.send("")
+    import sage_mode
+    sage_mode.combat_pulse(session)
     if _is_action_blocked(player):
         session.send("You are stunned and can't act this round!" if "stunned" in player.active_status_effects else "You cannot act this round!")
         return

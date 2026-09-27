@@ -69,7 +69,8 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.257: `changelog.py`.
+- The in-game change history through version 15.258: `changelog.py`.
+- Builder-configured Summon Elder mobs teach five separate Sage Modes. Set `mset <vnum> flags SummonElder` and `mset <vnum> summonfamily <family>`, then place the mob. Players sign a contract at level 20, and train at level 80, one attempt per family every 12 real hours with a 50% chance for 1% mastery. Full mastery permits a timed combat mode.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

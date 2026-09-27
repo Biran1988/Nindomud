@@ -381,6 +381,8 @@ def cmd_mstat(session, args: List[str]) -> None:
         lines.append("&WGambler:&x &Gyes&x &D(runs chou-han -- see the 'gamble' command)&x")
     if t.get("teacher", ""):
         lines.append(f"&WTeacher:&x &G{t['teacher'].title()}&x &D(players must find a matching teacher to practice a {t['teacher'].title()} skill)&x")
+    if "SummonElder" in t.get("act_flags", []):
+        lines.append(f"&WSummon Elder:&x {t.get('summon_family') or 'unconfigured -- set summonfamily'}")
     wandering = "Wander" in t.get("act_flags", []) and "Sentinel" not in t.get("act_flags", [])
     lines.append(f"&WTravel Mode:&x {'&Gwander&x' if wandering else '&Dstay&x'}")
     lines.append(_rule())
@@ -717,6 +719,7 @@ VALID_ITEM_EXTRA_FLAGS = {
     "no_take", # commands.py -- protects this item from 'get' -- for cosmetic room decoration (furniture, signs, plants) that's meant to stay put, placed via 'oset load'/spawn points and never picked up
 }
 VALID_MOB_ACT_FLAGS = {
+    "SummonElder",  # sage_mode.py -- teaches its configured summon_family in the same room
     "Invis",  # commands.py -- hidden from room look and directional scan
     "Banker",       # commands.py -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob
     "BountyOffice", # commands.py -- lets a player claim a bounty in person at this mob
@@ -1365,7 +1368,7 @@ def _do_bunlink(session, room, rest: List[str]) -> None:
 
 MOB_STRING_FIELDS = {"short_desc", "long_desc", "description", "sex",
                       "position", "default_position", "hit_dice", "damage_dice", "special_function",
-                      "teacher", "primary_class"}
+                      "teacher", "primary_class", "summon_family"}
 MOB_INT_FIELDS = {"level", "alignment", "mana", "move", "armor_class", "hit_roll",
                    "damage_roll", "attacks", "gold", "ryo_reward"}
 MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defenses",
@@ -1376,7 +1379,7 @@ MOB_BOOL_FIELDS = {"shopkeeper", "gambler", "respawns", "enabled"}
 
 # Builder input uses short, readable names. The stored prototype keys stay
 # unchanged so existing saves and programs continue to load unchanged.
-MOB_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
+MOB_FIELD_NAMES = {"short_desc": "short", "long_desc": "long", "summon_family": "summonfamily",
                    "primary_class": "class", "act_flags": "flags"}
 OBJECT_FIELD_NAMES = {"short_desc": "short", "long_desc": "long",
                       "extra_flags": "flags", "wear_flags": "wear",
@@ -1743,6 +1746,9 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
     hint text instead of the internal storage key, defaulting to
     `field` itself for every field with no separate alias."""
     display = display or field
+    if field == "summon_family":
+        return (f"'{display}' chooses which family this SummonElder teaches. Current: {t.get(field) or 'none'}.\n"
+                f"Usage: mset <vnum> {display} <toad|snake|slug|ninken|monkey|off>")
     if field in MOB_BOOL_FIELDS:
         current = t.get(field, False)
         return f"'{display}' is on/off. Current: {'on' if current else 'off'}.\nUsage: mset <vnum> {display} on|off"
@@ -2033,6 +2039,13 @@ def cmd_mset(session, args: List[str]) -> None:
                 session.send(f"'{value_text}' isn't a real class. Valid: {', '.join(sorted(valid_classes))}, or 'off' to clear.")
                 return
             value_text = teacher_value
+        if field == "summon_family":
+            import data_summons
+            family = value_text.strip().lower()
+            if family not in data_summons.CONTRACTS and family not in ("off", "none"):
+                session.send("Choose a summon family: toad, snake, slug, ninken, monkey, or off.")
+                return
+            value_text = "" if family in ("off", "none") else family
         if field == "primary_class":
             class_value = value_text.strip().lower()
             valid_classes = {"ninjutsu", "taijutsu", "genjutsu", "bukijutsu"}

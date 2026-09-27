@@ -59,6 +59,7 @@ import security
 import roulette
 import slots
 import status_effects
+import sage_mode
 import storage
 import village_perks
 import olc
@@ -7636,6 +7637,8 @@ def cmd_commands(session, args: List[str]) -> None:
 
 
 COMMANDS = {
+    "sage": sage_mode.command,
+    "summon": sage_mode.summon_command,
     "restore": cmd_restore, "respawn": cmd_respawn,
     "emotes": cmd_emotes, "emojis": cmd_emotes,
     "look": cmd_look, "l": cmd_look,
