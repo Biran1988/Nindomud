@@ -64,7 +64,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.255: `changelog.py`.
+- The in-game change history through version 15.256: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,
