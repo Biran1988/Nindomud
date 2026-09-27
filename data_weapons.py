@@ -132,6 +132,8 @@ def weapon_type_for_item(item_name: str) -> Optional[str]:
     which proficiency skill gets granted on wield. Now checks the real
     prototype first; keyword-guessing is kept only as a fallback for
     the rare case no prototype exists for the item at all."""
+    if not item_name:
+        return None
     import olc
     query = item_name.lower()
     # The exact prototype wins over broader names such as "A Basic Kunai"

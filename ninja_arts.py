@@ -142,6 +142,17 @@ def use_disable(session, target):
                 status_effects.apply_effect(session.player.active_status_effects, effect, source=name)
 
 
+def use_samurai_sabre(session):
+    """Flow chakra through a wielded sword for five effect pulses."""
+    if data_weapons.weapon_type_for_item(session.player.equipment.get("wielded", "")) != "sword":
+        session.send("Wield a sword to use Samurai Sabre.")
+        return
+    if not _pay(session, "samurai sabre"):
+        return
+    status_effects.apply_effect(session.player.active_status_effects, "samurai_sabre", source="samurai sabre")
+    session.send("&CChakra envelops your sword. Sword strikes deal 20% more damage for five pulses.&x")
+
+
 def attach_trap(target, key, attacker_name):
     effects = target.active_status_effects
     if key in effects:
@@ -162,7 +173,10 @@ def detonate_trap(target, name):
 
 def weapon_hit(attacker, victim, damage):
     """Apply the wielded weapon's item-specific combat property on hit."""
-    prop = property_of(attacker.equipment.get("wielded", ""))
+    wielded = attacker.equipment.get("wielded", "")
+    prop = property_of(wielded)
+    if damage > 0 and "samurai_sabre" in attacker.active_status_effects and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword":
+        damage = max(1, damage * 120 // 100)
     if prop is None or damage <= 0:
         return damage
     if prop == "poison" and random.randint(1, 100) <= 30:

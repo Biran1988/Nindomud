@@ -2150,6 +2150,8 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
             return False
     if jutsu.get("jutsu_type") == "fan_art" and "mighty fan" not in player.equipment.get("wielded", "").lower():
         return False
+    if jutsu.get("required_weapon_types") and data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")) not in jutsu["required_weapon_types"]:
+        return False
     if jutsu.get("element", "none") != "none":
         if jutsu["element"] not in (player.chakra_nature, player.chakra_nature_secondary):
             return False
@@ -2362,7 +2364,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob)
-    to_hit += _genjutsu_hit_bonus(player, jutsu)
+    to_hit += _genjutsu_hit_bonus(player, jutsu) + jutsu.get("accuracy_bonus", 0)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {mob.name}, but it misses!")
@@ -2386,6 +2388,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, mob, dmg)
     dmg += _jutsu_damage_bonus(player)
+    if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary):
+        dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
     import village_perks
@@ -2542,7 +2546,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {target.name}, but it misses!")
@@ -2586,6 +2590,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, target, dmg)
     dmg += _jutsu_damage_bonus(player)
+    if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary):
+        dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
     import village_perks

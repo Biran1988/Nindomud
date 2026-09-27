@@ -462,7 +462,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Bukijutsu techniques center on weapons and thrown items -- like Taijutsu, no hand signs and no casting delay. Some genuinely consume an inventory item on use.\n"
             "\n"
-            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken (35), wind-only Fan Techniques and Poison Gas Bomb (40), Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). At level 25, Bukijutsu can also craft Antidote and Medicinal Pills from Medicinal Herbs; see 'help craft'. Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted. Weapon arts accept a carried or wielded weapon.\n"
+            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken and Samurai Sabre (35), wind-only Fan Techniques and Poison Gas Bomb (40), Flying Swallow and Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). At level 25, Bukijutsu can also craft Antidote and Medicinal Pills from Medicinal Herbs; see 'help craft'. Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted. Weapon arts accept a carried or wielded weapon. See 'help samurai sabre' and 'help flying swallow'.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -3568,6 +3568,30 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "samurai sabre",
+        "keywords": ["samurai sabre"],
+        "title": "Samurai Sabre",
+        "body": (
+            "Syntax: samurai sabre\n"
+            "\n"
+            "Description: Bukijutsu level 35. Requires a wielded sword. Flow chakra through the blade to increase ordinary sword hit damage by 20% for five pulses. Switching to another weapon does not benefit from the effect. Costs 35 Chakra and 10 Stamina; 25 second cooldown.\n"
+            "\nDate: 2026-09-27"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "flying swallow",
+        "keywords": ["flying swallow"],
+        "title": "Flying Swallow",
+        "body": (
+            "Syntax: flying swallow <target>\n"
+            "\n"
+            "Description: Bukijutsu level 45. Requires a wielded sword or kunai. A chakra-extended slash with +15 accuracy, 38-58 base damage and a 30% chance to cause bleeding. Wind chakra nature increases its damage by 15%, but is not required. Costs 30 Chakra and 18 Stamina; 7 second cooldown.\n"
+            "\nDate: 2026-09-27"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "wind blade jutsu",

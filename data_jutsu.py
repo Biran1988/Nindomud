@@ -337,6 +337,23 @@ JUTSU = {
             ("Water Release: Glue Technique", "ninjutsu", 35, 35, 0, 7.0, None, None, "water", "weapon_art", None, 0),
         ]
     },
+    "samurai sabre": {
+        "jutsu_id": "arts_samurai_sabre", "display_name": "Samurai Sabre",
+        "class_requirement": "bukijutsu", "level_requirement": 35,
+        "chakra_cost": 35, "stamina_cost": 10, "cooldown": 25.0,
+        "jutsu_type": "sabre_buff", "required_weapon_types": ("sword",),
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 2, "element": "none",
+    },
+    "flying swallow": {
+        "jutsu_id": "arts_flying_swallow", "display_name": "Flying Swallow",
+        "class_requirement": "bukijutsu", "level_requirement": 45,
+        "chakra_cost": 30, "stamina_cost": 18, "cooldown": 7.0,
+        "jutsu_type": "blade_strike", "required_weapon_types": ("sword", "kunai"),
+        "damage": (38, 58), "damage_type": "physical", "effect": "bleeding",
+        "effect_chance_pct": 30, "accuracy_bonus": 15,
+        "wind_damage_bonus_pct": 15, "tier": 2, "element": "none",
+    },
     "fireball jutsu": {
         "jutsu_id": "ninjutsu_fireball", "display_name": "Fireball Jutsu",
         "class_requirement": "ninjutsu", "level_requirement": 20,

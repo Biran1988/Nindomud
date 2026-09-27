@@ -5,6 +5,12 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Bukijutsu gains `samurai sabre` at level 35 while wielding a sword:
+  it costs 35 Chakra and 10 Stamina and boosts normal sword hits 20% for
+  five pulses. `flying swallow <target>` at level 45 requires a sword or
+  kunai, costs 30 Chakra and 18 Stamina, gains +15 accuracy, can cause
+  bleeding, and deals 15% more damage with Wind chakra nature. Both work
+  against mobs; Flying Swallow also works against players where PvP is allowed.
 - Taijutsu gains Empi (level 20) and Nidan Kyten Geri (level 30) as
   direct stamina strikes. Gates and their follow-ups remain on hold.
 - Bukijutsu weapon arts now enchant, poison, or disenchant a wielded weapon

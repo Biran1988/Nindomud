@@ -4,6 +4,7 @@ from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
 
 import combat
+import commands
 import content
 import data_jutsu
 import leveling
@@ -25,7 +26,7 @@ class NinjaArtsTests(unittest.TestCase):
 
     def test_all_arts_unlock_and_element_gate(self):
         entries = [j for j in data_jutsu.JUTSU.values() if j["jutsu_id"].startswith("arts_")]
-        self.assertEqual(len(entries), 13)
+        self.assertEqual(len(entries), 15)
         self.assertIn("Weapon Enchantment", self.player.learned_skills)
         self.assertNotIn("Water Release: Glue Technique", self.player.learned_skills)
         self.player.chakra_nature = "wind"
@@ -46,6 +47,42 @@ class NinjaArtsTests(unittest.TestCase):
         self.player.cooldowns.clear()
         ninja_arts.use_weapon_art(self.session, "disenchantment", ["kunai"])
         self.assertEqual(self.player.inventory, ["A Basic Kunai", "A Basic Kunai"])
+
+    def test_samurai_sabre_needs_sword_buffs_only_sword_hits_and_expires(self):
+        starting_chakra = self.player.chakra
+        commands.cmd_use_jutsu(self.session, "samurai sabre", [])
+        self.assertNotIn("samurai_sabre", self.player.active_status_effects)
+        self.assertEqual(self.player.chakra, starting_chakra)
+
+        self.player.equipment["wielded"] = "A Basic Sword"
+        commands.cmd_use_jutsu(self.session, "samurai sabre", [])
+        self.assertEqual(self.player.active_status_effects["samurai_sabre"]["duration"], 5)
+        self.assertEqual(self.player.chakra, starting_chakra - 35)
+        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 60)
+        self.player.equipment["wielded"] = "A Basic Kunai"
+        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 50)
+        for _ in range(5):
+            ninja_arts.status_effects.tick_effects(self.player.active_status_effects)
+        self.player.equipment["wielded"] = "A Basic Sword"
+        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 50)
+
+    def test_flying_swallow_requires_blade_and_wind_improves_damage(self):
+        target = combat.Mob(2, 222, "Target", 20, 1000, 1000, 1, 0, 0)
+        room = NS(biome="none", ground_items=[], kekkei_no_me_caster=None)
+        self.assertFalse(combat._can_use_jutsu(self.player, data_jutsu.JUTSU["flying swallow"], "flying swallow"))
+        self.player.equipment["wielded"] = "A Basic Kunai"
+        self.assertTrue(combat._can_use_jutsu(self.player, data_jutsu.JUTSU["flying swallow"], "flying swallow"))
+        with patch.object(combat.world.WORLD, "get", return_value=room), \
+             patch.object(combat.random, "randint", side_effect=lambda low, high: 1 if high == 100 else high):
+            combat.use_jutsu(self.session, "flying swallow", target)
+            regular_damage = 1000 - target.health
+            self.player.chakra_nature = "wind"
+            self.player.cooldowns.clear()
+            target.health = 1000
+            combat.use_jutsu(self.session, "flying swallow", target)
+            wind_damage = 1000 - target.health
+        self.assertGreater(wind_damage, regular_damage)
+        self.assertIn("bleeding", target.active_status_effects)
 
     def test_arts_update_a_wielded_weapon_without_an_inventory_copy(self):
         content._register_shared_items()

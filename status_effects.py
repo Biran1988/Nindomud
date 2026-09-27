@@ -12,6 +12,10 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    "samurai_sabre": {
+        "display_name": "Samurai Sabre", "duration": 5,
+        "message": "Chakra sharpens {target}'s sword.",
+    },
     "barrier": {
         "display_name": "Barrier", "duration": 5,
         "message": "A chakra barrier surrounds {target}.",

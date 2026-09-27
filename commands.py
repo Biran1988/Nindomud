@@ -2574,6 +2574,13 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             return
         ninja_arts.use_weapon_art(session, jutsu_key, target_words)
         return
+    if jutsu_data.get("jutsu_type") == "sabre_buff":
+        if target_words:
+            session.send("Usage: samurai sabre")
+            return
+        import ninja_arts
+        ninja_arts.use_samurai_sabre(session)
+        return
     if jutsu_data.get("jutsu_type") == "trap_disable":
         import ninja_arts
         query = " ".join(target_words).lower()
