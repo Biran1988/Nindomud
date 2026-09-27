@@ -163,7 +163,6 @@ async def pulse_loop() -> None:
         for session in list(ACTIVE_SESSIONS):
             if session.state == State.PLAYING:
                 combat.tick_effects_pulse(session)
-                sage_mode.expire(session)
                 # Shadow Clone upkeep, per direct follow-up request
                 # ("Clones can be summoned before combat and persist
                 # until unsigned or chakra runs out") -- same
@@ -210,6 +209,9 @@ async def pulse_loop() -> None:
                 if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
                     for message in regen.tick_sharingan_idle(session.player):
                         session.send(message)
+                        session.send_prompt()
+                    if session.player.sage_active_contract:
+                        sage_mode.idle_upkeep(session)
                         session.send_prompt()
 
         if elapsed_since_autosave >= config.AUTOSAVE_INTERVAL_SECONDS:

@@ -12,16 +12,15 @@ MIN_LEVEL = 80
 TRAIN_INTERVAL = 12 * 60 * 60
 TRAIN_SUCCESS_PERCENT = 50
 MASTERY_REQUIRED = 100
-ACTIVATION_COST = 100
-DURATION = 5 * 60
-COOLDOWN = 30 * 60
+IDLE_CHAKRA_UPKEEP = 12  # every 10 seconds while online and out of combat
+COMBAT_CHAKRA_UPKEEP = 16  # each combat round
+COMBAT_STAMINA_UPKEEP = 8
 SUMMON_COST = 40
 
 
-def active_contract(player, now=None):
-    now = time.time() if now is None else now
+def active_contract(player):
     contract = player.sage_active_contract
-    if (contract in data_summons.CONTRACTS and now < player.sage_ends_at
+    if (contract in data_summons.CONTRACTS
             and contract in player.signed_summoning_contracts
             and player.sage_mastery.get(contract, 0) >= MASTERY_REQUIRED):
         return contract
@@ -55,8 +54,15 @@ def combat_pulse(session):
     if not contract:
         if player.sage_active_contract:
             player.sage_active_contract = ""
-            session.send("Your Sage Mode fades as the nature energy runs out.")
+            session.send("Your Sage Mode ends because its contract or mastery is no longer valid.")
         return
+    if player.chakra < COMBAT_CHAKRA_UPKEEP or player.stamina < COMBAT_STAMINA_UPKEEP:
+        player.sage_active_contract = ""
+        session.send("Your chakra and stamina give out -- your Sage Mode fades.")
+        return
+    player.chakra -= COMBAT_CHAKRA_UPKEEP
+    player.stamina -= COMBAT_STAMINA_UPKEEP
+    session.send(f"Your Sage Mode uses {COMBAT_CHAKRA_UPKEEP} chakra and {COMBAT_STAMINA_UPKEEP} stamina to remain active.")
     if contract == "slug" and player.health > 0:
         amount = min(player.maximum_health - player.health, max(1, player.maximum_health // 20))
         if amount > 0:
@@ -64,13 +70,17 @@ def combat_pulse(session):
             session.send(f"Slug Sage Mode restores {amount} health.")
 
 
-def expire(session):
-    """Clear an exhausted form even if the player is not fighting."""
+def idle_upkeep(session):
+    """Called on the same 10-second, out-of-combat timer as Sharingan."""
     player = session.player
-    if player.sage_active_contract and not active_contract(player):
+    if not player.sage_active_contract:
+        return
+    if not active_contract(player) or player.chakra < IDLE_CHAKRA_UPKEEP:
         player.sage_active_contract = ""
-        player.sage_ends_at = 0.0
-        session.send("Your Sage Mode fades as the nature energy runs out.")
+        session.send("Your chakra gives out -- your Sage Mode fades.")
+        return
+    player.chakra -= IDLE_CHAKRA_UPKEEP
+    session.send(f"Your Sage Mode uses {IDLE_CHAKRA_UPKEEP} chakra to remain active.")
 
 
 def elder_families(player):
@@ -86,28 +96,27 @@ def elder_families(player):
 
 def command(session, args):
     player = session.player
-    if not args or args[0].lower() == "status":
+    if args and args[0].lower() == "status":
         lines = ["Sage Mode training (each family is mastered separately):"]
         for key, info in data_summons.CONTRACTS.items():
             pct = max(0, min(100, player.sage_mastery.get(key, 0)))
             lines.append(f"  {info['display_name']}: {pct}% -- {info['hideout_name']}")
         lines.append(f"Active: {active_contract(player) or 'none'}")
-        lines.append("Use sage train at a signed contract's elder, or sage activate <family>.")
+        lines.append("Use sage train at an elder; sage [on <family>] toggles your mastered mode.")
         session.send("\n".join(lines))
         return
-    action = args[0].lower()
-    if action == "off":
+    action = args[0].lower() if args else "toggle"
+    if action == "off" or (action == "toggle" and active_contract(player)):
         if not active_contract(player):
             session.send("You are not in Sage Mode.")
             return
         player.sage_active_contract = ""
-        player.sage_ends_at = 0.0
         session.send("You release your Sage Mode.")
         return
-    if action not in ("train", "activate"):
-        session.send("Usage: sage status | sage train | sage activate <family> | sage off")
+    if action not in ("train", "on", "activate", "toggle") and action not in data_summons.CONTRACTS:
+        session.send("Usage: sage [on <family>|off|status] | sage train [family]")
         return
-    if session.combat_target or session.pvp_target:
+    if action == "train" and (session.combat_target or session.pvp_target):
         session.send("You must finish fighting first.")
         return
     if action == "train":
@@ -120,9 +129,16 @@ def command(session, args):
             session.send("Only a summon elder at their hideout can teach Sage Mode.")
             return
     else:
-        contract = args[1].lower() if len(args) > 1 else ""
+        if action in ("on", "activate"):
+            contract = args[1].lower() if len(args) > 1 else player.sage_preferred_contract
+        else:
+            contract = player.sage_preferred_contract if action == "toggle" else action
+        if not contract:
+            mastered = [key for key in data_summons.CONTRACTS if key in player.signed_summoning_contracts
+                        and player.sage_mastery.get(key, 0) >= MASTERY_REQUIRED]
+            contract = mastered[0] if len(mastered) == 1 else ""
         if contract not in data_summons.CONTRACTS:
-            session.send("Choose toad, snake, slug, ninken, or monkey.")
+            session.send("Choose a mastered family: sage on <toad|snake|slug|ninken|monkey>.")
             return
     if contract not in player.signed_summoning_contracts:
         session.send("You must sign this family's summoning contract first.")
@@ -152,20 +168,15 @@ def command(session, args):
         session.send(f"You must reach 100% mastery with the {contract} elder first.")
         return
     if active_contract(player):
-        session.send("You are already in Sage Mode. Release it first.")
+        session.send("You are already in Sage Mode. Use 'sage off' before choosing another family.")
         return
-    now = time.time()
-    if now < player.sage_cooldown_until:
-        session.send(f"Your natural energy has not recovered. {int((player.sage_cooldown_until - now + 59) // 60)} minutes remain.")
+    required_chakra = COMBAT_CHAKRA_UPKEEP if session.combat_target or session.pvp_target else IDLE_CHAKRA_UPKEEP
+    if player.chakra < required_chakra or player.stamina < COMBAT_STAMINA_UPKEEP:
+        session.send("You need chakra and stamina to sustain Sage Mode.")
         return
-    if player.chakra < ACTIVATION_COST:
-        session.send(f"You need {ACTIVATION_COST} chakra to enter Sage Mode.")
-        return
-    player.chakra -= ACTIVATION_COST
     player.sage_active_contract = contract
-    player.sage_ends_at = now + DURATION
-    player.sage_cooldown_until = now + COOLDOWN
-    session.send(f"You gather natural energy and enter {contract.title()} Sage Mode for five minutes!")
+    player.sage_preferred_contract = contract
+    session.send(f"You gather natural energy and enter {contract.title()} Sage Mode. Use 'sage off' to release it.")
 
 
 def summon_command(session, args):

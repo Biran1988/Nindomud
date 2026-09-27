@@ -39,7 +39,7 @@ STAFF_LEVELS = [
     "implementor",
 ]
 
-REGEN_INTERVAL_SECONDS = 40 / 3  # 75% of the old 10-second natural regen pace
+REGEN_INTERVAL_SECONDS = (40 / 3) * 5  # 20% of the prior natural regen rate (one tick about every 66.7s)
 IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS = 10  # unchanged when natural regeneration slows
 MISSION_COOLDOWN_SECONDS = 600  # 10 minutes -- how soon a completed mission can be repeated
 APARTMENT_COST_RYO = 100_000  # one-time cost to claim an apartment; one per player

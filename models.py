@@ -342,8 +342,7 @@ class Player:
     sage_mastery: dict = field(default_factory=dict)
     sage_training_ready_at: dict = field(default_factory=dict)
     sage_active_contract: str = ""
-    sage_ends_at: float = 0.0
-    sage_cooldown_until: float = 0.0
+    sage_preferred_contract: str = ""
     # Track jutsu (Section 119, per direct request/confirmation):
     # real, active tracking state. Exactly one of tracking_target_
     # mob_id / tracking_target_player_name is ever set at a time --

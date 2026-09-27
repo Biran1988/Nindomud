@@ -409,4 +409,5 @@ CHANGELOG = [
     ("15.256", "Bukijutsu gains Samurai Sabre (level 35), a five-pulse 20% sword damage buff, and Flying Swallow (level 45), a precise sword/kunai strike with a chance to bleed and a Wind nature damage bonus."),
     ("15.257", "Added individual helpfiles for recent Taijutsu strikes and stances, Bukijutsu Ninja Arts, Mangekyo techniques, and medicinal supplies; expanded Ninjutsu and Genjutsu pages with actual costs, effects, and cooldowns."),
     ("15.258", "Summon Elder mobs can be configured for any of five families. Sign their contracts, summon partners, and undertake a long, separate Sage Mode mastery path with each elder."),
+    ("15.259", "Sage Mode is now an on/off toggle with idle and combat upkeep instead of a duration and cooldown. Natural Health, Chakra, and Stamina regeneration runs at 20% of its previous rate."),
 ]

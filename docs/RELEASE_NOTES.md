@@ -69,8 +69,10 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.258: `changelog.py`.
-- Builder-configured Summon Elder mobs teach five separate Sage Modes. Set `mset <vnum> flags SummonElder` and `mset <vnum> summonfamily <family>`, then place the mob. Players sign a contract at level 20, and train at level 80, one attempt per family every 12 real hours with a 50% chance for 1% mastery. Full mastery permits a timed combat mode.
+- The in-game change history through version 15.259: `changelog.py`.
+- Builder-configured Summon Elder mobs teach five separate Sage Modes. Set `mset <vnum> flags SummonElder` and `mset <vnum> summonfamily <family>`, then place the mob. Players sign a contract at level 20, and train at level 80, one attempt per family every 12 real hours with a 50% chance for 1% mastery. Full mastery permits the family's Sage Mode.
+- Sage Mode toggles on/off with `sage` or `sage on <family>` and `sage off`. It stays active until turned off or resources fail, using 12 Chakra per idle 10-second tick and 16 Chakra plus 8 Stamina per combat round. The selected form survives reconnecting.
+- Natural Health, Chakra, and Stamina regeneration now runs at 20% of the prior rate: a recovery tick about every 66.7 seconds instead of 13.3 seconds. Per-tick amounts and Chakra Control bonuses remain as configured.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,
@@ -95,8 +97,8 @@ existing server installation, keeping the server's `data/` directory intact.
   Kage legendary item listings and purchases also follow prototype name edits.
 - `mcopy <source> <new>` and `ocopy <source> <new>` copy complete prototypes
   to unused VNUMs, with independent nested fields and no automatic spawn.
-- Natural regeneration runs at 75% of its former pace, without a full recovery
-  announcement; Sharingan's idle upkeep remains on its original 10-second timer.
+- Reaching full resources does not trigger a recovery announcement; Sharingan's
+  idle upkeep remains on its 10-second timer.
 - Sharingan, shadow clone, Kamui, and tracking upkeep report their real resource
   cost whenever charged. Sharingan Genjutsu is retired; `shar` toggles Sharingan.
 - Staff can use `mset <player> mangekyo on` or `bloodset <player> mangekyo yes`

@@ -1399,17 +1399,20 @@ DEFAULT_HELP_ENTRIES = [
         "primary_keyword": "sage", "keywords": ["sage", "sage mode", "senjutsu"],
         "title": "Sage Mode",
         "body": (
-            "Syntax: sage status | sage train [family] | sage activate <family> | sage off\n\n"
+            "Syntax: sage [on <family>|off|status] | sage train [family]\n\n"
             "Description: Sign a family's contract and reach level 80, then find its living Summon Elder. "
             "One meditation attempt is allowed per family every 12 real hours. "
             "Each attempt has a 50% chance of gaining just 1% mastery. "
             "Failed attempts also consume the interval. Each family has separate progress; "
             "100% mastery is required to activate its Sage Mode. At least 100 successful sessions are needed.\n\n"
-            "Activation costs 100 Chakra, lasts five real minutes, and starts a 30-minute cooldown. "
+            "Toggle a mastered family's Sage Mode on with 'sage on <family>' and off with 'sage off'. "
+            "Bare 'sage' toggles your last selected form (or your only mastered form). "
+            "It stays on while you have enough resources: 12 Chakra every 10 seconds out of combat, "
+            "or 16 Chakra and 8 Stamina per combat round. It turns off automatically when you cannot pay. "
             "All forms boost attack and jutsu damage by 20%, accuracy by 10, and reduce incoming combat damage by 10%. "
             "Toad adds 5 accuracy; Snake adds 10% jutsu damage; Slug heals 5% maximum health per combat round; "
             "Ninken adds 10 dodge chance; Monkey adds 10% wielded weapon damage. "
-            "Sage Mode lasts through logout, but its real-time duration and cooldown keep counting down.\n\n"
+            "Your toggle is saved through logout; upkeep resumes while online.\n\n"
             "Date: 2026-09-27"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
