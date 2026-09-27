@@ -20,7 +20,7 @@ class TaijutsuExpansionTests(unittest.TestCase):
         with patch.object(leveling.storage, "save_player"):
             leveling.sync_universal_skills(taijutsu)
             leveling.sync_universal_skills(ninjutsu)
-        for name in ("Choku Zuki", "Mae Geri", "Oi Zuki", "Sokuto", "Kumade", "Tamashiwara",
+        for name in ("Choku Zuki", "Mae Geri", "Oi Zuki", "Sokuto", "Empi", "Kumade", "Nidan Kyten Geri", "Tamashiwara",
                      "Kihon Dachi", "Neko Ashi Dachi", "Sanchin Dachi"):
             self.assertIn(name, taijutsu.learned_skills)
             self.assertNotIn(name, ninjutsu.learned_skills)
@@ -29,6 +29,21 @@ class TaijutsuExpansionTests(unittest.TestCase):
         self.assertIn("choku zuki", data_jutsu.jutsu_for_class_at_level("taijutsu", 3))
         self.assertIn("ushiro shishou", data_jutsu.jutsu_for_class_at_level("ninjutsu", 30))
         self.assertEqual(data_jutsu.match_prefix(["tamashiware", "guard"]), ("tamashiwara", 1))
+
+    def test_empi_and_nidan_are_stamina_strikes_without_handsigns(self):
+        player = Player(name="Tai", account_name="Tai", primary_class="taijutsu", level=35)
+        player.learned_skills = ["Empi", "Nidan Kyten Geri"]
+        player.stamina = 100
+        mob = combat.Mob(1, 100, "target", 35, 1000, 1000, 1, 0, 0)
+        session = NS(player=player, send=Mock())
+        for key in ("empi", "nidan kyten geri"):
+            self.assertFalse(data_handsigns.has_handsigns(data_jutsu.JUTSU[key]))
+            with patch.object(combat.random, "randint", return_value=1), \
+                 patch.object(combat, "_jutsu_damage_bonus", return_value=0):
+                combat.use_jutsu(session, key, mob)
+        self.assertLess(mob.health, 1000)
+        self.assertEqual(player.stamina, 73)
+        self.assertEqual(player.chakra, Player(name="Base", account_name="Base").chakra)
 
     def test_stances_switch_persist_and_affect_combat_stats(self):
         player = Player(name="Tai", account_name="Tai", primary_class="taijutsu", level=35)

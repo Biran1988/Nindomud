@@ -5,6 +5,18 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Taijutsu gains Empi (level 20) and Nidan Kyten Geri (level 30) as
+  direct stamina strikes. Gates and their follow-ups remain on hold.
+- Bukijutsu weapon arts now enchant, poison, or disenchant a wielded weapon
+  directly. The property stays on that individual equipped item.
+- Ninjutsu level 100 gains Nanairo no Rasengan: one cast sends seven
+  separately rolled colors at a target. The caster's chakra nature strengthens
+  its matching color; soul and dark can poison and blind. The original source's
+  level requirement was beyond Nindo's level 100 cap, so this adapts it as a
+  capstone with a single 120 Chakra cost and 25 second cooldown.
+- Genjutsu pass: Insect Eyes reflects the target's actual attack damage and
+  extra strikes. Frightened reduces damage dealt by both players and mobs;
+  mob damage is reduced once per hit.
 - Hidden Mist Jutsu is water-only Ninjutsu at level 40. `perform hidden mist
   jutsu` creates a 12-second effect on the room itself. Other occupants cannot
   see or target its caster. The caster gets +15 to hit and reduces a defender's
@@ -46,7 +58,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.252: `changelog.py`.
+- The in-game change history through version 15.255: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

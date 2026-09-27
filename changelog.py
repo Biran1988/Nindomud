@@ -403,4 +403,7 @@ CHANGELOG = [
     ("15.250", "Bukijutsu level 25+ can craft Antidote and Medicinal Pills from new Medicinal Herbs. Choose a pill level up to your own; examine reveals its saved level. Antidotes cure poison; the strongest medicine heals Health, Chakra, and Stamina."),
     ("15.251", "Medicinal Pills restore only Health, Chakra, and Stamina; they no longer cure bleeding or silence. Antidote Pills cure poison only and are not consumed when you are healthy."),
     ("15.252", "Water-only Hidden Mist Jutsu now creates a timed room effect. Enemies cannot target its caster there, while the caster gains accuracy and reduces enemy dodge. Ushiro remains an opening-only strike."),
+    ("15.253", "Genjutsu pass: Insect Eyes now reflects the victim's actual attack sequence, including extra strikes. Frightened now reduces both mob and player damage consistently without reducing mob attacks twice."),
+    ("15.254", "Ninjutsu pass: Nanairo no Rasengan unlocks at level 100 with seven separately rolled chakra strikes. Matching nature boosts its own color; the soul and dark strikes can poison and blind."),
+    ("15.255", "Taijutsu gains Empi at level 20 and Nidan Kyten Geri at level 30. Bukijutsu's weapon arts now work on a wielded weapon directly, with no need to unequip it first."),
 ]

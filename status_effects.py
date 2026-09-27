@@ -140,9 +140,12 @@ def reduce_incoming_damage(effects: Dict[str, dict], amount: int) -> int:
 
 
 def reduce_outgoing_damage(effects: Dict[str, dict], amount: int) -> int:
-    if "weakened" not in effects or amount <= 0:
+    if amount <= 0:
         return amount
-    return max(1, amount * (100 - EFFECT_DEFS["weakened"]["damage_penalty_pct"]) // 100)
+    for name in ("weakened", "frightened"):
+        if name in effects:
+            amount = max(1, amount * (100 - EFFECT_DEFS[name]["damage_penalty_pct"]) // 100)
+    return amount
 
 
 def tick_effects(effects: Dict[str, dict]) -> list:

@@ -64,6 +64,7 @@ JUTSU_HANDSIGNS = {
     "chakra ball": ["Ram", "Tiger"],
     "rasengan": ["Ram", "Tiger", "Hare"],
     "oodama rasengan": ["Ram", "Tiger", "Hare", "Dragon"],
+    "nanairo no rasengan": ["Ram", "Tiger", "Hare", "Dragon", "Ox", "Snake", "Rooster"],
     "fire rasengan": ["Tiger", "Horse", "Ram"],
     "water rasengan": ["Dragon", "Ram", "Hare"],
     "wind rasengan": ["Tiger", "Hare", "Dog"],

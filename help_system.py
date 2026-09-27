@@ -462,7 +462,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Bukijutsu techniques center on weapons and thrown items -- like Taijutsu, no hand signs and no casting delay. Some genuinely consume an inventory item on use.\n"
             "\n"
-            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken (35), wind-only Fan Techniques and Poison Gas Bomb (40), Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). At level 25, Bukijutsu can also craft Antidote and Medicinal Pills from Medicinal Herbs; see 'help craft'. Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted.\n"
+            "Jutsu granted automatically as a Bukijutsu character levels: Throw Shuriken (1), Throw Kunai (15), Counter Kunai (25, passive), Explosive Tag Kunai (30). Ninja Arts add Multi-Shuriken Throw (10), Multi-Kunai Throw (20), Exploding Note and Trap Disabling (25), Smoke Bomb and Toxin Binding (30), Demon Wind Shuriken (35), wind-only Fan Techniques and Poison Gas Bomb (40), Disenchantment (45), Exploding Clay (50), and Weapon Enchantment (55). At level 25, Bukijutsu can also craft Antidote and Medicinal Pills from Medicinal Herbs; see 'help craft'. Consumable bombs and throwing weapons are sold at shops; enchantments bind permanently to an individual weapon until disenchanted. Weapon arts accept a carried or wielded weapon.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -1689,12 +1689,12 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "taijutsu strikes",
-        "keywords": ["taijutsu strikes", "choku zuki", "mae geri", "oi zuki", "sokuto", "kumade", "tamashiwara"],
+        "keywords": ["taijutsu strikes", "choku zuki", "mae geri", "oi zuki", "sokuto", "empi", "kumade", "nidan kyten geri", "tamashiwara"],
         "title": "Taijutsu Strikes",
         "body": (
             "Syntax: <technique> [target]\n\n"
             "Description: Taijutsu unlocks Choku Zuki (level 3), Mae Geri (5), Oi Zuki (10), "
-            "Sokuto (15), Kumade (25), and Tamashiwara (35). Type the technique "
+            "Sokuto (15), Empi (20), Kumade (25), Nidan Kyten Geri (30), and Tamashiwara (35). Type the technique "
             "name directly, with a target or during combat. Kumade may blind the target "
             "and reduce accuracy; Tamashiwara may cause bleeding. Each costs stamina.\n\nDate: 2026-09-26"
         ),
@@ -3661,7 +3661,7 @@ DEFAULT_HELP_ENTRIES = [
 # The selected Ninjutsu expansion is data-driven, so every new technique
 # gets an in-game help page with its actual unlock, nature, and cost.
 _EXPANSION_HELP_KEYS = (
-    "chakra ball", "rasengan", "oodama rasengan", "suigadan", "juuha shou",
+    "chakra ball", "rasengan", "oodama rasengan", "nanairo no rasengan", "suigadan", "juuha shou",
     "karyuu endan", "retsudotensho", "chishin", "chidori", "dual chidori",
     "full body chidori", "maximum chidori", "raikiri", "fire rasengan",
     "water rasengan", "wind rasengan", "earth rasengan", "lightning rasengan",
@@ -3688,6 +3688,7 @@ for _key in _EXPANSION_HELP_KEYS:
         "elemental_clone": "Summons one living clone that fights alongside you and costs 25 Chakra per round. Requires 100% Shadow Clone Jutsu mastery; recasting any clone replaces the existing clones.",
         "ambush": "An opening attack with 50% extra damage; cannot be used mid-fight or against a wounded target.",
         "area": "An earthquake that damages other attackable mobs in the room as well.",
+        "sevenfold": "A level-cap Rasengan with seven separate strike rolls: fire, water, earth, wind, lightning, soul, and dark. A matching chakra nature strengthens its own color. Soul can poison and dark can blind; one cast pays one Chakra cost.",
         "disguise": "Take the appearance of a person in this room. Use without a target to release your disguise; higher Henge tiers last longer.",
         "item_illusion": "Change how a carried item looks to other players who examine you; its real identity and properties stay intact.",
         "item_decoy": "Project a false copy of a carried item on the ground. It cannot be picked up, equipped, or sold.",
@@ -3721,7 +3722,7 @@ def seed_default_help() -> None:
         path = _path(entry["primary_keyword"])
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "genjutsu"}:
+        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "genjutsu", "taijutsu strikes", "bukijutsu"}:
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if existing.get("updated_by") == "System" and existing.get("body") != entry["body"]:

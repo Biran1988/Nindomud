@@ -95,6 +95,11 @@ def use_weapon_art(session, key, args):
         prop = "poison" if key == "toxin binding" else None
         query = " ".join(args)
     item = _owned_item(player, query) if query else None
+    # Wielding removes the real item from inventory. Weapon arts should still
+    # be usable on that same item without making the player unequip it first.
+    wielded = player.equipment.get("wielded", "")
+    if not item and query and query.lower() in base_item(wielded).lower():
+        item = wielded
     if not item or not data_weapons.weapon_type_for_item(base_item(item)):
         session.send("Specify a weapon in your inventory.")
         return
@@ -107,7 +112,11 @@ def use_weapon_art(session, key, args):
         return
     if not _pay(session, key):
         return
-    player.inventory[player.inventory.index(item)] = base_item(item) + (f" [art:{prop}]" if prop else "")
+    updated = base_item(item) + (f" [art:{prop}]" if prop else "")
+    if item in player.inventory:
+        player.inventory[player.inventory.index(item)] = updated
+    else:
+        player.equipment["wielded"] = updated
     session.send(f"{base_item(item)} is now {'disenchanted' if prop is None else 'permanently bound to ' + prop}.")
 
 

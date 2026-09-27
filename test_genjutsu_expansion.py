@@ -119,6 +119,32 @@ class GenjutsuExpansionTests(unittest.TestCase):
         self.assertIn("asleep", foe.active_status_effects)
         self.assertIn("asleep", victim.active_status_effects)
 
+    def test_frightened_reduces_player_and_mob_damage_once(self):
+        self.assertEqual(status_effects.reduce_outgoing_damage({"frightened": {}}, 100), 80)
+        self.assertEqual(status_effects.reduce_outgoing_damage({"weakened": {}, "frightened": {}}, 100), 68)
+        with patch.object(combat.dice, "roll", return_value=100), \
+             patch.object(combat.derived_stats, "damage_roll", return_value=0), \
+             patch.object(commands, "equipped_weapon_damroll_bonus", return_value=0), \
+             patch.object(commands, "equipped_weapon_type_damage_bonus", return_value=0):
+            mob = combat.Mob(123, 555, "Enemy", 30, 100, 100, 1, 0, 0)
+            status_effects.apply_effect(mob.active_status_effects, "frightened")
+            self.assertEqual(combat._mob_attack_damage(mob), 80)
+
+    def test_insect_eyes_reflects_victim_attack_sequence(self):
+        mirror = data_jutsu.JUTSU["insect eyes"]
+        ordinary = data_jutsu.JUTSU["distortion flame"]
+        mob = combat.Mob(123, 555, "Enemy", 30, 100, 100, 1, 0, 0)
+        mob.attacks = 3
+        with patch.object(combat, "_mob_attack_damage", return_value=17) as attack:
+            self.assertEqual(combat._mirror_illusion_damage(mirror, mob, 20), 71)
+            self.assertEqual(attack.call_count, 3)
+        target = Player("Target", "Target", level=30)
+        with patch.object(combat, "_player_attack_damage", return_value=23) as attack, \
+             patch.object(combat, "_roll_extra_attacks", return_value=2):
+            self.assertEqual(combat._mirror_illusion_damage(mirror, target, 20), 89)
+            self.assertEqual(attack.call_count, 3)
+        self.assertEqual(combat._mirror_illusion_damage(ordinary, target, 20), 20)
+
     def test_barrier_reduces_actual_pvp_jutsu_damage(self):
         attacker = self.player
         attacker.learned_skills = ["Distortion Flame"]

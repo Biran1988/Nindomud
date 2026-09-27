@@ -47,6 +47,19 @@ class NinjaArtsTests(unittest.TestCase):
         ninja_arts.use_weapon_art(self.session, "disenchantment", ["kunai"])
         self.assertEqual(self.player.inventory, ["A Basic Kunai", "A Basic Kunai"])
 
+    def test_arts_update_a_wielded_weapon_without_an_inventory_copy(self):
+        content._register_shared_items()
+        self.player.equipment["wielded"] = "A Basic Kunai"
+        self.player.inventory = []
+        ninja_arts.use_weapon_art(self.session, "weapon enchantment", ["kunai", "sharp"])
+        self.assertEqual(self.player.inventory, [])
+        self.assertEqual(ninja_arts.property_of(self.player.equipment["wielded"]), "sharp")
+        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 40), 44)
+        self.player.cooldowns.clear()
+        ninja_arts.use_weapon_art(self.session, "disenchantment", ["kunai"])
+        self.assertEqual(self.player.equipment["wielded"], "A Basic Kunai")
+        self.assertEqual(self.player.inventory, [])
+
     def test_traps_can_be_disabled_or_detonate(self):
         mob = combat.Mob(1, 111, "Dummy", 20, 200, 200, 1, 0, 0)
         self.assertTrue(ninja_arts.attach_trap(mob, "exploding note", self.player.name))

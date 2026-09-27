@@ -1606,18 +1606,47 @@ def _genjutsu_hit_bonus(player, jutsu):
 
 
 def _mirror_illusion_damage(jutsu, target, rolled):
-    """Insect Eyes reflects the opponent's actual offensive strength."""
+    """Insect Eyes makes the victim suffer their own normal attack sequence."""
     if jutsu.get("jutsu_type") != "mirror":
         return rolled
     if isinstance(target, Mob):
-        import dice
-        return max(1, rolled + dice.average(target.damage_dice) * max(1, target.attacks))
-    return max(1, rolled + max(0, derived_stats.damage_roll(target)) + max(1, target.strength // 3))
+        return max(1, rolled + sum(_mob_attack_damage(target) for _ in range(max(1, target.attacks))))
+    return max(1, rolled + sum(_player_attack_damage(target) for _ in range(1 + _roll_extra_attacks(target))))
 
 
 def _genjutsu_impact(jutsu, target):
     if jutsu.get("stamina_drain"):
         target.stamina = max(0, target.stamina - jutsu["stamina_drain"])
+
+
+NANAIRO_STRIKES = (
+    ("fire", None), ("water", None), ("earth", None),
+    ("wind", None), ("lightning", None),
+    ("soul", "poisoned"), ("dark", "blinded"),
+)
+
+
+def _sevenfold_damage(jutsu, caster):
+    """Roll each Nanairo strike separately; a missed color deals no damage.
+
+    Its five elemental colors are part of this one Ninjutsu, rather than
+    seven independently castable elemental jutsu. Matching chakra nature
+    strengthens only that color; soul and dark have no nature gate.
+    """
+    total = 0
+    landed = []
+    effects = []
+    for color, effect in NANAIRO_STRIKES:
+        if random.randint(1, 100) > 75:
+            continue
+        strike = random.randint(*jutsu["damage"])
+        if color in (caster.chakra_nature, caster.chakra_nature_secondary):
+            strike = round(strike * 1.2)
+        total += strike
+        landed.append(color)
+        if effect and random.randint(1, 100) <= 25:
+            effects.append(effect)
+    return total, landed, effects
 
 
 def _try_counter_kunai(session, target_session, target, attacker_name: str, jutsu_display_name: str) -> bool:
@@ -2063,8 +2092,6 @@ def resolve_pulse(session) -> None:
         if player.health <= 0:
             break
         dmg = _mob_attack_damage(mob)
-        if "frightened" in mob.active_status_effects:
-            dmg = int(dmg * (1 - status_effects.EFFECT_DEFS["frightened"]["damage_penalty_pct"] / 100))
         if player.sharingan_active and player.bloodline_tomoe >= 3:
             reduced = _sharingan_predict_and_reduce_damage(player, dmg)
             if reduced < dmg:
@@ -2347,7 +2374,16 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         session.send(f"You attach {jutsu['display_name']} to {mob.name}. It will detonate in two rounds unless disabled.")
         return
 
-    dmg, was_explosive = roll_jutsu_damage(jutsu)
+    if jutsu.get("jutsu_type") == "sevenfold":
+        dmg, landed, sevenfold_effects = _sevenfold_damage(jutsu, player)
+        if not landed:
+            session.send(f"All seven colors of {colored_name} fail to connect with {mob.name}!")
+            return
+        session.send(f"&C{len(landed)} of seven Rasengan strikes connect: {', '.join(landed)}.&x")
+        was_explosive = False
+    else:
+        dmg, was_explosive = roll_jutsu_damage(jutsu)
+        sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, mob, dmg)
     dmg += _jutsu_damage_bonus(player)
     if jutsu.get("jutsu_type") == "ambush":
@@ -2385,6 +2421,9 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
         status_effects.apply_effect(mob.active_status_effects, jutsu["effect"], source=jutsu_key)
         session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=mob.name))
+    for effect in sevenfold_effects:
+        status_effects.apply_effect(mob.active_status_effects, effect, source=jutsu_key)
+        session.send(status_effects.EFFECT_DEFS[effect]["message"].format(target=mob.name))
 
     if jutsu.get("jutsu_type") == "area":
         for other in list(mobs_in_room(player.room_vnum)):
@@ -2534,7 +2573,17 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         target_session.send(f"&R{player.name} attaches {jutsu['display_name']} to you! Use Trap Disabling before it detonates.&x")
         return
 
-    dmg, was_explosive = roll_jutsu_damage(jutsu)
+    if jutsu.get("jutsu_type") == "sevenfold":
+        dmg, landed, sevenfold_effects = _sevenfold_damage(jutsu, player)
+        if not landed:
+            session.send(f"All seven colors of {colored_name} fail to connect with {target.name}!")
+            target_session.send("The rainbow of chakra passes around you without a hit.")
+            return
+        session.send(f"&C{len(landed)} of seven Rasengan strikes connect: {', '.join(landed)}.&x")
+        was_explosive = False
+    else:
+        dmg, was_explosive = roll_jutsu_damage(jutsu)
+        sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, target, dmg)
     dmg += _jutsu_damage_bonus(player)
     if jutsu.get("jutsu_type") == "ambush":
@@ -2595,6 +2644,10 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key, duration_override=effect_duration)
         target_session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
         session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
+    for effect in sevenfold_effects:
+        status_effects.apply_effect(target.active_status_effects, effect, source=jutsu_key)
+        target_session.send(status_effects.EFFECT_DEFS[effect]["message"].format(target="You"))
+        session.send(status_effects.EFFECT_DEFS[effect]["message"].format(target=target.name))
 
     if jutsu.get("jutsu_type") == "fan_art" and fan_direction and target.health > 0:
         ninja_arts.fan_push(session, target, fan_direction, target_session)

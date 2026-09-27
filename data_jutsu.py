@@ -78,12 +78,26 @@ JUTSU = {
         "damage": (22, 34), "damage_type": "physical", "effect": None,
         "tier": 2, "element": "none",
     },
+    "empi": {
+        "jutsu_id": "taijutsu_empi", "display_name": "Empi",
+        "class_requirement": "taijutsu", "level_requirement": 20,
+        "chakra_cost": 0, "stamina_cost": 11, "cooldown": 4.0,
+        "damage": (24, 37), "damage_type": "physical", "effect": None,
+        "tier": 2, "element": "none",
+    },
     "kumade": {
         "jutsu_id": "taijutsu_kumade", "display_name": "Kumade",
         "class_requirement": "taijutsu", "level_requirement": 25,
         "chakra_cost": 0, "stamina_cost": 13, "cooldown": 5.0,
         "damage": (27, 41), "damage_type": "physical", "effect": "blinded", "effect_chance_pct": 35,
         "tier": 2, "element": "none",
+    },
+    "nidan kyten geri": {
+        "jutsu_id": "taijutsu_nidan_kyten_geri", "display_name": "Nidan Kyten Geri",
+        "class_requirement": "taijutsu", "level_requirement": 30,
+        "chakra_cost": 0, "stamina_cost": 16, "cooldown": 5.5,
+        "damage": (32, 47), "damage_type": "physical", "effect": None,
+        "tier": 3, "element": "none",
     },
     "tamashiwara": {
         "jutsu_id": "taijutsu_tamashiwara", "display_name": "Tamashiwara",
@@ -526,6 +540,10 @@ JUTSU.update({
     "chakra ball": _ninjutsu("Chakra Ball", 3, 9, (9, 16), cooldown=2.5),
     "rasengan": _ninjutsu("Rasengan", 25, 24, (27, 43)),
     "oodama rasengan": _ninjutsu("Oodama Rasengan", 45, 42, (48, 72), cooldown=8.0),
+    # The original source unlocks this beyond level 100. Nindo caps at 100,
+    # so its seven-stage attack is the Ninjutsu level-cap technique here.
+    "nanairo no rasengan": _ninjutsu("Nanairo no Rasengan", 100, 120, (25, 38),
+                                     jutsu_type="sevenfold", cooldown=25.0),
     "suigadan": _ninjutsu("Suigadan", 30, 28, (28, 46), "water", requires_water=True),
     "juuha shou": _ninjutsu("Juuha Shou", 30, 28, (28, 46), "wind", effect="off_balance", effect_chance_pct=25),
     "karyuu endan": _ninjutsu("Karyuu Endan", 40, 36, (41, 65), "fire", effect="burning", effect_chance_pct=40),

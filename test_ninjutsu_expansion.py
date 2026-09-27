@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 import combat
 import commands
+import data_handsigns
 import data_jutsu
 import derived_stats
 import leveling
@@ -116,6 +117,50 @@ class NinjutsuExpansionTests(unittest.TestCase):
             combat._clone_attack_target_once(attacker_session, attacker, defender_session, defender, clone)
         self.assertLess(defender.health, before)
         self.assertIn("paralyzed", defender.active_status_effects)
+
+    def test_nanairo_unlock_and_seven_independent_colors(self):
+        p = self.player(99, "fire")
+        with patch.object(leveling.storage, "save_player"):
+            leveling.sync_universal_skills(p)
+            self.assertNotIn("Nanairo no Rasengan", p.learned_skills)
+            p.level = 100
+            leveling.sync_universal_skills(p)
+        jutsu = data_jutsu.JUTSU["nanairo no rasengan"]
+        self.assertIn("Nanairo no Rasengan", p.learned_skills)
+        self.assertEqual(jutsu["chakra_cost"], 120)
+        self.assertTrue(data_handsigns.sequence_for("nanairo no rasengan"))
+        with patch.object(combat.random, "randint", side_effect=lambda lo, hi: lo):
+            damage, colors, effects = combat._sevenfold_damage(jutsu, p)
+        self.assertEqual(colors, ["fire", "water", "earth", "wind", "lightning", "soul", "dark"])
+        self.assertEqual(damage, 25 * 6 + 30)  # Fire gains 20%; other colors do not.
+        self.assertEqual(effects, ["poisoned", "blinded"])
+        with patch.object(combat.random, "randint", return_value=100):
+            self.assertEqual(combat._sevenfold_damage(jutsu, p), (0, [], []))
+
+    def test_nanairo_cast_on_mob_and_player(self):
+        p = self.player(100, "fire")
+        p.learned_skills = ["Nanairo no Rasengan"]
+        s = NS(player=p, send=Mock())
+        mob = combat.Mob(1, 100, "enemy", 100, 1000, 1000, 1, 0, 0)
+        with patch.object(combat.random, "randint", side_effect=lambda lo, hi: lo), \
+             patch.object(combat, "_jutsu_damage_bonus", return_value=0):
+            combat.use_jutsu(s, "nanairo no rasengan", mob)
+        self.assertLess(mob.health, 1000)
+        self.assertIn("poisoned", mob.active_status_effects)
+        self.assertIn("blinded", mob.active_status_effects)
+        self.assertEqual(p.chakra, 380)
+
+        p.cooldowns.clear()
+        defender = Player(name="Defender", account_name="Defender", level=100)
+        defender.room_vnum = p.room_vnum
+        defender.health = defender.maximum_health = 1000
+        defender_session = NS(player=defender, send=Mock())
+        with patch.object(combat.random, "randint", side_effect=[1, 100]), \
+             patch.object(combat, "_sevenfold_damage", return_value=(50, ["fire"], [])), \
+             patch.object(combat, "_jutsu_damage_bonus", return_value=0):
+            combat.use_jutsu_on_player(s, "nanairo no rasengan", defender_session)
+        self.assertLess(defender.health, 1000)
+        self.assertEqual(p.chakra, 260)
 
 
 if __name__ == "__main__":
