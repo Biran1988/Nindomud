@@ -1383,9 +1383,9 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: summon sign [family] (beside a Summon Elder) | summon <toad|snake|slug|ninken|monkey> | summon dismiss\n"
             "\n"
-            "Description: Five summoning contracts exist -- Toad, Snake, Slug, Ninken, and Monkey. A builder places a Summon Elder in that family's hideout. At level 20, stand beside it and use 'summon sign' to sign its contract. Calling that family costs 40 Chakra and summons its highest tier allowed by your level.\n"
+            "Description: Five summoning families exist -- Toad, Snake, Slug, Ninken, and Monkey. A builder places a Summon Elder in that family's hideout. At level 20, stand beside it and use 'summon sign' to choose your one permanent contract. You cannot sign or summon another family afterward. Calling your family costs 40 Chakra and summons its highest tier allowed by your level.\n"
             "\n"
-            "A summon's real strength is your own current level multiplied by that specific tier's own power -- so the same contract gets meaningfully stronger as you level, without needing to re-sign anything. Only one summon can ever be active at a time; summoning a new one dismisses whatever was already out.\n"
+            "A summon's real strength is your own current level multiplied by that specific tier's own power -- so the same contract gets meaningfully stronger as you level, without needing to re-sign anything. Calling your family again replaces your current summon.\n"
             "\n"
             "Every contract's strongest tier has its own genuinely unique battle role, not just bigger numbers -- some heal you, some trap or bind an enemy, one can save you from a killing blow, and one doesn't fight at all but makes your own attacks hit harder instead. Discovering exactly what each family's top tier does is part of the fun.\n"
             "\n"
@@ -1400,10 +1400,10 @@ DEFAULT_HELP_ENTRIES = [
         "title": "Sage Mode",
         "body": (
             "Syntax: sage [on <family>|off|status] | sage train [family]\n\n"
-            "Description: Sign a family's contract and reach level 80, then find its living Summon Elder. "
-            "One meditation attempt is allowed per family every real hour. "
+            "Description: Choose one permanent summoning contract and reach level 80, then find its living Summon Elder. "
+            "You can only train the family you chose. One meditation attempt is allowed every real hour. "
             "Each attempt has a 5% chance of gaining just 1% mastery. "
-            "Failed attempts also consume the interval. Each family has separate progress; "
+            "Failed attempts also consume the interval. "
             "100% mastery is required to activate its Sage Mode. At least 100 successful sessions are needed.\n\n"
             "Toggle a mastered family's Sage Mode on with 'sage on <family>' and off with 'sage off'. "
             "Bare 'sage' toggles your last selected form (or your only mastered form). "
@@ -1411,7 +1411,7 @@ DEFAULT_HELP_ENTRIES = [
             "or 16 Chakra and 8 Stamina per combat round. It turns off automatically when you cannot pay. "
             "All forms boost attack and jutsu damage by 20%, accuracy by 10, and reduce incoming combat damage by 10%. "
             "Toad adds 5 accuracy; Snake adds 10% jutsu damage; Slug heals 5% maximum health per combat round; "
-            "Ninken adds 10 dodge chance; Monkey adds 10% wielded weapon damage. "
+            "Ninken grants one extra ordinary attack each combat round; Monkey adds 10% wielded weapon damage. "
             "Your toggle is saved through logout; upkeep resumes while online.\n\n"
             "Date: 2026-09-27"
         ),

@@ -84,18 +84,18 @@ class SageModeTests(unittest.TestCase):
                     self.assertEqual(json.load(file)["sage_training_interval_version"], 2)
 
     def test_summoning_and_five_family_toggle_and_upkeep(self):
-        self.player.signed_summoning_contracts = list(sage_mode.data_summons.CONTRACTS)
-        sage_mode.summon_command(self.session, ["toad"])
-        self.assertEqual(combat.active_summon(self.player).summon_tier_key, "toad_3")
+        self.player.signed_summoning_contracts = ["slug"]
         sage_mode.summon_command(self.session, ["slug"])
+        self.assertEqual(combat.active_summon(self.player).summon_tier_key, "slug_2")
+        sage_mode.summon_command(self.session, ["toad"])
         self.assertEqual(combat.active_summon(self.player).summon_tier_key, "slug_2")
         self.assertEqual(sum(1 for mobs in combat.MOBS_BY_ROOM.values() for mob in mobs if mob.summon_owner), 1)
         combat.dismiss_summon(self.player)
-        self.player.sage_mastery = {key: 100 for key in sage_mode.data_summons.CONTRACTS}
+        self.player.sage_mastery = {"slug": 100, "toad": 100}
         sage_mode.command(self.session, ["on", "slug"])
-        self.assertEqual(self.player.chakra, 920)  # two summons; toggle has no upfront cost
+        self.assertEqual(self.player.chakra, 960)  # one summon; toggle has no upfront cost
         sage_mode.combat_pulse(self.session)
-        self.assertEqual(self.player.chakra, 904)
+        self.assertEqual(self.player.chakra, 944)
         self.assertEqual(self.player.stamina, 92)
         self.assertEqual(self.player.health, 550)
         self.assertEqual(sage_mode.outgoing(self.player, 100), 120)
@@ -108,10 +108,13 @@ class SageModeTests(unittest.TestCase):
         self.assertEqual(restored.sage_active_contract, "slug")
         self.assertEqual(restored.sage_preferred_contract, "slug")
         sage_mode.idle_upkeep(self.session)
-        self.assertEqual(self.player.chakra, 892)
+        self.assertEqual(self.player.chakra, 932)
         sage_mode.command(self.session, ["off"])
         sage_mode.command(self.session, ["on", "toad"])
-        self.assertEqual(sage_mode.accuracy(self.player), 15)
+        self.assertFalse(sage_mode.active_contract(self.player))
+        self.assertIn("permanent", self.session.send.call_args.args[0])
+        sage_mode.command(self.session, [])
+        self.assertEqual(sage_mode.active_contract(self.player), "slug")
         self.player.chakra = 15
         sage_mode.idle_upkeep(self.session)
         self.assertEqual(self.player.chakra, 3)
@@ -119,23 +122,85 @@ class SageModeTests(unittest.TestCase):
         self.assertFalse(sage_mode.active_contract(self.player))
         self.assertEqual(self.player.chakra, 3)
         self.assertEqual(sage_mode.outgoing(self.player, 100), 100)
-        self.assertEqual(self.player.sage_preferred_contract, "toad")
+        self.assertEqual(self.player.sage_preferred_contract, "slug")
+
+    def test_contract_choice_is_permanent_even_with_legacy_multiple_contracts(self):
+        olc.cmd_mset(self.session, ["9002", "flags", "SummonElder"])
+        olc.cmd_mset(self.session, ["9002", "summonfamily", "toad"])
+        combat.spawn_mob(9002, 9001)
+        sage_mode.sign_command(self.session)
+        self.assertEqual(self.player.signed_summoning_contracts, ["toad"])
+        olc.cmd_mset(self.session, ["9002", "summonfamily", "slug"])
+        sage_mode.sign_command(self.session)
+        self.assertEqual(self.player.signed_summoning_contracts, ["toad"])
+        self.assertIn("permanent", self.session.send.call_args.args[0])
+        self.player.signed_summoning_contracts = ["toad", "slug"]  # legacy live session
+        self.player.sage_mastery = {"toad": 100, "slug": 100}
+        sage_mode.summon_command(self.session, ["slug"])
+        self.assertIsNone(combat.active_summon(self.player))
+        sage_mode.command(self.session, ["on", "slug"])
+        self.assertFalse(sage_mode.active_contract(self.player))
+        sage_mode.command(self.session, ["train", "slug"])
+        self.assertEqual(self.player.sage_mastery["slug"], 100)
+        self.assertEqual(sage_mode.chosen_contract(self.player), "toad")
+
+    def test_old_multi_contract_save_keeps_first_signed_family(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(storage, "DATA_DIR", temp), \
+                 patch.object(storage, "ACCOUNTS_DIR", os.path.join(temp, "accounts")), \
+                 patch.object(storage, "PLAYERS_DIR", os.path.join(temp, "players")):
+                self.player.signed_summoning_contracts = ["snake", "slug"]
+                self.player.sage_active_contract = "slug"
+                self.player.sage_preferred_contract = "slug"
+                storage.save_player(self.player)
+                loaded = storage.load_player(self.player.name)
+                self.assertEqual(loaded.signed_summoning_contracts, ["snake"])
+                self.assertEqual(loaded.sage_active_contract, "")
+                self.assertEqual(loaded.sage_preferred_contract, "snake")
+                self.assertEqual(storage.load_player(self.player.name).signed_summoning_contracts, ["snake"])
 
     def test_combat_toggle_can_start_mid_fight_and_turns_off_before_bonus_if_unfunded(self):
         self.player.signed_summoning_contracts = ["ninken"]
         self.player.sage_mastery = {"ninken": 100}
         self.session.combat_target = object()
         sage_mode.command(self.session, ["on", "ninken"])
-        self.assertEqual(sage_mode.dodge(self.player), 10)
+        self.assertEqual(sage_mode.extra_attacks(self.player), 1)
         self.player.stamina = 7
         sage_mode.combat_pulse(self.session)
         self.assertFalse(sage_mode.active_contract(self.player))
         self.assertEqual(self.player.stamina, 7)
-        self.assertEqual(sage_mode.dodge(self.player), 0)
+        self.assertEqual(sage_mode.extra_attacks(self.player), 0)
         self.session.combat_target = None
         self.player.stamina = 100
         sage_mode.command(self.session, [])
         self.assertEqual(sage_mode.active_contract(self.player), "ninken")
+
+    def test_ninken_bonus_is_a_real_second_strike_in_mob_combat(self):
+        self.player.signed_summoning_contracts = ["ninken"]
+        self.player.sage_mastery = {"ninken": 100}
+        mob = combat.spawn_mob(9002, 9001)
+        self.session.combat_target = mob
+        with patch("combat._player_attack_mob_once") as attack, \
+             patch("combat._roll_extra_attacks", return_value=0):
+            combat.resolve_pulse(self.session)
+            self.assertEqual(attack.call_count, 1)
+            sage_mode.command(self.session, ["on", "ninken"])
+            combat.resolve_pulse(self.session)
+            self.assertEqual(attack.call_count, 3)  # one normal + one Ninken strike
+
+    def test_ninken_bonus_is_a_real_second_strike_in_pvp(self):
+        self.player.signed_summoning_contracts = ["ninken"]
+        self.player.sage_mastery = {"ninken": 100}
+        opponent = Player(name="Opponent", account_name="Opponent", room_vnum=9001)
+        opponent_session = NS(player=opponent, pvp_target=self.session, send=Mock())
+        self.session.pvp_target = opponent_session
+        with patch("combat._player_attack_target_once") as attack, \
+             patch("combat._roll_extra_attacks", return_value=0):
+            combat.resolve_pvp_pulse(self.session)
+            self.assertEqual(attack.call_count, 1)
+            sage_mode.command(self.session, ["on", "ninken"])
+            combat.resolve_pvp_pulse(self.session)
+            self.assertEqual(attack.call_count, 3)
 
     def test_help_and_builder_field_reference(self):
         self.assertIn("SummonElder", olc.VALID_MOB_ACT_FLAGS)

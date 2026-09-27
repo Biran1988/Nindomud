@@ -16,6 +16,8 @@ Confirmed mechanics, locked in directly:
   that one family, not a single fixed summon -- a basic member of the
   family at the unlock level, stronger/rarer members unlocking at
   higher levels within that same contract.
+- The first signed family is a permanent choice. A player cannot sign,
+  call, or study Sage Mode with any other summoning family.
 - A summon's real combat stats scale directly off the SUMMONER's own
   CURRENT character level, multiplied by that summon's own base
   modifier (stronger contracts/tiers have a higher modifier) -- the

@@ -18,10 +18,15 @@ COMBAT_STAMINA_UPKEEP = 8
 SUMMON_COST = 40
 
 
+def chosen_contract(player):
+    """The first valid signed family is the player's permanent choice."""
+    return next((key for key in player.signed_summoning_contracts if key in data_summons.CONTRACTS), "")
+
+
 def active_contract(player):
     contract = player.sage_active_contract
     if (contract in data_summons.CONTRACTS
-            and contract in player.signed_summoning_contracts
+            and contract == chosen_contract(player)
             and player.sage_mastery.get(contract, 0) >= MASTERY_REQUIRED):
         return contract
     return ""
@@ -40,8 +45,9 @@ def accuracy(player):
     return 10 + (5 if contract == "toad" else 0) if contract else 0
 
 
-def dodge(player):
-    return 10 if active_contract(player) == "ninken" else 0
+def extra_attacks(player):
+    """Ninken Sage Mode grants one extra ordinary strike each combat round."""
+    return 1 if active_contract(player) == "ninken" else 0
 
 
 def incoming(player, damage):
@@ -97,10 +103,15 @@ def elder_families(player):
 def command(session, args):
     player = session.player
     if args and args[0].lower() == "status":
-        lines = ["Sage Mode training (each family is mastered separately):"]
-        for key, info in data_summons.CONTRACTS.items():
-            pct = max(0, min(100, player.sage_mastery.get(key, 0)))
-            lines.append(f"  {info['display_name']}: {pct}% -- {info['hideout_name']}")
+        chosen = chosen_contract(player)
+        lines = ["Sage Mode training:"]
+        if chosen:
+            info = data_summons.CONTRACTS[chosen]
+            pct = max(0, min(100, player.sage_mastery.get(chosen, 0)))
+            lines.append(f"  Permanent contract: {info['display_name']} -- {info['hideout_name']}")
+            lines.append(f"  Mastery: {pct}%")
+        else:
+            lines.append("  No summoning contract signed. Choose one family at its elder.")
         lines.append(f"Active: {active_contract(player) or 'none'}")
         lines.append("Use sage train at an elder; sage [on <family>] toggles your mastered mode.")
         session.send("\n".join(lines))
@@ -134,14 +145,15 @@ def command(session, args):
         else:
             contract = player.sage_preferred_contract if action == "toggle" else action
         if not contract:
-            mastered = [key for key in data_summons.CONTRACTS if key in player.signed_summoning_contracts
-                        and player.sage_mastery.get(key, 0) >= MASTERY_REQUIRED]
-            contract = mastered[0] if len(mastered) == 1 else ""
+            chosen = chosen_contract(player)
+            contract = chosen if player.sage_mastery.get(chosen, 0) >= MASTERY_REQUIRED else ""
         if contract not in data_summons.CONTRACTS:
             session.send("Choose a mastered family: sage on <toad|snake|slug|ninken|monkey>.")
             return
-    if contract not in player.signed_summoning_contracts:
-        session.send("You must sign this family's summoning contract first.")
+    chosen = chosen_contract(player)
+    if contract != chosen:
+        session.send(f"Your {chosen.title()} contract is permanent; you cannot learn another family's Sage Mode." if chosen
+                     else "You must sign this family's summoning contract first.")
         return
     if action == "train":
         if player.level < MIN_LEVEL:
@@ -197,8 +209,10 @@ def summon_command(session, args):
         session.send("Usage: summon <toad|snake|slug|ninken|monkey> | summon sign [family] | summon dismiss")
         return
     contract = args[0].lower()
-    if contract not in player.signed_summoning_contracts:
-        session.send("You have not signed that summoning contract.")
+    chosen = chosen_contract(player)
+    if contract != chosen:
+        session.send(f"Your {chosen.title()} contract is permanent; you cannot summon another family." if chosen
+                     else "You have not signed that summoning contract.")
         return
     if session.combat_target or session.pvp_target:
         session.send("You cannot change summons while fighting.")
@@ -218,6 +232,10 @@ def sign_command(session, args=None):
     if session.combat_target or session.pvp_target:
         session.send("You must finish fighting first.")
         return
+    chosen = chosen_contract(player)
+    if chosen:
+        session.send(f"You already chose the {chosen.title()} family. A summoning contract is permanent; you cannot sign another.")
+        return
     families = elder_families(player)
     contract = args[0].lower() if args else (next(iter(families)) if len(families) == 1 else None)
     if contract not in families and families:
@@ -227,8 +245,6 @@ def sign_command(session, args=None):
         session.send("Find the summon family's hidden sanctuary to sign its contract.")
     elif player.level < data_summons.CONTRACTS[contract]["unlock_level"]:
         session.send("You must reach level 20 to sign a summoning contract.")
-    elif contract in player.signed_summoning_contracts:
-        session.send("You have already signed this contract.")
     else:
-        player.signed_summoning_contracts.append(contract)
-        session.send(f"You sign the {contract.title()} summoning contract before its elder. Use 'summon {contract}' to call a partner.")
+        player.signed_summoning_contracts = [contract]
+        session.send(f"You permanently choose the {contract.title()} summoning contract before its elder. Use 'summon {contract}' to call a partner.")

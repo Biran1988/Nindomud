@@ -69,8 +69,9 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.260: `changelog.py`.
-- Builder-configured Summon Elder mobs teach five separate Sage Modes. Set `mset <vnum> flags SummonElder` and `mset <vnum> summonfamily <family>`, then place the mob. Players sign a contract at level 20, and train at level 80, one attempt per family every real hour with a 5% chance for 1% mastery. Existing 12-hour waits are shortened on character load. Full mastery permits the family's Sage Mode.
+- The in-game change history through version 15.261: `changelog.py`.
+- Builder-configured Summon Elder mobs teach five possible Sage Modes. Set `mset <vnum> flags SummonElder` and `mset <vnum> summonfamily <family>`, then place the mob. Players sign one contract at level 20, and train at level 80, one attempt every real hour with a 5% chance for 1% mastery. Existing 12-hour waits are shortened on character load. Full mastery permits the chosen family's Sage Mode.
+- A player's first signed summoning family is permanent. They can summon and study Sage Mode only with that family; old multi-contract saves retain the first valid signed contract. Ninken Sage Mode grants one extra ordinary attack per combat round instead of bonus dodge chance.
 - Sage Mode toggles on/off with `sage` or `sage on <family>` and `sage off`. It stays active until turned off or resources fail, using 12 Chakra per idle 10-second tick and 16 Chakra plus 8 Stamina per combat round. The selected form survives reconnecting.
 - Natural Health, Chakra, and Stamina regeneration now runs at 20% of the prior rate: a recovery tick about every 66.7 seconds instead of 13.3 seconds. Per-tick amounts and Chakra Control bonuses remain as configured.
 - `mset fields` is now grouped and wrapped for a MUD client;

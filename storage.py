@@ -466,6 +466,17 @@ def load_player(name: str) -> Optional[Player]:
     legacy_experience_curve = "experience_curve_version" not in raw
     legacy_sage_training = raw.get("sage_training_interval_version", 1) < 2
     player = Player.from_dict(raw)
+    import data_summons
+    chosen_summon = next((family for family in player.signed_summoning_contracts
+                          if family in data_summons.CONTRACTS), "")
+    normalized_contracts = [chosen_summon] if chosen_summon else []
+    summon_contracts_migrated = player.signed_summoning_contracts != normalized_contracts
+    if summon_contracts_migrated:
+        player.signed_summoning_contracts = normalized_contracts
+        if player.sage_active_contract != chosen_summon:
+            player.sage_active_contract = ""
+        if player.sage_preferred_contract != chosen_summon:
+            player.sage_preferred_contract = chosen_summon
     sage_training_migrated = legacy_sage_training and bool(player.sage_training_ready_at)
     if sage_training_migrated:
         # Old saves recorded next-attempt time using a 12-hour interval.
@@ -485,7 +496,7 @@ def load_player(name: str) -> Optional[Player]:
         player.experience_curve_version = 1
     import leveling
     experience_migrated = leveling.migrate_experience_curve(player)
-    if sage_training_migrated or experience_migrated:
+    if summon_contracts_migrated or sage_training_migrated or experience_migrated:
         save_player(player)
     return player
 

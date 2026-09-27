@@ -2048,7 +2048,7 @@ def resolve_pulse(session) -> None:
     else:
         _player_attack_mob_once(session, player, mob)
         if mob.health > 0:
-            for _ in range(_roll_extra_attacks(player)):
+            for _ in range(_roll_extra_attacks(player) + sage_mode.extra_attacks(player)):
                 if mob.health <= 0:
                     break
                 _player_attack_mob_once(session, player, mob)
@@ -2090,7 +2090,7 @@ def resolve_pulse(session) -> None:
         session.send(f"&R{mob.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player) + sage_mode.dodge(player):
+    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player):
         session.send(f"&CYou dodge {mob.name}'s attack!&x")
         return
 
@@ -2569,7 +2569,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             target_session.send(f"&R{player.name}'s {colored_name} passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target) + sage_mode.dodge(target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your {colored_name}!&x")
         if not silent_to_target:
             target_session.send(f"&CYou dodge {player.name}'s {colored_name}!&x")
@@ -3019,7 +3019,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         target_session.send(f"&R{player.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target) + sage_mode.dodge(target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your attack!&x")
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
@@ -3161,7 +3161,7 @@ def resolve_pvp_pulse(session) -> None:
 
     _player_attack_target_once(session, player, target_session, target)
     if target.health > 0:
-        for _ in range(_roll_extra_attacks(player)):
+        for _ in range(_roll_extra_attacks(player) + sage_mode.extra_attacks(player)):
             if target.health <= 0:
                 break
             _player_attack_target_once(session, player, target_session, target)
