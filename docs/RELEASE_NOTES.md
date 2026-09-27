@@ -5,6 +5,11 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Every registered jutsu now has an exact-name help lookup. Recent Taijutsu
+  strikes and stances, Bukijutsu Ninja Arts, Mangekyo techniques, and the
+  medicinal pill materials have individual pages. The Ninjutsu and Genjutsu
+  expansion pages show actual damage, costs, cooldowns, and effects. System
+  pages refresh on login while staff-written help text is preserved.
 - Bukijutsu gains `samurai sabre` at level 35 while wielding a sword:
   it costs 35 Chakra and 10 Stamina and boosts normal sword hits 20% for
   five pulses. `flying swallow <target>` at level 45 requires a sword or
@@ -64,7 +69,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.256: `changelog.py`.
+- The in-game change history through version 15.257: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

@@ -411,7 +411,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Ninjutsu techniques cover elemental attacks and a few utility jutsu, most of them requiring hand signs (see 'help handsigns') and a real casting delay before they land.\n"
             "\n"
-            "Jutsu granted automatically as a Ninjutsu character levels: Shadow Shuriken Technique (1), Fireball/Water Dragon/Wind Blade/Lightning Strike Jutsu/Earth Wall Crusher (20 -- each requires your own chakra nature to genuinely match its element, see 'help elements'), Shadow Clone Jutsu (30).\n"
+            "Ninjutsu grows from Chakra Ball and the first elemental attacks through Rasengan, elemental Rasengans, Chidori, clones, and the level-100 Nanairo no Rasengan. Matching chakra nature is required for elemental attacks. See 'skills' for your level-sorted roster and 'help <jutsu name>' for each move.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -445,7 +445,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: One of the four primary classes (see 'help classes'). Taijutsu techniques are pure physical combat -- no hand signs, no chakra cost, and no casting delay, unlike Ninjutsu/Genjutsu. Used directly by name rather than through 'perform'.\n"
             "\n"
-            "Jutsu granted automatically as a Taijutsu character levels: Dynamic Entry (1).\n"
+            "Beyond Dynamic Entry, Taijutsu unlocks Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Empi, Kumade, Nidan Kyten Geri, and Tamashiwara, plus Kihon, Neko Ashi, and Sanchin stances. See 'help <technique name>' for individual damage, costs, and effects.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -3507,7 +3507,7 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "demonic illusion",
-        "keywords": ["demonic illusion"],
+        "keywords": ["demonic illusion", "demonic illusion hell viewing technique"],
         "title": "Demonic Illusion: Hell Viewing Technique",
         "body": (
             "Syntax: perform demonic illusion hell viewing technique <target>\n"
@@ -3682,8 +3682,7 @@ DEFAULT_HELP_ENTRIES = [
     },
 ]
 
-# The selected Ninjutsu expansion is data-driven, so every new technique
-# gets an in-game help page with its actual unlock, nature, and cost.
+# These pages use live jutsu data for their costs, cooldowns, and effects.
 _EXPANSION_HELP_KEYS = (
     "chakra ball", "rasengan", "oodama rasengan", "nanairo no rasengan", "suigadan", "juuha shou",
     "karyuu endan", "retsudotensho", "chishin", "chidori", "dual chidori",
@@ -3697,6 +3696,53 @@ _EXPANSION_HELP_KEYS = (
     "kasumi juusha", "suzu senbon", "nehan shouja", "jubaku satsu", "jigaku gouka",
     "kokuangyou",
 )
+_EXPANSION_DESCRIPTIONS = {
+    "chakra ball": "Forms a compact ball of chakra for a direct hit.",
+    "rasengan": "A spinning chakra sphere that strikes one target.",
+    "oodama rasengan": "A larger, stronger Rasengan.",
+    "nanairo no rasengan": "Seven independently rolled colors strike the target. The caster's matching chakra nature strengthens that one color; soul can poison and dark can blind.",
+    "suigadan": "A water attack that requires a natural water source in the room.",
+    "juuha shou": "A slicing Wind attack that can knock a target off balance.",
+    "karyuu endan": "A Fire attack that can leave its target burning.",
+    "retsudotensho": "A heavy Earth attack.",
+    "chishin": "An earthquake that also strikes other attackable mobs in the room.",
+    "chidori": "A Lightning strike that can paralyze the target.",
+    "dual chidori": "A stronger two-handed Chidori that can paralyze.",
+    "full body chidori": "A powerful Lightning Chidori that can paralyze.",
+    "maximum chidori": "The strongest Chidori in this set, with a chance to paralyze.",
+    "raikiri": "An opening-only Lightning strike against an unhurt target, dealing 50% more damage when it connects.",
+    "fire rasengan": "A Fire Rasengan that can burn.",
+    "water rasengan": "A Water Rasengan that can drain Chakra.",
+    "wind rasengan": "A Wind Rasengan that can knock the target off balance.",
+    "earth rasengan": "An Earth Rasengan that trades status effects for higher direct damage.",
+    "lightning rasengan": "A Lightning Rasengan that can paralyze.",
+    "raiton kage bunshin": "Summons one Lightning clone that fights with you and can paralyze.",
+    "mizu bunshin": "Summons one Water clone that fights with you and can drain Chakra.",
+    "deido bunshin": "Summons one Earth clone that fights with you and deals 25% more clone-attack damage.",
+    "suna bunshin": "Summons one Sand clone that fights with you and can entangle a target.",
+    "barrier": "A defensive chakra barrier reduces incoming damage by 10% for five pulses.",
+    "henge": "Disguise yourself as a person in the room; casting without a target removes your disguise.",
+    "greater henge": "A longer-lasting disguise as a person in the room; casting without a target removes it.",
+    "ultimate henge": "The longest-lasting disguise as a person in the room; casting without a target removes it.",
+    "kokohi arazu": "Change the visible name of a carried item without altering the real item.",
+    "niju kokohi arazu": "Project a false copy of a carried item onto the ground; it cannot be taken or sold.",
+    "chisei": "Temporarily increases maximum Chakra and Genjutsu accuracy for six pulses.",
+    "distortion flame": "An illusion that deals mental damage.",
+    "phantom soldiers": "An illusory assault that deals mental damage.",
+    "soundless sound": "Mental damage with a chance to impair accuracy.",
+    "kori shinchu": "Mental damage that drains 20 Stamina and can disorient the target.",
+    "oboro bunshin": "Illusory clones that can confuse the target and lower accuracy.",
+    "kanashibari": "A binding illusion that can briefly paralyze the target.",
+    "snakes embrace": "An illusion of snakes that can weaken the target's outgoing damage.",
+    "devils taunt": "An illusion that can stun and stop an action.",
+    "insect eyes": "Reflects the victim's own normal attack sequence as mental damage, including extra strikes.",
+    "kasumi juusha": "Haze-like illusory warriors that sharply reduce accuracy.",
+    "suzu senbon": "Bell sounds that can disrupt the target's accuracy.",
+    "nehan shouja": "Attempts to put eligible enemies in the room to sleep for two pulses; safe rooms prevent hostile PvP.",
+    "jubaku satsu": "A binding tree illusion that can stun the target.",
+    "jigaku gouka": "A tormenting illusion that can dull the target's reflexes.",
+    "kokuangyou": "A darkness illusion that can blind the target.",
+}
 for _key in _EXPANSION_HELP_KEYS:
     _jutsu = data_jutsu.JUTSU[_key]
     _type = _jutsu.get("jutsu_type")
@@ -3707,7 +3753,7 @@ for _key in _EXPANSION_HELP_KEYS:
         _syntax = f"perform {_key} <carried item> as <apparent name>"
     if _type == "item_decoy":
         _syntax = f"perform {_key} <carried item>"
-    _details = {
+    _details = _EXPANSION_DESCRIPTIONS[_key] + " " + {
         "buff": "Raises a defensive barrier for five pulses (10% less incoming damage, no Armor Class bonus).",
         "elemental_clone": "Summons one living clone that fights alongside you and costs 25 Chakra per round. Requires 100% Shadow Clone Jutsu mastery; recasting any clone replaces the existing clones.",
         "ambush": "An opening attack with 50% extra damage; cannot be used mid-fight or against a wounded target.",
@@ -3719,7 +3765,7 @@ for _key in _EXPANSION_HELP_KEYS:
         "chisei": "Gain temporary maximum Chakra and +12 accuracy for Genjutsu attacks for six pulses.",
         "room_sleep": "Put eligible enemies in your room to sleep for two pulses, each with an independent resistance check; no friendly fire or PvP in safe rooms.",
         "mirror": "Mental damage scales with the opponent's own offensive strength.",
-    }.get(_type, "A damaging combat jutsu.")
+    }.get(_type, "")
     _specific = {
         "kori shinchu": " Also drains 20 Stamina on hit.",
         "kanashibari": " Its paralysis can block actions briefly.",
@@ -3732,13 +3778,30 @@ for _key in _EXPANSION_HELP_KEYS:
                if _jutsu["element"] != "none" else " Usable with any chakra nature.")
     if _jutsu.get("requires_water"):
         _nature += " Requires water in the room (ocean, river, lake, or swamp)."
-    _effect = f" Can inflict {_jutsu['effect'].replace('_', ' ')}." if _jutsu["effect"] else ""
+    _effect = (f" { _jutsu.get('effect_chance_pct', 100)}% chance to inflict {_jutsu['effect'].replace('_', ' ')}."
+               if _jutsu["effect"] else "")
+    _damage = (f" Base damage: {_jutsu['damage'][0]}-{_jutsu['damage'][1]}."
+               if _jutsu['damage'] is not None else "")
+    _duration = (f" Illusion lasts {_jutsu['duration']} pulses."
+                 if _jutsu.get('duration') else "")
+    _costs = (f"Costs {_jutsu['chakra_cost']} Chakra and {_jutsu['stamina_cost']} Stamina; "
+              f"{_jutsu['cooldown']:g} second cooldown.")
     DEFAULT_HELP_ENTRIES.append({
         "primary_keyword": _key, "keywords": [_key], "title": _jutsu["display_name"],
-        "body": (f"Syntax: {_syntax}\n\nDescription: {_details}{_specific}{_nature}{_effect} "
-                 f"Unlocks at level {_jutsu['level_requirement']}; costs {_jutsu['chakra_cost']} Chakra.\n\nDate: 2026-09-26"),
+        "body": (f"Syntax: {_syntax}\n\nDescription: {_details}{_specific}{_nature}{_damage}{_effect}{_duration} "
+                 f"Unlocks at level {_jutsu['level_requirement']}. {_costs}\n\nDate: 2026-09-27"),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     })
+
+# Keep an individual page for every recently added fighting art. Replace the
+# older Taijutsu group aliases and the short Samurai/Flying pages with their
+# fuller entries; existing player-authored files still take precedence.
+import recent_help
+
+_recent_pages = {entry["primary_keyword"]: entry for entry in recent_help.PAGES}
+DEFAULT_HELP_ENTRIES = [entry for entry in DEFAULT_HELP_ENTRIES
+                        if entry["primary_keyword"] not in _recent_pages]
+DEFAULT_HELP_ENTRIES.extend(recent_help.PAGES)
 
 
 def seed_default_help() -> None:
@@ -3746,10 +3809,12 @@ def seed_default_help() -> None:
         path = _path(entry["primary_keyword"])
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in {"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "genjutsu", "taijutsu strikes", "bukijutsu"}:
+        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion"}
+                                           | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
-            if existing.get("updated_by") == "System" and existing.get("body") != entry["body"]:
+            if (existing.get("updated_by") == "System" and
+                    any(existing.get(field) != entry[field] for field in ("body", "keywords", "title"))):
                 save_entry(entry)
     # Earlier releases seeded a separate help file for the old, conflicting
     # staff command. Redirect the stock entry without overwriting staff edits.
@@ -3790,9 +3855,13 @@ def find_by_keyword(query: str) -> Optional[dict]:
     query = query.strip().lower()
     if not query:
         return None
-    for entry in all_entries():
+    entries = all_entries()
+    # An exact page wins over a broad overview's alias, even when the
+    # overview's filename sorts first (e.g. taijutsu strikes / Choku Zuki).
+    for entry in entries:
         if query == entry["primary_keyword"].lower():
             return entry
+    for entry in entries:
         if query in [k.lower() for k in entry.get("keywords", [])]:
             return entry
     return None

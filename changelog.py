@@ -407,4 +407,5 @@ CHANGELOG = [
     ("15.254", "Ninjutsu pass: Nanairo no Rasengan unlocks at level 100 with seven separately rolled chakra strikes. Matching nature boosts its own color; the soul and dark strikes can poison and blind."),
     ("15.255", "Taijutsu gains Empi at level 20 and Nidan Kyten Geri at level 30. Bukijutsu's weapon arts now work on a wielded weapon directly, with no need to unequip it first."),
     ("15.256", "Bukijutsu gains Samurai Sabre (level 35), a five-pulse 20% sword damage buff, and Flying Swallow (level 45), a precise sword/kunai strike with a chance to bleed and a Wind nature damage bonus."),
+    ("15.257", "Added individual helpfiles for recent Taijutsu strikes and stances, Bukijutsu Ninja Arts, Mangekyo techniques, and medicinal supplies; expanded Ninjutsu and Genjutsu pages with actual costs, effects, and cooldowns."),
 ]
