@@ -1,5 +1,8 @@
 """Sage Mode must require a real configured elder and a long, saved progression."""
 import unittest
+import json
+import os
+import tempfile
 from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
 
@@ -9,6 +12,7 @@ import config
 import help_system
 import olc
 import sage_mode
+import storage
 import world
 from models import Player
 
@@ -49,12 +53,35 @@ class SageModeTests(unittest.TestCase):
         with patch("sage_mode.time.time", return_value=1000000 + sage_mode.TRAIN_INTERVAL), patch("sage_mode.random.randint", return_value=100):
             sage_mode.command(self.session, ["train"])
             self.assertEqual(self.player.sage_mastery["toad"], 1)
+        with patch("sage_mode.time.time", return_value=1000000 + 2 * sage_mode.TRAIN_INTERVAL), patch("sage_mode.random.randint", return_value=5):
+            sage_mode.command(self.session, ["train"])
+            self.assertEqual(self.player.sage_mastery["toad"], 2)
         self.assertEqual(Player.from_dict(self.player.to_dict()).sage_training_ready_at["toad"],
-                         1000000 + 2 * sage_mode.TRAIN_INTERVAL)
+                         1000000 + 3 * sage_mode.TRAIN_INTERVAL)
         olc.cmd_mset(self.session, ["9002", "flags", "-SummonElder"])
         self.assertFalse(sage_mode.elder_families(self.player))
         sage_mode.command(self.session, ["train"])
-        self.assertEqual(self.player.sage_mastery["toad"], 1)
+        self.assertEqual(self.player.sage_mastery["toad"], 2)
+
+    def test_existing_twelve_hour_wait_is_migrated_only_once(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(storage, "DATA_DIR", temp), \
+                 patch.object(storage, "ACCOUNTS_DIR", os.path.join(temp, "accounts")), \
+                 patch.object(storage, "PLAYERS_DIR", os.path.join(temp, "players")):
+                storage.save_player(self.player)
+                path = storage.player_path(self.player.name)
+                with open(path, encoding="utf-8") as file:
+                    old_save = json.load(file)
+                old_save.pop("sage_training_interval_version")
+                old_save["sage_training_ready_at"] = {"toad": 1000000 + 12 * 60 * 60}
+                with open(path, "w", encoding="utf-8") as file:
+                    json.dump(old_save, file)
+                loaded = storage.load_player(self.player.name)
+                self.assertEqual(loaded.sage_training_ready_at["toad"], 1000000 + 60 * 60)
+                self.assertEqual(storage.load_player(self.player.name).sage_training_ready_at["toad"],
+                                 loaded.sage_training_ready_at["toad"])
+                with open(path, encoding="utf-8") as file:
+                    self.assertEqual(json.load(file)["sage_training_interval_version"], 2)
 
     def test_summoning_and_five_family_toggle_and_upkeep(self):
         self.player.signed_summoning_contracts = list(sage_mode.data_summons.CONTRACTS)
@@ -116,6 +143,8 @@ class SageModeTests(unittest.TestCase):
         pages = {entry["primary_keyword"] for entry in help_system.DEFAULT_HELP_ENTRIES}
         self.assertTrue({"sage", "summon elder", "summon"} <= pages)
         self.assertIs(commands.COMMANDS["sage"], sage_mode.command)
+        self.assertEqual(sage_mode.TRAIN_INTERVAL, 60 * 60)
+        self.assertEqual(sage_mode.TRAIN_SUCCESS_PERCENT, 5)
         self.assertAlmostEqual((40 / 3) / config.REGEN_INTERVAL_SECONDS, 0.20)
         self.assertLess(config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS, config.REGEN_INTERVAL_SECONDS)
 

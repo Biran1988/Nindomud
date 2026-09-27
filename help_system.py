@@ -1401,8 +1401,8 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: sage [on <family>|off|status] | sage train [family]\n\n"
             "Description: Sign a family's contract and reach level 80, then find its living Summon Elder. "
-            "One meditation attempt is allowed per family every 12 real hours. "
-            "Each attempt has a 50% chance of gaining just 1% mastery. "
+            "One meditation attempt is allowed per family every real hour. "
+            "Each attempt has a 5% chance of gaining just 1% mastery. "
             "Failed attempts also consume the interval. Each family has separate progress; "
             "100% mastery is required to activate its Sage Mode. At least 100 successful sessions are needed.\n\n"
             "Toggle a mastered family's Sage Mode on with 'sage on <family>' and off with 'sage off'. "

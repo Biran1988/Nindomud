@@ -464,7 +464,18 @@ def load_player(name: str) -> Optional[Player]:
     with open(path, "r", encoding="utf-8") as f:
         raw = json.load(f)
     legacy_experience_curve = "experience_curve_version" not in raw
+    legacy_sage_training = raw.get("sage_training_interval_version", 1) < 2
     player = Player.from_dict(raw)
+    sage_training_migrated = legacy_sage_training and bool(player.sage_training_ready_at)
+    if sage_training_migrated:
+        # Old saves recorded next-attempt time using a 12-hour interval.
+        # Preserve the actual attempt time while applying the new 1-hour wait.
+        reduction = 11 * 60 * 60
+        player.sage_training_ready_at = {
+            family: max(0, ready_at - reduction)
+            for family, ready_at in player.sage_training_ready_at.items()
+        }
+        player.sage_training_interval_version = 2
     if player.prompt_string in _LEGACY_PROMPT_MIGRATIONS:
         player.prompt_string = _LEGACY_PROMPT_MIGRATIONS[player.prompt_string]
     for skill, value in list(player.skill_proficiencies.items()):
@@ -473,7 +484,8 @@ def load_player(name: str) -> Optional[Player]:
     if legacy_experience_curve:
         player.experience_curve_version = 1
     import leveling
-    if leveling.migrate_experience_curve(player):
+    experience_migrated = leveling.migrate_experience_curve(player)
+    if sage_training_migrated or experience_migrated:
         save_player(player)
     return player
 

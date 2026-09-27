@@ -9,8 +9,8 @@ import time
 import data_summons
 import combat
 MIN_LEVEL = 80
-TRAIN_INTERVAL = 12 * 60 * 60
-TRAIN_SUCCESS_PERCENT = 50
+TRAIN_INTERVAL = 60 * 60
+TRAIN_SUCCESS_PERCENT = 5
 MASTERY_REQUIRED = 100
 IDLE_CHAKRA_UPKEEP = 12  # every 10 seconds while online and out of combat
 COMBAT_CHAKRA_UPKEEP = 16  # each combat round

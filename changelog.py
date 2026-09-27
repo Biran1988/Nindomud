@@ -410,4 +410,5 @@ CHANGELOG = [
     ("15.257", "Added individual helpfiles for recent Taijutsu strikes and stances, Bukijutsu Ninja Arts, Mangekyo techniques, and medicinal supplies; expanded Ninjutsu and Genjutsu pages with actual costs, effects, and cooldowns."),
     ("15.258", "Summon Elder mobs can be configured for any of five families. Sign their contracts, summon partners, and undertake a long, separate Sage Mode mastery path with each elder."),
     ("15.259", "Sage Mode is now an on/off toggle with idle and combat upkeep instead of a duration and cooldown. Natural Health, Chakra, and Stamina regeneration runs at 20% of its previous rate."),
+    ("15.260", "Summon Elder Sage training can now be attempted once per real hour per family, with a 5% chance to gain 1% mastery; existing 12-hour waits are shortened."),
 ]

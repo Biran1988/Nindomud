@@ -341,6 +341,7 @@ class Player:
     signed_summoning_contracts: list = field(default_factory=list)
     sage_mastery: dict = field(default_factory=dict)
     sage_training_ready_at: dict = field(default_factory=dict)
+    sage_training_interval_version: int = 2
     sage_active_contract: str = ""
     sage_preferred_contract: str = ""
     # Track jutsu (Section 119, per direct request/confirmation):
