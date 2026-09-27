@@ -965,6 +965,11 @@ def tick_pending_casts() -> None:
 
         session.pending_cast = None
         player = session.player
+        if cast.is_pvp and getattr(cast.target, "player", None):
+            import hidden_mist
+            if hidden_mist.obscures(player, cast.target.player):
+                session.send("&CThe hidden mist swallows your target before your jutsu can land.&x")
+                continue
         if cast.jutsu_key == "hidden mist jutsu":
             import hidden_mist
             if hidden_mist.cast(session):

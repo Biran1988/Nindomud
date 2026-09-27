@@ -102,6 +102,15 @@ class HiddenMistTests(unittest.TestCase):
         self.assertIsNone(self.caster.pending_cast)
         self.assertFalse(hidden_mist.room_active(self.room))
 
+    def test_pending_targeted_cast_loses_target_when_mist_forms(self):
+        self.enemy.player.learned_skills.append("Chakra Ball")
+        combat.begin_pending_cast(self.enemy, "chakra ball", self.caster, is_pvp=True)
+        self.enemy.pending_cast.remaining_seconds = 0
+        self.cast_mist()
+        # Both casts finish this pulse; the mist forms before the attack lands.
+        self.assertIsNone(self.enemy.pending_cast)
+        self.assertIn("mist swallows your target", "".join(self.enemy_output))
+
 
 if __name__ == "__main__":
     unittest.main()
