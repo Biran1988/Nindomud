@@ -135,6 +135,8 @@ async def pulse_loop() -> None:
         mangekyo.process_amaterasu_player_burns(combat, session_module)
         mangekyo.process_kamui_pocket_dimensions(combat, world_module, session_module)
         mangekyo.process_kekkei_no_me(combat, world_module, session_module)
+        import hidden_mist
+        hidden_mist.process_rooms(ACTIVE_SESSIONS)
         programs.process_random_triggers()
         territory.ensure_war_window_scheduled(_broadcast_all)
         territory.tick_captures(_broadcast_all)

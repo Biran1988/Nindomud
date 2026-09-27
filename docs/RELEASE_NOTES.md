@@ -5,6 +5,11 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Hidden Mist Jutsu is water-only Ninjutsu at level 40. `perform hidden mist
+  jutsu` creates a 12-second effect on the room itself. Other occupants cannot
+  see or target its caster. The caster gets +15 to hit and reduces a defender's
+  dodge by 15 while in that room. It improves the chance of landing Ushiro,
+  which still requires an unhurt target and cannot be used mid-fight.
 - Bukijutsu level 25+ can `craft pill medicine <level>` or
   `craft pill antidote <level>` from one Medicinal Herbs. Level is chosen up
   to the crafter's current level and stored with each pill, visible in
@@ -41,7 +46,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.251: `changelog.py`.
+- The in-game change history through version 15.252: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,

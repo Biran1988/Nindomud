@@ -121,6 +121,13 @@ JUTSU = {
         "damage": (28, 44), "damage_type": "physical", "effect": None,
         "tier": 2, "element": "none",
     },
+    "hidden mist jutsu": {
+        "jutsu_id": "ninjutsu_hidden_mist", "display_name": "Hidden Mist Jutsu",
+        "class_requirement": "ninjutsu", "level_requirement": 40,
+        "chakra_cost": 40, "stamina_cost": 0, "cooldown": 30.0,
+        "jutsu_type": "mist", "damage": None, "damage_type": None, "effect": None,
+        "tier": 3, "element": "water",
+    },
     "demonic illusion hell viewing technique": {
         "jutsu_id": "genjutsu_starter", "display_name": "Demonic Illusion: Hell Viewing Technique",
         "class_requirement": "genjutsu", "level_requirement": 1,

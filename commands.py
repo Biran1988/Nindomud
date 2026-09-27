@@ -835,6 +835,7 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
 
 def cmd_look(session, args: List[str]) -> None:
     import genjutsu
+    import hidden_mist
     player = session.player
     if player.illusion_walk_caster is not None and not args:
         import areas
@@ -874,7 +875,8 @@ def cmd_look(session, args: List[str]) -> None:
             return
         for other in session.active_sessions():
             if other.player and other is not session and other.player.room_vnum == player.room_vnum \
-                    and query in genjutsu.apparent_name(other.player).lower() and not _is_invisible_player(other.player):
+                    and query in genjutsu.apparent_name(other.player).lower() and not _is_invisible_player(other.player) \
+                    and not hidden_mist.conceals_from_view(player, other.player):
                 if player.illusion_walk_caster is not None:
                     session.send("You don't see anyone here by that name.")
                     return
@@ -922,6 +924,9 @@ def cmd_look(session, args: List[str]) -> None:
     if room.description:
         lines.append(f"&Y{room.description}&x")
         lines.append("")
+    if hidden_mist.room_active(room):
+        lines.append("&CA dense hidden mist obscures the room.&x")
+        lines.append("")
     if room.temp_description_text:
         if time.time() >= room.temp_description_until:
             room.temp_description_text = ""
@@ -932,7 +937,7 @@ def cmd_look(session, args: List[str]) -> None:
     lines.extend(_format_exits(room, is_staff))
     lines.append("")
     for other in session.active_sessions():
-        if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _is_invisible_player(other.player):
+        if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
     mobs = combat.mobs_in_room(player.room_vnum)
@@ -992,6 +997,7 @@ def _is_invisible_item(name: str) -> bool:
 
 def cmd_scan(session, args: List[str]) -> None:
     import genjutsu
+    import hidden_mist
     player = session.player
     if player.level < SCAN_LEVEL or "Scan" not in player.learned_skills:
         session.send("You learn Scan at level 3.")
@@ -1020,7 +1026,7 @@ def cmd_scan(session, args: List[str]) -> None:
         return
     lines = [f"&CScanning {direction}: {target.name}&x"]
     for other in session.active_sessions():
-        if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player):
+        if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.")
     for mob in combat.mobs_in_room(target.vnum):
         if not _is_invisible_mob(mob):
@@ -2505,6 +2511,10 @@ def cmd_attack(session, args: List[str]) -> None:
     if target_session.player.health <= 0:
         session.send(f"{target_session.player.name} is already down.")
         return
+    import hidden_mist
+    if hidden_mist.obscures(player, target_session.player):
+        session.send("The mist hides your target. You cannot lock onto them.")
+        return
 
     _wake_and_stand(session)
     combat.start_pvp_attack(session, target_session)
@@ -2523,6 +2533,29 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
                 fan_direction = direction
                 target_words = target_words[:idx] + target_words[idx + 1:]
                 break
+    import hidden_mist
+    if target_words:
+        query = " ".join(target_words).lower()
+        if any(s is not session and s.player and s.player.room_vnum == player.room_vnum
+               and query in s.player.name.lower() and hidden_mist.obscures(player, s.player)
+               for s in getattr(session, "active_sessions", lambda: [])()):
+            session.send("The mist hides your target. You cannot lock onto them.")
+            return
+    if jutsu_data.get("jutsu_type") == "mist":
+        if target_words:
+            session.send("Usage: perform hidden mist jutsu")
+            return
+        if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
+            session.send("You have not learned Hidden Mist Jutsu or lack the water element.")
+            return
+        if session.pending_cast is not None:
+            session.send("You're already forming hand signs for another jutsu!")
+            return
+        if hidden_mist.active(player):
+            session.send("Your mist already fills this room.")
+            return
+        combat.begin_pending_cast(session, jutsu_key, session, is_pvp=False)
+        return
     if jutsu_data.get("jutsu_type") == "weapon_art":
         import ninja_arts
         if jutsu_key == "water release: glue technique" and hasattr(session, "start_timed_action"):

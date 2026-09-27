@@ -965,6 +965,11 @@ def tick_pending_casts() -> None:
 
         session.pending_cast = None
         player = session.player
+        if cast.jutsu_key == "hidden mist jutsu":
+            import hidden_mist
+            if hidden_mist.cast(session):
+                grow_skill_from_usage(player, "Handsigns")
+            continue
         if data_jutsu.JUTSU.get(cast.jutsu_key, {}).get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
             import genjutsu
             genjutsu.resolve_cast(session, cast.jutsu_key, cast.target)
@@ -1805,7 +1810,8 @@ def _player_attack_mob_once(session, player, mob) -> None:
     set_bonus = commands_module.equipped_set_bonus_percent(player)
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player) + _summon_weapon_buff_hitroll_bonus(player)
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
+    import hidden_mist
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -2018,6 +2024,10 @@ def resolve_pulse(session) -> None:
         return
     if _is_action_blocked(mob):
         session.send(f"{mob.name} is trapped in the illusion and cannot attack this round.")
+        return
+    import hidden_mist
+    if hidden_mist.obscures(mob, player):
+        session.send(f"&C{mob.name} searches the mist but cannot target you.&x")
         return
 
     import commands as commands_module
@@ -2318,7 +2328,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     set_bonus = commands_module.equipped_set_bonus_percent(player)
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
+    import hidden_mist
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob)
     to_hit += _genjutsu_hit_bonus(player, jutsu)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
@@ -2421,6 +2432,10 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         return
 
     target = target_session.player
+    import hidden_mist
+    if hidden_mist.obscures(player, target):
+        session.send("The mist hides your target. You cannot lock onto them.")
+        return
     if jutsu.get("jutsu_type") == "ambush" and target.health < target.maximum_health:
         session.send(f"{target.name} is hurt and alert; you cannot sneak up on them.")
         return
@@ -2483,7 +2498,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         session.send(f"You use {colored_name} on {target.name}, but it misses!")
@@ -2498,7 +2513,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             target_session.send(f"&R{player.name}'s {colored_name} passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your {colored_name}!&x")
         if not silent_to_target:
             target_session.send(f"&CYou dodge {player.name}'s {colored_name}!&x")
@@ -2895,6 +2910,10 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     if _is_action_blocked(player):
         session.send("You are unable to act!")
         return
+    import hidden_mist
+    if hidden_mist.obscures(player, target):
+        session.send("&CYou cannot find your target in the hidden mist.&x")
+        return
     import commands as commands_module
     import weather
     import data_personality
@@ -2903,7 +2922,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player) + _summon_weapon_buff_hitroll_bonus(player)
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
@@ -2927,7 +2946,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         target_session.send(f"&R{player.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your attack!&x")
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
@@ -2952,6 +2971,9 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
 
 def _clone_attack_target_once(session, player, target_session, target, clone) -> None:
     """A live clone assists in PvP under the same safety and defense rules."""
+    import hidden_mist
+    if hidden_mist.obscures(player, target):
+        return
     import commands as commands_module
     import weather
     element = clone.clone_element
@@ -3056,6 +3078,10 @@ def resolve_pvp_pulse(session) -> None:
         session.send(message)
     for message in tick_automatic_bloodline_awakening(player):
         session.send(message)
+    import hidden_mist
+    if hidden_mist.obscures(player, target):
+        session.send("&CYou search the mist but cannot target your opponent.&x")
+        return
     _resolve_ninken_flee_lock(session, player, target_session, target)
 
     _player_attack_target_once(session, player, target_session, target)

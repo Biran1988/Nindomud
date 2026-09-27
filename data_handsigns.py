@@ -59,6 +59,7 @@ ALL_SIGNS = ["Rat", "Ox", "Tiger", "Hare", "Dragon", "Snake", "Horse", "Ram", "M
 # thematically-appropriate invented sequence for jutsu original to
 # this MUD (everything else below).
 JUTSU_HANDSIGNS = {
+    "hidden mist jutsu": ["Ox", "Snake", "Tiger"],
     "water release: glue technique": ["Ox", "Monkey", "Dragon"],
     "chakra ball": ["Ram", "Tiger"],
     "rasengan": ["Ram", "Tiger", "Hare"],

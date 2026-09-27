@@ -402,4 +402,5 @@ CHANGELOG = [
     ("15.249", "Fan Techniques can now push a surviving target through an open exit. Use 'fan techniques <target> <direction>' while wielding a Mighty Fan; closed doors and hidden exits block the gust."),
     ("15.250", "Bukijutsu level 25+ can craft Antidote and Medicinal Pills from new Medicinal Herbs. Choose a pill level up to your own; examine reveals its saved level. Antidotes cure poison; the strongest medicine heals Health, Chakra, and Stamina."),
     ("15.251", "Medicinal Pills restore only Health, Chakra, and Stamina; they no longer cure bleeding or silence. Antidote Pills cure poison only and are not consumed when you are healthy."),
+    ("15.252", "Water-only Hidden Mist Jutsu now creates a timed room effect. Enemies cannot target its caster there, while the caster gains accuracy and reduces enemy dodge. Ushiro remains an opening-only strike."),
 ]

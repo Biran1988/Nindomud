@@ -1708,7 +1708,17 @@ DEFAULT_HELP_ENTRIES = [
             "Syntax: perform ushiro shishou <target>\n\n"
             "Description: A level 30 Ninjutsu opening strike. Sneak up on an unhurt target before "
             "combat starts for increased damage. It costs chakra and cannot be used "
-            "mid-fight or against an already hurt target.\n\nDate: 2026-09-26"
+            "mid-fight or against an already hurt target. Hidden Mist improves your chance to land the opening strike but does not lift either restriction.\n\nDate: 2026-09-26"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "hidden mist jutsu",
+        "keywords": ["hidden mist", "mist jutsu", "hidden mist jutsu"],
+        "title": "Hidden Mist Jutsu",
+        "body": (
+            "Syntax: perform hidden mist jutsu\n\n"
+            "Description: A level 40, water-only Ninjutsu room effect. Costs 40 Chakra before Chakra Control discounts and has a 30-second cooldown. After hand signs, thick mist fills your current room for 12 seconds. Anyone there, including people entering later, cannot target or see the caster. The caster gains 15 points of accuracy and reduces opponents' dodge by 15 points when attacking in that room. Leaving the room ends the caster's advantage until they return while the mist remains. Ushiro Shishou remains an opening-only attack against an unhurt target; the mist improves its accuracy without enabling it mid-fight. The source files mention Silent Killing, which is not yet a Nindo_mud skill.\n\nDate: 2026-09-26"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
