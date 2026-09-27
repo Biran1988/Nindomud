@@ -169,8 +169,14 @@ def consume(session, verb: str, query: str) -> None:
         return
 
     if expected_category == "medical":
+        cure_only = bool(data.get("cures")) and not data.get("resources") and not data.get("restore") and not (proto and proto.get("heal_amount"))
+        if cure_only and not any(effect in player.active_status_effects for effect in data["cures"]):
+            session.send("You are not poisoned; save the antidote for when you need it.")
+            return
         amount = proto.get("heal_amount", 0) if proto else 0
-        if amount:
+        if cure_only:
+            resources, duration = [], 0
+        elif amount:
             resources = list(proto.get("heal_flags", []))
             duration = proto.get("heal_duration", 30)
         elif data and (data.get("restore") or data.get("resources")):
@@ -181,13 +187,14 @@ def consume(session, verb: str, query: str) -> None:
             session.send("This medical item has no healing configured. Set heal, healtime, and healflags first.")
             return
         resources = [r for r in resources if r in {"health", "chakra", "stamina"}]
-        if not resources or amount <= 0 or duration <= 0:
+        if not cure_only and (not resources or amount <= 0 or duration <= 0):
             session.send("This medical item needs a heal amount, healtime, and at least one healflag.")
             return
-        player.medical_healing.append({
-            "resources": resources, "amount": amount, "duration": duration,
-            "started_at": time.time(), "applied": 0,
-        })
+        if not cure_only:
+            player.medical_healing.append({
+                "resources": resources, "amount": amount, "duration": duration,
+                "started_at": time.time(), "applied": 0,
+            })
     else:
         resource = data["restore"]
         amount = data["amount"]
@@ -199,7 +206,8 @@ def consume(session, verb: str, query: str) -> None:
     player.inventory.remove(match)
     session.send(data["message"].format(item=match))
     if expected_category == "medical":
-        session.send(f"Healing begins: {amount} {', '.join(resources)} over {duration} seconds.")
+        if amount > 0:
+            session.send(f"Healing begins: {amount} {', '.join(resources)} over {duration} seconds.")
     elif actual_gain > 0:
         session.send(f"You recover {actual_gain} {resource}.")
     else:

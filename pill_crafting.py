@@ -31,14 +31,12 @@ def pill_data(item_name: str):
         return None
     if kind.lower() == "antidote":
         return {
-            "category": "medical", "level": level, "resources": ["health"],
-            "amount": 50 + 2 * level, "heal_duration": 30,
+            "category": "medical", "level": level,
             "cures": ["poisoned"],
             "message": "You swallow {item}. The poison leaves your body.",
         }
     return {
         "category": "medical", "level": level, "resources": ["health", "chakra", "stamina"],
         "amount": 100 + 6 * level, "heal_duration": 30,
-        "cures": ["bleeding", "silenced"],
         "message": "You swallow {item}. Its potent herbs begin restoring you.",
     }

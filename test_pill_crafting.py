@@ -62,14 +62,28 @@ class PillCraftingTests(unittest.TestCase):
         self.player.active_status_effects = {"bleeding": {}, "silenced": {}, "poisoned": {}}
         with patch.object(consumables.time, "time", return_value=1000):
             consumables.consume(self.session, "use", "medicinal")
-        self.assertEqual(set(self.player.active_status_effects), {"poisoned"})
+        self.assertEqual(set(self.player.active_status_effects), {"bleeding", "silenced", "poisoned"})
         self.assertEqual(self.player.medical_healing[0]["amount"], 250)
         self.assertEqual(consumables.tick_medical_healing(self.player, now=1030),
                          {"health": 250, "chakra": 250, "stamina": 250})
         with patch.object(consumables.time, "time", return_value=2000):
             consumables.consume(self.session, "use", "antidote")
         self.assertNotIn("poisoned", self.player.active_status_effects)
-        self.assertEqual(self.player.medical_healing[0]["amount"], 110)
+        self.assertEqual(set(self.player.active_status_effects), {"bleeding", "silenced"})
+        self.assertEqual(self.player.medical_healing, [])
+
+    def test_antidote_is_saved_if_not_poisoned(self):
+        pill = pill_crafting.encode_pill("Antidote", 25)
+        self.player.inventory.append(pill)
+        self.player.learned_skills.append("Examine")
+        commands.cmd_examine(self.session, ["antidote"])
+        description = "".join(self.output)
+        self.assertIn("Cures:", description)
+        self.assertIn("poisoned", description)
+        self.assertNotIn("Healing:", description)
+        consumables.consume(self.session, "use", "antidote")
+        self.assertEqual(self.player.inventory, [pill])
+        self.assertEqual(self.player.medical_healing, [])
 
     def test_indexed_use_selects_individual_pill_level(self):
         first = pill_crafting.encode_pill("Medicinal", 25)

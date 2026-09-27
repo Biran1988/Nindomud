@@ -4090,8 +4090,10 @@ def cmd_examine(session, args: List[str]) -> None:
     pill_info = pill_crafting.pill_data(match)
     if pill_info:
         lines.append(f"&WPill Level:&x {pill_info['level']}")
-        lines.append(f"&WHealing:&x {pill_info['amount']} {', '.join(pill_info['resources'])} over {pill_info['heal_duration']} seconds")
-        lines.append(f"&WCures:&x {', '.join(pill_info['cures'])}")
+        if pill_info.get("resources"):
+            lines.append(f"&WHealing:&x {pill_info['amount']} {', '.join(pill_info['resources'])} over {pill_info['heal_duration']} seconds")
+        if pill_info.get("cures"):
+            lines.append(f"&WCures:&x {', '.join(pill_info['cures'])}")
 
     if appraisal_pct < 40:
         lines.append("&D(Train Examine further to learn more about this item.)&x")

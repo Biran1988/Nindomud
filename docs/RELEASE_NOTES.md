@@ -8,9 +8,9 @@ existing server installation, keeping the server's `data/` directory intact.
 - Bukijutsu level 25+ can `craft pill medicine <level>` or
   `craft pill antidote <level>` from one Medicinal Herbs. Level is chosen up
   to the crafter's current level and stored with each pill, visible in
-  `examine` but not the item name. Antidotes cure poison and heal Health;
-  Medicinal Pills restore Health, Chakra, and Stamina over 30 seconds and
-  cure bleeding/silence. Indexed `use 2.pill` selects among different levels.
+  `examine` but not the item name. Antidotes cure poison only; Medicinal Pills
+  restore Health, Chakra, and Stamina over 30 seconds without curing status
+  effects. Indexed `use 2.pill` selects among different levels.
   Village general stores sell the herbs. Other classes
   cannot craft these pills, even at the general weapon/armor crafting unlock.
 - Ninja Arts/Bukijutsu adds multi-throws, Demon Wind Shuriken, four delayed
@@ -41,7 +41,7 @@ existing server installation, keeping the server's `data/` directory intact.
   and `commands.py`.
 - Progressive leveling, automatic level-sensitive mob XP, and migration of
   existing characters: `leveling.py`, `combat.py`, and `storage.py`.
-- The in-game change history through version 15.250: `changelog.py`.
+- The in-game change history through version 15.251: `changelog.py`.
 - `mset fields` is now grouped and wrapped for a MUD client;
   `mset fields player` displays player fields separately: `olc.py`.
 - Builder commands accept compact field names, including `flags`, `wear`,
