@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "perform",
+  "keywords": [
+    "perform",
+    "per"
+  ],
+  "title": "Perform",
+  "body": "Syntax: perform <jutsu name> <target>  (alias: per)\n\nDescription: Uses a Ninjutsu or Genjutsu technique on a target -- these classes require the deliberate 'perform' command rather than a bare jutsu name. Taijutsu and Bukijutsu jutsu can instead be used by typing their name directly (e.g. 'dynamic entry <target>'). Works against another player too, not just mobs -- same targeting rules as 'attack' (a PvP-safe room blocks it, an already-defeated player can't be targeted).\n\nNinjutsu and Genjutsu specifically involve forming hand signs first (see 'help handsigns') -- there's a real delay before the technique actually goes off, but your ordinary attacks keep landing normally the whole time, and the jutsu lands separately on top once it resolves. If this is what starts the fight (you weren't already fighting anything), combat doesn't actually begin until the jutsu itself resolves -- hit or miss -- not the instant you give the command.\n\nJutsu damage scales with your own Strength and Damage Roll, plus your wielded weapon's own damage and Damage Roll bonus -- the same things that make a regular weapon attack hit harder also make your jutsu hit harder.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

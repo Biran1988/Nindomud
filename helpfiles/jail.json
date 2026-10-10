@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "jail",
+  "keywords": [
+    "jail",
+    "unjail"
+  ],
+  "title": "Jail",
+  "body": "Syntax: jail <player name> <hours>  |  unjail <player name>  (administrator+ only)\n\nDescription: A staff punishment command. Teleports the named player to a dedicated jail cell with no exits, and keeps them there for the given number of hours -- as a punishment. Works on an online OR offline player -- an offline target is teleported the moment they next log in and the sentence is checked.\n\nAutomatically releases the player once the time is up, sending them to their home village's own starting room. 'unjail' releases them early if needed, to the same destination.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

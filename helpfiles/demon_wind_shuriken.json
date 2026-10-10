@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "demon wind shuriken",
+  "keywords": [
+    "demon wind shuriken"
+  ],
+  "title": "Demon Wind Shuriken",
+  "body": "Syntax: demon wind shuriken <target>\n\nDescription: Throws one carried Demon Wind Shuriken, which lands on the room floor and can cause bleeding. Requires a carried demon wind shuriken. Base damage: 91-107. 35% chance to inflict bleeding. Bukijutsu unlocks at level 35. Costs 20 Chakra and 22 Stamina; 7 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

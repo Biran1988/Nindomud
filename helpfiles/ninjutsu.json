@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "ninjutsu",
+  "keywords": [
+    "ninjutsu"
+  ],
+  "title": "Ninjutsu",
+  "body": "Syntax: perform <jutsu name> <target>\n\nDescription: One of the four primary classes (see 'help classes'). Ninjutsu techniques cover elemental attacks and a few utility jutsu, most of them requiring hand signs (see 'help handsigns') and a real casting delay before they land.\n\nNinjutsu grows from Chakra Ball and the first elemental attacks through Rasengan, elemental Rasengans, Chidori, clones, and the level-100 Nanairo no Rasengan. Matching chakra nature is required for elemental attacks. See 'skills' for your level-sorted roster and 'help <jutsu name>' for each move.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

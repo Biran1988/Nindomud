@@ -104,6 +104,7 @@ _ITEM_VNUMS = {
     "poison_gas_bomb": 9805, "exploding_clay": 9806, "mighty_fan": 9807,
     "glue_pot": 9808,
     "medicinal_herbs": 9809,
+    "death_scroll": 9810,
 }
 
 
@@ -141,6 +142,9 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["mighty_fan"], "A Mighty Fan", "weapon", 180, weapon_type="exotic")
     make(_ITEM_VNUMS["glue_pot"], "A Pot of Glue", "misc", 50)
     make(_ITEM_VNUMS["medicinal_herbs"], "Medicinal Herbs", "misc", 150)
+    if _ITEM_VNUMS["death_scroll"] not in olc.OBJECT_TEMPLATES:
+        make(_ITEM_VNUMS["death_scroll"], "A Scroll of 100 Years of Death", "scroll", 0)
+        olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "100 years of death"
     if had_shared_items:
         return  # old templates are registered; only backfill the new Art stock
     make(_ITEM_VNUMS["war_club"], "A Wooden War Club", "weapon", 35, weapon_type="blunt")
@@ -367,6 +371,8 @@ def populate() -> None:
 
     areas.ensure_single_village_areas()
     _register_shared_items()
+    import lightsabers
+    lightsabers.register_items()
 
     # Shopkeeper mob template vnums: village index * 10 + role, in the
     # 6000 block (distinct from the 5000-block bandit templates).
@@ -691,6 +697,10 @@ def populate() -> None:
     # hardcoded mob's own registration convention.
     import tailed_beasts
     tailed_beasts.register_all_beast_templates(combat)
+
+    # Arena and jail rooms are built after the saved snapshot is applied.
+    # Enforce area deletions again so these hardcoded rooms stay removed.
+    world_persistence.apply_deleted_areas()
 
 
 def register_default_spawn_points_for_testing() -> None:

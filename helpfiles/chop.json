@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "chop",
+  "keywords": [
+    "chop"
+  ],
+  "title": "Chop",
+  "body": "Syntax: chop\n\nDescription: Swings an axe for the Lumberjack job. Needs an axe held and a forest biome to stand in. Costs 1-2 Stamina and takes a few seconds. A held axe loses one use per attempt and breaks after 250 uses by default.\n\nThere are 6 axes (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Edged -- required levels 1/20/40/60/80/99). Pine, Maple, Redwood, and Ebony wood each have a full Common-through-Legendary tier ladder, built around your axe's own tier -- a better axe always matters more than levels alone, and only the Diamond-Edged axe gives a real (though still not guaranteed) shot at Legendary wood. Kindling, Birch, Oak, Ironwood, Masterwork Oak, and Heartwood logs (feeding Fishing's own rod crafting) are still findable at their usual fixed rarity alongside the tiered wood.\n\nLumberjack also raises your Max Stamina -- each Lumberjack level adds its own level number, stacking cumulatively (Farming and Mining contribute to the same Max Stamina pool too, so leveling more than one adds up together). See 'help farm' for the exact math.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

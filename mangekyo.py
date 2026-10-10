@@ -36,15 +36,8 @@ def _allocate_pocket_dimension_vnum(world_module) -> int:
     return vnum
 
 
-def open_pocket_dimension(caster_session, target_session, world_module) -> int:
-    """Step 1 of Kamui's real, confirmed 2-step entry: sends ONLY the
-    target to a real, brand-new, exit-less room (matching jail.py's
-    own established convention for a dedicated, non-standard room).
-    The caster is NOT moved here at all -- confirmed directly they
-    must separately cast Kamui again on THEMSELVES to actually join.
-    Returns the real, new room's own vnum, stashed on the caster's
-    own player (kamui_pocket_dimension_vnum) so their own follow-up
-    cast knows where to send them."""
+def _create_pocket_room(world_module) -> int:
+    """Allocate a temporary room for either a target or a solo entry."""
     from world import Room
     vnum = _allocate_pocket_dimension_vnum(world_module)
     world_module.WORLD.add_room(Room(
@@ -57,24 +50,66 @@ def open_pocket_dimension(caster_session, target_session, world_module) -> int:
         ),
         biome="none",
     ))
+    return vnum
+
+
+def open_pocket_dimension(caster_session, target_session, world_module) -> int:
+    """Send a same-room target into a new pocket without moving the caster."""
+    if caster_session.player.room_vnum != target_session.player.room_vnum:
+        raise ValueError("There's nobody here by that name.")
+    if caster_session.player.kamui_pocket_dimension_vnum in world_module.WORLD.rooms:
+        raise ValueError("You already have a pocket dimension open. Enter it or let it close first.")
+    target_room = world_module.WORLD.get(target_session.player.room_vnum)
+    if target_room and target_room.name == "A Pocket Dimension":
+        raise ValueError("That target is already inside a pocket dimension.")
+    vnum = _create_pocket_room(world_module)
+    caster_session.player.kamui_return_room_vnum = caster_session.player.room_vnum
+    target_session.player.kamui_return_room_vnum = target_session.player.room_vnum
     caster_session.player.kamui_pocket_dimension_vnum = vnum
     target_session.player.room_vnum = vnum
     return vnum
 
 
+def open_mob_pocket_dimension(caster_session, mob, world_module) -> int:
+    """Transfer a mob to the caster's temporary dimension."""
+    import combat
+    player = caster_session.player
+    if player.room_vnum != mob.room_vnum or mob not in combat.mobs_in_room(player.room_vnum):
+        raise ValueError("That target is no longer here.")
+    if player.kamui_pocket_dimension_vnum in world_module.WORLD.rooms:
+        raise ValueError("You already have a pocket dimension open. Enter it or let it close first.")
+    if world_module.WORLD.get(player.room_vnum).name == "A Pocket Dimension":
+        raise ValueError("You cannot open Kamui from inside a pocket dimension.")
+    vnum = _create_pocket_room(world_module)
+    player.kamui_return_room_vnum = player.room_vnum
+    player.kamui_pocket_dimension_vnum = vnum
+    mob.kamui_return_room_vnum = mob.room_vnum
+    combat.MOBS_BY_ROOM[mob.room_vnum].remove(mob)
+    mob.room_vnum = vnum
+    combat.MOBS_BY_ROOM.setdefault(vnum, []).append(mob)
+    return vnum
+
+
 def enter_own_pocket_dimension(caster_session) -> bool:
-    """Step 2 of Kamui's real, confirmed 2-step entry: the caster
-    joins the pocket dimension they themselves already opened (see
-    open_pocket_dimension). No chakra cost to enter (confirmed
-    directly) -- real upkeep only starts ticking once they're
-    actually inside (see process_kamui_pocket_dimensions below).
-    Returns False if the caster has no real pocket dimension open at
-    all right now."""
-    vnum = caster_session.player.kamui_pocket_dimension_vnum
-    if not vnum:
+    """Join an existing pocket or create a solo one on a self cast.
+
+    Upkeep begins once the caster is inside. Returns False when they
+    are already there, without opening a duplicate room.
+    """
+    import world
+    player = caster_session.player
+    vnum = player.kamui_pocket_dimension_vnum
+    current_room = world.WORLD.get(player.room_vnum)
+    if current_room and current_room.name == "A Pocket Dimension" and player.room_vnum != vnum:
+        raise ValueError("You cannot open Kamui from inside another pocket dimension.")
+    if player.room_vnum == vnum and player.kamui_pocket_dimension_active:
         return False
-    caster_session.player.room_vnum = vnum
-    caster_session.player.kamui_pocket_dimension_active = True
+    if not vnum or world.WORLD.get(vnum) is None:
+        vnum = _create_pocket_room(world)
+        player.kamui_return_room_vnum = player.room_vnum
+        player.kamui_pocket_dimension_vnum = vnum
+    player.room_vnum = vnum
+    player.kamui_pocket_dimension_active = True
     return True
 
 
@@ -84,11 +119,60 @@ def leave_pocket_dimension(caster_session, world_module) -> None:
     itself (it was only ever created for this one real use, per
     direct confirmation there's no reason to keep it around once
     nobody's using it)."""
+    import upkeep_reports
+    for message in upkeep_reports.flush(caster_session.player, "Kamui Pocket Dimension"):
+        caster_session.send(message)
+    upkeep_reports.stop_maintaining(caster_session.player, "Kamui: Pocket Dimension")
+    import session as session_module
     vnum = caster_session.player.kamui_pocket_dimension_vnum
+    import combat
+    for mob in list(combat.MOBS_BY_ROOM.get(vnum, [])):
+        combat.MOBS_BY_ROOM[vnum].remove(mob)
+        destination = mob.kamui_return_room_vnum
+        if destination not in world_module.WORLD.rooms:
+            destination = caster_session.player.kamui_return_room_vnum
+        if destination not in world_module.WORLD.rooms:
+            destination = next(iter(world_module.WORLD.rooms))
+        mob.room_vnum = destination
+        mob.kamui_return_room_vnum = None
+        combat.MOBS_BY_ROOM.setdefault(destination, []).append(mob)
+    for participant in session_module.ACTIVE_SESSIONS:
+        if participant.player and participant.player.room_vnum == vnum and vnum is not None:
+            destination = participant.player.kamui_return_room_vnum
+            if destination not in world_module.WORLD.rooms:
+                destination = caster_session.player.kamui_return_room_vnum
+            if destination not in world_module.WORLD.rooms:
+                destination = next(iter(world_module.WORLD.rooms))
+            participant.player.room_vnum = destination
+            participant.player.kamui_return_room_vnum = None
+            if participant is not caster_session:
+                participant.send("&YThe Kamui dimension collapses; you return to reality.&x")
+                participant.send_prompt()
+    caster_session.player.kamui_return_room_vnum = None
     caster_session.player.kamui_pocket_dimension_active = False
     caster_session.player.kamui_pocket_dimension_vnum = None
     if vnum and vnum in world_module.WORLD.rooms:
         del world_module.WORLD.rooms[vnum]
+
+
+def end_kamui_on_departure(leaving_session, world_module) -> None:
+    """Close a temporary dimension when its caster or captive leaves."""
+    import session as session_module
+    import storage
+    player = leaving_session.player
+    if player is None:
+        return
+    owner = next((s for s in session_module.ACTIVE_SESSIONS if s.player
+                  and s.player.kamui_pocket_dimension_vnum
+                  and (s is leaving_session or s.player.kamui_pocket_dimension_vnum == player.room_vnum)), None)
+    if owner is None:
+        return
+    vnum = owner.player.kamui_pocket_dimension_vnum
+    participants = [s for s in session_module.ACTIVE_SESSIONS
+                    if s.player and s.player.room_vnum == vnum]
+    leave_pocket_dimension(owner, world_module)
+    for s in participants + [owner]:
+        storage.save_player(s.player)
 
 
 _NEXT_TSUKUYOMI_ROOM_VNUM = None  # lazily initialized on first real use, see _allocate_tsukuyomi_room_vnum
@@ -113,7 +197,7 @@ def _allocate_tsukuyomi_room_vnum(world_module) -> int:
 def open_tsukuyomi(caster_session, target_session, world_module) -> None:
     """Casting Tsukuyomi immediately moves BOTH caster and target into
     a shared, real torture room in one action (confirmed directly,
-    unlike Kamui's own 2-step entry). A real random number from 5-10
+    unlike Kamui's target-first 2-step entry). A real random number from 5-10
     is rolled right here, hidden from both players, setting how many
     of the caster's own actions the technique lasts."""
     import random
@@ -121,6 +205,16 @@ def open_tsukuyomi(caster_session, target_session, world_module) -> None:
 
     target_session.player.tsukuyomi_return_room_vnum = target_session.player.room_vnum
     caster_return_vnum = caster_session.player.room_vnum
+
+    # Entering the mindscape ends ordinary fights for both participants.
+    # A cast or timed action already queued by the victim must not fire
+    # after the freeze takes hold, regardless of staff rank.
+    for participant in (caster_session, target_session):
+        participant.combat_target = None
+        participant.pvp_target = None
+    target_session.pending_cast = None
+    target_session.pending_action = None
+    target_session.chakra_charge = None
 
     vnum = _allocate_tsukuyomi_room_vnum(world_module)
     world_module.WORLD.add_room(Room(
@@ -164,6 +258,47 @@ def end_tsukuyomi(caster_session, target_session, world_module) -> None:
         del world_module.WORLD.rooms[vnum]
 
 
+def end_tsukuyomi_on_departure(leaving_session, world_module) -> None:
+    """Release both minds if either participant logs out or disconnects."""
+    import storage
+
+    player = leaving_session.player
+    if player is None:
+        return
+    if player.tsukuyomi_active_target_name:
+        other = next((s for s in leaving_session.active_sessions()
+                      if s is not leaving_session and s.player
+                      and s.player.name == player.tsukuyomi_active_target_name), None)
+        if other:
+            end_tsukuyomi(leaving_session, other, world_module)
+            other.send("&YTsukuyomi ends as its caster leaves.&x")
+            other.send_prompt()
+            storage.save_player(other.player)
+        else:
+            player.room_vnum = player.tsukuyomi_caster_return_vnum or player.room_vnum
+            if player.tsukuyomi_room_vnum:
+                world_module.WORLD.rooms.pop(player.tsukuyomi_room_vnum, None)
+            player.tsukuyomi_active_target_name = None
+            player.tsukuyomi_actions_remaining = 0
+            player.tsukuyomi_room_vnum = None
+            player.tsukuyomi_caster_return_vnum = None
+        storage.save_player(player)
+    elif player.tsukuyomi_frozen:
+        other = next((s for s in leaving_session.active_sessions()
+                      if s is not leaving_session and s.player
+                      and s.player.tsukuyomi_active_target_name == player.name), None)
+        if other:
+            end_tsukuyomi(other, leaving_session, world_module)
+            other.send("&YTsukuyomi ends as its target leaves.&x")
+            other.send_prompt()
+            storage.save_player(other.player)
+        else:
+            player.room_vnum = player.tsukuyomi_return_room_vnum or player.room_vnum
+            player.tsukuyomi_frozen = False
+            player.tsukuyomi_return_room_vnum = None
+        storage.save_player(player)
+
+
 def process_kamui_pocket_dimensions(combat_module, world_module, session_module) -> None:
     """Called once per real pulse -- ticks the real, confirmed chakra
     upkeep for every active Kamui pocket dimension: 15/tick with just
@@ -179,6 +314,7 @@ def process_kamui_pocket_dimensions(combat_module, world_module, session_module)
             other.player and other is not s and other.player.room_vnum == vnum
             for other in session_module.ACTIVE_SESSIONS
         )
+        target_present = target_present or bool(combat_module.MOBS_BY_ROOM.get(vnum))
         cost = (
             data_mangekyo.KAMUI_UPKEEP_WITH_TARGET_PER_TICK
             if target_present
@@ -189,7 +325,13 @@ def process_kamui_pocket_dimensions(combat_module, world_module, session_module)
             leave_pocket_dimension(s, world_module)
             continue
         s.player.chakra -= cost
-        s.send(f"&CYour Kamui pocket dimension uses {cost} chakra to remain active.&x")
+        import upkeep_reports
+        for message in upkeep_reports.record(s.player, "Kamui Pocket Dimension", cost):
+            s.send(message)
+        if "Kamui: Pocket Dimension" not in s.player.learned_skills:
+            s.player.learned_skills.append("Kamui: Pocket Dimension")
+            s.player.skill_proficiencies["Kamui: Pocket Dimension"] = (100 if getattr(s.player, "_immortal_skill_mastery", False) else 0)
+        upkeep_reports.maintain_skill(s.player, "Kamui: Pocket Dimension")
 
 
 def process_amaterasu_room_fires(combat_module, world_module) -> None:
@@ -197,10 +339,7 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
     alongside process_tailed_beasts -- sweeps every real room
     currently on fire from Amaterasu (Room.amaterasu_fire_caster is
     set), and:
-    1. Expires the fire once Room.amaterasu_fire_expires_at has
-       passed (confirmed directly: a real 30 minutes from the cast,
-       unless sealed early by a scroll-taught sealing jutsu -- not
-       yet built).
+    1. Expires the room fire five minutes after the cast.
     2. Deals real, per-tick damage (data_mangekyo.
        AMATERASU_ROOM_BURN_PER_TICK) to every player physically in
        that room right now, EXCEPT the original caster (confirmed
@@ -240,16 +379,23 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
                     combat_module.clamp_immortal_health(s)
                 else:
                     combat_module.handle_player_defeat(s)
+        for mob in list(combat_module.MOBS_BY_ROOM.get(room.vnum, [])):
+            mob.health -= status_effects.reduce_incoming_damage(
+                mob.active_status_effects, random.randint(*data_mangekyo.AMATERASU_ROOM_BURN_PER_TICK))
+            if mob.health <= 0:
+                owner = next((s for s in session_module.ACTIVE_SESSIONS
+                              if s.player and s.player.name == room.amaterasu_fire_caster), None)
+                if owner:
+                    combat_module.handle_mob_defeat(owner, mob)
+                else:
+                    combat_module.remove_mob(mob)
 
 
 def process_amaterasu_player_burns(combat_module, session_module) -> None:
     """Called once per real pulse -- ticks every player's own,
-    genuinely PERMANENT direct Amaterasu burn (player.
-    mangekyo_amaterasu_burn_until, confirmed directly to have no real
-    duration of its own at all: it burns forever until sealed, so
-    this never actually clears it on a timer -- only a future sealing
-    jutsu will). Separate from the room-fire tick above, since this
-    travels with the player wherever they go."""
+    direct Amaterasu burn. It has no timer; a real defeat clears it.
+    Separate from the room-fire tick above, since this travels with
+    the player wherever they go."""
     import random
 
     for s in session_module.ACTIVE_SESSIONS:
@@ -258,7 +404,7 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
         dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
         s.player.health -= dmg
-        s.send(f"&RAmaterasu's black flame burns you for {damage_messages.describe_damage(dmg)} damage -- it will not go out.&x")
+        s.send(f"&RAmaterasu's black flame burns you for {damage_messages.describe_damage(dmg)} damage!&x")
         if s.player.health <= 0:
             if combat_module.try_trigger_izanagi(s):
                 pass
@@ -301,3 +447,6 @@ def process_kekkei_no_me(combat_module, world_module, session_module) -> None:
             s.player.chakra = max(0, s.player.chakra - chakra_loss)
             s.player.stamina = max(0, s.player.stamina - stamina_loss)
             s.send(f"&RThe {room.kekkei_no_me_element} chakra saturating this domain saps your strength ({chakra_loss} chakra, {stamina_loss} stamina).&x")
+        for mob in combat_module.MOBS_BY_ROOM.get(room.vnum, []):
+            mob.chakra = max(0, mob.chakra - random.randint(*data_mangekyo.KEKKEI_NO_ME_CHAKRA_DRAIN_PER_TICK))
+            mob.stamina = max(0, mob.stamina - random.randint(*data_mangekyo.KEKKEI_NO_ME_STAMINA_DRAIN_PER_TICK))

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "equipment",
+  "keywords": [
+    "equipment",
+    "eq"
+  ],
+  "title": "Equipment",
+  "body": "Syntax: equipment  (alias: eq)\n\nDescription: Shows every wear location, including empty slots, along with what you currently have worn, wielded, and held.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

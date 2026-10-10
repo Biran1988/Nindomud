@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "ocopy",
+  "keywords": [
+    "ocopy"
+  ],
+  "title": "Ocopy (staff)",
+  "body": "Syntax: ocopy <source object vnum> <new object vnum>\n\nDescription: Copies an object prototype, including its stats, flags, and programs, to an unused VNUM. The copy is independent of the original. It is not placed or stocked automatically; use 'oinvoke' or 'mset additem' when ready. Inspect it with 'ostat'.\n\nDate: 2026-09-25",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

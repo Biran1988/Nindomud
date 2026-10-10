@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "farm",
+  "keywords": [
+    "farm",
+    "farming"
+  ],
+  "title": "Farm",
+  "body": "Syntax: farm\n\nDescription: Tends crops for the Farming job. Hold a Copper Hoe (VNUM 20802) with 'hold hoe' first; carrying it is not enough. Farm in a plains biome. Costs 1-2 Stamina and takes a few seconds; harvests can fail. The Copper Hoe is sold in general stores. Each attempt wears the hoe by one use; it breaks after 250 uses by default.\n\nFarming level unlocks eight crop types, from Carrot and Potato at level 1 through Pepper at level 80. Crops are standalone sellable goods.\n\nFarming also raises your Max Stamina -- each Farming level adds its own level number, stacking cumulatively (level 1 gives +1, level 2 adds +2 more for +3 total, level 3 adds +3 more for +6 total, and so on). At level 23 that's +276 Max Stamina total. Lumberjack and Mining raise Max Stamina the same way (all three stack into the same pool); Cooking, Weaponsmith, and Armorsmith raise Max Chakra the same way; Gemcutter raises Max Health at DOUBLE this rate -- see their own helpfiles.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

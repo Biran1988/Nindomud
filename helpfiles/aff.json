@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "aff",
+  "keywords": [
+    "aff",
+    "affects",
+    "effects"
+  ],
+  "title": "Aff",
+  "body": "Syntax: aff\n\nDescription: Shows every status effect currently active on you (stunned, bleeding, confused, frightened, silenced, entangled, and so on) along with how many pulses each has left. Also shows if the Sharingan is currently toggled on. Same info 'score' already shows, without the rest of the score sheet around it.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

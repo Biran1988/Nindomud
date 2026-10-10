@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "changes",
+  "keywords": [
+    "changes"
+  ],
+  "title": "Changes",
+  "body": "Syntax: changes\n\nDescription: Shows the in-game changelog, newest entry first. Long enough now that it pages 20 lines at a time -- press enter to see more.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

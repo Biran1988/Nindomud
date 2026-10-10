@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "lottery",
+  "keywords": [
+    "lottery",
+    "lottery buy",
+    "jackpot",
+    "draw"
+  ],
+  "title": "Daily Lottery",
+  "body": "Syntax: lottery  |  lottery buy <four digits|random>\n\nDescription: Each ticket costs 1,000 ryo from your carried money. Pick exactly four digits, including leading zeroes, such as 0042, or type random for an automatic pick. You can buy one ticket per drawing. Every ticket adds its price to the shared jackpot.\n\nA random number from 0000 through 9999 is drawn every 24 hours. You may buy one ticket per draw, choosing four digits or letting the game pick with 'random'. If no ticket matches, 25,000 ryo is added to the jackpot and it carries over. A match wins the jackpot, deposited directly into the winner's bank. Multiple matching players split the jackpot; then the next jackpot starts at 25,000 ryo plus new ticket purchases. 'lottery' shows the next draw in UTC, the current pot, your ticket and the last number.\n\nDate: 2026-09-28",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

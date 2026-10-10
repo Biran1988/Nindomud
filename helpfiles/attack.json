@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "attack",
+  "keywords": [
+    "attack",
+    "kill"
+  ],
+  "title": "Attack",
+  "body": "Syntax: attack <target>  (alias: kill)\n\nDescription: Starts a fight with a mob in the room, or (if 'group' or PvP is set up) with another player. Once combat starts, your basic attack resolves automatically every pulse until the fight ends -- you don't need to re-type it each round. The verb shown (slash/stab/punch/etc.) matches whatever you're wielding. See 'help combatstats' for how Hit Roll, Armor Class, Dodge, and Critical Chance factor into each swing.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

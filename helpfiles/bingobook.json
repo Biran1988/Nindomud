@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "bingobook",
+  "keywords": [
+    "bingobook"
+  ],
+  "title": "Bingo Book",
+  "body": "Syntax: bingobook\n\nDescription: Lists every posted bounty, grouped by village, and whether you've already claimed each one. Bounties are posted by staff via the 'bounty' command.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

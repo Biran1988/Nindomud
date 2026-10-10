@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "respawn",
+  "keywords": [
+    "respawn"
+  ],
+  "title": "Respawn",
+  "body": "Syntax: respawn\n\nDescription: Administrator/Implementor only. Immediately restores missing registered mob populations throughout the MUD, plus pending timer respawns. Honors total population caps but bypasses per-period limits. Existing mobs (including wanderers within their area) are counted and left untouched. Uncapped populations use one mob per template per area; unassigned rooms are checked individually. Does not spawn unused prototypes or items, alter saved world data, or send area reset messages.\n\nDate: 2026-09-20",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

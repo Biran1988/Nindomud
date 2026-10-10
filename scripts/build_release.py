@@ -1,7 +1,9 @@
 """Package a data-safe source archive and portable single-file Python server."""
 
 import argparse
+import json
 from pathlib import Path
+import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,15 +12,23 @@ ROOT = Path(__file__).resolve().parents[1]
 def build(output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
     source_files = sorted(ROOT.glob("*.py"))
+    sys.path.insert(0, str(ROOT))
+    import help_system
     archive = output / "Nindo_mud.zip"
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(ROOT.rglob("*")):
             relative = path.relative_to(ROOT)
             if not path.is_file() or any(part in {".git", "data", "__pycache__", ".pytest_cache"} or part.startswith("data_test") for part in relative.parts):
                 continue
-            if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt"} and relative.name not in {".gitignore"}:
+            if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"}:
                 continue
             zf.write(path, relative)
+        # Ship readable, individual helpfiles as release content. Keep these
+        # outside data/help so extracting the archive cannot overwrite saved
+        # staff-written pages; the server seeds/refreshes its own data/help.
+        for entry in help_system.DEFAULT_HELP_ENTRIES:
+            name = help_system._slug(entry["primary_keyword"]) + ".json"
+            zf.writestr("helpfiles/" + name, json.dumps(entry, indent=2) + "\n")
 
     standalone = output / "Nindo_mud"
     with standalone.open("w", encoding="utf-8") as file:
@@ -39,7 +49,10 @@ def build(output: Path) -> None:
         file.write("def start():\n")
         file.write("    namespace = {'__name__': '__main__', '__file__': os.path.join(_ROOT, 'main.py')}\n")
         file.write("    exec(compile(_SOURCES['main'], namespace['__file__'], 'exec'), namespace)\n")
-        file.write("if __name__ == '__main__':\n    start()\n")
+        file.write("if __name__ == '__main__':\n")
+        file.write("    if sys.argv[1:] == ['--preflight']:\n")
+        file.write("        import main, session, combat, commands, help_system, jutsu_colors, mangekyo_discovery\n")
+        file.write("    else:\n        start()\n")
     standalone.chmod(0o755)
 
 

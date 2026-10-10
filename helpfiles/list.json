@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "list",
+  "keywords": [
+    "list"
+  ],
+  "title": "List",
+  "body": "Syntax: list\n\nDescription: Shows what a shopkeeper in the room has for sale, with prices.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

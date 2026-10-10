@@ -24,9 +24,12 @@ import os
 import time
 import random
 import copy
+import hashlib
+import hmac
 from typing import List, Optional
 
 import colors
+import config
 import combat
 import spawn_points
 import data_kekkei_genkai
@@ -189,7 +192,44 @@ def _require_builder(session) -> bool:
     if not can_build(session):
         session.send("You do not have builder access.")
         return False
+    if (session.account.staff_level == "builder" and
+            not _require_assigned_vnum(session, session.player.room_vnum)):
+        return False
     return True
+
+
+def _require_assigned_vnum(session, vnum: int) -> bool:
+    """Builder rank has no access until Biran assigns this vnum range."""
+    if not session.account or session.account.staff_level != "builder":
+        return True
+    area = areas.find_area_for_vnum(vnum)
+    if area and session.account.name.lower() in {name.lower() for name in area.builders}:
+        return True
+    session.send("That vnum is outside your assigned builder area.")
+    return False
+
+
+def _is_biran(session) -> bool:
+    return bool(session.account and session.account.staff_level == "implementor"
+                and session.account.name.lower() == config.ADMIN_NAME)
+
+
+def _require_exit_link(session, source: int, destination: int) -> bool:
+    """Prototype boundary links require Biran unless both share an owner."""
+    if not _require_assigned_vnum(session, source) or not _require_assigned_vnum(session, destination):
+        return False
+    src = areas.find_area_for_vnum(source)
+    dst = areas.find_area_for_vnum(destination)
+    if src and dst and src.name.lower() == dst.name.lower():
+        return True
+    if _is_biran(session):
+        return True
+    if (src and dst and src.prototype and dst.prototype and src.prototype_owner
+            and src.prototype_owner == dst.prototype_owner
+            and session.account and session.account.name.lower() == src.prototype_owner):
+        return True
+    session.send("Only Biran may connect a prototype to the live world or another builder's area.")
+    return False
 
 
 def _require_admin(session) -> bool:
@@ -290,6 +330,14 @@ def cmd_mstat(session, args: List[str]) -> None:
                         tomoe_cap = data_kekkei_genkai.max_tomoe_for_potential(target_player.bloodline_potential)
                         lines.append(f"  Tomoe: {target_player.bloodline_tomoe}/{tomoe_cap} (Potential-based cap)")
                         lines.append(f"  Sharingan active: {'Yes' if target_player.sharingan_active else 'No'}")
+                        lines.append(f"  Mangekyo: {'Yes' if target_player.bloodline_mangekyo else 'No'}")
+                        if target_player.bloodline_mangekyo:
+                            import data_mangekyo
+                            roster = data_mangekyo.TECHNIQUE_ROSTER
+                            for number, eye in enumerate((target_player.mangekyo_eye_1,
+                                                          target_player.mangekyo_eye_2), start=1):
+                                name = roster[eye]["display_name"] if eye in roster else "Unassigned"
+                                lines.append(f"  Eye {number}: {name}")
                         if target_player.copied_jutsu_key:
                             lines.append(f"  Copied jutsu ready: {target_player.copied_jutsu_key} (costs {target_player.copied_jutsu_cost} chakra)")
                 session.send("\n".join(lines))
@@ -361,6 +409,7 @@ def cmd_mstat(session, args: List[str]) -> None:
             lines.append(f"&WActive Effects:&x {', '.join(effect_strs)}")
         else:
             lines.append("&WActive Effects:&x &Gnone&x")
+        lines.append(f"&WScavenged Items:&x {_fmt_list(live_mob.scavenged_items)}")
     lines += [
         _rule(),
         f"&C{'OTHER INFORMATION'.center(62)}&x",
@@ -509,6 +558,8 @@ def cmd_mcopy(session, args: List[str]) -> None:
         session.send("Usage: mcopy <source vnum> <new vnum>")
         return
     source, target = map(int, args)
+    if not _require_assigned_vnum(session, source) or not _require_assigned_vnum(session, target):
+        return
     if source not in combat.MOB_TEMPLATES:
         session.send(f"No mobile prototype {source} exists.")
         return
@@ -528,6 +579,8 @@ def cmd_ocopy(session, args: List[str]) -> None:
         session.send("Usage: ocopy <source vnum> <new vnum>")
         return
     source, target = map(int, args)
+    if not _require_assigned_vnum(session, source) or not _require_assigned_vnum(session, target):
+        return
     if source not in OBJECT_TEMPLATES:
         session.send(f"No object prototype {source} exists.")
         return
@@ -546,7 +599,7 @@ def cmd_rcreate(session, args: List[str]) -> None:
         return
     cmd_rset(session, ["create", args[0]])
     vnum = int(args[0])
-    if len(args) > 1 and vnum in world.WORLD.rooms:
+    if len(args) > 1 and vnum in world.WORLD.rooms and session.player.room_vnum == vnum:
         world.WORLD.rooms[vnum].name = " ".join(args[1:])
         _log(session.player.name, "room", vnum, f"name set to '{world.WORLD.rooms[vnum].name}'")
 
@@ -572,6 +625,8 @@ def cmd_oinvoke(session, args: List[str]) -> None:
         return
     vnum = int(args[0])
     room_vnum = int(args[1]) if len(args) == 2 else session.player.room_vnum
+    if not _require_assigned_vnum(session, vnum) or not _require_assigned_vnum(session, room_vnum):
+        return
     prototype = OBJECT_TEMPLATES.get(vnum)
     room = world.WORLD.get(room_vnum)
     if not prototype:
@@ -729,6 +784,7 @@ VALID_MOB_ACT_FLAGS = {
     "Garrison",     # content.py -- war/territory defender designation; no mechanical check yet
     "Trap",         # content.py -- war/territory trap designation; no mechanical check yet
     "Wander",       # combat.is_wandering/process_wander -- moves through a random available exit on its own independent timer (2-4 min, randomized per mob); replaces the old travel_mode field entirely
+    "Scavenger",    # combat.process_scavengers -- collects takeable room items into transient mob inventory
     "Mission",      # missions.py -- marks this mob as eligible for the dynamic C/B/A/S rank-request mission pool (see missions.pick_mission_mob); the mob's own level, weighed against the requesting player's level, determines which rank it can actually be offered for
     "Immortal",     # combat.is_immortal_mob -- per direct request (Section 150): genuinely CANNOT be attacked at all (plain attack or jutsu-based), matching the exact same real "protected and cannot be attacked" refusal already used for shopkeepers/gamblers/teachers -- not just a huge HP pool
 }
@@ -774,6 +830,8 @@ def cmd_astat(session, args: List[str]) -> None:
         _rule(),
         f"&WVnum Range:&x {area.vnum_start}-{area.vnum_end}   &WSize:&x {size} reserved vnums",
         f"&WCreator:&x {area.creator}",
+        f"&WPrototype:&x {'yes' if area.prototype else 'no'}   &WBuilder Owner:&x {area.prototype_owner or '(none)'}",
+        f"&WAssigned Builders:&x {', '.join(area.builders) or '(none)'}",
         f"&WRooms Built:&x {len(rooms_in_range)} of {size} ({len(rooms_in_range) * 100 // size}%)",
     ]
     income_text = f"&Y{area.income} ryo/tick&x" if area.income else "&D(none set)&x"
@@ -785,6 +843,94 @@ def cmd_astat(session, args: List[str]) -> None:
     lines.append(f"&WReset Message:&x {reset_message_text}")
     lines.append(_rule())
     session.send("\n".join(lines))
+
+
+def _delete_area_contents(area, session) -> dict:
+    """Remove an area and persist tombstones for content.py built-ins."""
+    import world_persistence
+    import corpses
+    from data_villages import VILLAGES
+
+    start, end = area.vnum_start, area.vnum_end
+    inside = lambda vnum: start <= vnum <= end
+    doomed_rooms = {v for v in world.WORLD.rooms if inside(v)}
+    points = spawn_points.list_spawn_points()
+    local_points = [p for p in points if inside(p["room_vnum"])]
+    exclusive_mobs = {p["vnum"] for p in local_points if p["kind"] == "mob"
+                      and not any(other["kind"] == "mob" and other["vnum"] == p["vnum"]
+                                  and not inside(other["room_vnum"]) for other in points)}
+    exclusive_items = {p["vnum"] for p in local_points if p["kind"] == "item"
+                       and not any(other["kind"] == "item" and other["vnum"] == p["vnum"]
+                                   and not inside(other["room_vnum"]) for other in points)}
+
+    # Move connected players before removing their rooms. Players whose
+    # village start is inside the area use the first remaining room.
+    fallback = next((v for v in world.WORLD.rooms if not inside(v)), None)
+    if fallback is None:
+        raise ValueError("Cannot delete the only remaining area with rooms.")
+    for connected in session.active_sessions():
+        if connected.player and inside(connected.player.room_vnum):
+            village_start = VILLAGES.get(connected.player.village, {}).get("starting_room_vnum")
+            connected.player.room_vnum = village_start if village_start in world.WORLD.rooms and not inside(village_start) else fallback
+            connected.send("&Y(This area was deleted; you have been moved to a safe room.)&x")
+            storage.save_player(connected.player)
+
+    ground_count = sum(len(world.WORLD.rooms[v].ground_items) for v in doomed_rooms)
+    mob_count = 0
+    for room_vnum, mobs in list(combat.MOBS_BY_ROOM.items()):
+        keep = [mob for mob in mobs if not inside(mob.room_vnum) and mob.template_vnum not in exclusive_mobs]
+        mob_count += len(mobs) - len(keep)
+        combat.MOBS_BY_ROOM[room_vnum] = keep
+    combat._respawn_queue[:] = [entry for entry in combat._respawn_queue
+                                if not inside(entry[2]) and entry[1] not in exclusive_mobs]
+
+    exit_count = 0
+    for room in world.WORLD.rooms.values():
+        for direction, target in list(room.exits.items()):
+            if target in doomed_rooms:
+                del room.exits[direction]
+                for attr in ("exit_flags", "exit_door_open", "exit_key_item", "exit_passcode"):
+                    getattr(room, attr, {}).pop(direction, None)
+                if room.vnum not in doomed_rooms:
+                    exit_count += 1
+    for vnum in doomed_rooms:
+        del world.WORLD.rooms[vnum]
+        corpses.CORPSES_BY_ROOM.pop(vnum, None)
+
+    territory_state = storage.load_territory()
+    for key in ("points", "traps"):
+        entries = territory_state.get(key, {})
+        for vnum_text in list(entries):
+            if vnum_text.isdigit() and inside(int(vnum_text)):
+                del entries[vnum_text]
+    if territory_state:
+        storage.save_territory(territory_state)
+
+    for point in local_points:
+        spawn_points.remove_spawn_point(point["kind"], point["vnum"], point["room_vnum"])
+    for vnum in exclusive_mobs:
+        combat.MOB_TEMPLATES.pop(vnum, None)
+    for vnum in exclusive_items:
+        OBJECT_TEMPLATES.pop(vnum, None)
+    for template in combat.MOB_TEMPLATES.values():
+        template["shop_items"] = [v for v in template.get("shop_items", []) if v not in exclusive_items]
+
+    custom = storage.load_custom_templates()
+    for vnum in exclusive_mobs:
+        custom.get("mobs", {}).pop(str(vnum), None)
+    for vnum in exclusive_items:
+        custom.get("items", {}).pop(str(vnum), None)
+    storage.save_custom_templates(custom)
+    areas.remove_area(area.name)
+    previous = storage.load_world_state().get("deleted_areas", [])
+    snapshot = world_persistence.snapshot_world()
+    snapshot["deleted_areas"] = previous + [{"name": area.name, "start": start, "end": end,
+                                              "mobs": sorted(exclusive_mobs), "items": sorted(exclusive_items)}]
+    storage.save_world_state(snapshot)
+    _log(session.player.name, "area", start, f"deleted {area.name} ({start}-{end})")
+    return {"rooms": len(doomed_rooms), "mobs": mob_count, "items": ground_count,
+            "exits": exit_count, "points": len(local_points),
+            "mob_templates": len(exclusive_mobs), "item_templates": len(exclusive_items)}
 
 
 def cmd_area(session, args: List[str]) -> None:
@@ -807,11 +953,139 @@ def cmd_area(session, args: List[str]) -> None:
     -- see areas.py's own docstring for the full reasoning."""
     if not _require_builder(session):
         return
+    usage = ("Usage: area create <name> [size]\n       area export <area name>  (Implementor)\n"
+             "       area import <file.json> [check]  (Implementor)\n"
+             "       area set <name> income <n>\n"
+             "       area set <name> resetmsg <text|off>\n"
+             "       area assign|unassign <name> <builder account>  (Biran only)\n"
+             "       area prototype <name> on|off  (Biran only)\n"
+             "       area delete <name> <confirmation code>  (Biran only)\n       area list")
     if not args:
-        session.send("Usage: area create <name> [size]\n       area set <name> income <n>\n       area set <name> resetmsg <text|off>\n       area list")
+        session.send(usage)
         return
 
     subcommand = args[0].lower()
+
+    if subcommand == "export":
+        if session.account.staff_level != "implementor":
+            session.send("Only an Implementor can export an area.")
+            return
+        if len(args) < 2:
+            session.send("Usage: area export <area name>")
+            return
+        import area_import
+        try:
+            path, package = area_import.export_area(" ".join(args[1:]))
+        except ValueError as exc:
+            session.send(f"Area export refused: {exc}")
+            return
+        session.send(f"Exported {package['area']['name']}: {len(package['rooms'])} rooms, "
+                     f"{len(package['mobs'])} mobs, {len(package['items'])} items. "
+                     f"Copy {path} to your computer and open it in Nindo Area Builder. "
+                     "After editing, copy the new JSON to data/area_imports/ and use 'area import <file.json> check'.")
+        _log(session.player.name, "area", package["area"]["vnum_start"],
+             f"exported {package['area']['name']}")
+        return
+
+    if subcommand == "import":
+        if session.account.staff_level != "implementor":
+            session.send("Only an Implementor can import an offline area.")
+            return
+        if len(args) not in (2, 3) or (len(args) == 3 and args[2].lower() != "check"):
+            session.send("Usage: area import <file.json> [check]  (place it in data/area_imports)")
+            return
+        import area_import
+        try:
+            staged = area_import.validate(area_import.load_package(args[1]))
+            if len(args) == 3:
+                session.send(f"Area package valid for {'update' if staged['updating'] else 'import'}: {staged['name']} ({staged['start']}-{staged['end']}), "
+                             f"{len(staged['rooms'])} rooms, {len(staged['mobs'])} mobs, "
+                             f"{len(staged['items'])} items, {len(staged['points'])} placements. No changes made.")
+                return
+            result = area_import.import_package(staged, session.account.name)
+        except ValueError as exc:
+            session.send(f"Area import refused: {exc}")
+            return
+        session.send(f"{'Updated' if staged['updating'] else 'Imported'} {staged['name']}: {result['rooms']} rooms, {result['mobs']} mobs, "
+                     f"{result['items']} items, {result['placements']} spawn points. Saved for reboot.")
+        _log(session.player.name, "area", staged["start"], f"imported {staged['name']} from {args[1]}")
+        return
+
+    if subcommand in ("assign", "unassign"):
+        if not _is_biran(session):
+            session.send("Only Biran can change builder assignments.")
+            return
+        if len(args) < 3:
+            session.send(f"Usage: area {subcommand} <area name> <builder account>")
+            return
+        account_name = args[-1]
+        target = storage.load_account(account_name)
+        if not target or target.staff_level != "builder":
+            session.send("That account does not exist or does not have Builder rank.")
+            return
+        area = areas.set_builder_assignment(" ".join(args[1:-1]), target.name, subcommand == "assign")
+        if not area:
+            session.send("No such area exists.")
+            return
+        session.send(f"{target.name} {'assigned to' if subcommand == 'assign' else 'removed from'} {area.name}.")
+        _log(session.player.name, "area", area.vnum_start,
+             f"{subcommand} builder {target.name} for {area.name}")
+        return
+
+    if subcommand == "prototype":
+        if not _is_biran(session):
+            session.send("Only Biran can change an area's prototype flag.")
+            return
+        if len(args) < 3 or args[-1].lower() not in ("on", "off"):
+            session.send("Usage: area prototype <name> on|off")
+            return
+        updated = areas.set_prototype(" ".join(args[1:-1]), args[-1].lower() == "on")
+        if not updated:
+            session.send("No such area exists.")
+            return
+        session.send(f"Area {updated.name} prototype flag is {'on' if updated.prototype else 'off'}.")
+        return
+
+    if subcommand != "list" and session.account and session.account.staff_level == "builder":
+        if subcommand == "create":
+            session.send("Only higher staff can create area reservations.")
+            return
+        if subcommand == "set" and len(args) > 2:
+            field_index = next((i for i, word in enumerate(args) if word.lower() in ("income", "resetmsg")), None)
+            edited = areas.find_area(" ".join(args[1:field_index])) if field_index else None
+            if not edited or not _require_assigned_vnum(session, edited.vnum_start):
+                return
+
+    if subcommand == "delete":
+        # Account identity and rank are both checked; the extra code is
+        # compared by digest and never echoed to the room or audit log.
+        if (not session.account or session.account.name.lower() != config.ADMIN_NAME
+                or session.account.staff_level != "implementor"):
+            session.send("Only Biran's Implementor account can delete areas.")
+            return
+        if len(args) < 3:
+            session.send("Usage: area delete <name> <confirmation code>")
+            return
+        supplied = hashlib.sha256(args[-1].encode("utf-8")).hexdigest()
+        expected = "8266498d969081c29737b8daeb5b51d60e56d008fff243a39d16c3032d42f6cf"
+        if not hmac.compare_digest(supplied, expected):
+            session.send("Incorrect area deletion code.")
+            return
+        name = " ".join(args[1:-1])
+        area = areas.find_area(name)
+        if area is None:
+            session.send(f"No area named '{name}' exists.")
+            return
+        try:
+            summary = _delete_area_contents(area, session)
+        except ValueError as exc:
+            session.send(str(exc))
+            return
+        session.send(f"Area '{area.name}' deleted: {summary['rooms']} rooms, {summary['mobs']} live mobs, "
+                     f"{summary['items']} ground items, {summary['exits']} incoming exits, "
+                     f"{summary['points']} spawn points, {summary['mob_templates']} exclusive mob prototypes, "
+                     f"{summary['item_templates']} exclusive item prototypes.")
+        return
 
     if subcommand == "list":
         all_areas = areas.all_areas()
@@ -824,7 +1098,9 @@ def cmd_area(session, args: List[str]) -> None:
             income_text = f", &Y{income} ryo/tick&x territory income" if income else ""
             lines.append(
                 f"  {entry['name']} ({entry['vnum_start']}-{entry['vnum_end']}) "
-                f"-- created by {entry['creator']}{income_text}"
+                f"-- {'prototype' if entry.get('prototype') else 'live'}, "
+                f"builder {entry.get('prototype_owner') or '(unassigned)'}, "
+                f"created by {entry['creator']}{income_text}"
             )
         session.send("\n".join(lines))
         return
@@ -903,7 +1179,7 @@ def cmd_area(session, args: List[str]) -> None:
         session.send(f"Area '{updated.name}' reset message set: {message_text}")
         return
 
-    session.send("Usage: area create <name> [size]\n       area set <name> income <n>\n       area set <name> resetmsg <text|off>\n       area list")
+    session.send(usage)
 
 
 def cmd_aset(session, args: List[str]) -> None:
@@ -948,7 +1224,11 @@ def cmd_aset(session, args: List[str]) -> None:
 
 
 def cmd_rset(session, args: List[str]) -> None:
-    if not _require_builder(session):
+    if (args and args[0].lower() in ("create", "goto") and session.account
+            and session.account.staff_level == "builder"):
+        if not can_build(session):
+            return
+    elif not _require_builder(session):
         return
     if not args:
         session.send(
@@ -967,6 +1247,13 @@ def cmd_rset(session, args: List[str]) -> None:
         return
 
     sub, rest = args[0].lower(), args[1:]
+
+    if sub in ("create", "delete", "goto") and rest and rest[0].isdigit():
+        if not _require_assigned_vnum(session, int(rest[0])):
+            return
+    if sub == "exit" and len(rest) == 2 and rest[1].isdigit():
+        if not _require_exit_link(session, session.player.room_vnum, int(rest[1])):
+            return
 
     if sub == "create":
         if not rest or not rest[0].isdigit():
@@ -1004,6 +1291,12 @@ def cmd_rset(session, args: List[str]) -> None:
         vnum = int(rest[0])
         if vnum not in world.WORLD.rooms:
             session.send(f"No room {vnum} exists.")
+            return
+        if session.account and session.account.staff_level == "builder" and any(
+                other.vnum != vnum and target == vnum and
+                not _require_assigned_vnum(session, other.vnum)
+                for other in world.WORLD.rooms.values() for target in other.exits.values()):
+            session.send("A room outside your area links here; ask Biran to remove that connection.")
             return
 
         # Remove any real exit FROM another room that currently
@@ -1306,6 +1599,8 @@ def _do_bexit(session, room, rest: List[str], force: bool = False) -> None:
         session.send("Invalid direction or destination vnum.")
         return
     dest_vnum = int(dest_raw)
+    if not _require_exit_link(session, src_vnum, dest_vnum):
+        return
 
     if src_vnum not in world.WORLD.rooms:
         session.send(f"Room {src_vnum} doesn't exist -- the source room must already exist.")
@@ -1351,7 +1646,10 @@ def _do_bunlink(session, room, rest: List[str]) -> None:
         session.send("There is no such exit to remove.")
         return
 
-    dest_vnum = room.exits.pop(direction)
+    dest_vnum = room.exits[direction]
+    if not _require_exit_link(session, room.vnum, dest_vnum):
+        return
+    room.exits.pop(direction)
     reverse = world.OPPOSITE_DIRECTION[direction]
     dest_room = world.WORLD.get(dest_vnum)
     if dest_room and dest_room.exits.get(reverse) == room.vnum:
@@ -1800,6 +2098,14 @@ def cmd_mset(session, args: List[str]) -> None:
         return
 
     sub = args[0].lower()
+    if session.account and session.account.staff_level == "builder":
+        targeted = int(args[1]) if sub in {"create", "delete", "spawn", "additem", "removeitem", "addprogram", "removeprogram"} and len(args) > 1 and args[1].isdigit() else int(args[0]) if args[0].isdigit() else None
+        if targeted is not None and not _require_assigned_vnum(session, targeted):
+            return
+        if sub == "spawn" and len(args) > 2 and args[2].isdigit() and not _require_assigned_vnum(session, int(args[2])):
+            return
+        if sub == "additem" and len(args) > 2 and args[2].isdigit() and not _require_assigned_vnum(session, int(args[2])):
+            return
 
     if sub == "fields":
         if len(args) > 2 or (len(args) == 2 and args[1].lower() not in ("mob", "player")):
@@ -1838,6 +2144,14 @@ def cmd_mset(session, args: List[str]) -> None:
         vnum = int(args[1])
         if vnum not in combat.MOB_TEMPLATES:
             session.send(f"No mobile prototype {vnum} exists.")
+            return
+        if session.account and session.account.staff_level == "builder" and (
+                any(m.template_vnum == vnum and not _require_assigned_vnum(session, m.room_vnum)
+                    for mobs in combat.MOBS_BY_ROOM.values() for m in mobs) or
+                any(p["kind"] == "mob" and p["vnum"] == vnum and
+                    not _require_assigned_vnum(session, p["room_vnum"])
+                    for p in spawn_points.list_spawn_points())):
+            session.send("This mobile is used outside your assigned area; ask Biran to remove it.")
             return
         name = combat.MOB_TEMPLATES[vnum].get("short_desc", f"mob {vnum}")
 
@@ -2601,6 +2915,10 @@ def cmd_oset(session, args: List[str]) -> None:
         return
 
     sub = args[0].lower()
+    if session.account and session.account.staff_level == "builder":
+        targeted = int(args[1]) if sub in {"create", "delete", "load", "addprogram", "removeprogram"} and len(args) > 1 and args[1].isdigit() else int(args[0]) if args[0].isdigit() else None
+        if targeted is not None and not _require_assigned_vnum(session, targeted):
+            return
 
     if sub == "fields":
         session.send("\n".join([
@@ -2648,6 +2966,14 @@ def cmd_oset(session, args: List[str]) -> None:
         vnum = int(args[1])
         if vnum not in OBJECT_TEMPLATES:
             session.send(f"No object prototype {vnum} exists.")
+            return
+        if session.account and session.account.staff_level == "builder" and (
+                any(p["kind"] == "item" and p["vnum"] == vnum and
+                    not _require_assigned_vnum(session, p["room_vnum"])
+                    for p in spawn_points.list_spawn_points()) or
+                any(vnum in t.get("shop_items", []) and not _require_assigned_vnum(session, mob_vnum)
+                    for mob_vnum, t in combat.MOB_TEMPLATES.items())):
+            session.send("This object is used outside your assigned area; ask Biran to remove it.")
             return
         name = OBJECT_TEMPLATES[vnum].get("short_desc", f"item {vnum}")
 

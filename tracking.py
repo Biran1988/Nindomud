@@ -168,6 +168,8 @@ def stop_tracking(player) -> None:
     """Ends any active tracking session for this player, clearing
     every real piece of tracking state at once. Safe to call even
     when nothing is actually being tracked."""
+    import upkeep_reports
+    upkeep_reports.stop_maintaining(player, "Track")
     player.tracking_target_mob_id = None
     player.tracking_target_player_name = None
     player.tracking_area_name = None
@@ -249,6 +251,9 @@ def tick_tracking(session) -> None:
         return
 
     player.chakra -= TRACK_UPKEEP_PER_PULSE
-    session.send(f"&CTracking uses {TRACK_UPKEEP_PER_PULSE} chakra to remain active.&x")
+    import upkeep_reports
+    for message in upkeep_reports.record(player, "Tracking", TRACK_UPKEEP_PER_PULSE):
+        session.send(message)
+    upkeep_reports.maintain_skill(player, "Track")
     direction = path[0]
     commands_module.cmd_move(session, direction)

@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "counter jutsu",
+  "keywords": [
+    "counter jutsu",
+    "counter-jutsu",
+    "countering",
+    "elemental collision",
+    "overpower"
+  ],
+  "title": "Counter Jutsu",
+  "body": "Syntax: (no command of its own -- happens automatically when two opposing-element jutsu collide)\n\nDescription: If you and another player are both mid-cast at each other in the same room, and your hand signs finish within about a second of theirs, the two jutsu can collide in mid-air -- but only if your elements genuinely oppose each other, following a fixed cycle: Water beats Fire, Fire beats Wind, Wind beats Lightning, Lightning beats Earth, and Earth beats Water. Same-element jutsu never collide this way, no matter how close the timing.\n\nA genuine collision cancels BOTH jutsu outright -- neither lands its usual damage or effect on its target. Instead, the clash leaves a real, temporary mark on the room itself (a burst of steam for Water and Fire, churned mud for Earth and Water, and so on), visible to anyone who looks, until it fades on its own after about a minute.\n\nThe elementally favored side isn't guaranteed a clean win, though: level and mastery both count. If the favored side's combined level-plus-mastery is at least 30 points higher than the other side's, its jutsu overpowers instead of just cancelling -- it still lands on its target, but at a genuinely reduced strength, since it had to punch through the clash to get there. The overpowered side's own jutsu still does nothing either way.\n\nThis works in PvP only, between two players' own casts.\n\nDate: 2026-08-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

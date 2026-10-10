@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "remove",
+  "keywords": [
+    "remove"
+  ],
+  "title": "Remove",
+  "body": "Syntax: remove <item>  |  remove all\n\nDescription: Unequips a worn or wielded item back into your inventory. 'remove all' unequips everything at once -- if inventory fills up partway through, whatever's left stays equipped rather than being lost.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

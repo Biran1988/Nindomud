@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "aset",
+  "keywords": [
+    "aset"
+  ],
+  "title": "Aset",
+  "body": "Syntax: aset income <n>  |  aset resetmsg <text|off>  |  aset <name> income <n>  |  aset <name> resetmsg <text|off>\n\nDescription: (Staff only.) Shorthand for 'area set' (see 'help area') -- same command, same validation, same everything, just shorter to type.\n\nLeave the area name out and it uses whichever area contains the room you're currently standing in -- 'aset income 25' from anywhere inside Leaf sets Leaf's own income, with no need to type 'leaf' at all. Give an explicit name instead (e.g. 'aset stone income 15') to edit a DIFFERENT area than the one you're standing in. If you're not currently inside any registered area at all and leave the name out, it'll tell you so and ask for an explicit name instead of guessing.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

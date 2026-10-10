@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "cook",
+  "keywords": [
+    "cook",
+    "cooking"
+  ],
+  "title": "Cook",
+  "body": "Syntax: cook <fish>\n\nDescription: Cooks a raw fish into a dish for the Cooking job. Hold a Copper Cooking Pot, or stand in your own apartment kitchen to cook without one. Costs 1-2 Stamina and takes a few seconds. Meals can burn. Each pot used loses one use per attempt, even when a meal burns, and breaks after 250 uses by default. Cooking in your own kitchen without a pot uses no tool.\n\nCooking also raises your Max Chakra -- each Cooking level adds its own level number, stacking cumulatively, same math as Farming uses for Max Stamina. See 'help farm' for the exact math.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

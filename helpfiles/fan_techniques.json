@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "fan techniques",
+  "keywords": [
+    "fan techniques"
+  ],
+  "title": "Fan Techniques",
+  "body": "Syntax: fan techniques <target> [direction]\n\nDescription: A Mighty Fan attack that may knock the target off balance. If a surviving target and an open exit are specified, the gust pushes them through that exit; closed doors and hidden exits block it. Requires Wind chakra nature. Base damage: 137-161. 35% chance to inflict off balance. Bukijutsu unlocks at level 40. Costs 35 Chakra and 20 Stamina; 7 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

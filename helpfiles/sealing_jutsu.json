@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "sealing jutsu",
+  "keywords": [
+    "sealing jutsu",
+    "jinchuriki"
+  ],
+  "title": "Sealing Jutsu",
+  "body": "Syntax: perform sealing jutsu <beast name>\n\nDescription: A level 100 technique, learned from a scroll, that seals a defeated Tailed Beast into you instead of letting it die. Only works once the beast has already been brought down through ordinary combat and is genuinely awaiting a final blow -- attacking it further does nothing once it's collapsed. You have exactly one real minute to seal it before it dies for good.\n\nOnce sealed, you carry the beast permanently -- even through your own death -- until someone else defeats you in combat and knows the separate Release Jutsu. You can only ever hold one beast at a time.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

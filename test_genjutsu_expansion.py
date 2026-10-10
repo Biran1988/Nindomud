@@ -28,7 +28,7 @@ class GenjutsuExpansionTests(unittest.TestCase):
     def test_all_21_unlock_only_for_genjutsu_and_have_handsigns(self):
         added = [key for key, entry in data_jutsu.JUTSU.items()
                  if entry["jutsu_id"].startswith("genjutsu_") and
-                 key not in ("demonic illusion hell viewing technique", "narakumi", "illusion walk", "silent genjutsu")]
+                 key not in ("demonic illusion hell viewing technique", "narakumi", "illusion walk", "silent genjutsu", "chokkan")]
         self.assertEqual(len(added), 21)
         with patch.object(leveling.storage, "save_player"):
             leveling.sync_universal_skills(self.player)
@@ -88,8 +88,11 @@ class GenjutsuExpansionTests(unittest.TestCase):
             genjutsu.begin_cast(self.session, "chisei", [])
         self.assertGreater(self.player.maximum_chakra, 500)
         self.assertEqual(combat._genjutsu_hit_bonus(self.player, data_jutsu.JUTSU["narakumi"]), 12)
-        for _ in range(6):
+        self.assertEqual(self.player.active_status_effects["chisei"]["duration"], 60)
+        for _ in range(59):
             combat.tick_effects_pulse(self.session)
+        self.assertGreater(self.player.maximum_chakra, 500)
+        combat.tick_effects_pulse(self.session)
         self.assertEqual(self.player.maximum_chakra, 500)
         self.assertEqual(self.player.chisei_chakra_bonus, 0)
         self.assertEqual(combat._genjutsu_hit_bonus(self.player, data_jutsu.JUTSU["narakumi"]), 0)
@@ -118,6 +121,8 @@ class GenjutsuExpansionTests(unittest.TestCase):
             genjutsu.begin_cast(self.session, "nehan shouja", [])
         self.assertIn("asleep", foe.active_status_effects)
         self.assertIn("asleep", victim.active_status_effects)
+        self.assertEqual(foe.active_status_effects["asleep"]["duration"], 12)
+        self.assertEqual(victim.active_status_effects["asleep"]["duration"], 12)
 
     def test_frightened_reduces_player_and_mob_damage_once(self):
         self.assertEqual(status_effects.reduce_outgoing_damage({"frightened": {}}, 100), 80)
@@ -157,7 +162,7 @@ class GenjutsuExpansionTests(unittest.TestCase):
              patch.object(combat, "roll_jutsu_damage", return_value=(20, False)), \
              patch.object(combat, "_jutsu_damage_bonus", return_value=0):
             combat.use_jutsu_on_player(self.session, "distortion flame", target_session)
-        self.assertEqual(target.health, 82)
+        self.assertEqual(target.health, 85)
         self.assertEqual(status_effects.reduce_incoming_damage({}, 20), 20)
 
 

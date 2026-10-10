@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "tsukuyomi",
+  "keywords": [
+    "tsukuyomi"
+  ],
+  "title": "Tsukuyomi",
+  "body": "Syntax: perform tsukuyomi <target>\n\nDescription: Mangekyo technique that brings caster and target into a shared torture room. The target is frozen and cannot attack, cast jutsu, move, or use staff actions, even as an immortal; existing fights and queued casts stop. The caster's torture actions determine the ordeal, which lasts a hidden 5-10 actions. If either player disconnects, the illusion ends and both return. Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock. The target must be in your room; moving away before a delayed cast resolves makes it fizzle. Costs 65 Chakra and 0 Stamina; 90 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

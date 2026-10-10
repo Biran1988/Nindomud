@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "narakumi",
+  "keywords": [
+    "narakumi"
+  ],
+  "title": "Narakumi",
+  "body": "Syntax: perform narakumi <target>\n\nDescription: A Genjutsu jutsu, unlocked at level 15. 24-29 mental damage, with a 50% chance to inflict Narakumi for 24 seconds, dulling the target's reflexes and lowering their chance to land hits. Costs 22 Chakra, 4 second cooldown. Active Sharingan resistance shortens the effect.\n\nDate: 2026-08-22",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "devils taunt",
+  "keywords": [
+    "devils taunt"
+  ],
+  "title": "Devil's Taunt",
+  "body": "Syntax: perform devils taunt <target>\n\nDescription: An illusion that can stun and stop an action.  Usable with any chakra nature. Base damage: 24-29. 45% chance to inflict stunned. The effect lasts 10 seconds before resistance. Unlocks at level 20. Costs 20 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

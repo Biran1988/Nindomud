@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "charge",
+  "keywords": [
+    "charge",
+    "chakra charge"
+  ],
+  "title": "Chakra Charge",
+  "body": "Syntax: charge [stamina amount] | charge stop\n\nDescription: A General Skill unlocked at level 10 for every shinobi. Choose how much Stamina to convert at 1 Stamina for 2 Chakra. The chosen amount flows in over 20 seconds: 20% is processed every 4 seconds, with fractional Stamina carried into later intervals. No Stamina is spent instantly. Without an amount, charge enough to fill your Chakra. You cannot request more Stamina than you have, and charging stops when Chakra fills or Stamina runs out. Use charge stop to end it early. Sleeping or an effect that prevents action interrupts the charge. It works during or outside combat. Practice or successful use can improve mastery, but mastery does not change the exchange rate.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

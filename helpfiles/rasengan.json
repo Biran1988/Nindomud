@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "rasengan",
+  "keywords": [
+    "rasengan"
+  ],
+  "title": "Rasengan",
+  "body": "Syntax: perform rasengan <target>\n\nDescription: A spinning chakra sphere that strikes one target.  Usable with any chakra nature. Base damage: 40-48. Unlocks at level 25. Costs 24 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

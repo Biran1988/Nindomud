@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "detonation field",
+  "keywords": [
+    "detonation field"
+  ],
+  "title": "Detonation Field",
+  "body": "Syntax: perform detonation field <target>\n\nDescription: A Explosion Release attack that strikes one target. Blindness reduces the target's accuracy.  Requires Explosion Release and its revealed chakra natures, without a clan bloodline. Base damage: 203-235. 45% chance to inflict blinded. Unlocks at level 45. Costs 42 Chakra and 0 Stamina; 14 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

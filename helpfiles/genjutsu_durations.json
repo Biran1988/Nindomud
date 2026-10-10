@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "genjutsu durations",
+  "keywords": [
+    "genjutsu durations",
+    "illusion durations"
+  ],
+  "title": "Genjutsu Status Durations",
+  "body": "Syntax: help genjutsu durations\n\nDescription: Genjutsu status effects last much longer than their ordinary equivalents: stun, paralysis, and ringing last 10 seconds; sleep lasts 12; fear, disorientation, confusion, and blindness last 20; soundless, haze, weakness, and Narakumi last 24. Chisei's extra Chakra capacity lasts 60 seconds. An active four-tomoe Sharingan can shorten incoming hostile Genjutsu effects. These are status durations, independent of any damage or cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

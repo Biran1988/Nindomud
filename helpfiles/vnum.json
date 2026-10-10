@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "vnum",
+  "keywords": [
+    "vnum"
+  ],
+  "title": "Vnum (staff)",
+  "body": "Syntax: vnum <mob|room|item> <vnum> <on|off>\n\nDescription: Globally enables or disables a prototype. Disabled mobs stop spawning; disabled rooms are closed to ordinary players.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

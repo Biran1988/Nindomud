@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "say",
+  "keywords": [
+    "say"
+  ],
+  "title": "Say",
+  "body": "Syntax: say <message>\n\nDescription: Speaks a message aloud to everyone else in the room.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "silence",
+  "keywords": [
+    "silence",
+    "unsilence"
+  ],
+  "title": "Silence",
+  "body": "Syntax: silence <player name> <hours>  |  unsilence <player name>  (administrator+ only)\n\nDescription: A staff punishment command. Blocks the named player from 'say', 'ooc', and village chat entirely for the given number of hours, as a punishment. Works on an online OR offline player -- an offline target's silence is checked (and, if the time is already up, automatically cleared) the moment they next try to speak.\n\nAutomatically lifts itself once the time is up -- no need to remember to undo it. 'unsilence' lifts it early if needed.\n\nSay, ooc, and village chat also apply this same silence AUTOMATICALLY, no staff involved, if a player sends too many messages too quickly (spamming). An automatic silence lasts 10 minutes and works exactly the same as a staff-issued one.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

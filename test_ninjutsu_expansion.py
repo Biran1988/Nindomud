@@ -39,17 +39,17 @@ class NinjutsuExpansionTests(unittest.TestCase):
         for key in ("chidori", "dual chidori", "full body chidori", "maximum chidori", "raikiri"):
             self.assertEqual(data_jutsu.JUTSU[key]["element"], "lightning")
         self.assertEqual(data_jutsu.JUTSU["juuha shou"]["element"], "wind")
-        self.assertEqual(commands.CHAKRA_NATURE_MIN_LEVEL, 25)
+        self.assertEqual(commands.CHAKRA_NATURE_MIN_LEVEL, 10)
 
-    def test_chakra_paper_reveals_at_25(self):
-        p = self.player(24, "water")
+    def test_chakra_paper_reveals_at_10(self):
+        p = self.player(9, "water")
         p.inventory = ["A Sheet of Chakra Paper"]
         s = NS(player=p, send=Mock())
         with patch.object(commands, "_find_object_prototype_by_name", return_value={"item_type": "misc"}):
             commands.cmd_channel(s, ["chakra", "paper"])
             self.assertFalse(p.chakra_nature_revealed)
             self.assertEqual(len(p.inventory), 1)
-            p.level = 25
+            p.level = 10
             commands.cmd_channel(s, ["chakra", "paper"])
         self.assertTrue(p.chakra_nature_revealed)
         self.assertEqual(p.inventory, [])
@@ -89,9 +89,17 @@ class NinjutsuExpansionTests(unittest.TestCase):
         base_ac = derived_stats.armor_class(p)
         commands.cmd_use_jutsu(s, "barrier", [])
         self.assertEqual(derived_stats.armor_class(p), base_ac)
-        self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 90)
-        for _ in range(5):
+        self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 75)
+        p.room_vnum = 2
+        self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 100)
+        p.room_vnum = 1
+        commands.cmd_use_jutsu(s, "barrier", [])
+        # The cooldown applies to recasting; the timer itself is three minutes.
+        status_effects.apply_effect(p.active_status_effects, "barrier")
+        for _ in range(179):
             status_effects.tick_effects(p.active_status_effects)
+        self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 75)
+        status_effects.tick_effects(p.active_status_effects)
         self.assertEqual(derived_stats.armor_class(p), base_ac)
         self.assertEqual(status_effects.reduce_incoming_damage(p.active_status_effects, 100), 100)
         a = combat.Mob(1, 100, "one", 50, 1000, 1000, 1, 0, 0)
@@ -132,7 +140,8 @@ class NinjutsuExpansionTests(unittest.TestCase):
         with patch.object(combat.random, "randint", side_effect=lambda lo, hi: lo):
             damage, colors, effects = combat._sevenfold_damage(jutsu, p)
         self.assertEqual(colors, ["fire", "water", "earth", "wind", "lightning", "soul", "dark"])
-        self.assertEqual(damage, 25 * 6 + 30)  # Fire gains 20%; other colors do not.
+        strike = jutsu["damage"][0]
+        self.assertEqual(damage, strike * 6 + round(strike * 1.2))
         self.assertEqual(effects, ["poisoned", "blinded"])
         with patch.object(combat.random, "randint", return_value=100):
             self.assertEqual(combat._sevenfold_damage(jutsu, p), (0, [], []))
@@ -141,11 +150,11 @@ class NinjutsuExpansionTests(unittest.TestCase):
         p = self.player(100, "fire")
         p.learned_skills = ["Nanairo no Rasengan"]
         s = NS(player=p, send=Mock())
-        mob = combat.Mob(1, 100, "enemy", 100, 1000, 1000, 1, 0, 0)
+        mob = combat.Mob(1, 100, "enemy", 100, 100000, 100000, 1, 0, 0)
         with patch.object(combat.random, "randint", side_effect=lambda lo, hi: lo), \
              patch.object(combat, "_jutsu_damage_bonus", return_value=0):
             combat.use_jutsu(s, "nanairo no rasengan", mob)
-        self.assertLess(mob.health, 1000)
+        self.assertLess(mob.health, 100000)
         self.assertIn("poisoned", mob.active_status_effects)
         self.assertIn("blinded", mob.active_status_effects)
         self.assertEqual(p.chakra, 380)

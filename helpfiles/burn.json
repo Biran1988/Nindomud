@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "burn",
+  "keywords": [
+    "burn"
+  ],
+  "title": "Burn (Tsukuyomi)",
+  "body": "Syntax: burn\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. Deals 20-40 Health damage and drains 30-50 Stamina; advances the ordeal by one action. The ordeal ends when its hidden action limit is reached.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

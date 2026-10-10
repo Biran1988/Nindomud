@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "quit",
+  "keywords": [
+    "quit"
+  ],
+  "title": "Quit",
+  "body": "Syntax: quit\n\nDescription: Saves your character and disconnects.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

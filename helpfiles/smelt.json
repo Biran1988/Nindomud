@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "smelt",
+  "keywords": [
+    "smelt",
+    "smelting"
+  ],
+  "title": "Smelt",
+  "body": "Syntax: smelt <ore>\n\nDescription: Converts a raw ore (from Mining) into its ingot -- An Iron Ore into An Iron Ingot, A Steel Ore into A Steel Ingot, A Chakra Steel Ore into A Chakra Steel Ingot. Gated by Mining level (1/20/50 respectively). The 20 tiered ore species (Rock Salt/Copper/Tin/Silver, Common through Legendary) are also smeltable, each tier into its own matching-tier ingot -- always level 1, since these aren't part of any level-gated crafting-chain progression, just flavor/sell value. Costs 1-2 Stamina and takes a real delay to resolve, but always succeeds once you meet the level requirement and still have the ore -- the randomness already happened when you found the ore in the first place. No tool or location required; works anywhere.\n\nIngots are what every crafting recipe in the game (Weaponsmith, Armorsmith, and every job's own tool-crafting) actually uses -- smelting is simply how you turn what Mining finds into something craftable.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

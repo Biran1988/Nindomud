@@ -36,6 +36,7 @@ MOB_TEMPLATES -- `mset spawn` creates more of them at runtime the same
 way.
 """
 
+import jutsu_colors
 import itertools
 import random
 import time
@@ -53,6 +54,7 @@ import world
 import dice
 import inventory
 import status_effects
+import signature_moves
 import ninja_arts
 import teams
 from data_villages import VILLAGES
@@ -130,7 +132,12 @@ class Mob:
     hit_roll: int = 0
     respawns: bool = True
     loot_items: List[str] = field(default_factory=list)
+    # Scavenged items are held only by this live mob instance. They are
+    # intentionally absent from prototypes and vanish on reboot or death.
+    scavenged_items: List[str] = field(default_factory=list)
     active_status_effects: Dict[str, dict] = field(default_factory=dict)
+    mangekyo_amaterasu_caster: Optional[str] = None
+    kamui_return_room_vnum: Optional[int] = None
     # Mob stats/class parity (Section 86, per direct request: "give
     # mobs all that stats and classes that players do") -- scoped
     # down through direct confirmation to real numeric chakra/stamina
@@ -498,6 +505,31 @@ def process_wander() -> None:
             _broadcast_to_room(destination, f"{mob.name.capitalize()} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
 
 
+def process_scavengers() -> None:
+    """Let flagged live mobs clear ordinary ground items once per pulse.
+
+    The collected strings live only on the mob instance; no prototype or
+    player save contains them, so a restart discards them. Private apartment
+    rooms and fixed no_take decorations are excluded.
+    """
+    import commands  # local import avoids the command/combat import cycle
+
+    for room_vnum, mobs in list(MOBS_BY_ROOM.items()):
+        room = world.WORLD.get(room_vnum)
+        if not room or room.apartment or not room.ground_items:
+            continue
+        for mob in list(mobs):
+            if mob.health <= 0 or "Scavenger" not in MOB_TEMPLATES.get(mob.template_vnum, {}).get("act_flags", []):
+                continue
+            for item in list(room.ground_items):
+                if commands._has_no_take_flag(item):
+                    continue
+                room.ground_items.remove(item)
+                mob.scavenged_items.append(item)
+            # The first scavenger collects every eligible item in this room.
+            break
+
+
 def find_mob(room_vnum: int, query: str) -> Optional[Mob]:
     """Per direct confirmation (Section 158): a real "N.keyword" prefix
     (e.g. "2.bandit") targets the Nth mob in the room matching
@@ -582,6 +614,20 @@ def start_attack(session, mob: Mob) -> None:
     session.player.recently_defeated_timer = 0.0
 
 
+def jutsu_resource_shortfall(player: Player, jutsu: dict, jutsu_key: str) -> str | None:
+    """Use the same copied-jutsu and chakra-control price as casting."""
+    is_copied_cast = player.copied_jutsu_key == jutsu_key
+    chakra_cost = player.copied_jutsu_cost if is_copied_cast else jutsu["chakra_cost"]
+    if not is_copied_cast and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
+        discount = derived_stats.chakra_control_cost_discount_percent(player.chakra_control)
+        chakra_cost = round(chakra_cost * (100 - discount) / 100)
+    if player.chakra < chakra_cost:
+        return "You don't have enough chakra."
+    if player.stamina < jutsu["stamina_cost"]:
+        return "You don't have enough stamina."
+    return None
+
+
 class PendingCast:
     """A hand-sign casting delay in progress, per direct request/
     design ("lets put a lag time before doing jutsu while your
@@ -634,6 +680,11 @@ def begin_pending_cast(session, jutsu_key: str, target, is_pvp: bool, start_comb
     player = session.player
     mastery = player.skill_proficiencies.get("Handsigns", 0)
     delay = data_handsigns.casting_delay_seconds(mastery)
+    if (getattr(player, "chokkan_active", False)
+            and "Chokkan" in player.learned_skills
+            and random.randint(1, 100) <= player.skill_proficiencies.get("Chokkan", 0)):
+        delay *= 0.5
+        grow_skill_from_usage(player, "Chokkan")
     signs = data_handsigns.sequence_for(jutsu_key)
 
     session.pending_cast = PendingCast(jutsu_key, target, is_pvp, delay, start_combat_on_resolve)
@@ -801,25 +852,29 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     (tick_pending_casts, grow_handsigns=True) and the instant-cast
     path via the Silent Genjutsu passive (grow_handsigns=False),
     matching resolve_illusion_walk_cast's own exact established
-    pattern. Inflicts a real, genuinely PERMANENT burn on the target
-    AND sets their current room ablaze too (everyone in it except the
-    caster), per direct confirmation."""
+    pattern. Inflicts a burn that persists until defeat on the target
+    and sets their current room ablaze too (everyone in it except the
+    caster)."""
     player = session.player
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
+        or target_session.player.room_vnum != player.room_vnum
         or target_session.player.health <= 0
     ):
-        session.send("&DYour target is no longer there!&x")
+        jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
     import data_mangekyo
     target_session.player.mangekyo_amaterasu_burning = True
+    target_session.player.mangekyo_amaterasu_caster = player.name
+    import mangekyo_discovery
+    mangekyo_discovery.record_use(player, "amaterasu")
     room = world.WORLD.get(target_session.player.room_vnum)
     if room is not None:
         room.amaterasu_fire_caster = player.name
         room.amaterasu_fire_expires_at = time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
-    session.send(f"&RBlack flames erupt around {target_session.player.name} -- Amaterasu will burn until sealed.&x")
-    target_session.send(f"&R{player.name}'s Amaterasu engulfs you in inextinguishable black flame!&x")
+    jutsu_colors.send(session, f"&RBlack flames erupt around {target_session.player.name} -- Amaterasu burns until they fall.&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you in black flame!&x")
     if grow_handsigns:
         grow_skill_from_usage(player, "Handsigns")
 
@@ -838,15 +893,17 @@ def resolve_kamui_limb_removal_cast(session, target_session) -> None:
         or target_session.player.room_vnum != player.room_vnum
         or target_session.player.health <= 0
     ):
-        session.send("&DYour target is no longer there!&x")
+        jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
     import data_mangekyo
     import random
     dmg = random.randint(*data_mangekyo.KAMUI_LIMB_REMOVAL_DAMAGE)
     dmg = status_effects.reduce_incoming_damage(target_session.player.active_status_effects, dmg)
     target_session.player.health -= dmg
-    session.send(f"&RYour blade tears through space itself, severing {target_session.player.name}'s limb for {damage_messages.describe_damage(dmg)} damage!&x")
-    target_session.send(f"&R{player.name}'s Kamui rips your limb away in an instant of pure agony -- {damage_messages.describe_damage(dmg)} damage!&x")
+    import mangekyo_discovery
+    mangekyo_discovery.record_use(player, "kamui limb removal")
+    jutsu_colors.send(session, f"&RYour blade tears through space itself, severing {target_session.player.name}'s limb for {damage_messages.describe_damage(dmg)} damage!&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s Kamui rips your limb away in an instant of pure agony -- {damage_messages.describe_damage(dmg)} damage!&x")
     if target_session.player.health <= 0:
         if try_trigger_izanagi(target_session):
             pass
@@ -868,18 +925,21 @@ def resolve_izanami_cast(session, target_session, grow_handsigns: bool = True) -
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
+        or target_session.player.room_vnum != player.room_vnum
         or target_session.player.health <= 0
     ):
-        session.send("&DYour target is no longer there!&x")
+        jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
     import data_mangekyo
     import random
     target_session.player.izanami_trapped = True
+    import mangekyo_discovery
+    mangekyo_discovery.record_use(player, "izanami")
     target_session.player.izanami_target_number = random.randint(
         data_mangekyo.IZANAMI_NUMBER_MIN, data_mangekyo.IZANAMI_NUMBER_MAX
     )
-    session.send(f"&R{target_session.player.name} is pulled into a recursive loop of your own making.&x")
-    target_session.send(
+    jutsu_colors.send(session, f"&R{target_session.player.name} is pulled into a recursive loop of your own making.&x")
+    jutsu_colors.send(target_session,
         f"&RTime folds in on itself -- you're trapped, reliving the same moment over and over. "
         f"Guess the number ({data_mangekyo.IZANAMI_NUMBER_MIN}-{data_mangekyo.IZANAMI_NUMBER_MAX}) to break free: 'guess <number>'&x"
     )
@@ -898,17 +958,19 @@ def resolve_kekkei_no_me_cast(session, grow_handsigns: bool = True) -> None:
     a nonexistent element."""
     player = session.player
     if not player.chakra_nature:
-        session.send("&DYour own chakra nature hasn't awakened yet -- there's nothing to draw on.&x")
+        jutsu_colors.send(session, "&DYour own chakra nature hasn't awakened yet -- there's nothing to draw on.&x")
         return
     room = world.WORLD.get(player.room_vnum)
     if room is None:
-        session.send("&DSomething's wrong with this room -- contact a builder.&x")
+        jutsu_colors.send(session, "&DSomething's wrong with this room -- contact a builder.&x")
         return
     import data_mangekyo
     room.kekkei_no_me_caster = player.name
     room.kekkei_no_me_element = player.chakra_nature
     room.kekkei_no_me_expires_at = time.time() + data_mangekyo.KEKKEI_NO_ME_DURATION_SECONDS
-    session.send(f"&RThe room itself bends to your will, awash in your own {player.chakra_nature} nature.&x")
+    import mangekyo_discovery
+    mangekyo_discovery.record_use(player, "kekkei no me")
+    jutsu_colors.send(session, f"&RThe room itself bends to your will, awash in your own {player.chakra_nature} nature.&x")
     for s in session.active_sessions():
         if s is not session and s.player and s.player.room_vnum == player.room_vnum:
             s.send(f"&R{player.name}'s domain consumes the room -- {player.chakra_nature} chakra saturates the air, draining you!&x")
@@ -920,22 +982,25 @@ def resolve_tsukuyomi_cast(session, target_session, grow_handsigns: bool = True)
     """The real, actual effect of a Tsukuyomi cast landing (Section
     140) -- moves BOTH the caster and target into a shared, real
     torture room in one action (mangekyo.open_tsukuyomi), unlike
-    Kamui's own 2-step entry. A real, hidden random number from 5-10
+    Kamui's target-first 2-step entry. A real, hidden random number from 5-10
     is rolled inside open_tsukuyomi itself, setting how many of the
     caster's own actions the technique lasts."""
     player = session.player
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
+        or target_session.player.room_vnum != player.room_vnum
         or target_session.player.health <= 0
     ):
-        session.send("&DYour target is no longer there!&x")
+        jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
     import mangekyo
     import world as world_module
     mangekyo.open_tsukuyomi(session, target_session, world_module)
-    session.send(f"&RYour world dissolves into crimson -- you and {target_session.player.name} are pulled into Tsukuyomi.&x")
-    target_session.send(f"&R{player.name}'s eyes consume your reality -- you're trapped in Tsukuyomi, frozen and defenseless.&x")
+    import mangekyo_discovery
+    mangekyo_discovery.record_use(player, "tsukuyomi")
+    jutsu_colors.send(session, f"&RYour world dissolves into crimson -- you and {target_session.player.name} are pulled into Tsukuyomi.&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s eyes consume your reality -- you're trapped in Tsukuyomi, frozen and defenseless.&x")
     if grow_handsigns:
         grow_skill_from_usage(player, "Handsigns")
 
@@ -965,6 +1030,13 @@ def tick_pending_casts() -> None:
         cast.remaining_seconds -= 1.0
         if cast.remaining_seconds > 0:
             continue
+        jutsu = data_jutsu.JUTSU.get(cast.jutsu_key)
+        if jutsu and jutsu.get("kkg_gate") and not _can_use_jutsu(session.player, jutsu, cast.jutsu_key):
+            session.pending_cast = None
+            session.send("&RYour Sharingan is no longer active -- the Mangekyo technique fades before it takes hold.&x"
+                         if jutsu.get("kkg_gate") == "mangekyo_technique" else
+                         "&RYour elemental release fades before the technique takes hold.&x")
+            continue
 
         session.pending_cast = None
         player = session.player
@@ -977,6 +1049,11 @@ def tick_pending_casts() -> None:
             import hidden_mist
             if hidden_mist.cast(session):
                 grow_skill_from_usage(player, "Handsigns")
+            continue
+        if (cast.jutsu_key in ("amaterasu", "tsukuyomi", "izanami", "kamui limb removal")
+                and not cast.is_pvp):
+            import mangekyo_mobs
+            mangekyo_mobs.resolve(session, cast.jutsu_key, cast.target)
             continue
         if data_jutsu.JUTSU.get(cast.jutsu_key, {}).get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
             import genjutsu
@@ -1011,7 +1088,12 @@ def tick_pending_casts() -> None:
             ):
                 session.send("&DYour hand signs falter -- your target is no longer there!&x")
                 continue
+            jutsu = data_jutsu.JUTSU[cast.jutsu_key]
             if cast.start_combat_on_resolve and session.pvp_target is None:
+                shortfall = jutsu_resource_shortfall(player, jutsu, cast.jutsu_key)
+                if shortfall:
+                    session.send(shortfall)
+                    continue
                 start_pvp_attack(session, target_session)
             use_jutsu_on_player(session, cast.jutsu_key, target_session)
         else:
@@ -1020,6 +1102,10 @@ def tick_pending_casts() -> None:
                 session.send("&DYour hand signs falter -- your target is no longer there!&x")
                 continue
             if cast.start_combat_on_resolve and session.combat_target is None:
+                shortfall = jutsu_resource_shortfall(player, data_jutsu.JUTSU[cast.jutsu_key], cast.jutsu_key)
+                if shortfall:
+                    session.send(shortfall)
+                    continue
                 start_attack(session, mob)
             use_jutsu(session, cast.jutsu_key, mob)
         grow_skill_from_usage(player, "Handsigns")
@@ -1086,6 +1172,9 @@ def tick_all_mob_effects(sessions=None) -> None:
     meaningfully act on, not just players."""
     for room_mobs in list(MOBS_BY_ROOM.values()):
         for mob in list(room_mobs):
+            if mob.mangekyo_amaterasu_caster:
+                import data_mangekyo
+                mob.health = max(0, mob.health - random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK))
             if "burning" in mob.active_status_effects:
                 mob.health = max(0, mob.health - status_effects.burning_damage())
             if "poisoned" in mob.active_status_effects:
@@ -1108,9 +1197,14 @@ def tick_all_mob_effects(sessions=None) -> None:
                                 break
             status_effects.tick_effects(mob.active_status_effects)
             if mob.health <= 0 and sessions and mob in room_mobs:
-                owner = next((s for s in sessions if s.player and s.combat_target is mob), None)
+                owner = next((s for s in sessions if s.player and
+                              (s.combat_target is mob or s.player.name == mob.mangekyo_amaterasu_caster)), None)
                 if owner:
+                    mob.mangekyo_amaterasu_caster = None
                     handle_mob_defeat(owner, mob)
+                else:
+                    mob.mangekyo_amaterasu_caster = None
+                    remove_mob(mob)
 
 
 PASSIVE_GROWTH_CHANCE_PCT = 20  # per combat round
@@ -1178,7 +1272,8 @@ def tick_passive_skill_growth(player: Player) -> list:
     return messages
 
 
-SHADOW_CLONE_UPKEEP_PER_CLONE = 25  # chakra per clone, per round -- halved from the original 50, per direct request ("Reduce bunching drain on chakra by half")
+SHADOW_CLONE_UPKEEP_PER_CLONE = 3.75  # 15% of the former 25; quarter-Chakra fractions carry between ticks
+SHADOW_CLONE_UPKEEP_QUARTERS = 15
 SHADOW_CLONE_HEALTH_PERCENT_OF_OWNER = 25  # confirmed design ("1/4 the players go") -- a clone's HP pool is a flat 25% of the CASTER's own current max health, fixed at summon time
 SUMMON_HP_PER_LEVEL = 8  # flat HP per summoner level, multiplied by the tier's own base_modifier -- see combat.stat_for_summon_tier / data_summons.py's own docstring for the confirmed "level x modifier" design
 SUMMON_DAMAGE_PER_LEVEL = 1.2  # flat damage per summoner level, multiplied by the tier's own base_modifier -- same formula, different flat scale, since a summon's own real per-hit damage should be meaningfully smaller than its own HP pool
@@ -1282,6 +1377,10 @@ def dismiss_shadow_clones(player) -> int:
     removed. Safe to call even if the player has no clones at all
     (returns 0)."""
     removed = 0
+    player._shadow_clone_upkeep_quarters = 0
+    import upkeep_reports
+    for skill in ("Shadow Clone Jutsu", "Raiton Kage Bunshin", "Mizu Bunshin", "Deido Bunshin", "Suna Bunshin"):
+        upkeep_reports.stop_maintaining(player, skill)
     for room_vnum, room_mobs in list(MOBS_BY_ROOM.items()):
         still_here = []
         removed_here = 0
@@ -1444,13 +1543,22 @@ def tick_shadow_clone_upkeep(player) -> list:
     all-or-nothing dismissal."""
     clones = active_shadow_clones(player)
     if not clones:
+        player._shadow_clone_upkeep_quarters = 0
         return []
+    import upkeep_reports
     messages = []
     while clones:
-        cost = len(clones) * SHADOW_CLONE_UPKEEP_PER_CLONE
+        quarters = len(clones) * SHADOW_CLONE_UPKEEP_QUARTERS + getattr(player, "_shadow_clone_upkeep_quarters", 0)
+        cost, remainder = divmod(quarters, 4)
         if player.chakra >= cost:
             player.chakra -= cost
-            messages.append(f"&CYour {len(clones)} shadow clone{'s' if len(clones) != 1 else ''} use {cost} chakra to remain active.&x")
+            player._shadow_clone_upkeep_quarters = remainder
+            messages.extend(upkeep_reports.record(player, "Shadow Clones", cost))
+            clone = clones[0]
+            skill = {"none": "Shadow Clone Jutsu", "lightning": "Raiton Kage Bunshin",
+                     "water": "Mizu Bunshin", "earth": "Deido Bunshin",
+                     "sand": "Suna Bunshin"}.get(clone.clone_element, "Shadow Clone Jutsu")
+            upkeep_reports.maintain_skill(player, skill)
             return messages
         popped = clones.pop()
         room_mobs = MOBS_BY_ROOM.get(popped.room_vnum, [])
@@ -1460,6 +1568,10 @@ def tick_shadow_clone_upkeep(player) -> list:
             messages.append(f"&RYou don't have enough chakra to sustain all your shadow clones -- one dispels! ({len(clones)} remaining.)&x")
         else:
             messages.append("&RYou don't have enough chakra to sustain your shadow clone -- it dispels!&x")
+    messages.extend(upkeep_reports.flush(player, "Shadow Clones"))
+    player._shadow_clone_upkeep_quarters = 0
+    for skill in ("Shadow Clone Jutsu", "Raiton Kage Bunshin", "Mizu Bunshin", "Deido Bunshin", "Suna Bunshin"):
+        upkeep_reports.stop_maintaining(player, skill)
     return messages
 
 
@@ -1479,17 +1591,18 @@ def tick_sharingan_upkeep(player) -> list:
     if not player.sharingan_active:
         return []
     import commands
+    import upkeep_reports
     chakra_cost = commands.sharingan_chakra_upkeep(player.bloodline_tomoe)
     if player.chakra < chakra_cost or player.stamina < commands.SHARINGAN_STAMINA_UPKEEP:
         player.sharingan_active = False
-        return ["&RYour chakra and stamina give out -- your Sharingan fades back to black.&x"]
+        return upkeep_reports.flush(player, "Sharingan") + ["&RYour chakra and stamina give out -- your Sharingan fades back to black.&x"]
     player.chakra -= chakra_cost
     player.stamina -= commands.SHARINGAN_STAMINA_UPKEEP
-    return [f"&CYour Sharingan uses {chakra_cost} chakra and {commands.SHARINGAN_STAMINA_UPKEEP} stamina to remain active.&x"]
+    return upkeep_reports.record(player, "Sharingan", chakra_cost, commands.SHARINGAN_STAMINA_UPKEEP)
 
 
 def tick_sharingan_mastery_gain(player) -> list:
-    """Rolls the Sharingan's small, Talent-scaled per-round chance to
+    """Rolls the Sharingan's small, Talent-scaled upkeep chance to
     gain mastery (data_kekkei_genkai.tick_mastery_gain) while it's
     actively toggled on -- per explicit design confirmation, only once
     the bloodline is already formally awakened (bloodline_awakened),
@@ -1643,7 +1756,7 @@ def _sevenfold_damage(jutsu, caster):
         if random.randint(1, 100) > 75:
             continue
         strike = random.randint(*jutsu["damage"])
-        if color in (caster.chakra_nature, caster.chakra_nature_secondary):
+        if color in (caster.chakra_nature, caster.chakra_nature_secondary, caster.chakra_nature_tertiary):
             strike = round(strike * 1.2)
         total += strike
         landed.append(color)
@@ -1670,8 +1783,8 @@ def _try_counter_kunai(session, target_session, target, attacker_name: str, juts
     if not held_kunai:
         return False
     target.inventory.remove(held_kunai)
-    session.send(f"&C{target.name} whips out a kunai and deflects your {jutsu_display_name} completely!&x")
-    target_session.send(f"&CYou whip out a kunai and deflect {attacker_name}'s {jutsu_display_name} completely!&x")
+    jutsu_colors.send(session, f"&C{target.name} whips out a kunai and deflects your {jutsu_display_name} completely!&x")
+    jutsu_colors.send(target_session, f"&CYou whip out a kunai and deflect {attacker_name}'s {jutsu_display_name} completely!&x")
     return True
 
 
@@ -1819,6 +1932,51 @@ def _roll_extra_attacks(player) -> int:
     return extra
 
 
+def _weapon_expert_damage(player, damage):
+    """The old MUD's armed-only, mastery-based 50% damage proc."""
+    if (player.primary_class == "bukijutsu" and player.equipment.get("wielded")
+            and "Weapon Expert" in player.learned_skills
+            and random.randint(1, 100) <= player.skill_proficiencies.get("Weapon Expert", 0)):
+        grow_skill_from_usage(player, "Weapon Expert")
+        return max(1, int(damage * 1.5))
+    return damage
+
+
+def _soto_uke_blocks(defender, attacker_level):
+    """Half mastery, a one-in-three follow-up, and 10 Stamina per block."""
+    if (defender.primary_class != "taijutsu" or "Soto Uke" not in defender.learned_skills
+            or defender.stamina < 10 or _is_action_blocked(defender)):
+        return False
+    chance = max(0, min(100, defender.skill_proficiencies.get("Soto Uke", 0) // 2
+                         + defender.level - attacker_level))
+    if random.randint(1, 100) <= chance and random.randint(1, 3) == 1:
+        defender.stamina -= 10
+        grow_skill_from_usage(defender, "Soto Uke")
+        return True
+    return False
+
+
+def _offhand_attack(session, target, target_session=None):
+    """One extra swing with the off-hand weapon's own properties."""
+    player = session.player
+    offhand = player.equipment.get("offhand")
+    if (player.primary_class != "bukijutsu" or not offhand or not player.equipment.get("wielded")
+            or "Dual Wield" not in player.learned_skills or player.stamina < 5
+            or random.randint(1, 100) > player.skill_proficiencies.get("Dual Wield", 0)):
+        return
+    player.stamina -= 5
+    grow_skill_from_usage(player, "Dual Wield")
+    primary = player.equipment["wielded"]
+    player.equipment["wielded"] = offhand
+    try:
+        if target_session is None:
+            _player_attack_mob_once(session, player, target)
+        else:
+            _player_attack_target_once(session, player, target_session, target)
+    finally:
+        player.equipment["wielded"] = primary
+
+
 def _player_attack_mob_once(session, player, mob) -> None:
     """One single attack (to-hit roll through any bleeding tick) from
     player against mob -- extracted so resolve_pulse can call this
@@ -1859,6 +2017,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
         session.send(f"You {attack_verb} at {mob.name} but miss!")
         return
     dmg = _player_attack_damage(player)
+    dmg = _weapon_expert_damage(player, dmg)
     dmg = int(dmg * (100 + _summon_weapon_buff_damage_percent(player)) / 100)
     is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
     if is_crit:
@@ -1867,9 +2026,9 @@ def _player_attack_mob_once(session, player, mob) -> None:
     dmg = ninja_arts.weapon_hit(player, mob, dmg)
     mob.health -= dmg
     if is_crit:
-        session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
+        session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
-        session.send(f"You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
+        session.send(f"You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     if "bleeding" in mob.active_status_effects:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
@@ -2015,6 +2174,10 @@ def resolve_pulse(session) -> None:
     for this pulse (server.py's pulse_loop does this before calling here;
     tests simulating pulses should do the same)."""
     player = session.player
+    import element_choice
+    if element_choice.in_choice(player):
+        session.combat_target = None
+        return
     mob = session.combat_target
     if mob is None:
         return
@@ -2033,6 +2196,7 @@ def resolve_pulse(session) -> None:
     session.send("")  # blank line so each round doesn't blur into the last
     import sage_mode
     sage_mode.combat_pulse(session)
+    ninja_arts.tick_samurai_sabre(session, combat=True)
 
     for message in tick_passive_skill_growth(player):
         session.send(message)
@@ -2052,6 +2216,8 @@ def resolve_pulse(session) -> None:
                 if mob.health <= 0:
                     break
                 _player_attack_mob_once(session, player, mob)
+        if mob.health > 0:
+            _offhand_attack(session, mob)
         for clone in active_shadow_clones(player):
             if mob.health <= 0:
                 break
@@ -2097,6 +2263,9 @@ def resolve_pulse(session) -> None:
     for _ in range(mob.attacks):
         if player.health <= 0:
             break
+        if _soto_uke_blocks(player, mob.level):
+            session.send(f"&CYou use Soto Uke to block {mob.name}'s attack!&x")
+            continue
         dmg = _mob_attack_damage(mob)
         if player.sharingan_active and player.bloodline_tomoe >= 3:
             reduced = _sharingan_predict_and_reduce_damage(player, dmg)
@@ -2107,7 +2276,7 @@ def resolve_pulse(session) -> None:
         dmg = commands_module.reduce_weapon_damage(player, data_weapons.weapon_type_for_item(mob.equipment.get("wielded", "")), dmg)
         dmg = sage_mode.incoming(player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg))
         player.health -= dmg
-        session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage.")
+        session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
 
     if player.health <= 0:
         if try_trigger_izanagi(session):
@@ -2119,6 +2288,14 @@ def resolve_pulse(session) -> None:
     elif player.wimpy_percent > 0 and (player.health / player.maximum_health * 100) <= player.wimpy_percent:
         session.send(f"&Y(Your health has dropped to your wimpy threshold of {player.wimpy_percent}%!)&x")
         commands_module.cmd_flee(session, [])
+
+
+def _staff_testing_mangekyo(player) -> bool:
+    """Use the authenticated live account, never a mutable player field."""
+    from session import ACTIVE_SESSIONS
+    return any(getattr(s, "player", None) is player
+               and getattr(getattr(s, "account", None), "staff_level", "player") != "player"
+               for s in ACTIVE_SESSIONS)
 
 
 def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
@@ -2147,6 +2324,10 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     mechanism's own eligibility elsewhere) -- checked here so even a
     copied or Kekkei-Genkai-gated elemental jutsu would still need a
     real matching nature (though no jutsu combines both gates today)."""
+    # Authenticate from the live session. Immortals can test every jutsu
+    # regardless of nature, bloodline, level, gear, location or mastery.
+    if _staff_testing_mangekyo(player):
+        return True
     if jutsu.get("jutsu_type") == "elemental_clone" and player.skill_proficiencies.get("Shadow Clone Jutsu", 0) < 100:
         return False
     if jutsu.get("requires_water"):
@@ -2159,12 +2340,17 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     if jutsu.get("required_weapon_types") and data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")) not in jutsu["required_weapon_types"]:
         return False
     if jutsu.get("element", "none") != "none":
-        if jutsu["element"] not in (player.chakra_nature, player.chakra_nature_secondary):
+        if jutsu["element"] not in (player.chakra_nature, player.chakra_nature_secondary, player.chakra_nature_tertiary):
             return False
-    if jutsu_key is not None and player.copied_jutsu_key == jutsu_key:
-        return True
     gate = jutsu.get("kkg_gate")
+    import data_kekkei_genkai
+    if gate in data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES:
+        return (_staff_testing_mangekyo(player)
+                or (data_kekkei_genkai.has_elemental_release(player, gate)
+                    and player.level >= jutsu["level_requirement"]))
     if gate == "mangekyo_technique":
+        if _staff_testing_mangekyo(player):
+            return True
         # Genuinely generic (Section 140): checks the jutsu's own real
         # "mangekyo_roster_key" (falling back to jutsu_key itself for
         # a single-jutsu technique like Amaterasu, where the 2 happen
@@ -2173,7 +2359,11 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
         # jutsu sharing the one roster key "kamui" -- this lets all 3
         # gate correctly without needing 3 separate roster entries.
         roster_key = jutsu.get("mangekyo_roster_key", jutsu_key)
-        return roster_key in (player.mangekyo_eye_1, player.mangekyo_eye_2)
+        return (player.bloodline_id == "sharingan" and player.bloodline_mangekyo
+                and player.sharingan_active
+                and roster_key in (player.mangekyo_eye_1, player.mangekyo_eye_2))
+    if jutsu_key is not None and player.copied_jutsu_key == jutsu_key:
+        return True
     return jutsu["display_name"].lower() in [s.lower() for s in player.learned_skills]
 
 
@@ -2211,7 +2401,7 @@ def use_shadow_clone_jutsu(session) -> None:
 
     cooldown_ready_at = player.cooldowns.get("shadow clone jutsu", 0)
     if now < cooldown_ready_at:
-        session.send(f"&WShadow Clone Jutsu&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+        jutsu_colors.send(session, f"&WShadow Clone Jutsu&x is still recovering ({cooldown_ready_at - now:.1f}s).")
         return
     if player.chakra < jutsu["chakra_cost"]:
         session.send("You don't have enough chakra.")
@@ -2245,7 +2435,7 @@ def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
         session.send("Master Shadow Clone Jutsu to 100% before creating elemental clones.")
         return
     if not _can_use_jutsu(player, jutsu, jutsu_key):
-        session.send(f"You need {jutsu['element'].capitalize()} chakra nature and must know {jutsu['display_name']}.")
+        jutsu_colors.send(session, f"You need {jutsu['element'].capitalize()} chakra nature and must know {jutsu['display_name']}.")
         return
     if _is_action_blocked(player) or getattr(session, "pending_cast", None) is not None:
         session.send("You are unable to form the clone right now.")
@@ -2255,7 +2445,7 @@ def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
         return
     now = time.time()
     if now < player.cooldowns.get(jutsu_key, 0):
-        session.send(f"{jutsu['display_name']} is still recovering.")
+        jutsu_colors.send(session, f"{jutsu['display_name']} is still recovering.")
         return
     cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
     if player.chakra < cost:
@@ -2275,7 +2465,7 @@ def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
 
 
 def use_barrier(session) -> None:
-    """Level-35 general defensive buff, active for five combat pulses."""
+    """Level-35 general defensive buff, active for three minutes in one room."""
     player = session.player
     jutsu = data_jutsu.JUTSU["barrier"]
     if not _can_use_jutsu(player, jutsu, "barrier"):
@@ -2296,56 +2486,57 @@ def use_barrier(session) -> None:
         return
     player.chakra -= jutsu["chakra_cost"]
     player.cooldowns["barrier"] = now + jutsu["cooldown"]
-    status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier")
+    duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS["barrier"]["duration"])
+    status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier",
+                                duration_override=duration)
     grow_skill_from_usage(player, "Barrier")
-    session.send("&CA chakra barrier rises around you, reducing incoming damage by 10% for five pulses.&x")
+    session.send(f"&CA chakra barrier rises around you, negating 25% of incoming damage for {duration} seconds. It breaks if you leave the room.&x")
 
 
 def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> None:
     player = session.player
     if _is_action_blocked(player):
-        session.send("You are unable to act!")
+        jutsu_colors.send(session, "You are unable to act!")
         return
     jutsu = data_jutsu.JUTSU.get(jutsu_key)
     now = time.time()
 
     if jutsu is None or not _can_use_jutsu(player, jutsu, jutsu_key):
-        session.send("You don't know that jutsu.")
+        jutsu_colors.send(session, "You don't know that jutsu.")
         return
     if jutsu.get("jutsu_type") == "ambush" and mob.health < mob.max_health:
-        session.send(f"{mob.name} is hurt and alert; you cannot sneak up on them.")
+        jutsu_colors.send(session, f"{mob.name} is hurt and alert; you cannot sneak up on them.")
         return
     if status_effects.has_effect(player.active_status_effects, "silenced"):
-        session.send("You are silenced and cannot use jutsu right now!")
+        jutsu_colors.send(session, "You are silenced and cannot use jutsu right now!")
         return
 
     cooldown_ready_at = player.cooldowns.get(jutsu_key, 0)
     import commands as commands_module
-    jutsu_color = commands_module.CLASS_WHO_COLOR.get(jutsu["class_requirement"], "&W")
-    colored_name = f"{jutsu_color}{jutsu['display_name']}&x"
+    colored_name = jutsu["display_name"]  # rendered by send_jutsu
     if now < cooldown_ready_at:
-        session.send(f"{colored_name} is still recovering ({cooldown_ready_at - now:.1f}s).")
+        jutsu_colors.send(session, f"{colored_name} is still recovering ({cooldown_ready_at - now:.1f}s).")
         return
     is_copied_cast = player.copied_jutsu_key == jutsu_key
     chakra_cost = player.copied_jutsu_cost if is_copied_cast else jutsu["chakra_cost"]
     stamina_cost = jutsu["stamina_cost"]
     discount_pct = derived_stats.chakra_control_cost_discount_percent(player.chakra_control)
-    if discount_pct and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
+    if not is_copied_cast and discount_pct and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
         chakra_cost = round(chakra_cost * (100 - discount_pct) / 100)
     if player.chakra < chakra_cost:
-        session.send("You don't have enough chakra.")
+        jutsu_colors.send(session, "You don't have enough chakra.")
         return
     if player.stamina < stamina_cost:
-        session.send("You don't have enough stamina.")
+        jutsu_colors.send(session, "You don't have enough stamina.")
         return
 
     if jutsu.get("requires_item"):
         held_items = [item for item in player.inventory if jutsu["requires_item"] in item.lower()]
         if len(held_items) < jutsu.get("requires_item_count", 1):
-            session.send(f"You don't have a {jutsu['requires_item']} to throw. You need {jutsu.get('requires_item_count', 1)}.")
+            jutsu_colors.send(session, f"You don't have a {jutsu['requires_item']} to throw. You need {jutsu.get('requires_item_count', 1)}.")
             return
     if jutsu.get("jutsu_type") == "trap" and jutsu_key in mob.active_status_effects:
-        session.send("That target already has this trap attached.")
+        jutsu_colors.send(session, "That target already has this trap attached.")
         return
 
     player.chakra -= chakra_cost
@@ -2374,28 +2565,28 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     to_hit += _genjutsu_hit_bonus(player, jutsu) + jutsu.get("accuracy_bonus", 0)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
-        session.send(f"You use {colored_name} on {mob.name}, but it misses!")
+        jutsu_colors.send(session, f"You use {colored_name} on {mob.name}, but it misses!")
         return
 
     if jutsu.get("jutsu_type") == "trap":
         ninja_arts.attach_trap(mob, jutsu_key, player.name)
         grow_skill_from_usage(player, jutsu["display_name"])
-        session.send(f"You attach {jutsu['display_name']} to {mob.name}. It will detonate in two rounds unless disabled.")
+        jutsu_colors.send(session, f"You attach {jutsu['display_name']} to {mob.name}. It will detonate in two rounds unless disabled.")
         return
 
     if jutsu.get("jutsu_type") == "sevenfold":
         dmg, landed, sevenfold_effects = _sevenfold_damage(jutsu, player)
         if not landed:
-            session.send(f"All seven colors of {colored_name} fail to connect with {mob.name}!")
+            jutsu_colors.send(session, f"All seven colors of {colored_name} fail to connect with {mob.name}!")
             return
-        session.send(f"&C{len(landed)} of seven Rasengan strikes connect: {', '.join(landed)}.&x")
+        jutsu_colors.send(session, f"&C{len(landed)} of seven Rasengan strikes connect: {', '.join(landed)}.&x")
         was_explosive = False
     else:
         dmg, was_explosive = roll_jutsu_damage(jutsu)
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, mob, dmg)
     dmg += _jutsu_damage_bonus(player)
-    if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary):
+    if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary, player.chakra_nature_tertiary):
         dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
@@ -2414,6 +2605,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         dmg = int(dmg * biome_mult)
 
     dmg = sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg), jutsu=True)
+    dmg = signature_moves.amount(player, jutsu, dmg)
     mob.health -= dmg
     _genjutsu_impact(jutsu, mob)
     grow_skill_from_usage(player, jutsu["display_name"])
@@ -2425,16 +2617,23 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     else:
         biome_note = ""
     if was_explosive:
-        session.send(f"&RThe kunai detonates!&x You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"&RThe kunai detonates!&x You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
     else:
-        session.send(f"You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg)} damage!{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg)} damage! {damage_messages.impact_flavor(dmg)}{perk_note}{biome_note}")
 
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
-        status_effects.apply_effect(mob.active_status_effects, jutsu["effect"], source=jutsu_key)
-        session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=mob.name))
+        duration = (status_effects.genjutsu_duration(jutsu["effect"])
+                    if jutsu["class_requirement"] == "genjutsu"
+                    else status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"])
+        duration = signature_moves.duration(player, jutsu, duration)
+        status_effects.apply_effect(mob.active_status_effects, jutsu["effect"], source=jutsu_key,
+                                    duration_override=duration)
+        jutsu_colors.send(session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=mob.name))
     for effect in sevenfold_effects:
-        status_effects.apply_effect(mob.active_status_effects, effect, source=jutsu_key)
-        session.send(status_effects.EFFECT_DEFS[effect]["message"].format(target=mob.name))
+        duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"])
+        status_effects.apply_effect(mob.active_status_effects, effect, source=jutsu_key,
+                                    duration_override=duration)
+        jutsu_colors.send(session, status_effects.EFFECT_DEFS[effect]["message"].format(target=mob.name))
 
     if jutsu.get("jutsu_type") == "area":
         for other in list(mobs_in_room(player.room_vnum)):
@@ -2444,7 +2643,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
                     or is_teacher(other) or is_immortal_mob(other)):
                 continue
             other.health -= dmg
-            session.send(f"{jutsu['display_name']} also strikes {other.name} for {damage_messages.describe_damage(dmg)} damage!")
+            jutsu_colors.send(session, f"{jutsu['display_name']} also strikes {other.name} for {damage_messages.describe_damage(dmg)} damage!")
             if other.health <= 0:
                 handle_mob_defeat(session, other)
 
@@ -2474,64 +2673,63 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     which passes elemental_counters.OVERPOWER_DAMAGE_MULTIPLIER."""
     player = session.player
     if _is_action_blocked(player):
-        session.send("You are unable to act!")
+        jutsu_colors.send(session, "You are unable to act!")
         return
     jutsu = data_jutsu.JUTSU.get(jutsu_key)
     now = time.time()
 
     if jutsu is None or not _can_use_jutsu(player, jutsu, jutsu_key):
-        session.send("You don't know that jutsu.")
+        jutsu_colors.send(session, "You don't know that jutsu.")
         return
     if status_effects.has_effect(player.active_status_effects, "silenced"):
-        session.send("You are silenced and cannot use jutsu right now!")
+        jutsu_colors.send(session, "You are silenced and cannot use jutsu right now!")
         return
 
     target = target_session.player
     import hidden_mist
     if hidden_mist.obscures(player, target):
-        session.send("The mist hides your target. You cannot lock onto them.")
+        jutsu_colors.send(session, "The mist hides your target. You cannot lock onto them.")
         return
     if jutsu.get("jutsu_type") == "ambush" and target.health < target.maximum_health:
-        session.send(f"{target.name} is hurt and alert; you cannot sneak up on them.")
+        jutsu_colors.send(session, f"{target.name} is hurt and alert; you cannot sneak up on them.")
         return
     if target.izanami_trapped:
-        session.send(f"{target.name} is lost in a loop, untouched by reality -- you cannot reach them.")
+        jutsu_colors.send(session, f"{target.name} is lost in a loop, untouched by reality -- you cannot reach them.")
         return
     cooldown_ready_at = player.cooldowns.get(jutsu_key, 0)
     import commands as commands_module
-    jutsu_color = commands_module.CLASS_WHO_COLOR.get(jutsu["class_requirement"], "&W")
-    colored_name = f"{jutsu_color}{jutsu['display_name']}&x"
+    colored_name = jutsu["display_name"]  # rendered by send_jutsu
     silent_to_target = (
         jutsu["class_requirement"] == "genjutsu"
         and commands_module.has_silent_genjutsu(player)
         and player.skill_proficiencies.get("Silent Genjutsu", 0) >= 100
     )
     if now < cooldown_ready_at:
-        session.send(f"{colored_name} is still recovering ({cooldown_ready_at - now:.1f}s).")
+        jutsu_colors.send(session, f"{colored_name} is still recovering ({cooldown_ready_at - now:.1f}s).")
         return
     is_copied_cast = player.copied_jutsu_key == jutsu_key
     chakra_cost = player.copied_jutsu_cost if is_copied_cast else jutsu["chakra_cost"]
     stamina_cost = jutsu["stamina_cost"]
     discount_pct = derived_stats.chakra_control_cost_discount_percent(player.chakra_control)
-    if discount_pct and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
+    if not is_copied_cast and discount_pct and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
         chakra_cost = round(chakra_cost * (100 - discount_pct) / 100)
     if player.chakra < chakra_cost:
-        session.send("You don't have enough chakra.")
+        jutsu_colors.send(session, "You don't have enough chakra.")
         return
     if player.stamina < stamina_cost:
-        session.send("You don't have enough stamina.")
+        jutsu_colors.send(session, "You don't have enough stamina.")
         return
 
     if jutsu.get("requires_item"):
         held_items = [item for item in player.inventory if jutsu["requires_item"] in item.lower()]
         if len(held_items) < jutsu.get("requires_item_count", 1):
-            session.send(f"You don't have a {jutsu['requires_item']} to throw. You need {jutsu.get('requires_item_count', 1)}.")
+            jutsu_colors.send(session, f"You don't have a {jutsu['requires_item']} to throw. You need {jutsu.get('requires_item_count', 1)}.")
             return
     if jutsu.get("jutsu_type") == "trap" and jutsu_key in target.active_status_effects:
-        session.send("That target already has this trap attached.")
+        jutsu_colors.send(session, "That target already has this trap attached.")
         return
 
-    caster_chakra_cost = jutsu["chakra_cost"]  # the jutsu's real cost -- NOT chakra_cost above, which may be a discounted copied-cast price
+    caster_chakra_cost = chakra_cost  # the amount actually paid for this cast
     player.chakra -= chakra_cost
     player.stamina -= stamina_cost
     if is_copied_cast:
@@ -2557,22 +2755,22 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0) + sage_mode.accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
-        session.send(f"You use {colored_name} on {target.name}, but it misses!")
+        jutsu_colors.send(session, f"You use {colored_name} on {target.name}, but it misses!")
         if not silent_to_target:
-            target_session.send(f"&C{player.name} uses {colored_name} on you, but it misses!&x")
+            jutsu_colors.send(target_session, f"&C{player.name} uses {colored_name} on you, but it misses!&x")
         return
 
     if target.kamui_intangibility_rounds_left > 0:
         target.kamui_intangibility_rounds_left -= 1
-        session.send(f"&R{colored_name} passes straight through {target.name}!&x")
+        jutsu_colors.send(session, f"&R{colored_name} passes straight through {target.name}!&x")
         if not silent_to_target:
-            target_session.send(f"&R{player.name}'s {colored_name} passes straight through you!&x")
+            jutsu_colors.send(target_session, f"&R{player.name}'s {colored_name} passes straight through you!&x")
         return
 
     if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
-        session.send(f"&C{target.name} dodges your {colored_name}!&x")
+        jutsu_colors.send(session, f"&C{target.name} dodges your {colored_name}!&x")
         if not silent_to_target:
-            target_session.send(f"&CYou dodge {player.name}'s {colored_name}!&x")
+            jutsu_colors.send(target_session, f"&CYou dodge {player.name}'s {colored_name}!&x")
         return
 
     if jutsu.get("jutsu_type") == "thrown" and _try_counter_kunai(session, target_session, target, player.name, jutsu["display_name"]):
@@ -2581,24 +2779,24 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     if jutsu.get("jutsu_type") == "trap":
         ninja_arts.attach_trap(target, jutsu_key, player.name)
         grow_skill_from_usage(player, jutsu["display_name"])
-        session.send(f"You attach {jutsu['display_name']} to {target.name}. It will detonate in two rounds unless disabled.")
-        target_session.send(f"&R{player.name} attaches {jutsu['display_name']} to you! Use Trap Disabling before it detonates.&x")
+        jutsu_colors.send(session, f"You attach {jutsu['display_name']} to {target.name}. It will detonate in two rounds unless disabled.")
+        jutsu_colors.send(target_session, f"&R{player.name} attaches {jutsu['display_name']} to you! Use Trap Disabling before it detonates.&x")
         return
 
     if jutsu.get("jutsu_type") == "sevenfold":
         dmg, landed, sevenfold_effects = _sevenfold_damage(jutsu, player)
         if not landed:
-            session.send(f"All seven colors of {colored_name} fail to connect with {target.name}!")
-            target_session.send("The rainbow of chakra passes around you without a hit.")
+            jutsu_colors.send(session, f"All seven colors of {colored_name} fail to connect with {target.name}!")
+            jutsu_colors.send(target_session, "The rainbow of chakra passes around you without a hit.")
             return
-        session.send(f"&C{len(landed)} of seven Rasengan strikes connect: {', '.join(landed)}.&x")
+        jutsu_colors.send(session, f"&C{len(landed)} of seven Rasengan strikes connect: {', '.join(landed)}.&x")
         was_explosive = False
     else:
         dmg, was_explosive = roll_jutsu_damage(jutsu)
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, target, dmg)
     dmg += _jutsu_damage_bonus(player)
-    if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary):
+    if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary, player.chakra_nature_tertiary):
         dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
@@ -2623,10 +2821,12 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         if reduced < dmg:
             dmg = reduced
         elif not silent_to_target:
-            target_session.send("&RYou weren't fast enough to counter!&x")
+            jutsu_colors.send(target_session, "&RYou weren't fast enough to counter!&x")
 
     dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
-    dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, sage_mode.outgoing(player, dmg, jutsu=True)))
+    dmg = sage_mode.outgoing(player, dmg, jutsu=True)
+    dmg = signature_moves.amount(player, jutsu, dmg)
+    dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
     _genjutsu_impact(jutsu, target)
     grow_skill_from_usage(player, jutsu["display_name"])
@@ -2638,30 +2838,35 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     else:
         biome_note = ""
     if was_explosive:
-        session.send(f"&RThe kunai detonates!&x You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"&RThe kunai detonates!&x You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
         if silent_to_target:
-            target_session.send(f"&RYou feel a sudden, sharp pain -- {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(target_session, f"&RYou feel a sudden, sharp pain -- {damage_messages.describe_damage(dmg)} damage!&x")
         else:
-            target_session.send(f"&RThe kunai detonates!&x {player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
+            jutsu_colors.send(target_session, f"&RThe kunai detonates!&x {player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
     else:
-        session.send(f"You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg)} damage!{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg)} damage! {damage_messages.impact_flavor(dmg)}{perk_note}{biome_note}")
         if silent_to_target:
-            target_session.send(f"&RSomething washes over you -- {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(target_session, f"&RSomething washes over you -- {damage_messages.describe_damage(dmg)} damage!&x")
         else:
-            target_session.send(f"{player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg)} damage!{perk_note}{biome_note}")
+            jutsu_colors.send(target_session, f"{player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg)} damage!{perk_note}{biome_note}")
 
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
         import data_kekkei_genkai
-        effect_duration = status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"]
+        effect_duration = (status_effects.genjutsu_duration(jutsu["effect"])
+                           if jutsu["class_requirement"] == "genjutsu"
+                           else status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"])
         if jutsu["class_requirement"] == "genjutsu" and data_kekkei_genkai.sharingan_genjutsu_resistant(target):
             effect_duration = data_kekkei_genkai.reduced_genjutsu_duration(effect_duration)
+        effect_duration = signature_moves.duration(player, jutsu, effect_duration)
         status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key, duration_override=effect_duration)
-        target_session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
-        session.send(status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
+        jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
+        jutsu_colors.send(session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
     for effect in sevenfold_effects:
-        status_effects.apply_effect(target.active_status_effects, effect, source=jutsu_key)
-        target_session.send(status_effects.EFFECT_DEFS[effect]["message"].format(target="You"))
-        session.send(status_effects.EFFECT_DEFS[effect]["message"].format(target=target.name))
+        duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"])
+        status_effects.apply_effect(target.active_status_effects, effect, source=jutsu_key,
+                                    duration_override=duration)
+        jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[effect]["message"].format(target="You"))
+        jutsu_colors.send(session, status_effects.EFFECT_DEFS[effect]["message"].format(target=target.name))
 
     if jutsu.get("jutsu_type") == "fan_art" and fan_direction and target.health > 0:
         ninja_arts.fan_push(session, target, fan_direction, target_session)
@@ -2679,7 +2884,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         if random.randint(1, 100) <= commands_module.SHARINGAN_COPY_JUTSU_CHANCE_PERCENT:
             target.copied_jutsu_key = jutsu_key
             target.copied_jutsu_cost = caster_chakra_cost * 2
-            target_session.send(
+            jutsu_colors.send(target_session,
                 f"&RYour Sharingan copies {colored_name}! You can now cast it once "
                 f"for &Y{target.copied_jutsu_cost}&R chakra.&x"
             )
@@ -2762,7 +2967,8 @@ def handle_mob_defeat(session, mob: Mob) -> None:
 
     ryo_mult = village_perks.ryo_multiplier(player.village)
     corpse_ryo = int(mob.ryo_reward * ryo_mult) if ryo_mult != 1.0 else mob.ryo_reward
-    corpse = corpses.spawn_corpse(mob.name, mob.room_vnum, corpse_ryo, mob.loot_items)
+    import seasonal_events
+    corpse = corpses.spawn_corpse(mob.name, mob.room_vnum, corpse_ryo, seasonal_events.mob_loot(mob))
     if not corpse.is_empty():
         session.send(f"{mob.name.capitalize()} leaves behind a corpse." + (f" &Y(x{ryo_mult:g} ryo village perk)&x" if ryo_mult != 1.0 else ""))
 
@@ -2787,6 +2993,7 @@ def handle_mob_defeat(session, mob: Mob) -> None:
 
     session.combat_target = None
     reset_summon_round_state(player)
+    seasonal_events.turkey_defeated(mob)
     remove_mob(mob)
 
     if session.group and len(session.group.members) > 1:
@@ -2811,6 +3018,8 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         share = member_base_xp // len(qualifying) if qualifying else 0
         member_multiplier = village_perks.xp_multiplier(member_player.village)
         member_xp = int(share * member_multiplier)
+        if member_player.holiday_xp_boost_until > time.time():
+            member_xp = int(member_xp * 1.10)
         team_bonus_applied = member_player.team_name and any(
             other.player and other is not member_session and other.player.team_name == member_player.team_name
             for other in qualifying
@@ -2826,12 +3035,15 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         perk_suffix = f" &Y(x{member_multiplier:g} village perk)&x" if member_multiplier != 1.0 else ""
         team_suffix = f" &C(+{teams.TEAM_XP_BONUS_PCT}% team bonus)&x" if team_bonus_applied else ""
         loyal_suffix = f" &C(+{data_personality.LOYAL_GROUP_XP_BONUS_PCT}% loyal bonus)&x" if loyal_bonus_applied else ""
+        holiday_suffix = " &M(+10% candy perk)&x" if member_player.holiday_xp_boost_until > time.time() else ""
         if member_session is session:
-            session.send(f"You gain {member_xp} experience.{perk_suffix}{team_suffix}{loyal_suffix}")
+            session.send(f"You gain {member_xp} experience.{perk_suffix}{team_suffix}{loyal_suffix}{holiday_suffix}")
         else:
-            member_session.send(f"You gain {member_xp} experience from the group's kill.{perk_suffix}{team_suffix}{loyal_suffix}")
+            member_session.send(f"You gain {member_xp} experience from the group's kill.{perk_suffix}{team_suffix}{loyal_suffix}{holiday_suffix}")
         for line in leveling.grant_experience(member_player, member_xp):
             member_session.send(line)
+        import element_choice
+        element_choice.begin(member_session)
 
     import missions  # local import to avoid circular dependency
     for line in missions.on_mob_defeated(player, mob.template_vnum):
@@ -2853,7 +3065,7 @@ def try_trigger_izanagi(session) -> bool:
     all. Returns True if it fired (caller should skip the normal
     defeat flow entirely, same contract as the immortal check)."""
     player = session.player
-    if not player.izanagi_active:
+    if not player.izanagi_active or not (player.sharingan_active or _staff_testing_mangekyo(player)):
         return False
     player.izanagi_active = False
     player.health = player.maximum_health
@@ -2898,6 +3110,10 @@ def handle_player_defeat(session) -> None:
         # combatants; nothing below this branch should ever run for
         # a duel loss.
         import duel as duel_module
+        if player.mangekyo_amaterasu_burning:
+            player.mangekyo_amaterasu_burning = False
+            player.mangekyo_amaterasu_caster = None
+            session.send("&YAmaterasu's flames go out as you fall.&x")
         duel_module.end_duel(session.duel, session)
         return
 
@@ -2916,6 +3132,10 @@ def handle_player_defeat(session) -> None:
             dismiss_summon(player)
             return
 
+    if player.mangekyo_amaterasu_burning:
+        player.mangekyo_amaterasu_burning = False
+        player.mangekyo_amaterasu_caster = None
+        session.send("&YAmaterasu's flames go out as you fall.&x")
     session.send("&RYour vision darkens as you collapse.&x")
 
     if player.level < 100:
@@ -3008,6 +3228,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         return
 
     dmg = _player_attack_damage(player)
+    dmg = _weapon_expert_damage(player, dmg)
     dmg = int(dmg * (100 + _summon_weapon_buff_damage_percent(player)) / 100)
     is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
     if is_crit:
@@ -3024,6 +3245,11 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
 
+    if _soto_uke_blocks(target, player.level):
+        session.send(f"&C{target.name} blocks your attack with Soto Uke!&x")
+        target_session.send(f"&CYou use Soto Uke to block {player.name}'s attack!&x")
+        return
+
     if target.sharingan_active and target.bloodline_tomoe >= 3:
         reduced = _sharingan_predict_and_reduce_damage(target, dmg)
         if reduced < dmg:
@@ -3036,9 +3262,9 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
     if is_crit:
-        session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage.")
+        session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
-        session.send(f"You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage.")
+        session.send(f"You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg)} damage.")
 
 
@@ -3105,6 +3331,11 @@ def resolve_pvp_pulse(session) -> None:
     target_session = session.pvp_target
     if target_session is None:
         return
+    import element_choice
+    if element_choice.in_choice(player) or element_choice.in_choice(target_session.player):
+        session.pvp_target = None
+        target_session.pvp_target = None
+        return
     target = target_session.player
     if (
         target is None
@@ -3140,6 +3371,7 @@ def resolve_pvp_pulse(session) -> None:
     session.send("")
     import sage_mode
     sage_mode.combat_pulse(session)
+    ninja_arts.tick_samurai_sabre(session, combat=True)
     if _is_action_blocked(player):
         session.send("You are stunned and can't act this round!" if "stunned" in player.active_status_effects else "You cannot act this round!")
         return
@@ -3165,6 +3397,8 @@ def resolve_pvp_pulse(session) -> None:
             if target.health <= 0:
                 break
             _player_attack_target_once(session, player, target_session, target)
+    if target.health > 0:
+        _offhand_attack(session, target, target_session)
     for clone in active_shadow_clones(player):
         if target.health <= 0:
             break

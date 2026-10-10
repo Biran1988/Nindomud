@@ -20,24 +20,31 @@ Deploy source code over the existing server installation. Never replace the
 server's `data/` directory: it contains authoritative player, area, world,
 spawn-point, shop, and builder-created state.
 
-Every release is distributed as `Nindo_mud.zip`. The archive intentionally
-contains source and tests only; runtime save data is excluded.
+Every release is distributed as `Nindo_mud.zip`. The archive includes source,
+tests, and individual reference pages under `helpfiles/`; runtime save data is
+excluded. Restart the server with `python3 main.py` after extracting the new
+source files. Startup copies missing reference pages into `data/help/` and
+refreshes system-owned pages, while preserving staff-written help. The
+`helpfiles/` directory is for inspection and does not replace saved data.
 
 ## Current release
 
-The archive includes `damage_messages.py` and its integration in combat,
-commands, and Mangekyo attacks. Damage is shown as a colored word from
-TRIVIAL to EXTINCTION-LEVEL (10,000+). It also includes persistent shopkeeper
-stock and item prototypes, 15-minute area resets, the restore and respawn
-commands, SMAUG-style builder commands, and progressive leveling and mob XP.
-The latest update adds Hidden Mist Jutsu as a water-only Ninjutsu room effect:
-enemies lose the caster as a target while the caster has a combat advantage.
+Version 15.307 adds a trainable signature move: select a 100%-mastered active
+jutsu with `signature <move>`, practice it to 150%, then gain a 25% bonus to
+its damage or effect duration. Switching drops the old move back to 100%.
+The visual area editor remains at `builder/Nindo_Area_Builder.html`.
+See `builder/README.md` for the offline-to-server workflow. Earlier updates
+added elemental releases, staff-wide jutsu testing, and jutsu base damage
+scaling along the damage-word ladder. The `reboot` command checks installed
+source before disconnecting players and reports import errors without taking
+the server offline.
 Ushiro remains an opener. The prior update added Bukijutsu-only medicinal and antidote pill crafting with
 selectable item levels, Medicinal Herbs, and level/effect details in `examine`.
 Earlier updates added Ninja Arts/Bukijutsu throws, traps, trap disabling,
 permanent item-bound weapon properties, wind-only fan attacks, and Water
 Release: Glue Technique. It also includes the 21 Genjutsu techniques,
-Barrier's 10% damage reduction, and doubled Sharingan upkeep.
+Barrier's 25% damage reduction for three minutes or until moving rooms, and
+three-minute combined Sharingan upkeep reports.
 See `docs/RELEASE_NOTES.md` for the files and checks that verify this release.
 Builders can use `mset fields` for a wrapped mob field list and
 `mset fields player` for the separate player field list.

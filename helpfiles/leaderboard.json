@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "leaderboard",
+  "keywords": [
+    "leaderboard",
+    "leaderboards",
+    "top"
+  ],
+  "title": "Leaderboard",
+  "body": "Syntax: leaderboard [category]  (aliases: leaderboards, top)\n\nDescription: Shows the top-ranked characters in a tracked category (level, kills, ryo, etc.). With no category, lists what's available.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

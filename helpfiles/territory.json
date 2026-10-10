@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "territory",
+  "keywords": [
+    "territory",
+    "war",
+    "capture point",
+    "capture points"
+  ],
+  "title": "Territory / War",
+  "body": "Syntax: territory  (alias: war)\n\nDescription: Shows every capture point in the game, who currently owns each one, its garrison, its income, and the current war window status.\n\nA capture point only changes hands during an active war window -- randomly scheduled ahead of time and announced server-wide, never a fixed predictable slot and never always-on. To take a point: clear out every defender stationed there, then have your village hold it alone, uncontested, for the full duration shown. If the owning village restocks the garrison, or your presence there drops to nothing, the clock resets. Holding it out flips ownership -- the new owner's garrison starts empty.\n\nEach point's income (paid into your village's shared treasury every few minutes, on top of a small base income every village gets regardless) comes from its own area -- see 'help garrison' for how that treasury gets spent on defense.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

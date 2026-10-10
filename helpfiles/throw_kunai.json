@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "throw kunai",
+  "keywords": [
+    "throw kunai"
+  ],
+  "title": "Throw Kunai",
+  "body": "Syntax: throw kunai <target>\n\nDescription: A Bukijutsu jutsu, unlocked at level 15. Used by typing its name directly. 24-29 physical damage, costs 8 Stamina, 2.5 second cooldown.\n\nRequires an actual kunai in your inventory -- it's genuinely thrown, not just a flavor name. The kunai is consumed and lands on the ground where you're standing, whether the throw hits or misses, so you (or anyone else) can pick it back up with 'get'.\n\nDate: 2026-08-23",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

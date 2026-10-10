@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "return",
+  "keywords": [
+    "return"
+  ],
+  "title": "Return (staff)",
+  "body": "Syntax: return\n\nDescription: (Staff only.) Sends whoever you most recently transferred back to wherever they originally were. Takes no argument -- it always targets your own last transfer, not a name you specify fresh. Refuses cleanly if that player has logged off, or if they've already been sent back.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

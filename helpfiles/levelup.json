@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "levelup",
+  "keywords": [
+    "levelup",
+    "level up"
+  ],
+  "title": "Levelup",
+  "body": "Syntax: levelup <player name>  (administrator+ only)\n\nDescription: Levels the named player up exactly ONE level, as a real reward -- genuinely the same as if they'd earned it through normal XP gain, not just a bare number change. Grants the real max HP/Chakra/Stamina increase (with a fresh full heal), new training points and practice points to spend, and unlocks any jutsu tied to the new level -- so a player can go train stats or practice skills naturally with what they were just given. Works on an online OR offline player. Always requires a target -- never applies to your own character.\n\nGenuinely separate from 'mset' -- this exists outside the raw prototype editor specifically as its own reward tool, not a field to poke directly.\n\nAlready at the level cap (100)? Refuses outright rather than doing nothing silently.\n\nDate: 2026-09-02",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "wimpy",
+  "keywords": [
+    "wimpy"
+  ],
+  "title": "Wimpy",
+  "body": "Syntax: wimpy <0-100>\n\nDescription: Sets an auto-flee threshold as a percentage of your max health -- once your health drops to or below it during a fight (PvE or PvP), you automatically attempt 'flee' on your own behalf. 0 disables it, the default. With no argument, shows your current setting instead of changing it.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "makeimm",
+  "keywords": [
+    "makeimm",
+    "promote immortal"
+  ],
+  "title": "Make Immortal (Implementor)",
+  "body": "Syntax: makeimm <account>\n\nDescription: Promotes an existing player account to the Helper immortal rank and saves the change immediately, even if the target is offline. An online player should reconnect for the full staff skill set. Existing staff ranks are not changed.\n\nOnly the Biran Implementor account can use this command.\n\nExample: makeimm Kakashi\n\nDate: 2026-09-29",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

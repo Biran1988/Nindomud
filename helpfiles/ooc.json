@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "ooc",
+  "keywords": [
+    "ooc"
+  ],
+  "title": "OOC",
+  "body": "Syntax: ooc <message>\n\nDescription: Sends a message on the server-wide out-of-character channel -- everyone online sees it, regardless of room or village.\n\nThe last 25 OOC messages are saved -- see 'help chatlog' to review them.\n\nFiltered words are automatically censored. Sending too many messages too quickly (say/ooc/village chat combined) triggers an automatic 10-minute silence -- see 'help silence'.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

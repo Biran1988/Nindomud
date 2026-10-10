@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "report",
+  "keywords": [
+    "report",
+    "bug",
+    "bug report"
+  ],
+  "title": "Report",
+  "body": "Syntax: report <what went wrong>\n\nDescription: Logs a bug report for staff to review -- what you type is saved along with your name, village, and the room you were standing in when you sent it, so staff have context without needing to ask. Works from anywhere, anytime, for any player.\n\nFor staff: any online staff member with the 'staff_notify_reports' setting on (the default -- toggle with 'staffconfig staff_notify_reports off') gets a live, in-game message the instant a player submits one. The full history lives outside the game entirely, in a running text file any player's report gets appended to -- ask whoever manages the server's files if you need to review it directly. Genuinely separate from 'idea' (see 'help idea') -- the two are logged to their own files with their own independent notification settings.\n\nThis isn't a live chat with staff -- there's no in-game reply. If you need an immediate answer, use a normal channel instead (see 'help say'/'help ooc').\n\nDate: 2026-09-02",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

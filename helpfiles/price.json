@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "price",
+  "keywords": [
+    "price"
+  ],
+  "title": "Price",
+  "body": "Syntax: price <item> <amount>\n\nDescription: Sets the sell price for an item already given to your own shopkeeper (see 'help shop'). If you've given more than one of the same item and none of them have a price yet, this sets all of them at once.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

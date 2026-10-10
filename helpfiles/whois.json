@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "whois",
+  "keywords": [
+    "whois"
+  ],
+  "title": "Whois",
+  "body": "Syntax: whois <player name>\n\nDescription: Shows an online player's description plus basic info -- village, level, class, rank, and clan. Works server-wide, unlike 'look', which only shows a description for a player standing in the same room as you.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

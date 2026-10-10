@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "raikiri",
+  "keywords": [
+    "raikiri"
+  ],
+  "title": "Raikiri",
+  "body": "Syntax: perform raikiri <target>\n\nDescription: An opening-only Lightning strike against an unhurt target, dealing 50% more damage when it connects. An opening attack with 50% extra damage; cannot be used mid-fight or against a wounded target. Requires Lightning chakra nature. Base damage: 689-809. Unlocks at level 60. Costs 58 Chakra and 0 Stamina; 10 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

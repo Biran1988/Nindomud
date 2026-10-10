@@ -12,14 +12,16 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    # Legacy saved effects can finish ticking safely after Samurai Sabre's
+    # migration to a persisted upkeep toggle; new casts do not apply this.
     "samurai_sabre": {
         "display_name": "Samurai Sabre", "duration": 5,
         "message": "Chakra sharpens {target}'s sword.",
     },
     "barrier": {
-        "display_name": "Barrier", "duration": 5,
+        "display_name": "Barrier", "duration": 180,
         "message": "A chakra barrier surrounds {target}.",
-        "damage_reduction_pct": 10,
+        "damage_reduction_pct": 25,
     },
     "blinded": {
         "display_name": "Blinded", "duration": 2,
@@ -122,6 +124,21 @@ EFFECT_DEFS = {
         "blocks_action": True,
     },
 }
+
+# A pulse is one second. These durations apply only when the status comes
+# from Genjutsu; other attacks using the same status keep EFFECT_DEFS timing.
+GENJUTSU_DURATIONS = {
+    "frightened": 20, "narakumi": 24, "soundless": 24,
+    "disoriented": 20, "confused": 20, "weakened": 24,
+    "haze": 24, "blinded": 20,
+    "stunned": 10, "paralyzed": 10, "ringing": 10,
+    "asleep": 12, "genjutsu_locked": 10, "chisei": 60,
+}
+
+
+def genjutsu_duration(name: str) -> int:
+    """Status lifetime in seconds when inflicted by a Genjutsu technique."""
+    return GENJUTSU_DURATIONS.get(name, EFFECT_DEFS[name]["duration"])
 
 
 def apply_effect(effects: Dict[str, dict], name: str, source: str = "", duration_override: int = None) -> None:

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "wear",
+  "keywords": [
+    "wear"
+  ],
+  "title": "Wear",
+  "body": "Syntax: wear <item>  |  wear all\n\nDescription: Equips armor or a weapon from your inventory into its own slot. 'wear kunai' wields the kunai, just like 'wield kunai'. Use 'hold' for tools. 'wear all' equips armor, weapons, and tools into their own free slots, skipping any occupied slot.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

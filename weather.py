@@ -83,7 +83,7 @@ def combat_accuracy_modifier() -> int:
 def night_dodge_bonus() -> int:
     """Added to a player's dodge_chance() bonus_percent argument --
     0 during the day, a small boost at night."""
-    return 5 if CURRENT_TIME_OF_DAY == "night" else 0
+    return 4.5 if CURRENT_TIME_OF_DAY == "night" else 0
 
 
 def status_line() -> str:

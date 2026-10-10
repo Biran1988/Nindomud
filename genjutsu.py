@@ -4,6 +4,7 @@ Illusory items are presentation state. They never enter real inventories or
 ground items, so they cannot be equipped, sold, looted, or duplicated.
 """
 
+import jutsu_colors
 import random
 import time
 
@@ -63,52 +64,52 @@ def begin_cast(session, key, words):
     if kind == "disguise" and not words and player.genjutsu_disguise:
         player.genjutsu_disguise = ""
         player.genjutsu_disguise_pulses = 0
-        session.send("You release your Henge and return to your own appearance.")
+        jutsu_colors.send(session, "You release your Henge and return to your own appearance.")
         return
     if not combat._can_use_jutsu(player, jutsu, key):
-        session.send("You haven't learned that Genjutsu.")
+        jutsu_colors.send(session, "You haven't learned that Genjutsu.")
         return
     if combat._is_action_blocked(player) or status_effects.has_effect(player.active_status_effects, "silenced"):
-        session.send("You cannot form that Genjutsu right now.")
+        jutsu_colors.send(session, "You cannot form that Genjutsu right now.")
         return
     if session.pending_cast is not None:
-        session.send("You're already forming hand signs for another jutsu!")
+        jutsu_colors.send(session, "You're already forming hand signs for another jutsu!")
         return
     if time.time() < player.cooldowns.get(key, 0):
-        session.send(f"{jutsu['display_name']} is still recovering.")
+        jutsu_colors.send(session, f"{jutsu['display_name']} is still recovering.")
         return
     cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
     if player.chakra < cost:
-        session.send("You don't have enough chakra.")
+        jutsu_colors.send(session, "You don't have enough chakra.")
         return
 
     payload = {"kind": kind, "room_vnum": player.room_vnum}
     if kind == "disguise":
         target = _target_in_room(session, " ".join(words).lower()) if words else None
         if target is None:
-            session.send(f"Use: perform {key} <person in room>. Use it without a target to end your disguise.")
+            jutsu_colors.send(session, f"Use: perform {key} <person in room>. Use it without a target to end your disguise.")
             return
         payload["target"] = target
     elif kind == "item_illusion":
         if "as" not in [word.lower() for word in words]:
-            session.send("Use: perform kokohi arazu <carried item> as <apparent name>.")
+            jutsu_colors.send(session, "Use: perform kokohi arazu <carried item> as <apparent name>.")
             return
         split = [word.lower() for word in words].index("as")
         item = _item_argument(player, words[:split])
         alias = " ".join(words[split + 1:]).strip()
         if not item or not alias or len(alias) > 40 or not alias.replace(" ", "").isalnum():
-            session.send("Choose a carried item and a name of up to 40 letters or numbers.")
+            jutsu_colors.send(session, "Choose a carried item and a name of up to 40 letters or numbers.")
             return
         payload.update(item=item, alias=alias)
     elif kind == "item_decoy":
         item = _item_argument(player, words)
         if not item:
-            session.send("Use: perform niju kokohi arazu <carried item>.")
+            jutsu_colors.send(session, "Use: perform niju kokohi arazu <carried item>.")
             return
         payload["item"] = item
     elif kind == "chisei":
         if status_effects.has_effect(player.active_status_effects, "chisei"):
-            session.send("Chisei is already active.")
+            jutsu_colors.send(session, "Chisei is already active.")
             return
     elif kind == "room_sleep":
         import world
@@ -120,7 +121,7 @@ def begin_cast(session, key, words):
         hostile_players = [s for s in ACTIVE_SESSIONS if s is not session and s.player
                            and s.player.room_vnum == player.room_vnum and s.player.health > 0]
         if not hostile_mobs and (not hostile_players or (room and room.safe)):
-            session.send("There are no eligible targets here.")
+            jutsu_colors.send(session, "There are no eligible targets here.")
             return
 
     import commands
@@ -135,43 +136,48 @@ def resolve_cast(session, key, payload):
     jutsu = data_jutsu.JUTSU[key]
     kind = payload["kind"]
     if player.room_vnum != payload["room_vnum"]:
-        session.send("Your illusion fades before it takes hold; you left the room.")
+        jutsu_colors.send(session, "Your illusion fades before it takes hold; you left the room.")
         return
     if kind == "disguise":
         target = payload["target"]
         if target is player or target.room_vnum != player.room_vnum or getattr(target, "health", 1) <= 0:
-            session.send("That person is no longer here.")
+            jutsu_colors.send(session, "That person is no longer here.")
             return
     if kind in ("item_illusion", "item_decoy") and payload["item"] not in player.inventory:
-        session.send("You are no longer carrying that item.")
+        jutsu_colors.send(session, "You are no longer carrying that item.")
         return
     if kind == "chisei" and status_effects.has_effect(player.active_status_effects, "chisei"):
-        session.send("Chisei is already active.")
+        jutsu_colors.send(session, "Chisei is already active.")
         return
     cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
     if player.chakra < cost or not combat._can_use_jutsu(player, jutsu, key):
-        session.send("You can no longer complete that Genjutsu.")
+        jutsu_colors.send(session, "You can no longer complete that Genjutsu.")
         return
     player.chakra -= cost
     player.cooldowns[key] = time.time() + jutsu["cooldown"]
+    import signature_moves
 
     if kind == "disguise":
         player.genjutsu_disguise = payload["target"].name
-        player.genjutsu_disguise_pulses = jutsu["duration"]
-        session.send(f"You assume the appearance of {player.genjutsu_disguise} for {jutsu['duration']} pulses.")
+        duration = signature_moves.duration(player, jutsu, jutsu["duration"])
+        player.genjutsu_disguise_pulses = duration
+        jutsu_colors.send(session, f"You assume the appearance of {player.genjutsu_disguise} for {duration} pulses.")
     elif kind == "item_illusion":
-        player.genjutsu_item_illusions[payload["item"]] = {"alias": payload["alias"], "pulses": jutsu["duration"]}
-        session.send(f"{payload['item']} now appears as {payload['alias']}; its real properties are unchanged.")
+        player.genjutsu_item_illusions[payload["item"]] = {"alias": payload["alias"], "pulses": signature_moves.duration(player, jutsu, jutsu["duration"])}
+        jutsu_colors.send(session, f"{payload['item']} now appears as {payload['alias']}; its real properties are unchanged.")
     elif kind == "item_decoy":
-        player.genjutsu_decoys.append({"name": payload["item"], "room_vnum": player.room_vnum, "pulses": jutsu["duration"]})
-        session.send(f"A false {payload['item']} appears on the ground. It cannot be taken or used.")
+        player.genjutsu_decoys.append({"name": payload["item"], "room_vnum": player.room_vnum,
+                                       "pulses": signature_moves.duration(player, jutsu, jutsu["duration"])})
+        jutsu_colors.send(session, f"A false {payload['item']} appears on the ground. It cannot be taken or used.")
     elif kind == "chisei":
-        bonus = max(20, 10 + player.intelligence // 2)
+        bonus = signature_moves.amount(player, jutsu, max(20, 10 + player.intelligence // 2))
         player.chisei_chakra_bonus = bonus
         player.maximum_chakra += bonus
         player.chakra += bonus
-        status_effects.apply_effect(player.active_status_effects, "chisei", source=key)
-        session.send(f"Chisei sharpens your Genjutsu and grants {bonus} temporary maximum Chakra for six pulses.")
+        duration = signature_moves.duration(player, jutsu, status_effects.genjutsu_duration("chisei"))
+        status_effects.apply_effect(player.active_status_effects, "chisei", source=key,
+                                    duration_override=duration)
+        jutsu_colors.send(session, f"Chisei sharpens your Genjutsu and grants {bonus} temporary maximum Chakra for {duration} seconds.")
     elif kind == "room_sleep":
         import world
         from session import ACTIVE_SESSIONS
@@ -183,7 +189,8 @@ def resolve_cast(session, key, payload):
                 continue
             chance = max(25, min(85, 70 + (player.level - mob.level) * 2))
             if random.randint(1, 100) <= chance:
-                status_effects.apply_effect(mob.active_status_effects, "asleep", source=key)
+                status_effects.apply_effect(mob.active_status_effects, "asleep", source=key,
+                                            duration_override=signature_moves.duration(player, jutsu, status_effects.genjutsu_duration("asleep")))
                 affected += 1
         if not (room and room.safe):
             import data_kekkei_genkai
@@ -193,13 +200,14 @@ def resolve_cast(session, key, payload):
                     continue
                 chance = max(25, min(85, 70 + (player.level - other.player.level) * 2))
                 if random.randint(1, 100) <= chance:
-                    duration = 2
+                    duration = status_effects.genjutsu_duration("asleep")
                     if data_kekkei_genkai.sharingan_genjutsu_resistant(other.player):
                         duration = data_kekkei_genkai.reduced_genjutsu_duration(duration)
+                    duration = signature_moves.duration(player, jutsu, duration)
                     status_effects.apply_effect(other.player.active_status_effects, "asleep", source=key, duration_override=duration)
                     other.send("Illusory feathers drift down; you fall asleep and cannot act!")
                     affected += 1
-        session.send(f"Nehan Shōja sends {affected} target(s) to sleep; others resist the illusion.")
+        jutsu_colors.send(session, f"Nehan Shōja sends {affected} target(s) to sleep; others resist the illusion.")
     combat.grow_skill_from_usage(player, jutsu["display_name"])
 
 

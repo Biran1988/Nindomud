@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "sharingan",
+  "keywords": [
+    "sharingan",
+    "shar",
+    "tomoe"
+  ],
+  "title": "Sharingan",
+  "body": "Syntax: sharingan  |  shar\n\nDescription: Toggles the 1-tomoe Sharingan's first ability: reading an opponent's attacks well enough to dodge them, a real bonus on top of your normal dodge chance while it's active. Costs chakra and stamina every combat round it stays on, and a smaller amount of chakra even while you're not fighting -- having it active costs something at all times, more so mid-combat -- and turns itself off automatically if you can't afford the upkeep anymore, rather than draining you into the negatives. Upkeep is combined with other maintained abilities in a report every six minutes, and any pending Sharingan total is reported when it turns off. Costs nothing to toggle off. At 2 tomoe, the chakra cost drops -- the technique becomes less taxing with more eyes open; the dodge bonus itself doesn't change.\n\nThe Sharingan can develop further with real use in combat -- up to 3 tomoe in each eye. Each stage brings its own new edge, sharper than the last. How quickly, and exactly what each one brings, isn't something you can see directly; toggling this command will always tell you how many tomoe you currently have, so you'll know the moment your eyes sharpen. Not every Sharingan is destined to reach the full 6 -- some eyes simply have more to give than others.\n\nRequires an awakened Sharingan with at least 1 tomoe. If you don't have one, this behaves like any other skill or jutsu you haven't learned. See 'help kekkei genkai' for the bigger picture of what a Kekkei Genkai is and how the Sharingan fits in.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

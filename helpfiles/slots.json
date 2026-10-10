@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "slots",
+  "keywords": [
+    "slots"
+  ],
+  "title": "Slots",
+  "body": "Syntax: slots [tier]\n\nDescription: With no argument, shows the slot machine's wager tiers and current jackpots. With a tier, pulls the lever -- wagers are in ryo, and each tier has its own progressive jackpot that grows from every pull across all players.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

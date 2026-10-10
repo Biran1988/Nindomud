@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "sanchin dachi",
+  "keywords": [
+    "sanchin dachi"
+  ],
+  "title": "Sanchin Dachi",
+  "body": "Syntax: sanchin dachi\n\nDescription: A stance granting +4 damage roll. Only one stance can be active; switch or leave it outside combat. Using the current stance again ends it. The stance persists through reconnects. Taijutsu unlocks at level 30. Costs 0 Chakra and 14 Stamina; 0 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

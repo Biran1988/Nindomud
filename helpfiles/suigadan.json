@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "suigadan",
+  "keywords": [
+    "suigadan"
+  ],
+  "title": "Suigadan",
+  "body": "Syntax: perform suigadan <target>\n\nDescription: A water attack that requires a natural water source in the room.  Requires Water chakra nature. Requires water in the room (ocean, river, lake, or swamp). Base damage: 62-71. Unlocks at level 30. Costs 28 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

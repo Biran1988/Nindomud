@@ -4,6 +4,7 @@ Session (no real socket needed). Run with: python3 test_smoke.py
 """
 
 import random
+import re
 import shutil
 
 import storage
@@ -219,7 +220,7 @@ def main():
     assert session.player.mission_points == mission_points_before - 5
 
     # --- Phase 6: OLC, SmaugFUSS-style (grant builder access for this test) --
-    session.account.staff_level = "builder"
+    session.account.staff_level = "implementor"
     feed(session, "rset create 9000")
     feed(session, "rset name Test Chamber")
     feed(session, "rset desc A room made by an automated test.")
@@ -764,7 +765,7 @@ def test_universal_starting_kit():
     s.handle_line("dynamic entry bandit")  # Taijutsu jutsu -- no 'perform' needed
     text = "".join(out)
     out.clear()
-    assert "Dynamic Entry" in text
+    assert "Dynamic Entry" in re.sub(r"\x1b\[[0-9;]*m", "", text)
     assert "Huh?" not in text
 
     print("UNIVERSAL STARTING KIT TEST PASSED")
@@ -835,7 +836,7 @@ def test_weapon_types():
     out.clear()
     assert "Kunai" in wield_output
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("oset create 9600 a ninja katana")
     feed_local("oset 9600 item_type weapon")
     feed_local("oset 9600 weapon_type sword")
@@ -930,7 +931,7 @@ def test_mstat_by_name():
     for cmd in ["south"]:
         feed_local(cmd)
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("west")
 
     mob = next(m for m in combat.mobs_in_room(s.player.room_vnum) if "bandit" in m.name.lower())
@@ -984,7 +985,7 @@ def test_prac_display():
     out.clear()
     for category in ["Ninjutsu", "Taijutsu", "Genjutsu", "Bukijutsu", "General Skills"]:
         assert f"[ {category} ]" in text, f"expected {category} header even if empty"
-    assert "Dynamic Entry" in text, "untouched (0%) skills should still show"
+    assert "Dynamic Entry" in re.sub(r"\x1b\[[0-9;]*m", "", text), "untouched (0%) skills should still show"
     assert "Strong Fist Style" in text
     assert "practice session(s) remaining" in text
 
@@ -1008,7 +1009,7 @@ def test_prac_display():
     s.handle_line("prac")
     text3 = "".join(out)
     out.clear()
-    assert "Dynamic Entry" in text3
+    assert "Dynamic Entry" in re.sub(r"\x1b\[[0-9;]*m", "", text3)
 
     # Strong Fist Style is passive -- practice must refuse it.
     s.handle_line("prac strong fist style")
@@ -1214,7 +1215,7 @@ def test_perform_required_for_ninjutsu_genjutsu():
     text_resolved = "".join(out)
     out.clear()
     assert s.combat_target is not None, "'perform' must successfully trigger the Ninjutsu jutsu, and combat must be active once it resolves"
-    assert "Shadow Shuriken Technique" in text_resolved, "the jutsu must genuinely resolve once the casting delay elapses"
+    assert "Shadow Shuriken Technique" in re.sub(r"\x1b\[[0-9;]*m", "", text_resolved), "the jutsu must genuinely resolve once the casting delay elapses"
 
     # A Taijutsu character should NOT need 'perform' for their jutsu.
     s2, feed2 = None, None
@@ -1234,7 +1235,7 @@ def test_perform_required_for_ninjutsu_genjutsu():
     s2.handle_line("dynamic entry bandit")
     kick_text = "".join(out)
     out.clear()
-    assert "Dynamic Entry" in kick_text, "Taijutsu jutsu should work directly without 'perform'"
+    assert "Dynamic Entry" in re.sub(r"\x1b\[[0-9;]*m", "", kick_text), "Taijutsu jutsu should work directly without 'perform'"
     assert "Huh?" not in kick_text
 
     print("PERFORM REQUIREMENT TEST PASSED")
@@ -1444,7 +1445,7 @@ def test_bukijutsu_class():
     s.handle_line("throw shuriken bandit")
     text = "".join(out)
     out.clear()
-    assert "Throw Shuriken" in text
+    assert "Throw Shuriken" in re.sub(r"\x1b\[[0-9;]*m", "", text)
     assert "Huh?" not in text  # worked by bare name, no 'perform' needed
 
     s.handle_line("perform throw shuriken bandit")
@@ -1479,7 +1480,7 @@ def test_builder_made_shopkeeper():
     for cmd in ["south"]:
         feed_local(cmd)
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # Build a brand-new room, a brand-new object prototype, and a
     # brand-new shopkeeper -- none of this reuses content.py's baseline.
@@ -1535,7 +1536,7 @@ def test_shopkeeper_multiple_categories():
     for cmd in ["south"]:
         feed_local(cmd)
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset 6002 shop_buys_categories armor")
     assert combat.MOB_TEMPLATES[6002]["shop_buys_categories"] == ["weapon", "armor"]
 
@@ -1570,7 +1571,7 @@ def test_gambler_chouhan():
     for cmd in ["south"]:
         feed_local(cmd)
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9902 a shady dealer")
     feed_local("mset 9902 gambler on")
     feed_local("mset spawn 9902 1")
@@ -1743,7 +1744,7 @@ def test_partial_jutsu_names():
     resolve_pending(s1)
     text = "".join(out)
     out.clear()
-    assert "Demonic Illusion" in text
+    assert "Demonic Illusion" in re.sub(r"\x1b\[[0-9;]*m", "", text)
     assert "damage" in text.lower() or "misses" in text.lower(), \
         "the jutsu must have resolved (hit or a clean miss) -- a miss is a valid outcome, not a failure"
 
@@ -1762,13 +1763,13 @@ def test_partial_jutsu_names():
     s2.handle_line("perform shadow shuriken bandit")
     out.clear()
     resolve_pending(s2)
-    assert "Shadow Shuriken Technique" in "".join(out)
+    assert "Shadow Shuriken Technique" in re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
     s2.player.cooldowns.pop("shadow shuriken technique", None)
     s2.handle_line("perform shadow shuriken technique bandit")
     out.clear()
     resolve_pending(s2)
-    assert "Shadow Shuriken Technique" in "".join(out)
+    assert "Shadow Shuriken Technique" in re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
 
     # Bare-name partials for Taijutsu and Bukijutsu too.
@@ -1776,7 +1777,7 @@ def test_partial_jutsu_names():
     s3.handle_line("west")
     out.clear()
     s3.handle_line("dynamic bandit")
-    assert "Dynamic Entry" in "".join(out)
+    assert "Dynamic Entry" in re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
 
     s4 = make("Tentenpj", "WeaponMasterPass1", "bukijutsu")
@@ -1787,7 +1788,7 @@ def test_partial_jutsu_names():
         "bare 'throw' must now be refused as genuinely ambiguous (Throw Shuriken vs Throw Kunai), not silently guessed"
     out.clear()
     s4.handle_line("throw shuriken bandit")
-    assert "Throw Shuriken" in "".join(out)
+    assert "Throw Shuriken" in re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
 
     print("PARTIAL JUTSU NAMES TEST PASSED")
@@ -2113,7 +2114,7 @@ def test_mstat_player_score():
 
     target = make("Narutox", "BelieveItPass123")
     viewer = make("Kakashix", "CopyNinjaPass123", cls="ninjutsu")
-    viewer.account.staff_level = "builder"
+    viewer.account.staff_level = "implementor"
 
     viewer.handle_line("mstat Narutox")
     text = "".join(out)
@@ -2226,7 +2227,7 @@ def test_scroll_learning_system():
 
         feed_local("Leestyle"); feed_local("y"); feed_local("LeeStylePass1")
         feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
-        s.account.staff_level = "builder"
+        s.account.staff_level = "implementor"
         p = s.player
 
         feed_local("oset create 9950 a weathered scroll")
@@ -2287,7 +2288,7 @@ def test_teacher_flag():
     for cmd in ["south"]:
         feed_local(cmd)
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9961 an old instructor")
 
     # Invalid class name is refused.
@@ -2517,7 +2518,7 @@ def test_armor_set_bonus():
 
     feed_local("Narutoset"); feed_local("y"); feed_local("BelieveItPass123")
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # A 3-piece set, each declared at 25%, to make sure completing it
     # gives ONE 25% bonus rather than stacking to 75%.
@@ -2582,7 +2583,7 @@ def test_program_system():
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # Mob greet (room 'enter' trigger genuinely needs 2 connected
     # rooms to demonstrate at all -- none exist right now; staff is
@@ -2626,7 +2627,7 @@ def test_program_system():
     assert "hums quietly on your finger" in text3
 
     # Mob death.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9982 a rival ninja")
     feed_local("mset addprogram 9982 death emote crumples to the ground.")
     feed_local("mset spawn 9982 1")
@@ -2685,7 +2686,7 @@ def test_npc_death_message():
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9990 a rival ninja")
     feed_local("mset spawn 9990 1")
 
@@ -2724,7 +2725,7 @@ def test_slot_machine_gambling():
 
     feed_local("Tsunadeslots"); feed_local("y"); feed_local("SlugPrincessPass1")
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9995 a slot attendant")
     feed_local("mset 9995 gambler on")
     feed_local("mset spawn 9995 1")
@@ -2903,7 +2904,7 @@ def test_roulette():
 
     feed_local("Tsunaderoul"); feed_local("y"); feed_local("SlugPrincessPass1")
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9996 a roulette dealer")
     feed_local("mset 9996 gambler on")
     feed_local("mset spawn 9996 1")
@@ -2953,7 +2954,7 @@ def test_program_system_extensions():
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # Speech trigger: independent keywords, only one response per utterance.
     feed_local("mset create 9997 an old sage")
@@ -2983,7 +2984,7 @@ def test_program_system_extensions():
     assert "waiting for that scroll" not in text3
 
     # drop_chance and give_mission_points, both on a death trigger.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("oset create 9997 a rare gem")
     feed_local("oset 9997 item_type armor")
     feed_local("mset create 9998 a rare beast")
@@ -3038,7 +3039,7 @@ def test_quest_reward_multi_action():
     feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     feed_local("oset create 9940 a legendary reward sword")
     feed_local("oset 9940 item_type weapon")
@@ -3079,7 +3080,7 @@ def test_quest_reward_multi_action():
     assert s.player.mission_points_earned_total == before_mp_total + 10
 
     # give_ryo validation.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("mset create 9941 a broken mob")
     s.handle_line("mset addprogram 9941 death give_ryo notanumber")
     text2 = "".join(out)
@@ -3122,7 +3123,7 @@ def test_elemental_jutsu_affinity():
     feed_local("leaf"); feed_local("ninjutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("rset create 9910")
     feed_local("rset biome forest")  # boosts wind
     feed_local("mset create 9911 a straw dummy")
@@ -3187,7 +3188,7 @@ def test_elemental_jutsu_affinity():
         del data_jutsu.JUTSU[test_jutsu_key]
 
     # An invalid biome is rejected.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("rset biome notabiome")
     text_invalid = "".join(out)
     out.clear()
@@ -3260,7 +3261,7 @@ def test_bingo_book_bounty_system():
         feed_local(cmd)
     s.player.auto_loot_ryo = False  # configs default on now -- this test checks exact ryo deltas from a bounty claim
     s.player.auto_sac_corpse = False
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     feed_local("mset create 9920 a notorious missing-nin")
     feed_local("mset spawn 9920 1")
@@ -3303,7 +3304,7 @@ def test_bingo_book_bounty_system():
     assert s.player.ryo == before_ryo2, "a bounty must not pay out twice to the same player"
 
     # Removal.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line(f"bounty remove {bounty_id}")
     text_remove = "".join(out)
     out.clear()
@@ -3890,7 +3891,7 @@ def test_appraisal_and_examine():
     assert "Set Bonus" not in text2
 
     # Expert/mastered: full set details revealed.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("oset create 9960 a helm of the void")
     feed_local("oset 9960 item_type armor")
     feed_local("oset 9960 set_vnums 9961")
@@ -4446,7 +4447,7 @@ def test_inventory_stacking():
     corpses.remove_corpse(corpse)  # clean up shared room state -- this is the Kage Chamber, reused by other tests
 
     # Fishing: catch happens, but a full inventory releases it (no xp).
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("rset create 9970")
     feed_local("rset biome ocean")
     s.account.staff_level = "player"
@@ -4700,7 +4701,7 @@ def test_invalid_room_recovery():
     # Uses an isolated room (not the shared village square, which
     # other tests may have left ground items in) so this can't be
     # affected by leftover world state from elsewhere in the suite.
-    s2.account.staff_level = "builder"
+    s2.account.staff_level = "implementor"
     s2.handle_line("rset create 97531")
     out2.clear()
     s2.account.staff_level = "player"
@@ -5198,14 +5199,12 @@ def test_every_command_and_jutsu_has_a_helpfile():
     # Every registered command (aliases included, movement excluded --
     # it's handled outside COMMANDS entirely, matching cmd_commands's
     # own docstring note) resolves to some helpfile, not "topic doesn't exist".
-    # Mangekyo's own real technique commands are a deliberate, confirmed
-    # exception (Section 140): the whole Mangekyo system stays completely
-    # undocumented, matching its own established convention -- discovered
-    # only by actually rolling/using it, never looked up.
-    MANGEKYO_UNDOCUMENTED_COMMANDS = {"izanagi", "guess", "stab", "impale", "burn", "crush", "unmake"}
     missing = []
     for verb in sorted(commands.COMMANDS.keys()):
-        if verb in MANGEKYO_UNDOCUMENTED_COMMANDS:
+        if verb in {"burn", "crush", "impale", "izanagi", "stab", "unmake"}:
+            # These pages exist, but players discover them only after using
+            # the corresponding Mangekyo eye technique.
+            assert help_system.find_by_keyword(verb) is not None
             continue
         s.handle_line(f"help {verb}")
         text = "".join(out)
@@ -5858,7 +5857,7 @@ def test_weather_and_day_night():
         weather.CURRENT_TIME_OF_DAY = "day"
         assert weather.night_dodge_bonus() == 0
         weather.CURRENT_TIME_OF_DAY = "night"
-        assert weather.night_dodge_bonus() == 5
+        assert weather.night_dodge_bonus() == 4.5
 
         # Every gathering job's own fail/burn chance actually reads the
         # modifier, not just weather.py computing it in isolation --
@@ -6198,7 +6197,7 @@ def test_sacrifice_ground_items_only():
     assert "nothing here to sacrifice" in text2.lower()
 
     # A protected (no_sac) item on the ground is still refused correctly.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     protected_vnum = 95010
     s.handle_line(f"oset create {protected_vnum} A Protected Ground Item")
     out.clear()
@@ -6253,7 +6252,7 @@ def test_goto_command():
     assert "do not have builder access" in text.lower()
     assert s1.player.room_vnum != 60000
 
-    s1.account.staff_level = "builder"
+    s1.account.staff_level = "implementor"
 
     # A valid vnum teleport actually moves the character.
     s1.handle_line("goto 1")
@@ -6490,7 +6489,7 @@ def test_job_actions_cost_stamina():
     feed_local("buy cooking pot")
     s.player.job_levels["fishing"] = 20  # enough to hold a Birch rod for the craft test below
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("rset create 9940")
     feed_local("rset biome ocean")
     feed_local("rset create 9941")
@@ -6928,7 +6927,7 @@ def test_item_stat_bonuses_and_flags():
     proto_a["stat_bonuses"]["hitroll"] = 5
     assert proto_b["stat_bonuses"] == {}, "each object prototype must get its own independent stat_bonuses dict"
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     feed_local("oset create 9976 a blessed katana")
     feed_local("oset 9976 item_type weapon")
     feed_local("oset 9976 weapon_type sword")
@@ -7111,7 +7110,7 @@ def test_player_bounties():
     out.clear()
     assert "no bingo book office here" in text_no_office.lower()
 
-    poster.account.staff_level = "builder"
+    poster.account.staff_level = "implementor"
     poster.handle_line("mset create 9994 a bingo book office attendant")
     out.clear()
     poster.handle_line("mset 9994 act_flags BountyOffice")
@@ -7545,7 +7544,7 @@ def test_astat():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     new_area = areas.create_area("astattestzonefull", "Astattestjob")
     world.WORLD.add_room(world.Room(new_area.vnum_start, "Astat Test Room", "x"))
@@ -7801,7 +7800,7 @@ def test_flag_validation():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     test_room_vnum = 20014
     world.WORLD.add_room(world.Room(test_room_vnum, "Flag Validation Test Room", "x"))
@@ -8006,7 +8005,7 @@ def test_rset_teleports_and_always_defaults_to_current_room():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     start_room = s.player.room_vnum
 
@@ -8071,7 +8070,7 @@ def test_configs_default_on_and_staff_configs():
             s.handle_line(line)
             out.clear()
         if staff:
-            s.account.staff_level = "builder"
+            s.account.staff_level = "implementor"
         return s
 
     # A brand-new character has every regular config on by default.
@@ -8168,7 +8167,7 @@ def test_crafted_items_are_real_and_staff_see_vnums():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.player.level = 25
     s.player.inventory.append("an iron ingot")
     s.player.inventory.append("a sturdy oak log")
@@ -8264,7 +8263,7 @@ def test_examine_shows_structured_stats_and_equipment_bonuses_apply():
     s.player.level = 60
     s.player.learned_skills.append("Examine")
     s.player.skill_proficiencies["Examine"] = 90
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("oset create 9996 A Test Amulet Of Many Stats")
     out.clear()
@@ -8316,7 +8315,7 @@ def test_examine_shows_structured_stats_and_equipment_bonuses_apply():
 
     # Swapping one item in a slot for another correctly reverses the
     # old one and applies the new one, not double-applying or leaking.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("oset create 9997 A Second Test Ring")
     out.clear()
     s.handle_line("oset 9997 item_type armor")
@@ -8499,7 +8498,7 @@ def test_mset_act_flags_validation():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     test_mob_vnum = 20016
     s.handle_line(f"mset create {test_mob_vnum} a flag validation test mob")
@@ -8723,21 +8722,9 @@ def test_multi_attack_skills_show_in_prac():
 
 
 def test_starter_jutsu_messages_are_colored():
-    """Per direct follow-up request ("make the current starter jutsu
-    flashy in color" -> clarified with "no I meant when using the
-    jutsu") -- jutsu-use messages carried zero color before this,
-    unlike most of the rest of the game. Colored each jutsu's own
-    display name using the SAME class-color mapping already
-    established elsewhere (commands.CLASS_WHO_COLOR -- Taijutsu red,
-    Ninjutsu blue, Genjutsu magenta, Bukijutsu yellow), via the
-    jutsu's own class_requirement field, rather than inventing a new,
-    unrelated color scheme -- so each jutsu is colored consistently
-    with its class everywhere else in the game. Also highlighted the
-    damage number itself. Covers all 4 starter jutsu (one per class)
-    getting their own distinct, correct color on a hit, and that the
-    miss and still-on-cooldown messages carry the same color too, not
-    just the successful-hit path."""
+    """Starter jutsu use and cooldown messages show the individual palette."""
     import combat
+    import jutsu_colors
 
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
@@ -8752,21 +8739,16 @@ def test_starter_jutsu_messages_are_colored():
     mob = combat.mobs_in_room(s.player.room_vnum)[-1]
     mob.health = mob.max_health = 9999
 
-    # Each of the 4 starter jutsu carries its own class's established color.
-    expected_colors = {
-        "dynamic entry": "\x1b[31m",  # Taijutsu -- red
-        "shadow shuriken technique": "\x1b[34m",  # Ninjutsu -- blue
-        "demonic illusion hell viewing technique": "\x1b[35m",  # Genjutsu -- magenta
-        "throw shuriken": "\x1b[33m",  # Bukijutsu -- yellow
-    }
-    for jutsu_key, expected_color in expected_colors.items():
+    for jutsu_key in ("dynamic entry", "shadow shuriken technique",
+                      "demonic illusion hell viewing technique", "throw shuriken"):
         s.player.cooldowns.clear()
         s.player.chakra = s.player.maximum_chakra
         s.player.stamina = s.player.maximum_stamina
         combat.use_jutsu(s, jutsu_key, mob)
         text = "".join(out)
         out.clear()
-        assert expected_color in text, f"{jutsu_key} should be colored with its own class's color ({expected_color!r}), got: {text!r}"
+        shades = set(re.findall(r"\x1b\[38;5;(\d+)m", text))
+        assert len(shades & {str(n) for n in jutsu_colors.SCHEMES[jutsu_key]}) >= 2, text
         # The damage tier itself uses a 256-color shade (only on an actual hit).
         if "damage" in text:
             assert "\x1b[38;5;" in text.split("for ")[1], f"the damage tier itself should use a 256-color shade: {text!r}"
@@ -8777,7 +8759,7 @@ def test_starter_jutsu_messages_are_colored():
     combat.use_jutsu(s, "dynamic entry", mob)
     text_cooldown = "".join(out)
     out.clear()
-    assert "\x1b[31m" in text_cooldown, "the cooldown-refusal message should also carry the jutsu's color"
+    assert "\x1b[38;5;" in text_cooldown, "cooldown refusals should use the jutsu's palette"
     assert "still recovering" in text_cooldown
 
     print("STARTER JUTSU MESSAGES ARE COLORED TEST PASSED")
@@ -8884,6 +8866,9 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     target.player.bloodline_talent = 62
     target.player.bloodline_awakened = True
     target.player.bloodline_mastery = 15
+    target.player.bloodline_mangekyo = True
+    target.player.mangekyo_eye_1 = "tsukuyomi"
+    target.player.mangekyo_eye_2 = "amaterasu"
 
     # Positive case: an administrator sees every field correctly.
     out2 = []
@@ -8904,6 +8889,10 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     assert "Talent: 62/100" in text_admin
     assert "Awakened: Yes" in text_admin
     assert "Mastery: 15" in text_admin
+    assert "Mangekyo: Yes" in text_admin
+    readable_admin = re.sub(r"\x1b\[[0-9;]*m", "", text_admin)
+    assert "Eye 1: Tsukuyomi" in readable_admin
+    assert "Eye 2: Amaterasu" in readable_admin
 
     # Negative case -- the actual point of the gate: a builder-only
     # staff member's mstat must not leak any of this, not even the
@@ -8923,6 +8912,7 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     assert "Kekkei Genkai" not in text_builder, "a builder-only staff member must not see this section at all"
     assert "Sharingan" not in text_builder, "a builder-only staff member must not see the bloodline name"
     assert "Potential" not in text_builder, "a builder-only staff member must not see Potential"
+    assert "Eye 1:" not in text_builder and "Eye 2:" not in text_builder
 
     # No bloodline set at all renders cleanly, not an error or a blank section.
     out4 = []
@@ -9835,7 +9825,7 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
     (combat rounds fire every COMBAT_ROUND_SECONDS=2.5s, idle ticks
     every 10s -- 4x less often).
 
-    Also covers: the idle tick reports Sharingan upkeep and fading,
+    Also covers: the idle tick accumulates Sharingan upkeep and reports fading,
     while natural recovery stays silent; upkeep applies every idle tick,
     independently of natural regeneration; and auto-
     deactivation with the correct, distinct message when chakra runs
@@ -9864,7 +9854,7 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
     before = s.player.chakra
     idle_messages = regen.tick_sharingan_idle(s.player)
     after = s.player.chakra
-    assert any(f"uses {commands.SHARINGAN_IDLE_CHAKRA_UPKEEP} chakra" in m for m in idle_messages)
+    assert idle_messages == [], "individual upkeep ticks should be quiet"
     assert after == before - commands.SHARINGAN_IDLE_CHAKRA_UPKEEP
 
     # --- Auto-deactivation with the correct, idle-specific message ---
@@ -9872,6 +9862,7 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
     s.player.chakra = 0
     messages = regen.tick_sharingan_idle(s.player)
     assert s.player.sharingan_active is False
+    assert any(f"{commands.SHARINGAN_IDLE_CHAKRA_UPKEEP} Chakra" in m for m in messages)
     assert any("fades back to black" in m for m in messages)
     assert any("chakra gives out" in m for m in messages)
 
@@ -10053,11 +10044,17 @@ def test_sharingan_tomoe_four_five_six():
         copier.player.bloodline_awakened = True
         copier.player.sharingan_active = True
         copier.player.bloodline_tomoe = 5
+        # The source caster pays a Chakra Control discount; the copied
+        # charge must be twice that actual payment, without a second
+        # discount from the copier's own Chakra Control.
+        attacker.player.chakra_control = 30
+        copier.player.chakra_control = 40
 
         cast_until_hit(attacker, "perform demonic illusion hell viewing technique copierfinaltest")
         assert copier.player.copied_jutsu_key == "demonic illusion hell viewing technique"
-        assert copier.player.copied_jutsu_cost == data_jutsu.JUTSU["demonic illusion hell viewing technique"]["chakra_cost"] * 2, \
-            "Copy Jutsu's cost must be exactly double the ORIGINAL caster's real cost for that jutsu"
+        source_cost = round(data_jutsu.JUTSU["demonic illusion hell viewing technique"]["chakra_cost"] * 0.8)
+        assert copier.player.copied_jutsu_cost == source_cost * 2, \
+            "Copy Jutsu's cost must be exactly double what the original caster actually spent"
         # Clear the landed status effect before testing the copied cast.
         copier.player.active_status_effects.clear()
 
@@ -10425,7 +10422,7 @@ def test_tips_system():
     assert "builder access" in text_denied.lower()
 
     # --- addtip/remtip work correctly for a builder ---
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("addtip Use 'aff' to see your active status effects!")
     text_add1 = "".join(out)
     out.clear()
@@ -10524,7 +10521,7 @@ def test_travel_mode_removed_wander_is_act_flag():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     vnum = 29302
     combat.MOB_TEMPLATES[vnum] = combat.default_template(vnum, "a test mset wander mob")
@@ -10599,7 +10596,7 @@ def test_aset_shorthand_and_current_area():
     out.clear()
     assert "builder access" in text_denied.lower()
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("aset")
     text_bare = "".join(out)
     out.clear()
@@ -10663,7 +10660,7 @@ def test_mset_act_shorthand():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     vnum = 30100
     combat.MOB_TEMPLATES[vnum] = combat.default_template(vnum, "a test act shorthand mob")
@@ -10780,7 +10777,7 @@ def test_wielded_item_shows_hitroll_damroll_damage():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # --- A non-weapon item never shows the new line ---
     vnum_bench = 30300
@@ -11005,8 +11002,9 @@ def test_bexit_auto_creates_missing_room():
         s.handle_line(cmd)
         out.clear()
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     existing_vnum = 50500
+    s.account.name = "biran"  # this cross-area link is restricted to Biran
     s.handle_line(f"rset create {existing_vnum}")
     out.clear()
     s.player.room_vnum = existing_vnum
@@ -11153,7 +11151,7 @@ def test_shadow_clone_jutsu():
     s.handle_line("perform shadow clone jutsu")
     text_cast = "".join(out)
     out.clear()
-    assert "shadow clone jutsu" in text_cast.lower()
+    assert "shadow clone jutsu" in re.sub(r"\x1b\[[0-9;]*m", "", text_cast).lower()
     clones = combat.active_shadow_clones(s.player)
     assert len(clones) == 1, "0% mastery must summon exactly 1 clone"
     assert clones[0].max_health == 50, "a clone's HP must be exactly 25% of the caster's own current max health"
@@ -11246,21 +11244,23 @@ def test_shadow_clone_jutsu():
     # --- Upkeep ticks OUTSIDE combat entirely, per confirmed design ("persist until unsigned or chakra runs out") ---
     s.combat_target = None
     before_outside_combat_chakra = s.player.chakra
+    quarters = 3 * combat.SHADOW_CLONE_UPKEEP_QUARTERS + getattr(s.player, "_shadow_clone_upkeep_quarters", 0)
     messages = combat.tick_shadow_clone_upkeep(s.player)
-    assert s.player.chakra == before_outside_combat_chakra - 3 * combat.SHADOW_CLONE_UPKEEP_PER_CLONE
-    assert any("75 chakra" in m and "shadow clones" in m for m in messages)
+    assert s.player.chakra == before_outside_combat_chakra - quarters // 4
+    assert messages == [], "the per-pulse clone charge should be silent until the summary is due"
     assert len(combat.active_shadow_clones(s.player)) == 3, "clones must still be alive after one affordable tick"
 
     # --- Insufficient chakra dismisses clones one at a time, not all at once ---
-    one_clone_cost = combat.SHADOW_CLONE_UPKEEP_PER_CLONE
-    two_clones_cost = 2 * combat.SHADOW_CLONE_UPKEEP_PER_CLONE
-    s.player.chakra = one_clone_cost + 10  # affordable for 1 clone, not 2
+    carried = getattr(s.player, "_shadow_clone_upkeep_quarters", 0)
+    one_clone_cost = (combat.SHADOW_CLONE_UPKEEP_QUARTERS + carried) // 4
+    two_clones_cost = (2 * combat.SHADOW_CLONE_UPKEEP_QUARTERS + carried) // 4
+    s.player.chakra = one_clone_cost + 1  # affordable for 1 clone, not 2
     assert s.player.chakra < two_clones_cost, "sanity check -- this amount must genuinely be unaffordable for 2 clones"
     messages = combat.tick_shadow_clone_upkeep(s.player)
     assert len(combat.active_shadow_clones(s.player)) == 1
-    assert len(messages) == 3
-    assert any("25 chakra" in m and "shadow clone" in m for m in messages)
-    assert s.player.chakra == 10
+    assert len(messages) == 2
+    assert all("dispels" in m for m in messages)
+    assert s.player.chakra == 1
 
     # --- Another player (or mob) can attack a clone directly, and defeating it gives GENUINELY zero reward, no corpse ---
     s.player.auto_sac_corpse = True  # force the edge case that used to still yield +1 ryo via corpse sacrifice
@@ -11660,7 +11660,7 @@ def test_kunai_jutsu_trio():
     s.handle_line(f"throw kunai {dummy.name}")
     text_throw = "".join(out)
     out.clear()
-    assert "throw kunai" in text_throw.lower()
+    assert "throw kunai" in re.sub(r"\x1b\[[0-9;]*m", "", text_throw).lower()
     assert s.player.inventory.count("A Basic Kunai") == before_kunai_count - 1, \
         "throwing a kunai must genuinely consume exactly one from inventory"
     assert room.ground_items.count("A Basic Kunai") == before_ground_count + 1, \
@@ -11932,13 +11932,18 @@ def test_staff_get_every_jutsu_regardless_of_class():
     assert staff.player.level == 1
     assert staff.player.primary_class == "ninjutsu"
 
-    staff.account.staff_level = "builder"
+    staff.account.staff_level = "implementor"
     staff._enter_world(staff.player)  # simulate re-entering the world now that the account is staff
     out.clear()
 
     for jutsu_key, jutsu_data in data_jutsu.JUTSU.items():
+        if jutsu_data.get("scroll_only"):
+            assert jutsu_data["display_name"] not in staff.player.learned_skills
+            continue
         assert jutsu_data["display_name"] in staff.player.learned_skills, \
             f"a staff character must know {jutsu_data['display_name']} ({jutsu_data['class_requirement']}) regardless of their own primary class or level"
+    assert all(staff.player.skill_proficiencies.get(skill) == 100 for skill in staff.player.learned_skills)
+    assert not ordinary.player._immortal_skill_mastery
 
     print("STAFF GET EVERY JUTSU REGARDLESS OF CLASS TEST PASSED")
 
@@ -12125,7 +12130,15 @@ def test_secondary_chakra_nature_at_level_100():
     assert s.player.chakra_nature_secondary != primary, \
         "the secondary must genuinely differ from the already-established primary"
 
-    # --- Once both are revealed, a third paper is refused cleanly, not consumed ---
+    # --- A third paper unlocks one more distinct nature for Kekkei Tota ---
+    s.player.inventory.append("A Sheet of Chakra Paper")
+    s.handle_line("channel chakra paper")
+    text_third = "".join(out)
+    out.clear()
+    assert "third chakra nature" in text_third.lower()
+    assert s.player.chakra_nature_tertiary_revealed
+    assert s.player.chakra_nature_tertiary not in (primary, s.player.chakra_nature_secondary)
+    # --- After all three reveals, another paper is refused and retained ---
     s.player.inventory.append("A Sheet of Chakra Paper")
     s.handle_line("channel chakra paper")
     text_done = "".join(out)
@@ -12223,7 +12236,7 @@ def test_elemental_jutsu_and_effects_system():
         out.clear()
         if "misses" not in text_matching.lower():
             break
-    assert "Fireball Jutsu" in text_matching and "damage" in text_matching.lower(), \
+    assert "Fireball Jutsu" in re.sub(r"\x1b\[[0-9;]*m", "", text_matching) and "damage" in text_matching.lower(), \
         "casting a jutsu matching your own chakra nature must genuinely work"
 
     s.player.cooldowns.clear()
@@ -12617,7 +12630,7 @@ def test_handsigns_and_casting_delay():
         combat.tick_pending_casts()
     text_resolved = "".join(out)
     out.clear()
-    assert "Fireball Jutsu" in text_resolved
+    assert "Fireball Jutsu" in re.sub(r"\x1b\[[0-9;]*m", "", text_resolved)
     assert caster.pending_cast is None
 
     # --- The real security fix: an ineligible cast is refused BEFORE the delay ever begins ---
@@ -12689,6 +12702,36 @@ def test_jutsu_combat_start_and_damage_scaling():
                               min_damage=0, max_damage=0, experience_reward=0, ryo_reward=0)
     combat.spawn_mob(99800, s.player.room_vnum)
     dummy = next(m for m in combat.mobs_in_room(s.player.room_vnum) if m.template_vnum == 99800)
+
+    # A failed resource check cannot pull the mob into combat, for either
+    # hand-sign casts or instant jutsu. The failed cast spends nothing.
+    s.player.chakra = 0
+    s.handle_line(f"perform fireball jutsu {dummy.name}")
+    assert s.combat_target is None and s.pending_cast is None
+    assert any("don't have enough chakra" in line.lower() for line in out)
+    out.clear()
+    s.player.chakra = 50000
+    s.player.learned_skills.append("Dynamic Entry")
+    s.player.stamina = 0
+    import commands
+    commands.cmd_use_jutsu(s, "dynamic entry", dummy.name.split())
+    assert s.combat_target is None and s.pending_cast is None
+    assert any("don't have enough stamina" in line.lower() for line in out)
+    out.clear()
+    s.player.stamina = s.player.maximum_stamina
+
+    # The player may run dry while signing, after passing the initial check.
+    s.handle_line(f"perform fireball jutsu {dummy.name}")
+    assert s.pending_cast is not None and s.combat_target is None
+    s.player.chakra = 0
+    for _ in range(10):
+        if s.pending_cast is None:
+            break
+        combat.tick_pending_casts()
+    assert s.pending_cast is None and s.combat_target is None
+    assert any("don't have enough chakra" in line.lower() for line in out)
+    out.clear()
+    s.player.chakra = 50000
 
     # --- Combat does NOT start until the jutsu resolves (still true, unaffected by the later reversal below) ---
     assert s.combat_target is None
@@ -13407,7 +13450,7 @@ def test_mset_short_long_aliases():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("mset create 66700 a short long alias test mob")
     out.clear()
@@ -13493,7 +13536,7 @@ def test_reload_command():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     combat.register_template(66800, "a reload command test mob", level=1, max_health=100,
                               min_damage=1, max_damage=2, experience_reward=1, ryo_reward=1)
@@ -13691,11 +13734,15 @@ def test_skills_colored_by_class_no_percentage():
     assert "77%" not in stripped and "%" not in stripped, \
         "the proficiency percentage must be completely removed from 'skills' -- available via 'prac' instead"
 
-    # --- Each class's own color renders correctly ---
-    assert "\x1b[34mFireball Jutsu" in raw, "a Ninjutsu skill must render in Ninjutsu's own blue"
-    assert "\x1b[35mDemonic Illusion: Hell Viewing Technique" in raw, "a Genjutsu skill must render in Genjutsu's own magenta"
-    assert "\x1b[31mDynamic Entry" in raw, "a Taijutsu skill must render in Taijutsu's own red"
-    assert "\x1b[33mThrow Shuriken" in raw, "a Bukijutsu skill must render in Bukijutsu's own yellow"
+    # Skill lists keep their original class colors; performance messages use
+    # individual palettes instead.
+    for name in ("Fireball Jutsu", "Demonic Illusion: Hell Viewing Technique",
+                 "Dynamic Entry", "Throw Shuriken"):
+        assert name in stripped
+    assert "\x1b[34mFireball Jutsu" in raw
+    assert "\x1b[35mDemonic Illusion: Hell Viewing Technique" in raw
+    assert "\x1b[31mDynamic Entry" in raw
+    assert "\x1b[33mThrow Shuriken" in raw
 
     # --- General Skills renders in the NEW cyan, not the old gray ---
     assert "\x1b[36mStrong Fist Style" in raw, "General Skills must render in the new cyan"
@@ -13721,7 +13768,7 @@ def test_redit_alias_for_rset():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("redit name A Redit Alias Test Room")
     text_set = "".join(out)
@@ -13797,7 +13844,7 @@ def test_idea_command_mirrors_report():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s2.handle_line(line)
         out2.clear()
-    s2.account.staff_level = "builder"
+    s2.account.staff_level = "implementor"
 
     import session as session_module
     original_sessions = list(session_module.ACTIVE_SESSIONS)
@@ -13866,7 +13913,7 @@ def test_set_rank_program_and_global_announcement():
     try:
         assert player_s.player.village_rank == "academy student"
 
-        player_s.account.staff_level = "builder"
+        player_s.account.staff_level = "implementor"
         player_s.handle_line("mset create 66960 an academy proctor cmd test")
         player_out.clear()
         player_s.handle_line("mset addprogram 66960 speech graduate set_rank genin")
@@ -13892,7 +13939,7 @@ def test_set_rank_program_and_global_announcement():
             "set_rank must apply the correct headband tier, matching every other rank-change path"
 
         # --- Invalid rank and the "kage" block, through the real mset command ---
-        player_s.account.staff_level = "builder"
+        player_s.account.staff_level = "implementor"
         player_s.handle_line("mset addprogram 66960 speech badrank set_rank not_a_real_rank")
         text_bad = "".join(player_out)
         player_out.clear()
@@ -14052,7 +14099,7 @@ def test_practice_requires_matching_teacher():
     s.player.practice_points = 20
 
     # --- mset validation: valid class, invalid class, and clearing back off ---
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("mset create 9967 a validation-only test npc")
     out.clear()
     s.handle_line("mset 9967 teacher ninjutsu")
@@ -15162,7 +15209,7 @@ def test_transfer_and_return():
         assert target_s.player.room_vnum == before_room
 
         # --- A successful transfer: moves target, saves their real room, remembers who ---
-        imm_s.account.staff_level = "builder"
+        imm_s.account.staff_level = "implementor"
         imm_s.player.room_vnum = 1030
         original_target_room = target_s.player.room_vnum
         imm_s.handle_line("transfer transfertesttgt")
@@ -15294,7 +15341,7 @@ def test_tailed_beasts_complete_system():
     out.clear()
     assert "builder access" in text_denied.lower()
 
-    imm_s.account.staff_level = "builder"
+    imm_s.account.staff_level = "implementor"
     imm_s.handle_line("unleash beast")
     out.clear()
     beasts_live = [m for room_mobs in combat.MOBS_BY_ROOM.values() for m in room_mobs if getattr(m, "tailed_beast_key", None)]
@@ -15488,7 +15535,7 @@ def test_immortals_immune_to_defeat():
         out.clear()
 
     # --- A staff member survives a lethal PvE round at exactly 1 HP ---
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     combat.register_template(70110, "an immortal test mob", level=100, max_health=100000,
                               min_damage=50, max_damage=100, experience_reward=1, ryo_reward=1)
     mob = combat.spawn_mob(70110, s.player.room_vnum)
@@ -15594,7 +15641,7 @@ def test_release_beast_global_announcement():
                 combat.remove_mob(mob)
     session_module.ACTIVE_SESSIONS = [imm_s, bystander_s]
     try:
-        imm_s.account.staff_level = "builder"
+        imm_s.account.staff_level = "implementor"
         imm_s.handle_line("unleash beast")
         out.clear()
         text_bystander = "".join(bystander_out)
@@ -15664,7 +15711,7 @@ def test_tailed_beast_safe_spawn_and_roaming_cap():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("unleash beast")
     out.clear()
@@ -16310,6 +16357,8 @@ def test_mangekyo_techniques_complete_system():
     s, out = make("Mangekyoizanagitest", "MangekyoIzanagiTestP1")
     s.player.bloodline_mangekyo = True
     s.player.mangekyo_eye_1 = "izanagi"
+    s.player.bloodline_id = "sharingan"
+    s.player.sharingan_active = True
     s.handle_line("izanagi")
     out.clear()
     assert s.player.izanagi_active
@@ -16357,7 +16406,7 @@ def test_mangekyo_techniques_complete_system():
     before_chakra = caster_s.player.chakra
     mangekyo.process_kamui_pocket_dimensions(combat, world_module, session_module)
     assert before_chakra - caster_s.player.chakra == data_mangekyo.KAMUI_UPKEEP_WITH_TARGET_PER_TICK
-    assert any("Kamui pocket dimension uses 35 chakra" in m for m in caster_out)
+    assert not any("Kamui pocket dimension uses 35 chakra" in m for m in caster_out)
 
     # --- Kamui: Intangibility, a guaranteed miss window ---
     assert combat._is_action_blocked is not None  # sanity: module loaded
@@ -16773,7 +16822,7 @@ def test_mset_class_sets_real_primary_class():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("mset create 70991 a class perm test mob")
     out.clear()
@@ -16830,7 +16879,7 @@ def test_wear_message_program_action():
     session_module.ACTIVE_SESSIONS = [wearer, bystander]
     bystander.player.room_vnum = wearer.player.room_vnum
 
-    wearer.account.staff_level = "builder"
+    wearer.account.staff_level = "implementor"
     wearer.handle_line("oset create 70997 a wear message perm test amulet")
     wearer_out.clear()
     wearer.handle_line("oset 70997 item_type armor")
@@ -16885,7 +16934,7 @@ def test_mset_rset_oset_delete():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # --- mset delete ---
     s.handle_line("mset create 70998 a delete perm test mob")
@@ -16957,7 +17006,7 @@ def test_ground_item_uses_long_desc():
         out.clear()
 
     # A real item with a genuine, custom long_desc.
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("oset create 71011 a ground desc perm test relic")
     out.clear()
     s.handle_line("oset 71011 long_desc An ancient relic hums faintly with residual chakra.")
@@ -17001,7 +17050,7 @@ def test_rarity_tags_hidden_except_examine():
         s.handle_line(line)
         out.clear()
 
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("oset create 71012 a rarity tag perm test blade")
     out.clear()
     s.handle_line("oset 71012 item_type weapon")
@@ -17136,7 +17185,7 @@ def test_program_star_substitution_and_trigger_order():
     # accumulates dozens of leftover players/mobs from every earlier
     # test by this point in the suite, making substring-position
     # checks against its own real output unreliable).
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("rset create 71040")
     out.clear()
     s.handle_line("mset create 71031 a star order test guard")
@@ -17182,7 +17231,7 @@ def test_spawnpoint_setspawn_merge():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     # setspawn genuinely no longer exists as a real command.
     s.handle_line("setspawn mob 5001 10 2")
@@ -17236,7 +17285,7 @@ def test_iruka_graduation_check():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("rset create 71053")
     out.clear()
@@ -17321,7 +17370,7 @@ def test_genin_promotion_mission_points_bonus():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("rset create 71080")
     out.clear()
@@ -17346,7 +17395,7 @@ def test_genin_promotion_mission_points_bonus():
     assert s.player.mission_points - before_mp == 50
 
     # --- generic set_rank path ---
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("mset create 71082 a generic promoter perm test mob")
     out.clear()
     s.handle_line("mset addprogram 71082 speech promoteme set_rank genin")
@@ -17362,7 +17411,7 @@ def test_genin_promotion_mission_points_bonus():
     assert s.player.mission_points - before_mp2 == 50
 
     # --- no bonus for a different rank ---
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
     s.handle_line("mset create 71083 a chunin promoter perm test mob")
     out.clear()
     s.handle_line("mset addprogram 71083 speech promotechunin set_rank chunin")
@@ -17463,7 +17512,7 @@ def test_backpack_container_system():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "builder"
+    s.account.staff_level = "implementor"
 
     s.handle_line("oset create 71110 a perm test backpack")
     out.clear()

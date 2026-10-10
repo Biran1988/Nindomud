@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "mcopy",
+  "keywords": [
+    "mcopy"
+  ],
+  "title": "Mcopy (staff)",
+  "body": "Syntax: mcopy <source mob vnum> <new mob vnum>\n\nDescription: Copies a mob prototype, including its stats, flags, shop stock, and programs, to an unused VNUM. The copy is independent of the original. It is not spawned or given a spawn point; use 'minvoke' or 'spawnpoint add mob' when ready. Inspect it with 'mstat'.\n\nDate: 2026-09-25",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

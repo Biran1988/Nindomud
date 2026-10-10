@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "henge",
+  "keywords": [
+    "henge"
+  ],
+  "title": "Henge",
+  "body": "Syntax: perform henge <target>\n\nDescription: Disguise yourself as a person in the room; casting without a target removes your disguise. Take the appearance of a person in this room. Use without a target to release your disguise; higher Henge tiers last longer. Usable with any chakra nature. Illusion lasts 12 pulses. Unlocks at level 5. Costs 12 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

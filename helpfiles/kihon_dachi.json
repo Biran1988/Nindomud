@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "kihon dachi",
+  "keywords": [
+    "kihon dachi"
+  ],
+  "title": "Kihon Dachi",
+  "body": "Syntax: kihon dachi\n\nDescription: A stance granting +2 damage roll and 2 points of Armor Class protection. Only one stance can be active; switch or leave it outside combat. Using the current stance again ends it. The stance persists through reconnects. Taijutsu unlocks at level 5. Costs 0 Chakra and 10 Stamina; 0 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

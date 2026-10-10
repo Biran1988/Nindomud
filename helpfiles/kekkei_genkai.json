@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "kekkei genkai",
+  "keywords": [
+    "kekkei genkai",
+    "kkg",
+    "bloodline",
+    "sharingan overview"
+  ],
+  "title": "Kekkei Genkai",
+  "body": "Syntax: help kekkei genkai\n\nDescription: Clan Kekkei Genkai (Sharingan, Byakugan, Shikotsumyaku) are inherited at character creation. Elemental releases instead depend on your revealed chakra natures, regardless of clan. A character with a clan Kekkei Genkai cannot also gain an elemental release.\n\nAwakening isn't something you trigger yourself, and there's no quest to accept or command to type for it -- once you're level 50 or higher, it can happen at any moment during real combat, entirely on its own. When it does, everyone connected sees a global announcement that someone's bloodline has awakened, though it never says whose or which one -- that part stays yours to discover, or keep to yourself. Once awakened, a Kekkei Genkai can develop further the more it's actually used, becoming sharper and more capable with real experience rather than all at once.\n\n&WThe Sharingan&x and all elemental releases have playable abilities. Its core: an active toggle ('sharingan' -- see 'help sharingan' for the command itself) that sharpens your senses in combat at a small ongoing cost, growing more capable the more tomoe you carry. Broadly, across its full progression: better instincts for reading and avoiding attacks, sharper offense, resistance to being caught off guard by illusion techniques, a technique of its own to cast, and -- at its rarest -- the fleeting ability to read and turn an opponent's own technique back on them. Not every Sharingan is destined to develop the same way or reach the same heights; some simply have more room to grow than others.\n\nElement combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. Each elemental release has three dedicated techniques.\n\nStaff: see 'help bloodstat' and 'help bloodset' for the tools to inspect and edit a player's hidden Kekkei Genkai state, and 'help awaken' for force-awakening one directly.\n\nDate: 2026-09-02\n\nElemental releases unlock when you choose your second nature at level 25. Every two-nature release has moves at levels 25, 45, and 70. Dust Release has three moves at level 100 after its third nature reveal. Each release has its own help page.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

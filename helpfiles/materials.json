@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "materials",
+  "keywords": [
+    "materials",
+    "crafting materials"
+  ],
+  "title": "Crafting Materials",
+  "body": "Syntax: craft weapon <type> <name>  |  craft armor <slot> <name>\n\nDescription: The 9 real materials usable with 'craft' (see 'help craft'), gathered via Mining and Lumberjack. Each has its own fixed stat value -- higher-tier materials give a stronger crafted item, and combining 2 strong materials gives the best results of all.\n\nIron Ingot (5), Sturdy Oak Log (6), Ironwood Log (8), Steel Ingot (12), Masterwork Oak Log (14), Alloy Ingot (22), Ancient Heartwood Log (26), Yew Log (26), Chakra Steel Ingot (30) -- the strongest material overall.\n\nDate: 2026-09-07",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

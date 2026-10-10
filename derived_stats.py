@@ -94,7 +94,9 @@ def dodge_chance(character: Character, bonus_percent: int = 0) -> int:
     a completed armor set's bonus is applied on top and CAN push this
     past 40%, since that cap is only meant to apply to raw attribute
     training, not set bonuses."""
-    return _with_bonus(_scaled(character.dexterity, base=5, span_cap=35), bonus_percent)
+    # Reduce only positive additions by 10%; raw Dexterity dodge is unchanged.
+    return _with_bonus(_scaled(character.dexterity, base=5, span_cap=35),
+                       bonus_percent * 0.9 if bonus_percent > 0 else bonus_percent)
 
 
 def critical_chance(character: Character, bonus_percent: int = 0) -> int:

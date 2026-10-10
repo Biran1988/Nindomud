@@ -1,0 +1,19 @@
+{
+  "primary_keyword": "taijutsu strikes",
+  "keywords": [
+    "taijutsu strikes",
+    "choku zuki",
+    "mae geri",
+    "oi zuki",
+    "sokuto",
+    "empi",
+    "kumade",
+    "nidan kyten geri",
+    "tamashiwara"
+  ],
+  "title": "Taijutsu Strikes",
+  "body": "Syntax: <technique> [target]\n\nDescription: Taijutsu unlocks Choku Zuki (level 3), Mae Geri (5), Oi Zuki (10), Sokuto (15), Empi (20), Kumade (25), Nidan Kyten Geri (30), and Tamashiwara (35). Type the technique name directly, with a target or during combat. Kumade may blind the target and reduce accuracy; Tamashiwara may cause bleeding. Each costs stamina.\n\nDate: 2026-09-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

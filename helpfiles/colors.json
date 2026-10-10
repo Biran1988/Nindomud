@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "colors",
+  "keywords": [
+    "colors",
+    "color",
+    "colour",
+    "color codes",
+    "ansi"
+  ],
+  "title": "Color Codes",
+  "body": "Syntax: prompt <text with &&codes>  |  description <text with &&codes>  |  biography <text with &&codes>\n\nDescription: Color codes add color to text you write yourself -- your prompt ('prompt'), description ('description'), and biography ('biography') all support them.\n\nA code is an && followed by one letter, applying to everything after it until the next code or a reset. Always end colored text with &&x to reset back to normal.\n\nStandard colors:\n  &&R red      &&G green    &&Y yellow   &&B blue\n  &&C cyan     &&M magenta  &&W white    &&D dark gray\n\nBright/bold versions -- same letters, lowercase:\n  &&r bright red      &&g bright green    &&y bright yellow   &&b bright blue\n  &&c bright cyan     &&m bright magenta  &&w bright white    &&d bright gray\n\nTwo more:\n  &&O orange (a convenience shortcut -- see below for how it's made)\n  &&x reset -- turns color back off; always use this when you're done\n\n256-color codes: &&[N] where N is a number from 0 to 255, for finer shades than the named codes above (&&O orange is actually &&[208] under the hood). Example: &&[196] is a bright red, &&[27] is a deep blue.\n\nExample: prompt &&RHP:%h&&x sets your prompt so 'HP:' shows in red and the rest stays normal.\n\n(If a code ever needs to appear as plain text instead of applying its color -- like every example on this very page -- type &&&& instead of a single &&.)\n\nIf you'd rather see plain text with no color at all, ask a staff member -- there's no player-facing toggle for this yet.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

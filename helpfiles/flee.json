@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "flee",
+  "keywords": [
+    "flee",
+    "run",
+    "escape"
+  ],
+  "title": "Flee",
+  "body": "Syntax: flee\n\nDescription: Attempts to escape an ongoing fight (PvE or PvP), flavored as using the Body Replacement Technique (Kawarimi) -- the classic Naruto substitution jutsu -- to slip away rather than a generic 'you run.' Not guaranteed: there's a real chance the technique fumbles and the fight continues, costing you that round. On success, moves you to a random valid exit from the room (a closed door still blocks it, same as normal movement) and ends the fight -- in PvP, your opponent is notified and released from the fight too.\n\n&D(This is the low-level version -- a flat chance, no stat scaling. A higher-tier technique that flees AND lands a free attack on the way out is planned as a later addition.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

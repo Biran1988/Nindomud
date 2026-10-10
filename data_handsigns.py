@@ -59,6 +59,9 @@ ALL_SIGNS = ["Rat", "Ox", "Tiger", "Hare", "Dragon", "Snake", "Horse", "Ram", "M
 # thematically-appropriate invented sequence for jutsu original to
 # this MUD (everything else below).
 JUTSU_HANDSIGNS = {
+    "ice senbon": ["Hare", "Ox", "Ram"],
+    "ice prison": ["Ox", "Snake", "Hare", "Dragon"],
+    "demonic mirroring ice crystals": ["Ram", "Snake", "Tiger", "Hare", "Dragon"],
     "hidden mist jutsu": ["Ox", "Snake", "Tiger"],
     "water release: glue technique": ["Ox", "Monkey", "Dragon"],
     "chakra ball": ["Ram", "Tiger"],
@@ -124,6 +127,9 @@ JUTSU_HANDSIGNS = {
     "kekkei no me": ["Ox", "Ram", "Tiger", "Snake", "Boar"],
 }
 
+import elemental_release_arts
+JUTSU_HANDSIGNS.update(elemental_release_arts.handsigns())
+
 
 def has_handsigns(jutsu: dict) -> bool:
     """Whether jutsu uses hand signs at all -- confirmed design:
@@ -131,7 +137,7 @@ def has_handsigns(jutsu: dict) -> bool:
     genuinely passive jutsu (never cast directly at all -- checked by
     its own jutsu_type, e.g. "counter" or "silent_genjutsu_passive")
     never uses hand signs either, regardless of its class."""
-    if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive", "stance", "buff", "elemental_clone"):
+    if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive", "stance", "buff", "elemental_clone", "chokkan"):
         return False
     if jutsu.get("jutsu_type") == "ambush" and jutsu.get("jutsu_id") != "ninjutsu_raikiri":
         return False

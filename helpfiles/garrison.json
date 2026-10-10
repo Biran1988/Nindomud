@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "garrison",
+  "keywords": [
+    "garrison",
+    "garrison buy"
+  ],
+  "title": "Garrison",
+  "body": "Syntax: garrison buy <tier>  (tiers: recruit, veteran, elite -- each stronger and more expensive than the last)\n\nDescription: Stations a new defense mob at the capture point you're standing in, paid for out of your village's shared treasury (see 'territory' to check the balance). Only your village's Kage can do this -- it's communal funds, not your own ryo. You have to be standing at a point your own village already controls, and a point can hold up to 3 defenders at once.\n\nA point's garrison has to be cleared out entirely before anyone can start capturing it, so a well-stocked garrison is real, meaningful defense -- not just flavor.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

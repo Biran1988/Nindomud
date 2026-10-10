@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "prompt",
+  "keywords": [
+    "prompt"
+  ],
+  "title": "Prompt",
+  "body": "Syntax: prompt [format string]\n\nDescription: Shows or changes your combat prompt format (the HP/Chakra/Stamina/XP/Ryo line shown after most commands). With no argument, shows your current format.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

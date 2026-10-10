@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "bank",
+  "keywords": [
+    "bank",
+    "gold",
+    "banker",
+    "deposit",
+    "withdraw"
+  ],
+  "title": "Bank",
+  "body": "Syntax: bank or gold  |  gold deposit <amount>  |  gold withdraw <amount>\n\nDescription: A safe place to store ryo away from death-penalty loss -- losing a fight (PvE or PvP) only ever costs you ryo you're carrying on hand, never anything sitting in the bank. There's no way for another player to take ryo from you directly either, so a banked balance is fully safe from other players too.\n\nPays a small amount of interest over time -- applied automatically whenever you interact with your balance in any way, including just checking it with a bare 'bank'. Checking your balance works from anywhere; depositing or withdrawing requires standing at a banker, found in every village square.\n\nThe bank can hold up to 1,000,000,000 (1 billion) ryo -- a deposit that would go over that is refused outright, not silently capped, so you'll know exactly how much room is left.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

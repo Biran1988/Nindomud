@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "biography",
+  "keywords": [
+    "biography",
+    "bio"
+  ],
+  "title": "Biography",
+  "body": "Syntax: biography [text]  (alias: bio)\n\nDescription: Shows or sets your character's freeform biography, shown to others who look at you.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

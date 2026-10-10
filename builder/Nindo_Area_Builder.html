@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nindo MUD Area Builder</title>
+<style>
+:root{font:15px/1.4 system-ui,sans-serif;color:#e9eef7;background:#101826}
+*{box-sizing:border-box}button,input,select,textarea{font:inherit}button{background:#254a76;color:white;border:1px solid #4b79aa;border-radius:6px;padding:7px 10px;cursor:pointer}button:hover{background:#37679b}button.danger{background:#683844;border-color:#aa6262}button.active{background:#a66620}
+input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;border-radius:5px;padding:6px;width:100%}textarea{min-height:85px;resize:vertical}label{display:block;font-size:13px;margin:9px 0 3px;color:#b7c9df}input[type=checkbox]{width:auto}h1{margin:0;font-size:22px}h2{font-size:17px;margin:14px 0 5px}h3{font-size:14px;margin:13px 0 5px}.app{display:grid;grid-template-columns:minmax(280px,340px) minmax(440px,1fr) minmax(290px,350px);height:100vh}.panel{padding:16px;overflow:auto;border-right:1px solid #33445b}.panel:last-child{border-left:1px solid #33445b;border-right:0}.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.hint{color:#aabdd1;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mapwrap{overflow:auto;background:#0b1220;min-height:300px;position:relative}.map{width:4000px;height:3000px;position:relative;transform-origin:top left;background-image:linear-gradient(#203047 1px,transparent 1px),linear-gradient(90deg,#203047 1px,transparent 1px);background-size:96px 96px}svg{position:absolute;inset:0;pointer-events:none}.node{position:absolute;width:80px;height:52px;padding:4px 5px;font-size:12px;line-height:1.25;touch-action:none;border:2px solid #4d85c0;border-radius:9px;background:#1a304b;cursor:grab;user-select:none;box-shadow:0 4px 13px #0008;overflow:hidden}.node.selected{border-color:#f3bc4f;background:#35405a}.node small{display:block;color:#9dcde4;font-size:10px}.node strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.zoom{position:sticky;z-index:2;top:8px;left:8px;display:flex;align-items:center;gap:4px;width:max-content;height:38px;margin-bottom:-38px;padding:5px;background:#172437e8;border:1px solid #48617f;border-radius:7px}.zoom button{padding:3px 9px}.zoom span{min-width:49px;text-align:center}.entry{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #31435c}.entry span{overflow:hidden;text-overflow:ellipsis}.entry button{padding:3px 8px}.status{background:#213a32;color:#b9f5d3;padding:8px;border-radius:6px;min-height:34px}.status.error{background:#5d2d35;color:#ffd2d2}.hidden{display:none}.checkboxline{display:flex;align-items:center;gap:7px;margin:9px 0}.checkboxline label{margin:0}@media(max-width:1050px){.app{display:block;height:auto}.panel{height:auto;border:0;border-bottom:1px solid #33445b}.mapwrap{height:500px}}
+</style>
+</head>
+<body>
+<main class="app">
+<section class="panel">
+<h1>Nindo MUD Area Builder</h1>
+<p class="hint">Works offline in your browser. Open an exported in-game area or start a new one, edit the grid, then export one JSON package.</p>
+<label>Area name<input id="areaName" maxlength="80"></label>
+<div class="row"><label>First room VNUM<input id="start" type="number" min="1" max="999999"></label><label>Last room VNUM<input id="end" type="number" min="1" max="999999"></label></div>
+<label>Area reset message<input id="areaReset" maxlength="500"></label>
+<div class="toolbar"><button id="addRoom">Add room</button><button id="connect">Connect rooms</button><button id="unlink">Remove exit</button><button id="deleteRoom" class="danger">Delete room</button></div>
+<div class="row"><label>Remove exit direction<select id="direction"><option>north</option><option>south</option><option>east</option><option>west</option><option>northeast</option><option>northwest</option><option>southeast</option><option>southwest</option><option>up</option><option>down</option><option>inside</option><option>outside</option></select></label><label>Connection type<select id="connectionType"><option value="auto">Auto from grid</option><option value="up">Up / down</option><option value="down">Down / up</option><option value="inside">Inside / outside</option><option value="outside">Outside / inside</option></select></label></div>
+<p class="hint">Rooms snap to the grid. Select a source room, press Connect rooms, then click a destination. The grid sets the compass direction and adds both exits. Use Connection type for vertical or inside/outside exits. Moving a linked room updates its compass exits.</p>
+<h2>Package</h2>
+<div class="toolbar"><button id="export">Export area JSON</button><button id="open">Open / import area JSON</button><input id="file" type="file" accept=".json,application/json" class="hidden"></div>
+<p class="hint">On your server, place the exported file in <code>data/area_imports/</code>. In game, use <code>area import filename.json check</code>, then <code>area import filename.json</code> as Implementor. A game export can update its own area; a new package adds unused VNUMs. The check command validates without changing the game.</p>
+<p id="status" class="status" role="status">Ready.</p>
+</section>
+<section id="mapwrap" class="mapwrap"><div class="zoom"><button id="zoomOut" title="Zoom out">−</button><span id="zoomValue">100%</span><button id="zoomIn" title="Zoom in">+</button><button id="zoomReset" title="Reset zoom">Reset</button></div><div id="mapStage"><div id="map" class="map"><svg id="lines" width="4000" height="3000"></svg><div id="nodes"></div></div></div></section>
+<section class="panel">
+<h2 id="selectedTitle">Select a room</h2>
+<div id="roomFields" class="hidden">
+<label>Room VNUM<input id="roomVnum" type="number" disabled></label>
+<label>Name<input id="roomName" maxlength="120"></label>
+<label>Description<textarea id="roomDesc" maxlength="5000"></textarea></label>
+<div class="row"><label>Sector<input id="roomSector" maxlength="40"></label><label>Biome<select id="roomBiome"><option>none</option><option>ocean</option><option>river</option><option>lake</option><option>forest</option><option>mountain</option><option>desert</option><option>swamp</option><option>plains</option></select></label></div>
+<div class="checkboxline"><input id="roomSafe" type="checkbox"><label for="roomSafe">PvP safe</label></div>
+<label>Room flags<select id="roomFlagChoice"><option value="">Choose a flag...</option><option value="CapturePoint">CapturePoint — territory control</option><option value="accelerated_healing">accelerated_healing — faster recovery</option></select><div id="selectedFlags" class="hint"></div></label>
+<label>Room reset message<input id="roomReset" maxlength="500"></label>
+<h3>Exits</h3><div id="exitList" class="hint"></div>
+<h3>Mobs placed here</h3><div id="mobList"></div>
+<div class="row"><label>Mob VNUM<input id="mobVnum" type="number" min="1"></label><label>Level<input id="mobLevel" type="number" min="1" max="100" value="1"></label></div>
+<label>Mob name<input id="mobName" maxlength="120"></label>
+<div class="row"><label>Health<input id="mobHealth" type="number" min="1" value="100"></label><label>Damage min / max<input id="mobDamage" placeholder="1-4"></label></div>
+<div class="toolbar"><button id="addMob">Add mob and spawn</button></div>
+<h3>Items placed here</h3><div id="itemList"></div>
+<div class="row"><label>Item VNUM<input id="itemVnum" type="number" min="1"></label><label>Cost (ryo)<input id="itemCost" type="number" min="0" value="0"></label></div>
+<label>Item name<input id="itemName" maxlength="120"></label>
+<label>Item type<input id="itemType" value="misc" maxlength="40"></label>
+<div class="toolbar"><button id="addItem">Add item and spawn</button></div>
+</div>
+</section>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), opposite={north:'south',south:'north',east:'west',west:'east',northeast:'southwest',southwest:'northeast',northwest:'southeast',southeast:'northwest',up:'down',down:'up',inside:'outside',outside:'inside'};
+let project={format:'nindo-area-v1',area:{name:'New Area',vnum_start:20000,vnum_end:20999,reset_message:''},rooms:[],mobs:[],items:[]};
+try{let saved=localStorage.getItem('nindo-area-draft');if(saved)project=JSON.parse(saved)}catch(e){}
+const GRID=96, TILE_W=80, TILE_H=52, MAP_W=4000, MAP_H=3000;
+const maxX=Math.floor((MAP_W-TILE_W)/GRID)*GRID, maxY=Math.floor((MAP_H-TILE_H)/GRID)*GRID;
+const compass=['east','northeast','north','northwest','west','southwest','south','southeast'];
+const planar=new Set(compass);
+let selected=null,connecting=false,drag=null,zoom=1;
+function snap(value,max){return Math.max(0,Math.min(max,Math.round(value/GRID)*GRID))}
+function inferDirection(source,target){
+  const dx=target.x-source.x, dy=target.y-source.y;
+  if(!dx&&!dy)return null;
+  // Exact rows, columns, and diagonals keep their cardinal/diagonal meaning.
+  const sector=Math.round(Math.atan2(-dy,dx)/(Math.PI/4));
+  return compass[(sector+8)%8];
+}
+function normalizePositions(){
+  const occupied=new Set();
+  for(const r of project.rooms){
+    let x=snap(Number.isFinite(Number(r.x))?Number(r.x):0,maxX);
+    let y=snap(Number.isFinite(Number(r.y))?Number(r.y):0,maxY);
+    if(occupied.has(`${x},${y}`)){
+      let free=false;
+      for(let yy=0;yy<=maxY&&!free;yy+=GRID)for(let xx=0;xx<=maxX;xx+=GRID){
+        if(!occupied.has(`${xx},${yy}`)){x=xx;y=yy;free=true;break}
+      }
+      if(!free)throw Error('The map grid is full.');
+    }
+    r.x=x;r.y=y;r.exits=r.exits||{};occupied.add(`${x},${y}`);
+  }
+}
+function setZoom(next,clientX,clientY){
+  const wrap=$('mapwrap'),old=zoom,rect=wrap.getBoundingClientRect();
+  const px=clientX===undefined?rect.left+wrap.clientWidth/2:clientX;
+  const py=clientY===undefined?rect.top+wrap.clientHeight/2:clientY;
+  const x=(wrap.scrollLeft+px-rect.left)/old,y=(wrap.scrollTop+py-rect.top)/old;
+  zoom=Math.max(.5,Math.min(2.5,Math.round(next*100)/100));
+  $('map').style.transform=`scale(${zoom})`;
+  $('mapStage').style.width=MAP_W*zoom+'px';
+  $('mapStage').style.height=MAP_H*zoom+'px';
+  $('zoomValue').textContent=Math.round(zoom*100)+'%';
+  wrap.scrollLeft=x*zoom-(px-rect.left);
+  wrap.scrollTop=y*zoom-(py-rect.top);
+}
+function updateMovedExits(r,oldX,oldY){
+  // Rebuild only compass links involving this room, then validate all slots.
+  const links=new Set();
+  for(const [dir,v] of Object.entries(r.exits))if(planar.has(dir))links.add(v);
+  for(const other of project.rooms)for(const [dir,v] of Object.entries(other.exits||{}))
+    if(planar.has(dir)&&v===r.vnum)links.add(other.vnum);
+  const proposed=new Map(project.rooms.map(other=>[other.vnum,{...other.exits}]));
+  for(const other of project.rooms){
+    for(const [dir,v] of Object.entries(proposed.get(other.vnum)))
+      if(planar.has(dir)&&(other===r||v===r.vnum))delete proposed.get(other.vnum)[dir];
+  }
+  for(const v of links){
+    const other=project.rooms.find(candidate=>candidate.vnum===v);
+    if(!other)continue;
+    const dir=inferDirection(r,other),reverse=opposite[dir];
+    if(!dir||proposed.get(r.vnum)[dir]&&proposed.get(r.vnum)[dir]!==v||
+      proposed.get(v)[reverse]&&proposed.get(v)[reverse]!==r.vnum){
+      r.x=oldX;r.y=oldY;
+      report('That position would overlap or give two links the same direction.',true);
+      return false;
+    }
+    proposed.get(r.vnum)[dir]=v;proposed.get(v)[reverse]=r.vnum;
+  }
+  for(const other of project.rooms)other.exits=proposed.get(other.vnum);
+  return true;
+}
+function report(message,error=false){$('status').textContent=message;$('status').className='status'+(error?' error':'')}
+function save(){try{localStorage.setItem('nindo-area-draft',JSON.stringify(project))}catch(e){report('Browser draft storage is full. Export your JSON to save it.',true)}}
+function room(){return project.rooms.find(r=>r.vnum===selected)}
+function nextId(collection,start){let id=start;while(collection.some(x=>x.vnum===id))id++;return id}
+function validInt(x,min,max){return Number.isInteger(Number(x))&&Number(x)>=min&&Number(x)<=max}
+function select(v){selected=v;let r=room();$('roomFields').classList.toggle('hidden',!r);$('selectedTitle').textContent=r?`Room ${v}`:'Select a room';if(r){$('roomVnum').value=r.vnum;$('roomName').value=r.name;$('roomDesc').value=r.description;$('roomSector').value=r.sector||'inside';$('roomBiome').value=r.biome||'none';$('roomSafe').checked=!!r.safe;renderFlags();$('roomReset').value=r.reset_message||'';refreshContents()}renderMap()}
+function refreshContents(){let r=room();if(!r)return;$('exitList').textContent=Object.entries(r.exits||{}).map(([d,v])=>`${d} → ${v}`).join('  •  ')||'No exits yet';
+for(let [kind,element] of [['mobs','mobList'],['items','itemList']]){let list=$(element);list.replaceChildren();project[kind].filter(x=>x.room_vnum===selected).forEach(x=>{let div=document.createElement('div');div.className='entry';let text=document.createElement('span');text.textContent=`${x.vnum}: ${x.name}`;let button=document.createElement('button');button.textContent='Remove';button.className='danger';button.onclick=()=>{if(project.source?.baseline?.[kind]?.[x.vnum]){report('Remove existing prototypes in game, then export the area again.',true);return}project[kind]=project[kind].filter(y=>y!==x);save();refreshContents()};div.append(text,button);list.append(div)})}}
+function renderFlags(){
+  const r=room(),list=$('selectedFlags');list.replaceChildren();
+  if(!r)return;
+  if(!(r.flags||[]).length){list.textContent='No flags selected.';return}
+  for(const flag of r.flags){
+    const entry=document.createElement('div');entry.className='entry';
+    const name=document.createElement('span');name.textContent=flag;
+    const remove=document.createElement('button');remove.textContent='Remove';
+    remove.onclick=()=>{r.flags=r.flags.filter(value=>value!==flag);save();renderFlags()};
+    entry.append(name,remove);list.append(entry);
+  }
+}
+function renderLines(){let svg=$('lines');svg.replaceChildren();for(let r of project.rooms){for(let [dir,v] of Object.entries(r.exits||{})){let t=project.rooms.find(x=>x.vnum===v);if(!t)continue;let line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',r.x+TILE_W/2);line.setAttribute('y1',r.y+TILE_H/2);line.setAttribute('x2',t.x+TILE_W/2);line.setAttribute('y2',t.y+TILE_H/2);line.setAttribute('stroke',dir==='up'||dir==='down'?'#dfad70':'#74b9cf');line.setAttribute('stroke-width','3');if(dir==='up'||dir==='down')line.setAttribute('stroke-dasharray','5 5');svg.append(line)}}}
+function renderMap(){
+  renderLines();let nodes=$('nodes');nodes.replaceChildren();
+  for(const r of project.rooms){
+    let node=document.createElement('div');node.className='node'+(r.vnum===selected?' selected':'');
+    node.style.left=r.x+'px';node.style.top=r.y+'px';
+    let small=document.createElement('small');small.textContent='#'+r.vnum;
+    let name=document.createElement('strong');name.textContent=r.name;node.append(small,name);
+    node.addEventListener('pointerdown',e=>{
+      if(connecting)return;
+      drag={r,startX:e.clientX,startY:e.clientY,oldX:r.x,oldY:r.y,moved:false};
+      node.setPointerCapture(e.pointerId);
+    });
+    node.addEventListener('pointermove',e=>{
+      if(!drag||drag.r!==r)return;
+      let dx=(e.clientX-drag.startX)/zoom,dy=(e.clientY-drag.startY)/zoom;
+      if(Math.abs(dx)+Math.abs(dy)>5)drag.moved=true;
+      if(drag.moved){
+        r.x=Math.max(0,Math.min(MAP_W-TILE_W,drag.oldX+dx));
+        r.y=Math.max(0,Math.min(MAP_H-TILE_H,drag.oldY+dy));
+        node.style.left=r.x+'px';node.style.top=r.y+'px';renderLines();
+      }
+    });
+    node.addEventListener('pointerup',()=>{
+      if(!drag)return;
+      const current=drag;drag=null;
+      if(current.moved){
+        r.x=snap(r.x,maxX);r.y=snap(r.y,maxY);
+        if(project.rooms.some(other=>other!==r&&other.x===r.x&&other.y===r.y)){
+          r.x=current.oldX;r.y=current.oldY;report('That grid space is already occupied.',true);
+        }else if(updateMovedExits(r,current.oldX,current.oldY))save();
+        renderMap();return;
+      }
+      clicked(r.vnum);
+    });
+    node.addEventListener('click',e=>{if(connecting){clicked(r.vnum);e.stopPropagation()}});
+    nodes.append(node);
+  }
+}
+function clicked(v){
+  if(!connecting){select(v);return}
+  let source=room(),target=project.rooms.find(r=>r.vnum===v);
+  if(!source||source===target){report('Select a source and a different destination room.',true);return}
+  const chosen=$('connectionType').value,dir=chosen==='auto'?inferDirection(source,target):chosen;
+  if(!dir){report('Place the rooms in different grid spaces first.',true);return}
+  const reverse=opposite[dir];
+  if(source.exits[dir]&&source.exits[dir]!==v){report(`Remove the existing ${dir} exit first.`,true);return}
+  if(target.exits[reverse]&&target.exits[reverse]!==source.vnum){report(`Destination already has a ${reverse} exit.`,true);return}
+  source.exits[dir]=v;target.exits[reverse]=source.vnum;
+  connecting=false;$('connect').classList.remove('active');
+  save();refreshContents();renderMap();report(`Connected ${source.vnum} ${dir} → ${v} and ${v} ${reverse} → ${source.vnum}.`);
+}
+function updateArea(){project.area.name=$('areaName').value;project.area.vnum_start=Number($('start').value);project.area.vnum_end=Number($('end').value);project.area.reset_message=$('areaReset').value;save()}
+function check(){updateArea();let a=project.area;if(!a.name.trim()||!validInt(a.vnum_start,1,999999)||!validInt(a.vnum_end,a.vnum_start,999999)||(project.source?.mode!=='update'&&a.vnum_end-a.vnum_start>=1000))throw Error('Set an area name and an ascending VNUM range (at most 1,000 for a new area).');if(!project.rooms.length)throw Error('Add at least one room.');let ids=new Set();for(let r of project.rooms){if(!validInt(r.vnum,a.vnum_start,a.vnum_end)||ids.has(r.vnum)||!r.name.trim())throw Error('Room VNUMs must be unique, named, and inside the area range.');ids.add(r.vnum)}for(let r of project.rooms)for(let target of Object.values(r.exits||{}))if(!ids.has(target)&&project.source?.mode!=='update')throw Error(`Room ${r.vnum} has an exit to a missing room.`);for(let kind of ['mobs','items']){let seen=new Set();for(let row of project[kind]){if(seen.has(row.vnum)||!ids.has(row.room_vnum))throw Error(`A ${kind} VNUM repeats or refers to a missing room.`);seen.add(row.vnum)}}return true}
+function download(){try{check();let name=project.area.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'area';let blob=new Blob([JSON.stringify(project,null,2)+'\n'],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=`${name}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);report(`Exported ${a.download}: ${project.rooms.length} rooms, ${project.mobs.length} mobs, ${project.items.length} items.`)}catch(e){report(e.message,true)}}
+for(let [id,prop] of [['areaName','name'],['start','vnum_start'],['end','vnum_end'],['areaReset','reset_message']])$(id).addEventListener('input',updateArea);
+for(let [id,prop] of [['roomName','name'],['roomDesc','description'],['roomSector','sector'],['roomBiome','biome'],['roomSafe','safe'],['roomReset','reset_message']])$(id).addEventListener('input',()=>{let r=room();if(!r)return;r[prop]=id==='roomSafe'?$(id).checked:$(id).value;save();if(id==='roomName')renderMap()});
+$('roomFlagChoice').addEventListener('change',()=>{let r=room(),flag=$('roomFlagChoice').value;if(r&&flag&&!r.flags.includes(flag)){r.flags.push(flag);save();renderFlags()}$('roomFlagChoice').value=''});
+$('addRoom').onclick=()=>{updateArea();let id=nextId(project.rooms,Number(project.area.vnum_start));if(!validInt(id,project.area.vnum_start,project.area.vnum_end)){report('The area VNUM range is full.',true);return}let location=null;for(let y=0;y<=maxY&&!location;y+=GRID)for(let x=0;x<=maxX;x+=GRID){if(!project.rooms.some(r=>r.x===x&&r.y===y)){location={x,y};break}}if(!location){report('The map grid is full.',true);return}project.rooms.push({vnum:id,name:'New Room',description:'',sector:'inside',biome:'none',safe:false,flags:[],reset_message:'',exits:{},x:location.x,y:location.y});save();select(id);report(`Added room ${id}.`)};
+$('connect').onclick=()=>{if(!room()){report('Select a source room first.',true);return}connecting=!connecting;$('connect').classList.toggle('active',connecting);report(connecting?'Click the destination room.':'Connection canceled.')};
+$('unlink').onclick=()=>{let r=room();if(!r)return;let dir=$('direction').value,target=project.rooms.find(x=>x.vnum===r.exits[dir]);if(!target){report(`Room ${selected} has no ${dir} exit.`,true);return}if(target.exits[opposite[dir]]===selected)delete target.exits[opposite[dir]];delete r.exits[dir];save();refreshContents();renderMap();report('Exit removed.')};
+$('deleteRoom').onclick=()=>{let r=room();if(!r)return;if(project.source?.baseline?.rooms?.[r.vnum]){report('Delete existing rooms in game, then export the area again.',true);return}if(!confirm(`Delete room ${r.vnum}, its exits, and its placed mobs/items?`))return;project.rooms=project.rooms.filter(x=>x!==r);for(let x of project.rooms)for(let [dir,v] of Object.entries(x.exits))if(v===r.vnum)delete x.exits[dir];project.mobs=project.mobs.filter(x=>x.room_vnum!==r.vnum);project.items=project.items.filter(x=>x.room_vnum!==r.vnum);save();select(null);report('Room removed.')};
+$('addMob').onclick=()=>{if(!room())return;let v=Number($('mobVnum').value),level=Number($('mobLevel').value),hp=Number($('mobHealth').value),match=/^(\d+)\s*-\s*(\d+)$/.exec($('mobDamage').value.trim());if(!validInt(v,1,999999)||project.mobs.some(x=>x.vnum===v)||!$('mobName').value.trim()||!validInt(level,1,100)||!validInt(hp,1,1000000)||!match||Number(match[1])<1||Number(match[2])<Number(match[1])){report('Enter a unique mob VNUM, name, level, health, and damage like 2-6.',true);return}project.mobs.push({vnum:v,name:$('mobName').value.trim(),level,health:hp,damage_min:Number(match[1]),damage_max:Number(match[2]),room_vnum:selected,respawns:true});$('mobVnum').value=nextId(project.mobs,v+1);$('mobName').value='';save();refreshContents();report('Mob added with a persistent spawn point.')};
+$('addItem').onclick=()=>{if(!room())return;let v=Number($('itemVnum').value),cost=Number($('itemCost').value);if(!validInt(v,1,999999)||project.items.some(x=>x.vnum===v)||!$('itemName').value.trim()||!$('itemType').value.trim()||!validInt(cost,0,1000000000)){report('Enter a unique item VNUM, name, type, and nonnegative cost.',true);return}project.items.push({vnum:v,name:$('itemName').value.trim(),item_type:$('itemType').value.trim(),cost,room_vnum:selected});$('itemVnum').value=nextId(project.items,v+1);$('itemName').value='';save();refreshContents();report('Item added with a persistent spawn point.')};
+$('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;normalizePositions();save();fill();select(null);report(`Opened ${file.name}.`)}catch(err){report(err.message,true)}e.target.value=''};
+function fill(){$('areaName').value=project.area.name;$('start').value=project.area.vnum_start;$('end').value=project.area.vnum_end;$('areaReset').value=project.area.reset_message||'';$('mobVnum').value=nextId(project.mobs,30000);$('itemVnum').value=nextId(project.items,40000);$('mobDamage').value='1-4'}
+try{normalizePositions()}catch(e){report(e.message,true)}
+fill();select(null);setZoom(1);
+$('zoomIn').onclick=()=>setZoom(zoom*1.25);
+$('zoomOut').onclick=()=>setZoom(zoom/1.25);
+$('zoomReset').onclick=()=>setZoom(1);
+$('mapwrap').addEventListener('wheel',e=>{
+  if(!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();setZoom(zoom*(e.deltaY<0?1.1:1/1.1),e.clientX,e.clientY)}
+},{passive:false});
+})();
+</script>
+</body>
+</html>

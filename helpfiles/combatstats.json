@@ -1,0 +1,19 @@
+{
+  "primary_keyword": "combatstats",
+  "keywords": [
+    "combatstats",
+    "combat stats",
+    "armor class",
+    "hit roll",
+    "damage roll",
+    "initiative",
+    "dodge chance",
+    "critical chance",
+    "ac"
+  ],
+  "title": "Combat Stats",
+  "body": "Syntax: score\n\nDescription: Six stats shown on your score sheet ('score'), derived from your attributes rather than trained directly.\n\n&CArmor Class&x - Lower is better (a classic convention). Improves as your Dexterity rises, and further with any worn armor's own crafted Armor Class bonus (stacks across every piece worn). Reduces the chance an incoming attack lands, on top of Dodge Chance below.\n  &G[Active]&x\n\n&CHit Roll&x - Rises with Dexterity, and further with your wielded weapon's own crafted Hit Roll bonus, if it has one. Improves your own chance of landing a hit, against a target's Armor Class.\n  &G[Active]&x\n\n&CDamage Roll&x - Rises with Strength.\n  &R[Not Yet Implemented as its own mechanic -- your Strength DOES affect your real damage directly (see 'help attributes'), and so does your wielded weapon's own type (a Sword hits harder than a Kunai, etc.), but this particular displayed number isn't yet what combat actually uses]&x\n\n&CInitiative&x - Rises with Dexterity.\n  &R[Not Yet Implemented -- there's no turn-order system yet for this to affect]&x\n\n&CDodge Chance&x - Your percent chance to fully avoid an incoming attack. 5% at baseline Dexterity, up to 40% at a maxed Dexterity -- a completed armor set's bonus can push this even higher.\n  &G[Active]&x\n\n&CCritical Chance&x - Your percent chance for an attack to land as a critical hit (50% extra damage). 5% at baseline Luck, up to 30% at a maxed Luck -- a completed armor set's bonus can push this even higher.\n  &G[Active]&x\n\n&D(See also: 'help attributes')&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "buy",
+  "keywords": [
+    "buy"
+  ],
+  "title": "Buy",
+  "body": "Syntax: buy <item>\n\nDescription: Purchases an item from a shopkeeper in the room. Your level must be at least the item's level; if it is too low, the purchase is refused without charging you. Use 'list' to see prices and item level requirements.\n\n'buy apartment' and 'buy room <type> <direction>' are special cases -- see 'help apartment' for details. At your own village's Kage chamber, 'buy' also purchases village-wide perks and legendary items from the Kage instead -- see 'help legendary items'.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

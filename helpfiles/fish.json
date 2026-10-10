@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "fish",
+  "keywords": [
+    "fish"
+  ],
+  "title": "Fish",
+  "body": "Syntax: fish\n\nDescription: Casts a line for the Fishing job. Needs a fishing rod held and a water biome (river/ocean/lake/swamp) to stand in. Costs 1-2 Stamina. Takes a few seconds to resolve. A held rod loses one use per attempt and breaks after 250 uses by default.\n\nThere are 6 rods (Kindling, Birch, Oak, Ironwood, Masterwork Oak, Heartwood -- required levels 1/20/40/60/80/99), one for each Lumberjack log type. Every fish species has a full Common-through-Legendary tier ladder; your rod is built around a specific tier and shifts the odds sharply toward it, so a better rod always matters more than levels alone. Only the Heartwood rod gives a real (though still not guaranteed) shot at Legendary catches -- every other rod can land one, but it's nearly never.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

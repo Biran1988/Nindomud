@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "exploding note",
+  "keywords": [
+    "exploding note"
+  ],
+  "title": "Exploding Note",
+  "body": "Syntax: exploding note <target>\n\nDescription: Attaches a consumed Exploding Note to a target. It detonates after two combat pulses for 28-46 damage unless disabled. Requires a carried exploding note. Bukijutsu unlocks at level 25. Costs 25 Chakra and 12 Stamina; 6 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -58,6 +58,15 @@ class EmoteTests(unittest.TestCase):
                     self.assertIn("You " + own, "".join(self.own))
                     self.assertIn("Brian " + other, "".join(self.local))
                     self.assertEqual(bool(self.remote), bool(prefix))
+                    self.assertTrue(all(ord(char) < 128 for output in (self.own, self.local, self.remote)
+                                        for line in output for char in line))
+
+    def test_legacy_telnet_output_has_readable_jutsu_names(self):
+        self.actor.send("Kasumi Jūsha  Nehan Shōja  Jigaku Gōka  Kokuangyō")
+        self.assertIn("Kasumi Jusha  Nehan Shoja  Jigaku Goka  Kokuangyo", "".join(self.own))
+        self.actor.send("A grin 😊 — then a bow.")
+        self.assertNotIn("😊", "".join(self.own))
+        self.assertIn("-", "".join(self.own))
 
     def test_invalid_input_is_not_broadcast(self):
         for command in ("@", "@notreal", "@yawn Brian", "ooc @notreal", "ooc @yawn extra"):

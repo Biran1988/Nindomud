@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "strong fist style",
+  "keywords": [
+    "strong fist style"
+  ],
+  "title": "Strong Fist Style",
+  "body": "Syntax: skills  (shows this skill's current proficiency; it's never used or practiced directly)\n\nDescription: A passive skill every character starts with. Unlike jutsu, it's never used directly -- it grows automatically from being in melee combat (never from 'practice'), and its proficiency percentage boosts your basic attack damage, up to +10% at 100% mastery.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

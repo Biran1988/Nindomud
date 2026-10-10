@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "crush",
+  "keywords": [
+    "crush"
+  ],
+  "title": "Crush (Tsukuyomi)",
+  "body": "Syntax: crush\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. Deals 80-120 Health damage and has a 25% chance to end the ordeal early; advances it by one action otherwise. The ordeal ends when its hidden action limit is reached.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

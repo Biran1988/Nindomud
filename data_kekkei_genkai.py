@@ -64,8 +64,6 @@ CLAN_INHERITANCE = {
     "uchiha": {"sharingan": 0.25},
     "hyuga": {"byakugan": 0.25},
     "kaguya": {"shikotsumyaku": 0.25},
-    "yuki": {"ice_release": 0.25},
-    "hozuki": {"hydrification": 0.25},
 }
 
 KEKKEI_GENKAI = {
@@ -81,15 +79,111 @@ KEKKEI_GENKAI = {
         "display_name": "Shikotsumyaku",
         "description": "The Kaguya's Dead Bone Pulse, letting the body's own skeleton become a weapon.",
     },
-    "ice_release": {
-        "display_name": "Ice Release",
-        "description": "The Yuki clan's rare kekkei genkai, fusing wind and water into ice.",
-    },
-    "hydrification": {
-        "display_name": "Hydrification",
-        "description": "The Hozuki's fluid physiology, said to make their bodies as yielding as water.",
-    },
 }
+
+# Elemental releases are derived from natures, never clan names. A character
+# who already carries an inherited clan bloodline cannot also gain one.
+# Two distinct natures produce one release; each has one two-nature recipe.
+ELEMENTAL_RELEASES = {
+    frozenset(("water", "wind")): "ice_release",
+    frozenset(("water", "earth")): "wood_release",
+    frozenset(("water", "lightning")): "storm_release",
+    frozenset(("water", "fire")): "boil_release",
+    frozenset(("earth", "fire")): "lava_release",
+    frozenset(("fire", "wind")): "scorch_release",
+    frozenset(("earth", "wind")): "magnet_release",
+    frozenset(("earth", "lightning")): "explosion_release",
+    frozenset(("fire", "lightning")): "flashfire_release",
+    frozenset(("wind", "lightning")): "tempest_release",
+}
+ELEMENTAL_RELEASE_NAMES = {
+    "ice_release": "Ice Release", "wood_release": "Wood Release",
+    "storm_release": "Storm Release", "boil_release": "Boil Release",
+    "lava_release": "Lava Release", "scorch_release": "Scorch Release",
+    "magnet_release": "Magnet Release", "explosion_release": "Explosion Release",
+    "flashfire_release": "Flashfire Release",
+    "tempest_release": "Tempest Release",
+    "dust_release": "Dust Release (Kekkei Tota)",
+}
+ELEMENTAL_RELEASE_REVEAL_LEVEL = 25  # Second chakra nature is chosen here.
+DUST_RELEASE_NATURES = frozenset(("earth", "wind", "fire"))
+
+
+def sync_elemental_release(player) -> bool:
+    """Derive an elemental release from revealed natures if no clan bloodline exists.
+
+    Called after chakra paper reveals and while loading legacy saves. A third
+    nature upgrades a qualifying two-nature release to Dust Release. Returns
+    whether saved state changed; the first two-nature result stays stable if
+    a third nature offers a second possible pair.
+    """
+    if player.bloodline_id:
+        if player.elemental_release_id:
+            player.elemental_release_id = None
+            sync_elemental_techniques(player)
+            return True
+        return sync_elemental_techniques(player)
+    natures = []
+    if player.chakra_nature_revealed and player.chakra_nature:
+        natures.append(player.chakra_nature)
+    if player.chakra_nature_secondary_revealed and player.chakra_nature_secondary:
+        natures.append(player.chakra_nature_secondary)
+    if player.chakra_nature_tertiary_revealed and player.chakra_nature_tertiary:
+        natures.append(player.chakra_nature_tertiary)
+    desired = None
+    if len(natures) >= 3 and frozenset(natures) == DUST_RELEASE_NATURES:
+        desired = "dust_release"
+    elif len(natures) >= 2:
+        from itertools import combinations
+        available = [ELEMENTAL_RELEASES[frozenset(pair)]
+                     for pair in combinations(natures, 2)
+                     if frozenset(pair) in ELEMENTAL_RELEASES]
+        desired = (player.elemental_release_id if player.elemental_release_id in available
+                   else next(iter(available), None))
+    changed = desired != player.elemental_release_id
+    if changed:
+        player.elemental_release_id = desired
+    techniques_changed = sync_elemental_techniques(player)
+    return changed or techniques_changed
+
+
+def has_elemental_release(player, release_id: str) -> bool:
+    """Verify the saved release against the player's revealed chakra natures."""
+    if (player.bloodline_id or player.level < ELEMENTAL_RELEASE_REVEAL_LEVEL
+            or player.elemental_release_id != release_id):
+        return False
+    natures = [nature for nature, revealed in (
+        (player.chakra_nature, player.chakra_nature_revealed),
+        (player.chakra_nature_secondary, player.chakra_nature_secondary_revealed),
+        (player.chakra_nature_tertiary, player.chakra_nature_tertiary_revealed),
+    ) if revealed and nature]
+    if release_id == "dust_release":
+        return len(natures) >= 3 and frozenset(natures) == DUST_RELEASE_NATURES
+    from itertools import combinations
+    return any(ELEMENTAL_RELEASES.get(frozenset(pair)) == release_id
+               for pair in combinations(natures, 2))
+
+
+def sync_elemental_techniques(player) -> bool:
+    """Grant or remove release moves when natures, release, or level change."""
+    import data_jutsu
+    changed = False
+    for jutsu in data_jutsu.JUTSU.values():
+        release_id = jutsu.get("kkg_gate")
+        if release_id not in ELEMENTAL_RELEASE_NAMES:
+            continue
+        name = jutsu["display_name"]
+        eligible = (getattr(player, "_immortal_skill_mastery", False)
+                    or (has_elemental_release(player, release_id)
+                        and player.level >= jutsu["level_requirement"]))
+        if eligible and name not in player.learned_skills:
+            player.learned_skills.append(name)
+            player.skill_proficiencies.setdefault(name, 0)
+            changed = True
+        elif not eligible and name in player.learned_skills:
+            player.learned_skills.remove(name)
+            changed = True
+    return changed
 
 
 def eligible_kkg_for_clan(clan: str) -> dict:

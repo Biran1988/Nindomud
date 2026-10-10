@@ -1,0 +1,21 @@
+{
+  "primary_keyword": "jobs",
+  "keywords": [
+    "jobs",
+    "job",
+    "job levels",
+    "fishing",
+    "mining",
+    "lumberjack",
+    "weaponsmith",
+    "armorsmith",
+    "gemcutter",
+    "cooking",
+    "farming"
+  ],
+  "title": "Jobs",
+  "body": "Syntax: jobs\n\nDescription: Shows your progress in every job -- a RuneScape-style leveling track completely separate from your ninja level and experience. A job's level and xp only rise from doing that job's own activity, never from combat or missions, and every registered job is shown even if you've never touched it (level 1, 0 xp) rather than only listing what you've already started.\n\n&CFishing&x - Buy a starter rod from any village General Store, then 'fish' at a water biome (e.g. Konoha Riverside, off the Outskirts). Higher rod tiers are crafted, not bought.\n  &G[Active]&x\n\n&CCooking&x - Buy a cooking pot (6 tiers, levels 1-99), hold it, then 'cook <fish>' -- no biome needed. Real chance to burn the dish; a successful one gets a quality tier (Common/Uncommon/Rare/Epic/Legendary, built around your pot's own tier) that scales its sell price and how much Stamina it restores if eaten.\n  &G[Active]&x\n\n&CFarming&x - Buy a hoe, hold it, then 'farm' at a plains biome (e.g. a village Farmland, off the Villager's House). Real chance to come up with nothing; crops are sellable.\n  &G[Active]&x\n\n&CMining&x - Buy a starter pickaxe, then 'mine' at a mountain biome (e.g. Konoha Mountain Path). Produces ore and ingots that feed Weaponsmith, Armorsmith, and Fishing's own rod crafting, plus raw gems for Gemcutter.\n  &G[Active]&x\n\n&CLumberjack&x - Buy a starter axe, then 'chop' at a forest biome (e.g. Konoha Forest Grove). Produces logs that feed Fishing's rod crafting and Weaponsmith.\n  &G[Active]&x\n\n&CWeaponsmith&x - Crafting-only, no gathering command of its own. 'craft' with no arguments to see recipes -- turns Mining's ore into forged weapons.\n  &G[Active]&x\n\n&CArmorsmith&x - Crafting-only, same as Weaponsmith -- turns Mining's ore into forged armor.\n  &G[Active]&x\n\n&CGemcutter&x - Hold a Copper Chisel (VNUM 20803) and use 'gemcut <raw gem>' to cut mining gems.\n  &G[Active]&x\n\nSee 'craft' with no arguments for the full recipe list across every crafting-capable job at once.\n\n&D(See also: 'help scoresheet')&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

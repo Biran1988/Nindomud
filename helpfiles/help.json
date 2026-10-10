@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "help",
+  "keywords": [
+    "help"
+  ],
+  "title": "Help",
+  "body": "Syntax: help  |  help <topic>\n\nDescription: With no topic, lists every available help topic. With a topic name (or one of its listed alternate keywords), shows that topic's help text. Covers every command, jutsu, and passive skill, plus deeper reference pages on attributes, combat stats, the score sheet, jobs, and grouping.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

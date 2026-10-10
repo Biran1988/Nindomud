@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "reload",
+  "keywords": [
+    "reload"
+  ],
+  "title": "Reload (staff)",
+  "body": "Syntax: reload\n\nDescription: Spawns back any mob or item spawn point registered in the room you're standing in right now that's genuinely missing -- confirmed to only spawn what's actually absent, never a duplicate of something already there. Checks this ROOM specifically, not the whole area (unlike a mob spawn point's own automatic area-reset sweep -- see 'help spawnpoint').\n\nUseful right after clearing out a room by hand, or any time you don't want to wait for the next area reset. Reports exactly how many mobs and items were actually brought back; says so plainly if there was nothing missing to begin with.\n\n&D(Staff only.)&x\n\nDate: 2026-08-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

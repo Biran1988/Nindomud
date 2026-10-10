@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "silent genjutsu",
+  "keywords": [
+    "silent genjutsu",
+    "silent"
+  ],
+  "title": "Silent Genjutsu",
+  "body": "Syntax: (a passive skill -- learned automatically at level 75, never used directly)\n\nDescription: Once learned, every Genjutsu you already know can be cast by its bare name alone, with no 'perform' needed, and lands instantly with no hand-sign delay at all -- this works whether you're casting on a mob or another player.\n\nAt full (100%) mastery of this skill specifically, casting on another player stops showing them any sign a jutsu was used at all -- no name, no cast message, nothing beyond the real effect actually landing (the damage, the fear, whatever the technique does). You yourself always see your own full, normal cast message regardless of your mastery level.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

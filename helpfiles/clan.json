@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "clan",
+  "keywords": [
+    "clan",
+    "clans"
+  ],
+  "title": "Clan",
+  "body": "Syntax: clan join <clan name>  |  clan leave\n\nDescription: Joins or leaves a clan available to your village. Clans are cosmetic only right now -- no mechanical bonus yet.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

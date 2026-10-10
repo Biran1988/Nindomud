@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "weather",
+  "keywords": [
+    "weather",
+    "time of day",
+    "day",
+    "night"
+  ],
+  "title": "Weather",
+  "body": "Syntax: weather\n\nDescription: Reports the current world-wide weather (clear/rain/storm/snow/fog) and time of day (day/night). Both change periodically on their own schedule, not per-room.\n\nThese aren't just flavor text: Rain/Storm improve the odds at every gathering job (Fishing/Mining/Lumberjack/Farming/Cooking); Snow worsens them; Storm/Fog reduce combat accuracy for everyone, player and mob alike; and Night gives players a small Dodge Chance boost.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

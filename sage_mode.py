@@ -55,20 +55,26 @@ def incoming(player, damage):
 
 
 def combat_pulse(session):
+    import upkeep_reports
     player = session.player
     contract = active_contract(player)
     if not contract:
         if player.sage_active_contract:
+            for message in upkeep_reports.flush(player, "Sage Mode"):
+                session.send(message)
             player.sage_active_contract = ""
             session.send("Your Sage Mode ends because its contract or mastery is no longer valid.")
         return
     if player.chakra < COMBAT_CHAKRA_UPKEEP or player.stamina < COMBAT_STAMINA_UPKEEP:
+        for message in upkeep_reports.flush(player, "Sage Mode"):
+            session.send(message)
         player.sage_active_contract = ""
         session.send("Your chakra and stamina give out -- your Sage Mode fades.")
         return
     player.chakra -= COMBAT_CHAKRA_UPKEEP
     player.stamina -= COMBAT_STAMINA_UPKEEP
-    session.send(f"Your Sage Mode uses {COMBAT_CHAKRA_UPKEEP} chakra and {COMBAT_STAMINA_UPKEEP} stamina to remain active.")
+    for message in upkeep_reports.record(player, "Sage Mode", COMBAT_CHAKRA_UPKEEP, COMBAT_STAMINA_UPKEEP):
+        session.send(message)
     if contract == "slug" and player.health > 0:
         amount = min(player.maximum_health - player.health, max(1, player.maximum_health // 20))
         if amount > 0:
@@ -77,16 +83,22 @@ def combat_pulse(session):
 
 
 def idle_upkeep(session):
-    """Called on the same 10-second, out-of-combat timer as Sharingan."""
+    """Charge on the idle timer; report whether anything was sent."""
     player = session.player
+    import upkeep_reports
     if not player.sage_active_contract:
-        return
+        return False
     if not active_contract(player) or player.chakra < IDLE_CHAKRA_UPKEEP:
+        for message in upkeep_reports.flush(player, "Sage Mode"):
+            session.send(message)
         player.sage_active_contract = ""
         session.send("Your chakra gives out -- your Sage Mode fades.")
-        return
+        return True
     player.chakra -= IDLE_CHAKRA_UPKEEP
-    session.send(f"Your Sage Mode uses {IDLE_CHAKRA_UPKEEP} chakra to remain active.")
+    messages = upkeep_reports.record(player, "Sage Mode", IDLE_CHAKRA_UPKEEP)
+    for message in messages:
+        session.send(message)
+    return bool(messages)
 
 
 def elder_families(player):
@@ -121,6 +133,9 @@ def command(session, args):
         if not active_contract(player):
             session.send("You are not in Sage Mode.")
             return
+        import upkeep_reports
+        for message in upkeep_reports.flush(player, "Sage Mode"):
+            session.send(message)
         player.sage_active_contract = ""
         session.send("You release your Sage Mode.")
         return

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "trade",
+  "keywords": [
+    "trade",
+    "trading"
+  ],
+  "title": "Trade",
+  "body": "Syntax: trade <player>  |  trade add <item>  |  trade remove <item>  |  trade ryo <amount>  |  trade confirm  |  trade  |  trade cancel\n\nDescription: A full negotiated trade with another player -- items and ryo, staged and reviewed by both sides before anything actually moves. Both players must stay in the SAME ROOM for the entire negotiation; either side leaving cancels the trade outright, with nothing exchanged.\n\n&Ctrade <player>&x - Proposes a trade to someone in the room, or accepts a pending proposal from them.\n  &G[Active]&x\n\n&Ctrade add <item>&x / &Ctrade remove <item>&x - Adds or removes an item from YOUR OWN offer. You can never touch the other side's offer, only see it.\n  &G[Active]&x\n\n&Ctrade ryo <amount>&x - Sets how much ryo you're offering, replacing any amount set before.\n  &G[Active]&x\n\n&Ctrade confirm&x - Locks in your current offer as final. The trade only completes once BOTH sides have confirmed.\n  &G[Active]&x\n\n&Ctrade&x (no arguments) - Shows both offers side by side and each side's confirmation status.\n  &G[Active]&x\n\n&Ctrade cancel&x - Backs out entirely, before or after accepting. Nothing is ever exchanged unless both sides confirm.\n  &G[Active]&x\n\n&D(Changing your offer in any way -- adding, removing, or changing the ryo amount -- resets BOTH sides' confirmations, even if the OTHER side already confirmed. A trade can never complete on terms that weren't both agreed to at the same moment.)&x\n\nDate: 2026-08-25",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

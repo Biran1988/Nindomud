@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "magnetic bind",
+  "keywords": [
+    "magnetic bind"
+  ],
+  "title": "Magnetic Bind",
+  "body": "Syntax: perform magnetic bind <target>\n\nDescription: A Magnet Release attack that strikes one target. Paralysis briefly blocks the target's actions.  Requires Magnet Release and its revealed chakra natures, without a clan bloodline. Base damage: 203-235. 45% chance to inflict paralyzed. Unlocks at level 45. Costs 42 Chakra and 0 Stamina; 14 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

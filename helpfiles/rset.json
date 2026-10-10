@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "rset",
+  "keywords": [
+    "rset",
+    "redit"
+  ],
+  "title": "Rset (staff)",
+  "body": "Syntax: rset create <vnum>  |  rset goto <vnum>  |  rset <subcommand> ...  (alias: redit)\nrset always acts on the room you're physically standing in, right now -- no separate, stale 'editing' state to track. 'create'/'goto' teleport you to the target room first, so every other subcommand naturally follows.\n\nDescription: Creates and edits rooms field by field.\n\n&WCreation/navigation:&x\n  create <vnum>              -- makes a new, blank room, teleports you into it, and starts editing it\n  goto <vnum>                -- teleports you to an existing room to edit it (same as the standalone 'goto' command)\n  show                       -- same as 'rstat' on the room you're standing in\n\n&WBasic fields:&x\n  name [text]                -- room name; no text opens a line editor\n  desc [text]                -- room description; no text opens a full editor\n  sector <type>              -- terrain/sector label (mostly cosmetic)\n  biome <type>               -- tags the room for elemental jutsu affinity and gathering-job placement\n  resetmsg [text|off]        -- room-specific atmospheric flavor line, shown every 15 minutes on the fixed area reset timer -- overrides the containing area's own message (see 'help area') if both are set; 'off' clears it\n\n&WExits:&x\n  exit <direction> <vnum>    -- one-way exit only\n  bexit <direction> <vnum>   -- two-way exit (this room <-> that room, both directions linked); an unrecognized vnum is created automatically as a blank room\n  bunlink <direction>        -- removes an exit and its reverse\n  exitflag <direction> <flag> [value] -- door/locked/hidden/keyitem/passcode on a specific exit\n\n&WFlags and special states:&x\n  safe on|off                -- PvP-safe zone toggle (blocks attacking other players here)\n  apartment on|off           -- marks this room as a purchasable apartment shell (see 'help apartment')\n  flags <flagname>           -- toggles a recognized room flag on/off (CapturePoint, accelerated_healing) -- see 'help flags'\n\n&WRoom programs:&x\n  addprogram <trigger> <action> <args...>\n  removeprogram <index>      -- index shown by 'rstat'\n\n&D(Staff only.)&x\n\nDate: 2026-08-21",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

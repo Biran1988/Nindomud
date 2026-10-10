@@ -98,12 +98,16 @@ def tick_sharingan_idle(player) -> list:
     messages = []
     if player.sharingan_active:
         import commands
+        import upkeep_reports
         if player.chakra < commands.SHARINGAN_IDLE_CHAKRA_UPKEEP:
             player.sharingan_active = False
+            messages.extend(upkeep_reports.flush(player, "Sharingan"))
             messages.append("&RYour chakra gives out -- your Sharingan fades back to black.&x")
         else:
             player.chakra -= commands.SHARINGAN_IDLE_CHAKRA_UPKEEP
-            messages.append(f"&CYour Sharingan uses {commands.SHARINGAN_IDLE_CHAKRA_UPKEEP} chakra to remain active.&x")
+            messages.extend(upkeep_reports.record(player, "Sharingan", commands.SHARINGAN_IDLE_CHAKRA_UPKEEP))
+            import combat
+            messages.extend(combat.tick_sharingan_mastery_gain(player))
 
     return messages
 

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "request",
+  "keywords": [
+    "request",
+    "request mission"
+  ],
+  "title": "Request",
+  "body": "Syntax: request <c-rank|b-rank|a-rank|s-rank>\n\nDescription: Requests a C-Rank, B-Rank, A-Rank, or S-Rank mission -- works from anywhere, no need to stand at a village board. Unlike D-Rank ('accept' at a village Mission Board, a fixed posted mission), these ranks are dynamic: a real mob is picked at random from every mob in the game flagged Mission (see 'help flags'), filtered to a level range relative to YOUR OWN current level -- a higher rank reaches for a much higher-level mob than a lower one does, so the same rank can mean something very different depending on how strong you already are. The pool is pulled from globally, not just your own village.\n\nRequires a minimum level to request each rank (C-Rank 10, B-Rank 25, A-Rank 50, S-Rank 80). Each rank has its own separate cooldown after requesting -- requesting one rank doesn't block requesting a different rank in the meantime. If no Mission-flagged mob exists at your current level for that rank, the request is refused rather than handing you an impossible or absurdly easy target.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

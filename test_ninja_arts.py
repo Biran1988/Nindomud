@@ -48,7 +48,7 @@ class NinjaArtsTests(unittest.TestCase):
         ninja_arts.use_weapon_art(self.session, "disenchantment", ["kunai"])
         self.assertEqual(self.player.inventory, ["A Basic Kunai", "A Basic Kunai"])
 
-    def test_samurai_sabre_needs_sword_buffs_only_sword_hits_and_expires(self):
+    def test_samurai_sabre_toggle_and_upkeep(self):
         starting_chakra = self.player.chakra
         commands.cmd_use_jutsu(self.session, "samurai sabre", [])
         self.assertNotIn("samurai_sabre", self.player.active_status_effects)
@@ -56,14 +56,28 @@ class NinjaArtsTests(unittest.TestCase):
 
         self.player.equipment["wielded"] = "A Basic Sword"
         commands.cmd_use_jutsu(self.session, "samurai sabre", [])
-        self.assertEqual(self.player.active_status_effects["samurai_sabre"]["duration"], 5)
+        self.assertTrue(self.player.samurai_sabre_active)
+        self.assertNotIn("samurai_sabre", self.player.active_status_effects)
         self.assertEqual(self.player.chakra, starting_chakra - 35)
         self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 60)
+        for _ in range(6):
+            ninja_arts.tick_samurai_sabre(self.session)
+        self.assertTrue(self.player.samurai_sabre_active)
+        self.assertEqual(self.player.chakra, starting_chakra - 35 - 24)
+        before_stamina = self.player.stamina
+        ninja_arts.tick_samurai_sabre(self.session, combat=True)
+        self.assertEqual(self.player.chakra, starting_chakra - 35 - 24 - 6)
+        self.assertEqual(self.player.stamina, before_stamina - 2)
         self.player.equipment["wielded"] = "A Basic Kunai"
         self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 50)
-        for _ in range(5):
-            ninja_arts.status_effects.tick_effects(self.player.active_status_effects)
+        ninja_arts.tick_samurai_sabre(self.session)
+        self.assertFalse(self.player.samurai_sabre_active)
         self.player.equipment["wielded"] = "A Basic Sword"
+        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 50)
+        self.player.cooldowns.clear()
+        commands.cmd_use_jutsu(self.session, "samurai sabre", [])
+        commands.cmd_use_jutsu(self.session, "samurai sabre", [])
+        self.assertFalse(self.player.samurai_sabre_active)
         self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 50)
 
     def test_flying_swallow_requires_blade_and_wind_improves_damage(self):

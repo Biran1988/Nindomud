@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "smoke bomb",
+  "keywords": [
+    "smoke bomb"
+  ],
+  "title": "Smoke Bomb",
+  "body": "Syntax: smoke bomb <target>\n\nDescription: Attaches a consumed Smoke Bomb. After two combat pulses it deals 5-12 damage and blinds the target unless disabled. Requires a carried smoke bomb. Bukijutsu unlocks at level 30. Costs 30 Chakra and 12 Stamina; 7 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

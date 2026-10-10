@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "get",
+  "keywords": [
+    "get"
+  ],
+  "title": "Get",
+  "body": "Syntax: get <item>  |  get <item> from <container>\n\nDescription: Picks up an item lying on the ground in the current room, subject to the same inventory stacking limits as everything else. A small number of items -- cosmetic room decoration like furniture, signs, or plants -- are flagged not to be picked up at all (see 'help flags', the 'no_take' item flag) and will refuse instead.\n\n'get <item> from <container>' instead takes an item OUT of a real container (a backpack or anything else set up with a real capacity via 'oset <vnum> concap <n>') and back into your ordinary inventory -- see 'help put' and 'help containers'.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

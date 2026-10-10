@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "examine",
+  "keywords": [
+    "examine"
+  ],
+  "title": "Examine",
+  "body": "Syntax: examine <item>\n\nDescription: Inspects an item closely. Requires Examine (unlocked at character level 20) -- how much detail you see scales with your Examine proficiency, from just its rarity at low proficiency up to full set bonus details at 80%+. At 40%+, shows the item's type, its real wear location, and a full stat breakdown -- every category (Armor Class, Hitroll, Damroll, Max Health/Chakra/Stamina, and each attribute) on its own line, never hidden in the item's own name or description.\n\nDate: 2026-08-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

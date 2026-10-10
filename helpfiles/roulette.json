@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "roulette",
+  "keywords": [
+    "roulette"
+  ],
+  "title": "Roulette",
+  "body": "Syntax: roulette number <0-36> <wager>  |  roulette <red|black|odd|even|low|high> <wager>\n\nDescription: Plays roulette with a gambler NPC. Wagered in MISSION POINTS, not ryo. A straight number pays 36x; the other bet types pay 2x.\n\nEach village has its own dedicated Roulette Room, connected off the Gambling Den.\n\nDate: 2026-08-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

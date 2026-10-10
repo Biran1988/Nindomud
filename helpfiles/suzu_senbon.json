@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "suzu senbon",
+  "keywords": [
+    "suzu senbon"
+  ],
+  "title": "Suzu Senbon",
+  "body": "Syntax: perform suzu senbon <target>\n\nDescription: Bell sounds that can disrupt the target's accuracy.  Ringing bells impair accuracy. Usable with any chakra nature. Base damage: 91-107. 65% chance to inflict ringing. The effect lasts 10 seconds before resistance. Unlocks at level 36. Costs 32 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "hedit",
+  "keywords": [
+    "hedit"
+  ],
+  "title": "Hedit (staff)",
+  "body": "Syntax: hedit create <keyword>  |  hedit <keyword>\n\nDescription: Creates or edits an in-game helpfile -- title, keywords, and body text via the same interactive editor 'rset desc' uses.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

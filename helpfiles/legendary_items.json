@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "legendary items",
+  "keywords": [
+    "legendary items",
+    "legendary item",
+    "kage items"
+  ],
+  "title": "Legendary Items",
+  "body": "Syntax: list  (at your own village's Kage chamber)  |  buy <item>\n\nDescription: Every village's Kage sells legendary gear -- one-of-a-kind items with far larger stat bonuses than anything craftable, priced in a large number of mission points rather than ryo. Purchasable by ANY player who can afford it, not just the Kage themselves. Each is a single unique item -- once you own one, buying it again is refused (\"only one to a customer\"). Mostly armor, but at least one legendary weapon is in the lineup too -- 'list' shows the full, current selection, and some slots have more than one option worth comparing before you commit.\n\nLike anything else you wear, it goes on with 'wear' and comes back off with 'remove'. 'examine' shows its full stat breakdown (requires Examine, see 'help examine').\n\nDate: 2026-08-19",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

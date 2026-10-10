@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "open",
+  "keywords": [
+    "open"
+  ],
+  "title": "Open",
+  "body": "Syntax: open <direction>\n\nDescription: Opens a closed door on one of the room's exits. Refuses if that exit isn't a door, or if the door is locked -- unlock it first.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

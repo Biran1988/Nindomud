@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "summon elder",
+  "keywords": [
+    "summon elder",
+    "summonelder",
+    "summonfamily"
+  ],
+  "title": "Summon Elder (builder)",
+  "body": "Syntax: mset <vnum> flags SummonElder | mset <vnum> summonfamily <toad|snake|slug|ninken|monkey>\nDescription: Place the mob in the chosen family's hideout with 'mset spawn <vnum> <room vnum>' or add a spawn point. Both the flag and a valid family are required. The elder must be alive and in the same room for signing contracts and Sage Mode training. Summon Elders cannot be attacked. Mstat shows their configured family.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

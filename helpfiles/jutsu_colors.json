@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "jutsu colors",
+  "keywords": [
+    "jutsu colors",
+    "jutsu colours"
+  ],
+  "title": "Jutsu Colors",
+  "body": "Syntax: help jutsu colors\n\nDescription: Every jutsu has its own three-shade color sequence when performed and in its helpfile. Skills and practice lists retain their usual category and proficiency colors. Sessions with ANSI disabled receive plain text instead.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

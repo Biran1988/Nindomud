@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "place",
+  "keywords": [
+    "place",
+    "place bounty"
+  ],
+  "title": "Place Bounty",
+  "body": "Syntax: place bounty <player name> <reward_ryo> <reward_mission_points> <description...>\n\nDescription: Posts a bounty on another player to the Bingo Book -- in person, at a mob flagged as a Bingo Book office. You pay the full reward up front (deducted immediately), so make sure you can afford it. Whoever defeats that player in PvP first claims the reward automatically, the same way a mob bounty pays out on a kill.\n\nYou can't place a bounty on yourself or on a fellow villager -- bounties are for rival-village ninja, not internal betrayal.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

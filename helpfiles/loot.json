@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "loot",
+  "keywords": [
+    "loot"
+  ],
+  "title": "Loot",
+  "body": "Syntax: loot [corpse]\n\nDescription: Takes the ryo and items off a corpse in the room. If your inventory can't fit everything, takes what it can and leaves the rest on the corpse.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

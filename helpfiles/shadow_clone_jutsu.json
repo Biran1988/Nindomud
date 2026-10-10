@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "shadow clone jutsu",
+  "keywords": [
+    "shadow clone jutsu",
+    "shadow clone",
+    "clone jutsu"
+  ],
+  "title": "Shadow Clone Jutsu",
+  "body": "Syntax: perform shadow clone jutsu  (no target -- this summons clones, it doesn't attack anything directly)\n\nDescription: A Ninjutsu jutsu, unlocked at level 30. Summons 1 to 3 real shadow clones, standing right there in the room with you -- they look exactly like you (same name, same description) to anyone who looks at them, with no way to tell them apart from the real you at a glance. How many you get depends on your current mastery of this jutsu: under 34% summons 1, 34-66% summons 2, 67% and up summons the full 3. Costs 40 Chakra to cast, 10 second cooldown.\n\nClones can be summoned before a fight and stick around independently -- they aren't tied to being in combat at all, and don't follow you if you walk away from them. Each clone has its own health (a flat 25% of your OWN current max health) and can be attacked directly by anyone, same as any other mob in the room; enough hits and one goes down, vanishing in a puff of smoke with nothing to loot and no reward for whoever did it. While you're actively fighting something, your clones automatically join in and attack it too, each using your own stats and weapon at half your own damage.\n\nActive clones drain an average 3.75 Chakra per clone every one-second pulse (15% of the previous 25), combat or not. Fractional costs carry forward and are charged as whole Chakra over subsequent pulses. If you can't afford the full upkeep, clones dispel one at a time rather than all at once. The charge is summarized with other upkeep every six minutes. Recasting dismisses any clones you already have and resummons fresh at your current mastery, rather than stacking more on top.\n\nMastery can be raised by 'practice' up to 20%; casting and successful paid clone maintenance can improve it above that cap, even outside combat, all the way to 100%.\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

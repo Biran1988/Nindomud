@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "imms",
+  "keywords": [
+    "imms",
+    "immortal",
+    "immortals",
+    "staff roster"
+  ],
+  "title": "Immortals",
+  "body": "Syntax: imms | immortal | immortals\n\nDescription: Lists every staff account by name and rank, including Helper, Builder, Area Leader, Administrator, and Implementor. Shows whether each account is currently online.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

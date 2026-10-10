@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "goto",
+  "keywords": [
+    "goto",
+    "teleport"
+  ],
+  "title": "Goto",
+  "body": "Syntax: goto <vnum>  |  goto <player name>\n\nDescription: (Staff only.) Teleports you directly to a room by vnum, or to wherever an online player currently is. Bypasses any locked/private room restrictions, same as staff already can when walking normally. Going to a vnum with no room there yet creates one on the spot (a bare 'An Unfinished Room', same placeholder 'rset bexit' uses) and teleports you there.\n\n'rset goto <vnum>' does the same teleport, then leaves you there editing that room with rset -- see 'help rset'.\n\nDate: 2026-08-28",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

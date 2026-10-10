@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "promoteimm",
+  "keywords": [
+    "promoteimm",
+    "immortal ranks"
+  ],
+  "title": "Promote Immortal (Implementor)",
+  "body": "Syntax: promoteimm <account> <builder|area leader|administrator>\n\nDescription: Raises an existing immortal account to a higher staff rank and saves the change immediately. Use makeimm <account> first for a player account. Only Biran's Implementor account can use this command. It cannot demote staff or grant Implementor.\n\nExamples: promoteimm Kakashi builder; promoteimm Kakashi area leader; promoteimm Kakashi administrator\n\nDate: 2026-09-29",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

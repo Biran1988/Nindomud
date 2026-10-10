@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "accept",
+  "keywords": [
+    "accept"
+  ],
+  "title": "Accept",
+  "body": "Syntax: accept <keyword>\n\nDescription: At a village Mission Board, accepts a posted D-Rank mission matching the keyword (e.g. 'accept clear' or 'accept weed'). Refused if it's already active, still on cooldown from your last completion, or your level is below that mission's requirement. For C-Rank and above, see 'help request' instead -- those aren't posted on any board.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "sage training",
+  "keywords": [
+    "sage training",
+    "senjutsu training"
+  ],
+  "title": "Sage Mode Training",
+  "body": "Syntax: summon sign [family]  |  sage train [family]  |  sage status\n\nDescription: At level 20 or higher, permanently choose one summon family at its living elder. At level 80, train with that same elder in its hideout. You can attempt training once per real hour; each attempt has a 5% chance to add 1% mastery, so mastering all 100% takes a long time. A failed attempt still starts the hour wait. Training is unavailable during combat. Once mastered, use 'sage on <family>' or bare 'sage' to activate and 'sage off' to release it. See 'help sage' for upkeep and shared bonuses.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

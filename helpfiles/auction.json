@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "auction",
+  "keywords": [
+    "auction",
+    "auction house",
+    "ah"
+  ],
+  "title": "Auction",
+  "body": "Syntax: auction list  |  auction sell <item> <starting bid> [buyout price] [duration minutes]  |  auction bid <id> <amount>  |  auction buyout <id>  |  auction cancel <id>\n\nDescription: The Auction House -- list an item from your inventory for other players to bid on, with an optional instant buyout price. Duration defaults to 1 hour (5 minutes to 24 hours if given). A 5% fee is taken from a successful sale. You can only have one active listing at a time -- sell, buyout, or cancel it before starting another.\n\n'auction cancel' only works before anyone's bid -- once a bid is in, that bidder is owed a fair shot at winning it. Bids aren't held in escrow: a bid is a promise, checked again for real ryo when the listing actually closes, so spending that ryo elsewhere before then can cost you the win. Works whether you're online or offline when a listing resolves -- you'll see the result waiting for you either way.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

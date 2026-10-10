@@ -69,12 +69,33 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
     except (ConnectionResetError, asyncio.IncompleteReadError):
         pass
     finally:
+        import mangekyo
+        import world
+        mangekyo.end_tsukuyomi_on_departure(session, world)
         if session in ACTIVE_SESSIONS:
             ACTIVE_SESSIONS.remove(session)
         try:
             writer.close()
         except Exception:
             pass
+
+
+def tick_idle_upkeep(session) -> None:
+    """Apply silent maintenance without repainting an otherwise idle prompt."""
+    import ninja_arts
+    import regen
+    import sage_mode
+
+    visible = False
+    for message in regen.tick_sharingan_idle(session.player):
+        session.send(message)
+        visible = True
+    if session.player.sage_active_contract:
+        visible = sage_mode.idle_upkeep(session) or visible
+    if session.player.samurai_sabre_active:
+        visible = ninja_arts.tick_samurai_sabre(session) or visible
+    if visible:
+        session.send_prompt()
 
 
 async def pulse_loop() -> None:
@@ -90,7 +111,7 @@ async def pulse_loop() -> None:
     import areas
     import territory
     import tips
-    import sage_mode
+    import upkeep_reports
     from session import ACTIVE_SESSIONS, State
 
     elapsed_since_regen = 0.0
@@ -103,6 +124,7 @@ async def pulse_loop() -> None:
     elapsed_since_tips = 0.0
     tips_rotation_index = 0
     elapsed_since_area_reset = 0.0
+    elapsed_since_seasonal = 0.0
 
     def _broadcast_all(message: str) -> None:
         for s in ACTIVE_SESSIONS:
@@ -123,9 +145,18 @@ async def pulse_loop() -> None:
         elapsed_since_area_reset += PULSE_SECONDS
 
         combat.process_respawns()
+        # Holiday populations only need minute-level calendar checks.
+        elapsed_since_seasonal += PULSE_SECONDS
+        if elapsed_since_seasonal >= 60:
+            elapsed_since_seasonal = 0.0
+            import seasonal_events
+            seasonal_events.sync_visitors()
+        import lottery
+        lottery.draw_due(ACTIVE_SESSIONS)
         corpses.process_decay()
         auction.process_expired_auctions()
         combat.process_wander()
+        combat.process_scavengers()
         import tailed_beasts
         import world as world_module
         import session as session_module
@@ -162,6 +193,8 @@ async def pulse_loop() -> None:
         combat.tick_pending_casts()
         for session in list(ACTIVE_SESSIONS):
             if session.state == State.PLAYING:
+                import element_choice
+                element_choice.begin(session)
                 combat.tick_effects_pulse(session)
                 # Shadow Clone upkeep, per direct follow-up request
                 # ("Clones can be summoned before combat and persist
@@ -172,6 +205,9 @@ async def pulse_loop() -> None:
                     session.send(message)
                 import tracking
                 tracking.tick_tracking(session)
+                for message in upkeep_reports.due(session.player):
+                    session.send(message)
+                    session.send_prompt()
 
         if elapsed_since_combat >= COMBAT_ROUND_SECONDS:
             elapsed_since_combat = 0.0
@@ -184,6 +220,9 @@ async def pulse_loop() -> None:
                     session.send_prompt()
 
         for session in list(ACTIVE_SESSIONS):
+            if session.state == State.PLAYING and session.chakra_charge is not None:
+                import commands
+                commands.process_chakra_charge(session)
             if session.state == State.PLAYING and session.pending_action is not None:
                 session.process_pending_action()
             if session.state == State.PLAYING:
@@ -207,12 +246,7 @@ async def pulse_loop() -> None:
             elapsed_since_idle_upkeep -= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS
             for session in list(ACTIVE_SESSIONS):
                 if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
-                    for message in regen.tick_sharingan_idle(session.player):
-                        session.send(message)
-                        session.send_prompt()
-                    if session.player.sage_active_contract:
-                        sage_mode.idle_upkeep(session)
-                        session.send_prompt()
+                    tick_idle_upkeep(session)
 
         if elapsed_since_autosave >= config.AUTOSAVE_INTERVAL_SECONDS:
             elapsed_since_autosave = 0.0

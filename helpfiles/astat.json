@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "astat",
+  "keywords": [
+    "astat"
+  ],
+  "title": "Astat (staff)",
+  "body": "Syntax: astat [name or vnum]\n\nDescription: Shows an area's full stat block -- by exact name, by a vnum (finds whichever area's reserved range contains it), or with no argument, the area containing the room you're standing in.\n\nShows the reserved vnum range and size, the creator, how many of those vnums actually have a real room built yet, and (if set) the area's territory income, which of its rooms are currently flagged as capture points, and its reset message (see 'help area').\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

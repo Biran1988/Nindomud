@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "drop",
+  "keywords": [
+    "drop",
+    "drop.all"
+  ],
+  "title": "Drop",
+  "body": "Syntax: drop <item>  |  drop all  |  drop.all\n\nDescription: Drops an item (or your entire inventory) on the ground in the current room. Dropped items can be picked back up with 'get', by you or anyone else who finds them.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "score",
+  "keywords": [
+    "score",
+    "sc"
+  ],
+  "title": "Score",
+  "body": "Syntax: score  (alias: sc)\n\nDescription: Shows your full character sheet: identity, combat stats, attributes, and mission info. See 'help scoresheet', 'help attributes', and 'help combatstats' for what each field means.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "pullweeds",
+  "keywords": [
+    "pullweeds"
+  ],
+  "title": "Pull Weeds",
+  "body": "Syntax: pullweeds\n\nDescription: Pulls a bundle of weeds from a villager's garden -- feeds the 'Weed the Garden' mission, but works even without that mission active. Needs a villager NPC in the room.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

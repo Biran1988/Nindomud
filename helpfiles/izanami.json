@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "izanami",
+  "keywords": [
+    "izanami"
+  ],
+  "title": "Izanami",
+  "body": "Syntax: perform izanami <target>\n\nDescription: Traps a target in a recursive loop. The target guesses one fixed hidden number, one guess per round, to escape; others cannot attack the trapped target. Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock. The target must be in your room; moving away before a delayed cast resolves makes it fizzle. Costs 70 Chakra and 0 Stamina; 60 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

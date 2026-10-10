@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "fire",
+  "keywords": [
+    "fire"
+  ],
+  "title": "Fire",
+  "body": "Syntax: (no command of its own -- a personal trait revealed by channeling a Chakra Paper, see 'help channel')\n\nDescription: One of the five chakra natures (see 'help elements'). Fireball Jutsu (Ninjutsu, level 20) requires Fire to cast at all, and carries a real chance to set the target Burning -- steady HP damage each round for a few rounds.\n\nBoosted in desert biomes. Weakened near open water (ocean, river, lake).\n\nDate: 2026-08-26\n\nSecond nature choices at level 25:\nFire + Water: Boil Release (help boil release)\nFire + Wind: Scorch Release (help scorch release)\nFire + Earth: Lava Release (help lava release)\nFire + Lightning: Flashfire Release (help flashfire release)",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

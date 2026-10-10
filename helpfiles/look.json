@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "look",
+  "keywords": [
+    "look",
+    "l"
+  ],
+  "title": "Look",
+  "body": "Syntax: look  |  look <name>  |  look self  |  look me\n\nDescription: Shows the room you're in: its name, anyone/anything present, and its exits. 'look <name>' examines a player, mob, or item in the room or your own inventory instead -- 'look self' or 'look me' shows your own description.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

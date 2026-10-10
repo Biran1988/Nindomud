@@ -26,6 +26,29 @@ HARDER_MOB_REWARD_CAP = 1.30
 HEALTH_PER_LEVEL = 8
 CHAKRA_PER_LEVEL = 5
 STAMINA_PER_LEVEL = 6
+
+
+def initial_proficiency(player: Player) -> int:
+    """Immortal staff learn new skills fully mastered; players start at zero."""
+    return 100 if getattr(player, "_immortal_skill_mastery", False) else 0
+
+
+def grant_immortal_jutsu(player: Player) -> bool:
+    """Give a signed-in immortal the complete current jutsu roster at 100%."""
+    if not getattr(player, "_immortal_skill_mastery", False):
+        return False
+    changed = False
+    for jutsu in data_jutsu.JUTSU.values():
+        name = jutsu["display_name"]
+        if name not in player.learned_skills:
+            player.learned_skills.append(name)
+            changed = True
+        if player.skill_proficiencies.get(name, 0) < 100:
+            player.skill_proficiencies[name] = 100
+            changed = True
+    return changed
+
+
 TRAINING_POINTS_PER_LEVEL = 6  # raised from 3 (Section 132, per direct request/confirmation): 99 level-ups x 6 = 594 total by level 100, just enough (small real surplus) to max all 9 real trainable attributes at the cap of 75 (needing 585 total: (75-10)*9)
 PRACTICE_POINTS_BASE_PER_LEVEL = 3   # everyone gets at least this many
 
@@ -190,29 +213,44 @@ def grant_experience(player: Player, amount: int) -> List[str]:
             f"&G+{stamina_gain} Max Stamina&x  &C+{training_gain} Training Point(s)&x  "
             f"&W+{practice_gain} Practice Point(s)&x"
         )
+        if player.level == 10 and not player.chakra_nature_revealed:
+            lines.append("&CYour first chakra nature can now be revealed with 'channel chakra paper'.&x")
+        if player.level == 25 and not player.chakra_nature_secondary_revealed:
+            lines.append("&CYou must now choose your second chakra nature in your village Kage chamber.&x")
 
         unlocked = data_jutsu.jutsu_for_class_at_level(player.primary_class, player.level)
         for key in unlocked:
             display = data_jutsu.JUTSU[key]["display_name"]
             if display not in player.learned_skills:
                 player.learned_skills.append(display)
-                player.skill_proficiencies[display] = 0
+                player.skill_proficiencies[display] = initial_proficiency(player)
                 lines.append(f"You have unlocked:\n  {display}")
+
+        import data_kekkei_genkai
+        known_before = set(player.learned_skills)
+        data_kekkei_genkai.sync_elemental_techniques(player)
+        for name in set(player.learned_skills) - known_before:
+            lines.append(f"You have unlocked:\n  {name}")
 
         if player.level >= data_jutsu.APPRAISAL_LEVEL_REQUIREMENT and "Examine" not in player.learned_skills:
             player.learned_skills.append("Examine")
-            player.skill_proficiencies["Examine"] = 0
+            player.skill_proficiencies["Examine"] = initial_proficiency(player)
             lines.append("You have unlocked:\n  Examine")
 
         if player.level >= SCAN_LEVEL and "Scan" not in player.learned_skills:
             player.learned_skills.append("Scan")
-            player.skill_proficiencies["Scan"] = 0
+            player.skill_proficiencies["Scan"] = initial_proficiency(player)
             lines.append("You have unlocked:\n  Scan")
+
+        if player.level >= data_jutsu.CHAKRA_CHARGE_LEVEL and "Chakra Charge" not in player.learned_skills:
+            player.learned_skills.append("Chakra Charge")
+            player.skill_proficiencies["Chakra Charge"] = initial_proficiency(player)
+            lines.append("You have unlocked:\n  Chakra Charge")
 
         import data_handsigns
         if player.level >= data_handsigns.HANDSIGNS_MIN_LEVEL and "Handsigns" not in player.learned_skills:
             player.learned_skills.append("Handsigns")
-            player.skill_proficiencies["Handsigns"] = 0
+            player.skill_proficiencies["Handsigns"] = initial_proficiency(player)
             lines.append("You have unlocked:\n  Handsigns")
 
         for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
@@ -220,7 +258,7 @@ def grant_experience(player: Player, amount: int) -> List[str]:
                 continue
             if player.level >= level_req and skill_name not in player.learned_skills:
                 player.learned_skills.append(skill_name)
-                player.skill_proficiencies[skill_name] = 0
+                player.skill_proficiencies[skill_name] = initial_proficiency(player)
                 lines.append(f"You have unlocked:\n  {skill_name}")
 
         # Save immediately -- a crash right after a level-up shouldn't cost
@@ -271,7 +309,7 @@ def sync_universal_skills(player: Player) -> List[str]:
         current_name = data_jutsu.SKILL_RENAMES.get(skill, skill)
         if current_name not in player.learned_skills:
             player.learned_skills.append(current_name)
-            player.skill_proficiencies[current_name] = 0
+            player.skill_proficiencies[current_name] = initial_proficiency(player)
             lines.append(f"&Y(New since your last login: you have learned {current_name}!)&x")
 
     if (
@@ -279,20 +317,25 @@ def sync_universal_skills(player: Player) -> List[str]:
         and "Examine" not in player.learned_skills
     ):
         player.learned_skills.append("Examine")
-        player.skill_proficiencies["Examine"] = 0
+        player.skill_proficiencies["Examine"] = initial_proficiency(player)
         lines.append("&Y(New since your last login: you have learned Examine!)&x")
 
     if player.level >= SCAN_LEVEL and "Scan" not in player.learned_skills:
         player.learned_skills.append("Scan")
-        player.skill_proficiencies["Scan"] = 0
+        player.skill_proficiencies["Scan"] = initial_proficiency(player)
         lines.append("&Y(New since your last login: you have learned Scan!)&x")
+
+    if player.level >= data_jutsu.CHAKRA_CHARGE_LEVEL and "Chakra Charge" not in player.learned_skills:
+        player.learned_skills.append("Chakra Charge")
+        player.skill_proficiencies["Chakra Charge"] = initial_proficiency(player)
+        lines.append("&Y(New since your last login: you have learned Chakra Charge!)&x")
 
     for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
         if required_class and player.primary_class != required_class:
             continue
         if player.level >= level_req and skill_name not in player.learned_skills:
             player.learned_skills.append(skill_name)
-            player.skill_proficiencies[skill_name] = 0
+            player.skill_proficiencies[skill_name] = initial_proficiency(player)
             lines.append(f"&Y(New since your last login: you have learned {skill_name}!)&x")
 
     # Per direct request/confirmation (Section 135): "make sure that
@@ -319,10 +362,17 @@ def sync_universal_skills(player: Player) -> List[str]:
         display_name = jutsu_data["display_name"]
         if display_name not in player.learned_skills:
             player.learned_skills.append(display_name)
-            player.skill_proficiencies[display_name] = 0
+            player.skill_proficiencies[display_name] = initial_proficiency(player)
             lines.append(f"&Y(New since your last login: you have learned {display_name}!)&x")
 
-    if lines:
+    import data_kekkei_genkai
+    known_before = set(player.learned_skills)
+    ice_changed = data_kekkei_genkai.sync_elemental_techniques(player)
+    for name in player.learned_skills:
+        if name not in known_before:
+            lines.append(f"&Y(New since your last login: you have learned {name}!)&x")
+
+    if lines or ice_changed:
         storage.save_player(player)
 
     return lines

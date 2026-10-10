@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "afk",
+  "keywords": [
+    "afk"
+  ],
+  "title": "AFK",
+  "body": "Syntax: afk\n\nDescription: Toggles your AFK (away from keyboard) status on or off.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

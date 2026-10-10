@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "read",
+  "keywords": [
+    "read",
+    "study"
+  ],
+  "title": "Read",
+  "body": "Syntax: read <scroll>  (alias: study)\n\nDescription: Learns the jutsu inscribed on a scroll -- an alternate way to pick up a jutsu beyond your starting kit. The scroll is consumed on a successful read; it isn't consumed if it's blank or teaches something you already know.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "reboot",
+  "keywords": [
+    "reboot"
+  ],
+  "title": "Reboot (staff)",
+  "body": "Syntax: reboot\n\nDescription: Saves every connected player, warns everyone, and restarts the whole server in place.\n\n&D(Staff only -- requires Implementor access, the single highest staff tier, given how disruptive this is.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "chidori",
+  "keywords": [
+    "chidori"
+  ],
+  "title": "Chidori",
+  "body": "Syntax: perform chidori <target>\n\nDescription: A Lightning strike that can paralyze the target.  Requires Lightning chakra nature. Base damage: 62-71. 15% chance to inflict paralyzed. Unlocks at level 30. Costs 30 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

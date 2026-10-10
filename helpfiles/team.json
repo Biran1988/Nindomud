@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "team",
+  "keywords": [
+    "team",
+    "teams"
+  ],
+  "title": "Teams",
+  "body": "Syntax: team create <name>  |  team invite <player>  |  team accept  |  team  |  team leave  |  team disband\n\nDescription: A genuinely different, longer-lived system from 'group' (see 'help group') -- a team's roster persists whether or not its members are online, up to 4 total including the leader. Fighting alongside a teammate you're ALSO grouped with grants a permanent +10% bonus to the experience you'd normally earn from that kill.\n\n&Cteam create <name>&x - Forms a new team with you as leader. Requires Chunin rank or higher, and you can't be on the 24-hour cooldown from recently leaving or disbanding a team.\n  &G[Active]&x\n\n&Cteam invite <player>&x - Leader-only. Invites someone by name, whether they're online or not -- they'll see the invite the next time they're online and check 'team accept'.\n  &G[Active]&x\n\n&Cteam accept&x - Joins the team that invited you, provided you aren't already on one and aren't on the 24-hour cooldown.\n  &G[Active]&x\n\n&Cteam&x (no arguments) - Shows your team's full roster and each member's online/offline status.\n  &G[Active]&x\n\n&Cteam leave&x / &Cteam disband&x - Leaves your team, or (leader-only) dissolves it entirely for every member. Either way starts a 24-hour cooldown before you (or, for a disband, every member) can join or create another team.\n  &G[Active]&x\n\n&D(The XP bonus specifically requires BOTH being on the same team AND actively grouped together via 'group invite' -- being teammates alone, with no active group, earns nothing extra.)&x\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

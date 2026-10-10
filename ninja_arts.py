@@ -5,6 +5,7 @@ the individual item. This survives ordinary inventory/equipment save, pickup,
 and trade without applying the effect to every copy of a prototype.
 """
 
+import jutsu_colors
 import random
 import time
 
@@ -143,14 +144,60 @@ def use_disable(session, target):
 
 
 def use_samurai_sabre(session):
-    """Flow chakra through a wielded sword for five effect pulses."""
-    if data_weapons.weapon_type_for_item(session.player.equipment.get("wielded", "")) != "sword":
-        session.send("Wield a sword to use Samurai Sabre.")
+    """Toggle an ongoing chakra edge on a wielded sword."""
+    player = session.player
+    if player.samurai_sabre_active:
+        import upkeep_reports
+        for message in upkeep_reports.flush(player, "Samurai Sabre"):
+            session.send(message)
+        upkeep_reports.stop_maintaining(player, "Samurai Sabre")
+        player.samurai_sabre_active = False
+        jutsu_colors.send(session, "&CYou release Samurai Sabre's chakra edge.&x")
+        return
+    if data_weapons.weapon_type_for_item(base_item(player.equipment.get("wielded", ""))) != "sword":
+        jutsu_colors.send(session, "Wield a sword to use Samurai Sabre.")
         return
     if not _pay(session, "samurai sabre"):
         return
-    status_effects.apply_effect(session.player.active_status_effects, "samurai_sabre", source="samurai sabre")
-    session.send("&CChakra envelops your sword. Sword strikes deal 20% more damage for five pulses.&x")
+    player.active_status_effects.pop("samurai_sabre", None)
+    player.samurai_sabre_active = True
+    jutsu_colors.send(session, "&CChakra envelops your sword. Sword strikes deal 20% more damage while you sustain Samurai Sabre. Use it again to turn it off.&x")
+
+
+SABRE_IDLE_CHAKRA_UPKEEP = 4
+SABRE_COMBAT_CHAKRA_UPKEEP = 6
+SABRE_COMBAT_STAMINA_UPKEEP = 2
+
+
+def tick_samurai_sabre(session, combat=False):
+    """Charge while active; return whether player-visible output was sent."""
+    player = session.player
+    if not player.samurai_sabre_active:
+        return False
+    import upkeep_reports
+    if data_weapons.weapon_type_for_item(base_item(player.equipment.get("wielded", ""))) != "sword":
+        for message in upkeep_reports.flush(player, "Samurai Sabre"):
+            session.send(message)
+        upkeep_reports.stop_maintaining(player, "Samurai Sabre")
+        player.samurai_sabre_active = False
+        jutsu_colors.send(session, "&YSamurai Sabre fades when you stop wielding a sword.&x")
+        return True
+    chakra = SABRE_COMBAT_CHAKRA_UPKEEP if combat else SABRE_IDLE_CHAKRA_UPKEEP
+    stamina = SABRE_COMBAT_STAMINA_UPKEEP if combat else 0
+    if player.chakra < chakra or player.stamina < stamina:
+        for message in upkeep_reports.flush(player, "Samurai Sabre"):
+            session.send(message)
+        upkeep_reports.stop_maintaining(player, "Samurai Sabre")
+        player.samurai_sabre_active = False
+        jutsu_colors.send(session, "&YYou can no longer sustain Samurai Sabre.&x")
+        return True
+    player.chakra -= chakra
+    player.stamina -= stamina
+    messages = upkeep_reports.record(player, "Samurai Sabre", chakra, stamina)
+    for message in messages:
+        session.send(message)
+    upkeep_reports.maintain_skill(player, "Samurai Sabre")
+    return bool(messages)
 
 
 def attach_trap(target, key, attacker_name):
@@ -175,7 +222,7 @@ def weapon_hit(attacker, victim, damage):
     """Apply the wielded weapon's item-specific combat property on hit."""
     wielded = attacker.equipment.get("wielded", "")
     prop = property_of(wielded)
-    if damage > 0 and "samurai_sabre" in attacker.active_status_effects and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword":
+    if damage > 0 and getattr(attacker, "samurai_sabre_active", False) and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword":
         damage = max(1, damage * 120 // 100)
     if prop is None or damage <= 0:
         return damage

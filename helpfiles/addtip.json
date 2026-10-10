@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "addtip",
+  "keywords": [
+    "addtip",
+    "tips"
+  ],
+  "title": "Addtip (staff)",
+  "body": "Syntax: addtip <text>  |  addtip\n\nDescription: Adds a new tip to the rotation shown to players who have 'config tips on' (the default) -- one tip is broadcast to everyone with tips on every 30 minutes, cycling through the list in order so nothing repeats back-to-back and every tip eventually gets seen. With no arguments, lists every tip currently in the rotation with its number, for use with 'remtip'. See 'config' for the player-facing toggle.\n\n&D(Staff only -- requires builder access.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

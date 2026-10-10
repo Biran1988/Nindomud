@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "gamble",
+  "keywords": [
+    "gamble",
+    "chouhan"
+  ],
+  "title": "Gamble",
+  "body": "Syntax: gamble chou|han <wager>  (alias: chouhan)\n\nDescription: Plays chou-han (odd/even dice) with a gambler NPC -- you must be sitting/resting first. Wagers are in ryo; a win pays 3x. Takes about a minute to resolve, with flavor messages along the way.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

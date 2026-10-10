@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "exploding clay",
+  "keywords": [
+    "exploding clay"
+  ],
+  "title": "Exploding Clay",
+  "body": "Syntax: exploding clay <target>\n\nDescription: Attaches a consumed Wad of Exploding Clay. After two combat pulses it detonates for 45-70 damage unless disabled. Requires a carried exploding clay. Bukijutsu unlocks at level 50. Costs 50 Chakra and 20 Stamina; 9 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

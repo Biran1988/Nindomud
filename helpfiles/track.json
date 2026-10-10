@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "track",
+  "keywords": [
+    "track",
+    "tracking"
+  ],
+  "title": "Track",
+  "body": "Syntax: perform track <mob or player name>\n\nDescription: A scroll-taught technique (learn it from a Track Scroll) that picks up a trail and follows it automatically. Name any mob or player anywhere in the world -- you don't need to be near them -- and your character will walk itself, one room per pulse, toward wherever they currently are.\n\nTracking is scoped to the target's own area -- it won't path across the whole map, only within the region they're actually in. It respects closed and locked doors just like normal movement. It runs quietly in the background, so you can keep doing other things while it walks you there, but it automatically pauses the instant you're in a fight (PvE or PvP) and picks back up the moment that fight ends.\n\nIt costs 5 Chakra every pulse it's active, summarized with other upkeep every six minutes, and stops on its own if you run out. Paid maintenance can improve Track mastery by 1% on a successful roll outside combat. It also ends cleanly -- with a message telling you so -- the moment the trail goes cold: your target logs off, dies, leaves their own area, or you simply arrive.\n\nDate: 2026-09-03",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

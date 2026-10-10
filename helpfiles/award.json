@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "award",
+  "keywords": [
+    "award",
+    "mset mission_points"
+  ],
+  "title": "Award (staff)",
+  "body": "Syntax: award <player> <amount>\n\nDescription: Adds `amount` mission points to a player's current balance -- unlike 'mset <player> mission_points <n>', which can only overwrite the balance outright to an exact value, this adjusts it relative to whatever it already is. A negative amount deducts instead; the balance never goes below 0.\n\nMatches exactly how a real mission completion grants points: both the spendable balance and the player's lifetime mission-points-earned total (used for leaderboards) move together on a grant -- except the lifetime total only ever increases, even on a deduction, since it's meant to record real history, not track a net balance.\n\n&D(Staff only -- requires administrator access.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

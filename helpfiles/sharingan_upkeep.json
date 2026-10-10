@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "sharingan upkeep",
+  "keywords": [
+    "sharingan upkeep",
+    "shar upkeep"
+  ],
+  "title": "Sharingan Upkeep",
+  "body": "Syntax: sharingan  |  shar\n\nDescription: Active Sharingan spends 6 Chakra every 10 seconds outside combat. During combat it spends 6 Stamina and 6-12 Chakra each round, depending on tomoe. Resources are charged at every tick. Sharingan, Sage Mode, clones, tracking, Kamui Pocket Dimension, and Samurai Sabre upkeep are combined into one report every six minutes, with separate costs per ability. Turning an ability off or running out of resources prints its pending total immediately. See 'help sharingan' for the toggle.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

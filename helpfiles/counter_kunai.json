@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "counter kunai",
+  "keywords": [
+    "counter kunai"
+  ],
+  "title": "Counter Kunai",
+  "body": "Syntax: (none -- this is a passive ability, it triggers automatically)\n\nDescription: A Bukijutsu jutsu, unlocked at level 25. Once learned, it works entirely on its own -- whenever someone throws Throw Shuriken, Throw Kunai, or Explosive Tag Kunai at you, and you're carrying a kunai of your own, you automatically whip it out and deflect the attack completely, taking zero damage. Your own kunai is consumed in the process. Without a kunai on hand, the attack lands normally -- there's no other cost or cooldown to worry about.\n\nDate: 2026-08-23",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

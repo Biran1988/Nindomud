@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "apartment",
+  "keywords": [
+    "apartment",
+    "housing"
+  ],
+  "title": "Apartment",
+  "body": "Syntax: apartment name <text>  |  apartment desc <text>\n\nDescription: Renames or redescribes your owned apartment. You must be standing inside it. Buying/selling an apartment is done via 'buy apartment'/'sell apartment' while standing in an available unit.\n\n&WRoom expansions:&x once you own an apartment, 'buy room <type> <direction>' (while standing inside your apartment OR any room you've already built) builds a new room off it in a direction of your choice -- one of each type max. The whole complex counts as your own space, so a room can branch off another (build a bedroom off your hallway, say), not only directly off the base apartment. Costs 200,000 ryo for the 1st, doubling per room already owned (200k/400k/800k/1.6M/3.2M/6.4M).\n\n&CHallway&x - A basic room, nothing special.\n&CBedroom&x - Recovers Health/Chakra/Stamina faster, same as a village Hospital.\n&CKitchen&x - Lets you 'cook' without holding a Cooking Pot.\n&CPond&x - A water biome, so you can 'fish' here.\n&CFarming&x - A plains biome, so you can 'farm' here.\n&CStorage&x - Whatever you leave here survives a server restart, unlike anywhere else in the game.\n\n&WSelling:&x 'sell room <type>' tears out one expansion room, refunding 50% of what it actually cost (the rest of the apartment stays yours) -- or 'sell apartment' gives up everything at once (base apartment plus every room you built), refunding 50% of each. Either way, the exit to that room is disconnected -- the direction is free again, the same as if it had never been built, so you (or a later owner, for the base apartment) can build something new there.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

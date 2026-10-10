@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "personality",
+  "keywords": [
+    "personality",
+    "personality trait",
+    "traits"
+  ],
+  "title": "Personality Traits",
+  "body": "Syntax: (chosen once, permanently, at character creation)\n\nDescription: Your personality trait gives a real, permanent trade-off to two of your combat stats -- one genuine upside, one genuine downside. There are 8 to choose from:\n\n&CReckless&x -- more damage, weaker armor class.\n&CConfident&x -- better hit roll, worse dodge chance.\n&CLoyal&x -- +10% experience whenever you're fighting alongside others (any real group, not just a formal team) -- this stacks with the team bonus. Fighting alone is completely ordinary, no bonus and no penalty.\n&CReserved&x -- better dodge chance, less damage.\n&CCalm&x -- stronger armor class, worse hit roll.\n&CHot-headed&x -- better critical chance, worse hit roll.\n&CCunning&x -- better critical chance, weaker armor class.\n&CCheerful&x -- better dodge chance, worse critical chance.\n\nChosen once at character creation and permanent -- there's no way to change it afterward.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "multi-shuriken throw",
+  "keywords": [
+    "multi-shuriken throw"
+  ],
+  "title": "Multi-Shuriken Throw",
+  "body": "Syntax: multi-shuriken throw <target>\n\nDescription: Throws three carried shuriken in one attack. Spent shuriken land on the room floor. Requires a carried shuriken. Base damage: 12-16. Bukijutsu unlocks at level 10. Costs 0 Chakra and 12 Stamina; 4 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

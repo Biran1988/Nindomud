@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "kanashibari",
+  "keywords": [
+    "kanashibari"
+  ],
+  "title": "Kanashibari",
+  "body": "Syntax: perform kanashibari <target>\n\nDescription: A binding illusion that can briefly paralyze the target.  Its paralysis can block actions briefly. Usable with any chakra nature. Base damage: 62-71. 50% chance to inflict paralyzed. The effect lasts 10 seconds before resistance. Unlocks at level 28. Costs 26 Chakra and 0 Stamina; 8 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

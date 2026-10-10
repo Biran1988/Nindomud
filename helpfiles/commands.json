@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "commands",
+  "keywords": [
+    "commands"
+  ],
+  "title": "Commands",
+  "body": "Syntax: commands\n\nDescription: Lists every command verb the game recognizes, player and staff commands together, in one combined list.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

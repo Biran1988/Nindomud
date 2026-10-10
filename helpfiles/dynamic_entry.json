@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "dynamic entry",
+  "keywords": [
+    "dynamic entry"
+  ],
+  "title": "Dynamic Entry",
+  "body": "Syntax: dynamic entry <target>\n\nDescription: A Taijutsu jutsu, part of every character's starting kit. Used by typing its name directly -- no 'perform' needed for Taijutsu/Bukijutsu. 2-3 physical damage, costs 5 Stamina, 2 second cooldown.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

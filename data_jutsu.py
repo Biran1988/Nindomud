@@ -36,6 +36,41 @@ PRACTICE_CAP_PERCENT = {
 
 
 JUTSU = {
+    "soto uke": {
+        "jutsu_id": "taijutsu_soto_uke", "display_name": "Soto Uke",
+        "class_requirement": "taijutsu", "level_requirement": 19,
+        "chakra_cost": 0, "stamina_cost": 10, "cooldown": 0.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 1, "element": "none", "jutsu_type": "combat_passive",
+    },
+    "weapon expert": {
+        "jutsu_id": "bukijutsu_weapon_expert", "display_name": "Weapon Expert",
+        "class_requirement": "bukijutsu", "level_requirement": 36,
+        "chakra_cost": 0, "stamina_cost": 0, "cooldown": 0.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 2, "element": "none", "jutsu_type": "combat_passive",
+    },
+    "dual wield": {
+        "jutsu_id": "bukijutsu_dual_wield", "display_name": "Dual Wield",
+        "class_requirement": "bukijutsu", "level_requirement": 70,
+        "chakra_cost": 0, "stamina_cost": 5, "cooldown": 0.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 3, "element": "none", "jutsu_type": "dual_wield",
+    },
+    "chokkan": {
+        "jutsu_id": "genjutsu_chokkan", "display_name": "Chokkan",
+        "class_requirement": "genjutsu", "level_requirement": 70,
+        "chakra_cost": 25, "stamina_cost": 0, "cooldown": 12.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 3, "element": "none", "jutsu_type": "chokkan",
+    },
+    "100 years of death": {
+        "jutsu_id": "general_100_years_of_death", "display_name": "100 Years of Death",
+        "class_requirement": "general", "level_requirement": 1,
+        "chakra_cost": 100, "stamina_cost": 20, "cooldown": 60.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 5, "element": "none", "jutsu_type": "instant_kill", "scroll_only": True,
+    },
     "shadow shuriken technique": {
         "jutsu_id": "ninjutsu_starter", "display_name": "Shadow Shuriken Technique",
         "class_requirement": "ninjutsu", "level_requirement": 1,
@@ -594,6 +629,42 @@ for _element, _name in (("lightning", "Raiton Kage Bunshin"),
         cooldown=10.0,
     )
 
+
+def _scale_base_damage_to_level() -> None:
+    """Place each damaging jutsu on the 20-word damage ladder by unlock level.
+
+    A level-75 art sits about three quarters of the way up the ladder.
+    Sevenfold attacks split that cast's base damage across seven strikes.
+    Special effects, bonuses, defense, and multipliers still apply in combat.
+    """
+    import damage_messages
+
+    tiers = damage_messages.DAMAGE_TIERS
+    for jutsu in JUTSU.values():
+        if jutsu.get("damage") is None:
+            continue
+        original_low, original_high = jutsu["damage"]
+        level = max(1, min(100, jutsu["level_requirement"]))
+        # The first tier is reserved for zero/one damage; even a starting
+        # attack should deal a few points. Level 100 reaches the top tier.
+        index = 1 + ((level - 1) * (len(tiers) - 2) + 49) // 99
+        prior_max = tiers[index - 1][0]
+        minimum = prior_max + 1
+        maximum = tiers[index][0] or 11000
+        low = minimum + (maximum - minimum) * 3 // 10
+        high = minimum + (maximum - minimum) * 7 // 10
+        if jutsu.get("jutsu_type") == "sevenfold":
+            low, high = max(1, low // 7), max(1, high // 7)
+        jutsu["damage"] = (low, high)
+        if "explosive_damage" in jutsu:
+            # Preserve the explosive proc's advantage over its normal hit.
+            blast_low, blast_high = jutsu["explosive_damage"]
+            jutsu["explosive_damage"] = (
+                max(low + 1, round(low * blast_low / original_low)),
+                max(high + 1, round(high * blast_high / original_high)),
+            )
+
+
 JUTSU["barrier"] = {
     "jutsu_id": "general_barrier", "display_name": "Barrier",
     "class_requirement": "general", "level_requirement": 35,
@@ -639,6 +710,34 @@ JUTSU.update({
     "kokuangyou": _genjutsu("Kokuangyō", 48, 40, (8, 16), "blinded", effect_chance_pct=75),
 })
 
+JUTSU.update({
+    "ice senbon": {
+        "jutsu_id": "ice_release_senbon", "display_name": "Ice Senbon",
+        "class_requirement": "ninjutsu", "level_requirement": 25,
+        "chakra_cost": 24, "stamina_cost": 0, "cooldown": 5.0,
+        "damage": (30, 48), "damage_type": "chakra", "effect": "off_balance",
+        "effect_chance_pct": 25, "tier": 2, "element": "none", "kkg_gate": "ice_release",
+    },
+    "ice prison": {
+        "jutsu_id": "ice_release_prison", "display_name": "Ice Prison",
+        "class_requirement": "ninjutsu", "level_requirement": 45,
+        "chakra_cost": 42, "stamina_cost": 0, "cooldown": 14.0,
+        "damage": (38, 62), "damage_type": "chakra", "effect": "paralyzed",
+        "effect_chance_pct": 45, "tier": 3, "element": "none", "kkg_gate": "ice_release",
+    },
+    "demonic mirroring ice crystals": {
+        "jutsu_id": "ice_release_mirrors", "display_name": "Demonic Mirroring Ice Crystals",
+        "class_requirement": "ninjutsu", "level_requirement": 70,
+        "chakra_cost": 78, "stamina_cost": 0, "cooldown": 24.0,
+        "damage": (85, 125), "damage_type": "chakra", "effect": "blinded",
+        "effect_chance_pct": 35, "tier": 5, "element": "none", "kkg_gate": "ice_release",
+    },
+})
+
+import elemental_release_arts
+JUTSU.update(elemental_release_arts.jutsu_entries())
+_scale_base_damage_to_level()
+
 # The universal starting kit -- every player gets exactly these,
 # regardless of class. Used by both session.py's chargen AND
 # leveling.sync_universal_skills() (the login update-check), so the two
@@ -652,6 +751,8 @@ UNIVERSAL_STARTING_SKILLS = [
     "Strong Fist Style",
     "Anki",
 ]
+
+CHAKRA_CHARGE_LEVEL = 10
 
 # Examine (commands.cmd_examine) is NOT part of the universal
 # starting kit -- whether a player has it at all is gated by character
@@ -705,6 +806,7 @@ MIN_MATCH_PREFIX_LENGTH = {
 }
 
 JUTSU_ALIASES = {
+    "demonic": "demonic illusion hell viewing technique",  # preserve the established short command
     "ex": "explosive tag kunai",  # preserve the established two-letter shortcut
     "explosive": "explosive tag kunai",  # preserve it despite new Exploding Note/Clay
     "tamashiware": "tamashiwara",  # common spelling of the new Taijutsu strike
@@ -735,13 +837,32 @@ def match_prefix(lower_words):
 
     Returns (jutsu_key, word_count_consumed) or (None, 0).
     """
+    # The roster and help display "Kamui: ..."; accept that spelling as
+    # well as the command spelling. Bare Kamui is the pocket technique,
+    # while a specified variant must never be mistaken for its target.
+    if lower_words and lower_words[0] == "kamui:":
+        lower_words = ["kamui", *lower_words[1:]]
+    if lower_words and lower_words[0] == "kamui":
+        if len(lower_words) > 1:
+            variants = [key for key in ("kamui pocket dimension", "kamui intangibility", "kamui limb removal")
+                        if key.split()[1].startswith(lower_words[1])]
+            if variants:
+                if len(variants) == 1:
+                    full_words = variants[0].split()
+                    consumed = (3 if len(full_words) > 2 and len(lower_words) > 2
+                                and full_words[2].startswith(lower_words[2]) else 2)
+                    return variants[0], consumed
+                return None, 0
+        return "kamui pocket dimension", 1
     joined = " ".join(lower_words)
-    for alias in sorted(JUTSU_ALIASES, key=lambda name: -len(name.split())):
-        if joined == alias or joined.startswith(alias + " "):
-            return JUTSU_ALIASES[alias], len(alias.split())
+    # An exact technique (possibly followed by its target) outranks a
+    # historical short alias such as "demonic".
     for key in sorted(JUTSU.keys(), key=lambda k: -len(k.split())):
         if joined == key or joined.startswith(key + " "):
             return key, len(key.split())
+    for alias in sorted(JUTSU_ALIASES, key=lambda name: -len(name.split())):
+        if joined == alias or joined.startswith(alias + " "):
+            return JUTSU_ALIASES[alias], len(alias.split())
 
     max_jutsu_words = max((len(k.split()) for k in JUTSU), default=1)
     for length in range(min(max_jutsu_words, len(lower_words)), 0, -1):
@@ -782,22 +903,19 @@ def jutsu_for_class_at_level(class_name: str, level: int):
     return [
         key for key, data in JUTSU.items()
         if data["class_requirement"] in (class_name, "general") and data["level_requirement"] == level
+        and not data.get("scroll_only") and not data.get("kkg_gate")
     ]
 
 
 def all_jutsu_keys():
-    """Every single jutsu in the whole table, no class or level filter
-    at all -- used only for the staff bypass (see session.py's
-    _enter_world), per confirmed design ("Immediately, regardless of
-    level -- the moment an account is staff, their character has
-    every jutsu from every class, even at level 1"). Deliberately
-    different from all_unlocked_for_class, which still respects
-    level_requirement -- this respects nothing at all."""
-    return list(JUTSU.keys())
+    """Staff testing roster across classes and levels, excluding skills
+    explicitly reserved for scroll learning."""
+    return [key for key, data in JUTSU.items() if not data.get("scroll_only")]
 
 
 def all_unlocked_for_class(class_name: str, level: int):
     return [
         key for key, data in JUTSU.items()
         if data["class_requirement"] in (class_name, "general") and data["level_requirement"] <= level
+        and not data.get("scroll_only") and not data.get("kkg_gate")
     ]

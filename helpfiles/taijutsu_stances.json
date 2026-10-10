@@ -1,0 +1,16 @@
+{
+  "primary_keyword": "taijutsu stances",
+  "keywords": [
+    "taijutsu stances",
+    "stance",
+    "stances",
+    "kihon dachi",
+    "neko ashi dachi",
+    "sanchin dachi"
+  ],
+  "title": "Taijutsu Stances",
+  "body": "Syntax: kihon dachi | neko ashi dachi | sanchin dachi\n\nDescription: Taijutsu class unlocks Kihon Dachi at level 5 (+2 damage roll, -2 AC), Neko Ashi Dachi at level 15 (+2 hit roll, -4 AC), and Sanchin Dachi at level 30 (+4 damage roll). Only one stance can be active. Change or leave a stance outside combat; using the active stance again returns to normal. Activation costs stamina. Your stance remains active across reconnects. See 'aff' or 'score'.\n\nDate: 2026-09-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

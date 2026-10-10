@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "combat",
+  "keywords": [
+    "combat",
+    "fighting"
+  ],
+  "title": "Combat",
+  "body": "Syntax: attack <target>  |  <jutsu name> <target>  |  perform <jutsu name> <target>\n\nDescription: Combat can be a normal weapon attack ('attack', or an unarmed strike with none wielded) or a jutsu (see 'help classes'). Once you're fighting, your character keeps swinging automatically every round without needing the command repeated.\n\nYour own Strength and Damage Roll (plus your wielded weapon's own damage and Damage Roll bonus) all genuinely increase how hard you hit, on both regular attacks and jutsu alike.\n\nCasting a Ninjutsu or Genjutsu jutsu involves a real hand-sign delay before it lands (see 'help handsigns') -- if this is what starts the fight, combat doesn't actually begin until the jutsu resolves, hit or miss. Once you're already fighting, though, your ordinary attacks keep landing normally the whole time a jutsu is forming -- the jutsu just lands separately on top once it resolves.\n\nBeing defeated in normal combat costs real experience and ryo, and sends you to your village hospital to recover -- a 'duel' (see 'help duel') is the one exception, costing nothing at all either way.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "beastmode",
+  "keywords": [
+    "beastmode",
+    "tailed beast mode"
+  ],
+  "title": "Beastmode",
+  "body": "Syntax: beastmode\n\nDescription: Toggles Tailed Beast Mode on and off, much like the Sharingan's own toggle. Only usable once you've mastered your sealed beast completely (100% mastery, earned slowly through real combat while carrying it). Grants a real, always-controlled boost to your damage, hit roll, and armor class -- no downside at all -- with the exact size scaling by which specific beast you hold: a stronger, higher-tailed beast grants noticeably more than a weaker one.\n\nBefore reaching full mastery, carrying a beast carries real risk instead: a small, ever-present chance each combat round of losing control entirely in a rampage -- unable to act, auto-attacking everyone nearby, for several real minutes, though genuinely stronger while it lasts. That risk disappears entirely once your mastery is high enough.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

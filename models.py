@@ -43,6 +43,15 @@ class Player:
     name: str
     account_name: str
 
+    def __setattr__(self, name, value):
+        # All room transitions (walking, recalls, staff moves, forced moves)
+        # break a room-bound Barrier immediately, even between server pulses.
+        if name == "room_vnum" and "room_vnum" in self.__dict__ and self.room_vnum != value:
+            effects = self.__dict__.get("active_status_effects")
+            if isinstance(effects, dict):
+                effects.pop("barrier", None)
+        object.__setattr__(self, name, value)
+
     # Permanent choices (Section 3) -- protected from player edits
     village: Optional[str] = None
     village_rank: str = "academy student"
@@ -66,6 +75,7 @@ class Player:
     genjutsu_decoys: list = field(default_factory=list)
     stamina: int = 100
     maximum_stamina: int = 100
+    chokkan_active: bool = False
 
     strength: int = 10
     wisdom: int = 10
@@ -162,6 +172,7 @@ class Player:
 
     learned_skills: List[str] = field(default_factory=list)
     skill_proficiencies: Dict[str, int] = field(default_factory=dict)
+    signature_move: str = ""  # one selected jutsu; 25% bonus only at 150%
     jutsu_tiers: Dict[str, int] = field(default_factory=dict)
     cooldowns: Dict[str, float] = field(default_factory=dict)
 
@@ -177,6 +188,10 @@ class Player:
     # shifts later positions in between uses of the same backpack.
     backpack_contents: Dict[str, List[str]] = field(default_factory=dict)
     inventory: List[str] = field(default_factory=list)
+    last_christmas_present_year: int = 0
+    last_july_fourth_gift_year: int = 0
+    last_may_fourth_gift_year: int = 0
+    holiday_xp_boost_until: float = 0.0
 
     room_vnum: int = 0
 
@@ -217,7 +232,7 @@ class Player:
     # player will end up in a 'downed' state and the sharingan user
     # will have to choose yes or no to finish them off...this is the
     # cost of gaining sharingan mangeko beytraing your friend."
-    # Confirmed design: Sharingan-only (the other 4 bloodlines can't
+    # Confirmed design: Sharingan-only (the other bloodlines can't
     # attempt this even if they meet the same eligibility numbers);
     # only reachable by a player already eligible_for_awakening_quest
     # (Potential>=90, fully-maxed mastery) fighting their own,
@@ -241,6 +256,8 @@ class Player:
     # checked via bloodline_mangekyo alone, not stored here at all.
     mangekyo_eye_1: Optional[str] = None
     mangekyo_eye_2: Optional[str] = None
+    # Permanent discovery: reveal an eye's individual help after first use.
+    mangekyo_eyes_used: List[str] = field(default_factory=list)
     # Izanagi (Section 140, if rolled): a real, deliberate stance the
     # player must proactively activate -- confirmed directly NOT
     # automatic. Stays active indefinitely (no separate expiration of
@@ -249,24 +266,23 @@ class Player:
     # is set (a real, once-per-real-day cooldown, confirmed directly).
     izanagi_active: bool = False
     izanagi_cooldown_until: float = 0.0
-    # Amaterasu (Section 140, if rolled): a real, genuinely PERMANENT
-    # burn on the target -- confirmed directly it has NO duration of
-    # its own, burning forever until sealed by a future, scroll-taught
-    # sealing jutsu (not yet built). Travels with the player wherever
+    # Amaterasu: a persistent burn with no timer, cleared on defeat.
+    # Travels with the player wherever
     # they go, genuinely separate from the room's own fire (see
     # world.Room.amaterasu_fire_caster), which stays behind if they
     # leave.
     mangekyo_amaterasu_burning: bool = False
+    mangekyo_amaterasu_caster: Optional[str] = None
     # Kamui's own real pocket dimension (Section 140, if rolled) -- a
     # genuinely unique, per-caster room (never shared between
-    # different Mangekyo users). kamui_pocket_dimension_vnum is set
-    # the instant the caster opens it on a real target (step 1 of the
-    # confirmed 2-step entry); kamui_pocket_dimension_active only
-    # becomes True once the caster has separately cast it on
-    # THEMSELVES to actually join (step 2) -- real chakra upkeep only
-    # starts ticking from that point on.
+    # different Mangekyo users). Opening on a target creates the room
+    # without moving the caster; self-casting either joins that room or
+    # opens a solo one. Upkeep starts once the caster is inside.
     kamui_pocket_dimension_vnum: Optional[int] = None
     kamui_pocket_dimension_active: bool = False
+    # Original room for both the caster and the banished target, restored
+    # when the temporary dimension closes or either participant departs.
+    kamui_return_room_vnum: Optional[int] = None
     # Kamui: Intangibility (Section 140, if rolled) -- a real,
     # guaranteed window (data_mangekyo.KAMUI_INTANGIBILITY_ROUNDS)
     # where every incoming attack simply misses, confirmed directly.
@@ -458,27 +474,26 @@ class Player:
     # item, etc.) -- though today Chakra Paper is the only way in.
     chakra_nature: Optional[str] = None
     chakra_nature_revealed: bool = False
-    # Secondary chakra nature (Section 84, per direct follow-up
-    # request) -- a second, independent hidden roll unlocked at
-    # level 100, revealed through the exact same Chakra Paper/channel
-    # flow as the primary nature above, just gated at level 100
-    # instead of 50. Confirmed design: requires the PRIMARY nature to
-    # already be revealed first (even if already level 100+) --
-    # rolled fresh at the moment of that second reveal, not at
-    # character creation, since nobody starts at level 100. Guaranteed
-    # to differ from chakra_nature (random among the other 4 elements,
-    # no thematic restriction on which -- opposing elements are
-    # explicitly fine per confirmed design, "even if they oppose each
-    # other").
+    # Chosen at level 25 in the protected Kage room; always distinct
+    # from the first nature. Existing characters' prior revealed second
+    # nature remains valid.
     chakra_nature_secondary: Optional[str] = None
     chakra_nature_secondary_revealed: bool = False
+    # Saved so an interrupted level-25 choice resumes in the Kage room and
+    # returns the player to their previous room after choosing.
+    element_choice_return_room_vnum: Optional[int] = None
+    # Elemental Kekkei Genkai and three-nature Kekkei Tota derive from
+    # chakra natures; inherited clan bloodlines exclude them.
+    chakra_nature_tertiary: Optional[str] = None
+    chakra_nature_tertiary_revealed: bool = False
+    elemental_release_id: Optional[str] = None
     # Sharingan-specific tomoe count (1-3), per explicit request that
     # the first awakening grant exactly 1 tomoe, not a flat "fully
     # awakened" state. 0 for every other bloodline, and 0 for a
     # not-yet-awakened Sharingan too -- data_kekkei_genkai.
     # attempt_awaken() sets this to 1 the first time a Sharingan is
     # awakened. Meaningless for the other 4 bloodlines (Byakugan,
-    # Shikotsumyaku, Ice Release, Hydrification), which still use
+    # Shikotsumyaku, Ice Release), which still use
     # bloodline_awakened alone.
     bloodline_tomoe: int = 0
     # True while a player has actively toggled their 1-tomoe dodge
@@ -487,6 +502,7 @@ class Player:
     # passive bonus. False whenever bloodline_tomoe is 0 (can't be
     # toggled on without at least 1 tomoe).
     sharingan_active: bool = False
+    samurai_sabre_active: bool = False
     # A jutsu key copied via the 5-tomoe Sharingan's Copy Jutsu perk
     # (commands.SHARINGAN_COPY_JUTSU_CHANCE_PERCENT, rolled in combat.
     # use_jutsu_on_player when an opponent casts a jutsu at this
@@ -524,6 +540,7 @@ class Player:
     npc_kills: int = 0
     bank_balance: int = 0        # deliberately separate from player.ryo -- untouched by death-penalty ryo loss (see combat.handle_player_defeat) or anything else that only ever operates on player.ryo
     bank_last_interest_at: float = 0.0  # epoch seconds -- interest is applied lazily on next bank interaction, not on a global timer (see bank.py)
+    lottery_paid_draws: List[float] = field(default_factory=list)  # prevents a payout replay after a restart
     # Lifetime total ever earned (never decremented) -- distinct from
     # mission_points itself, which IS spent on Kage perks. Both feed
     # leaderboards.py ("most earned" vs "most held").

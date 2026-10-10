@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "train",
+  "keywords": [
+    "train"
+  ],
+  "title": "Train",
+  "body": "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n\nDescription: Spends a training point to raise one attribute by one point, up to the cap of 75. See 'help attributes' for what each attribute does.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

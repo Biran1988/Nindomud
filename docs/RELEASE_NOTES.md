@@ -5,6 +5,33 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- `gold` is an alias for `bank`. The daily `lottery` draws four digits every
+  24 hours. Tickets cost 1,000 ryo, increase the jackpot, and a missed draw
+  adds 25,000 ryo. Winning shares go into the players' banks; the next pot
+  starts at 25,000 ryo.
+- Mangekyo targets mobs. Kamui can also send its caster into a solo pocket;
+  the caster can extinguish owned Amaterasu fire. Positive dodge bonuses are
+  reduced by 10% while base Dexterity dodge remains intact.
+
+- Administrator `mstat <player>` now names the player's assigned Mangekyo
+  Eye 1 and Eye 2 techniques in the hidden Kekkei Genkai block.
+
+- The archive includes individual JSON pages in `helpfiles/`, including
+  `jubaku_satsu.json` and the three Taijutsu stances. Restart the Python
+  server to seed them into its existing `data/help/` without replacing
+  staff-written pages. `help jubaku`, `help kihon`, and other unambiguous
+  jutsu abbreviations now resolve to their individual pages.
+
+- In-game help now covers every executable command and every registered jutsu.
+  New pages explain Izanagi, Izanami guessing, Tsukuyomi actions, Sage training,
+  each family's Sage Mode, and combined Sharingan upkeep. Existing system-owned
+  Sharingan and Barrier pages refresh with their current behavior.
+
+- Barrier negates 25% of incoming damage for three minutes or until the player
+  changes rooms, without changing Armor Class. Sharingan upkeep still charges on each combat or idle tick, but
+  reports a combined Chakra and Stamina total every three minutes or when
+  Sharingan turns off.
+
 - Every registered jutsu now has an exact-name help lookup. Recent Taijutsu
   strikes and stances, Bukijutsu Ninja Arts, Mangekyo techniques, and the
   medicinal pill materials have individual pages. The Ninjutsu and Genjutsu

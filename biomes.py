@@ -80,6 +80,11 @@ def roll_secondary_chakra_nature(primary_element: str) -> str:
     return random.choice([e for e in ELEMENTS if e != "none" and e != primary_element])
 
 
+def roll_tertiary_chakra_nature(primary_element: str, secondary_element: str) -> str:
+    """Draw one more distinct nature at the level cap for three-nature releases."""
+    return random.choice([e for e in ELEMENTS if e != "none" and e not in (primary_element, secondary_element)])
+
+
 def damage_modifier(biome: str, element: str) -> float:
     """Returns the multiplier a jutsu's damage should get for being
     used with `element` while standing in `biome`. 1.0 (no change) for

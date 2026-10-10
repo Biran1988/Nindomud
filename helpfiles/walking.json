@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "walking",
+  "keywords": [
+    "walking",
+    "movement stamina",
+    "travel stamina"
+  ],
+  "title": "Walking and Stamina",
+  "body": "Syntax: north | south | east | west | northeast | northwest | southeast | southwest | up | down\n\nDescription: Each successful walk to another room consumes 1 or 2 Stamina. Blocked exits and closed doors cost nothing. You can still walk when exhausted; Stamina never drops below zero. Automatic Track movement also uses walking Stamina.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

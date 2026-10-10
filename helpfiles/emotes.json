@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "emotes",
+  "keywords": [
+    "emotes",
+    "emojis",
+    "emote",
+    "socials"
+  ],
+  "title": "Text Emotes",
+  "body": "Syntax: emotes  |  @<name>  |  ooc @<name>\n\nDescription: Browse 80 cosmetic text emotes. Use @yawn to show your current room that you yawn, or ooc @yawn to show everyone online [OOC] followed by your character's name and action.\n\nNames are case-insensitive. Examples: @wave, @bow, @facepalm, @headband, ooc @laugh. No target or extra words are accepted.\n\nSilence and shared chat spam limits apply. OOC emotes are recorded in chatlog; room emotes are not. These actions do not change stats, combat, or the world.\n\nDate: 2026-09-19",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

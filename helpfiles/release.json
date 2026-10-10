@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "release",
+  "keywords": [
+    "release"
+  ],
+  "title": "Release",
+  "body": "Syntax: release <player>\n\nDescription: Ends your own active Illusion Walk genjutsu on someone early. This is the only way it ever ends besides running its own course (see 'help illusion walk') -- only the person who actually cast it on them can release it.\n\nDate: 2026-09-04",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

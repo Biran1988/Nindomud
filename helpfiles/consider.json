@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "consider",
+  "keywords": [
+    "consider"
+  ],
+  "title": "Consider",
+  "body": "Syntax: consider <mob>\n\nDescription: Gauges how dangerous a mob would be to fight, based on the level gap between it and you -- a quick, cheap check before committing to 'attack', not a full combat simulation. Mobs only; a player's level/rank is already visible via 'who' or 'look' for a PvP read.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

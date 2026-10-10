@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "wield",
+  "keywords": [
+    "wield"
+  ],
+  "title": "Wield",
+  "body": "Syntax: wield <item>\n\nDescription: Equips a weapon from your inventory. Only accepts an actual weapon -- armor or a tool is refused here (see 'wear'/'hold' instead). Swapping weapons automatically unequips whatever was wielded before. The first time you wield a weapon of a given type, you automatically learn its weapon skill (see 'prac').\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

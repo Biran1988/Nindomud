@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "config",
+  "keywords": [
+    "config"
+  ],
+  "title": "Config",
+  "body": "Syntax: config [setting] [on|off]\n\nDescription: Shows or changes your personal settings, such as auto-looting ryo/gear from corpses, auto-sacrificing them, or the periodic tip-of-the-day broadcast. Run 'config' alone to see every available setting and its current state. Every setting defaults on for a brand-new character, and is reset back on for every character at the start of every server session -- you can still turn any of them off yourself any time, it just isn't remembered as your starting state across a restart.\n\nStaff have their own, separate set -- see 'help staffconfig'.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

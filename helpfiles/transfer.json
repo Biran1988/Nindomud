@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "transfer",
+  "keywords": [
+    "transfer"
+  ],
+  "title": "Transfer",
+  "body": "Syntax: transfer <player name>\n\nDescription: (Staff only.) Teleports another online player directly to your own current location. Their own real room is saved first, so 'return' can send them back later -- transferring the same player again while they're still away just updates that saved room to wherever they were at that moment, rather than remembering every past location.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

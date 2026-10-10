@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "trap disabling",
+  "keywords": [
+    "trap disabling"
+  ],
+  "title": "Trap Disabling",
+  "body": "Syntax: trap disabling [target]\n\nDescription: Disarms attached traps on the selected target (or yourself when no target is given). Failure triggers the trap against you. Bukijutsu unlocks at level 25. Costs 15 Chakra and 10 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

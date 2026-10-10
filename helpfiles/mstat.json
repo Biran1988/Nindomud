@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "mstat",
+  "keywords": [
+    "mstat"
+  ],
+  "title": "Mstat (staff)",
+  "body": "Syntax: mstat <vnum or name>\n\nDescription: Shows a mob prototype's full stat block -- works on a live spawned mob or an offline prototype by vnum. Also works on a player's name, showing their score sheet instead. If you're an administrator (or higher), a player's mstat also appends hidden Kekkei Genkai status (clan, bloodline, Potential, Talent, awakened, mastery). For a Sharingan user it shows Mangekyo status and the assigned Eye 1 and Eye 2 techniques by name -- see 'help bloodstat'. Builder-level staff see the normal score sheet with nothing extra; this data stays hidden below administrator.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

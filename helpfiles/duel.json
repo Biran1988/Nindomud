@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "duel",
+  "keywords": [
+    "duel",
+    "duels",
+    "dueling"
+  ],
+  "title": "Duel",
+  "body": "Syntax: duel <player>  |  duel  |  duel cancel\n\nDescription: A formal, friendly 1v1 fight, staged in a dedicated 10-room arena spanning five biomes (forest, mountain, desert, swamp, plains) -- real biomes, so elemental jutsu affinity genuinely applies there.\n\n&Cduel <player>&x - Challenges someone in the room, or accepts a pending challenge from them. The instant BOTH sides have accepted, you're both pulled straight into the arena -- but to two DIFFERENT starting rooms, not the same one. Finding each other through the arena's maze-like layout is part of the challenge.\n  &G[Active]&x\n\n&Cduel&x (no arguments) - Shows who you're currently dueling (or who you've challenged/been challenged by).\n  &G[Active]&x\n\n&Cduel cancel&x - Backs out. Before acceptance, this simply calls off the challenge. Mid-duel, it ends things the same way a real defeat would -- both of you are pulled back out and returned home.\n  &G[Active]&x\n\n&D(A duel only ever ends in a genuine defeat -- there's no yield or concede. Unlike ordinary PvP, though, losing a duel costs you nothing: no experience lost, no ryo lost, no trip to the hospital. Both fighters are simply healed up a bit and sent back to wherever they started from before the challenge began.)&x\n\nDate: 2026-08-25",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

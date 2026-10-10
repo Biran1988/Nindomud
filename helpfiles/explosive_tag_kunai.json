@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "explosive tag kunai",
+  "keywords": [
+    "explosive tag kunai",
+    "explosive tag"
+  ],
+  "title": "Explosive Tag Kunai",
+  "body": "Syntax: explosive tag kunai <target>\n\nDescription: A Bukijutsu jutsu, unlocked at level 30. Used by typing its name directly. 62-71 physical damage, costs 15 Chakra and 10 Stamina, 6 second cooldown.\n\nSame kunai-consuming, ground-dropping mechanics as Throw Kunai -- but there's a 30% chance the kunai is rigged to detonate instead, dealing a much bigger 172-189 explosive hit rather than the normal damage. It's always one or the other on a given throw, never both.\n\nDate: 2026-08-23",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

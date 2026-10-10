@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "illusion walk",
+  "keywords": [
+    "illusion walk",
+    "illusion"
+  ],
+  "title": "Illusion Walk",
+  "body": "Syntax: perform illusion walk <player>\n\nDescription: A Genjutsu technique that traps someone in an illusion of endless walking -- they keep seeing new surroundings every time they try to move, but never actually go anywhere at all. Works on another player only, in your own room.\n\nEvery step the victim takes -- including the moment the illusion slips -- costs them half their current stamina, so it drains fast the longer they wander (2000 becomes 1000, then 500, then 250, and so on). If it drops to 10 or below, sheer exhaustion shatters the illusion outright and they can see and act normally again immediately.\n\nThe higher your own mastery of this technique, the longer the victim can wander before the illusion slips and shows them their real surroundings again -- though that moment doesn't end the genjutsu itself. If they try to move again, the illusion starts fooling them right back. While genuinely trapped -- in any fake room, or even the room they started in -- the victim can't see or attack anyone real at all, you included, even though everyone else can still see and attack them completely normally. The only way it truly ends (short of exhaustion) is if you release them yourself (see 'help release').\n\nA defender with strong enough genjutsu resistance sees through this completely and can't be caught by it at all.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

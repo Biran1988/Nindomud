@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "lock",
+  "keywords": [
+    "lock"
+  ],
+  "title": "Lock",
+  "body": "Syntax: lock <direction>\n\nDescription: Locks a door. The door must already be closed. Anyone can lock a door they're standing at -- there's no key requirement to lock, only to unlock one that needs a specific key item or passcode.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

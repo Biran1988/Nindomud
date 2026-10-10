@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "leave",
+  "keywords": [
+    "leave",
+    "leave exam"
+  ],
+  "title": "Leave (Chunin Exam)",
+  "body": "Syntax: leave\n\nDescription: Voluntarily exits the Forest of Death back to your village, without finishing or forfeiting the Chunin Exam. Any scrolls you've collected and your exam progress are unaffected -- 'exam' takes you right back to the entrance whenever you're ready to continue. Only works while actually in the exam.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

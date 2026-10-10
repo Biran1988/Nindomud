@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "chatlog",
+  "keywords": [
+    "chatlog",
+    "chat log"
+  ],
+  "title": "Chatlog",
+  "body": "Syntax: chatlog\n\nDescription: Shows the last 25 messages sent on the 'ooc' channel, oldest first. Persists across server restarts -- the log isn't lost when the server reboots.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

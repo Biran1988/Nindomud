@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "convert",
+  "keywords": [
+    "convert"
+  ],
+  "title": "Convert",
+  "body": "Syntax: convert\n\nDescription: Exchanges 5 unused practice points for 1 training point at a teacher, letting you accelerate your attribute training with practice points you aren't otherwise spending. Requires a real teacher physically present (any teacher counts, not just one matching a specific skill's class) -- see 'help train' for what training points are spent on.\n\nDate: 2026-09-06",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

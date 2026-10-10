@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "teacher",
+  "keywords": [
+    "teacher",
+    "sensei",
+    "instructor"
+  ],
+  "title": "Teacher",
+  "body": "Syntax: (mechanic, not a command -- see 'help prac'/'help mset')\n\nDescription: Per direct request/confirmation (Section 110): practicing any skill or jutsu now requires a real teacher-flagged mob physically present in your room -- see 'help prac'/'help practice' for the practice command itself.\n\nA teacher's own class (Ninjutsu, Taijutsu, Genjutsu, or Bukijutsu) determines what they can teach -- they can only help you practice a skill from their OWN class. The one exception: 'General Skills' (universal starting skills, weapon skills like Kunai/Sword, Handsigns, Examine) aren't tied to any one class, so ANY teacher can help you practice those, regardless of their own specialty.\n\nIf no matching teacher is present, 'practice'/'prac <skill>' refuses outright and names the class you need to go find.\n\nFor staff: 'mset <vnum> teacher <class>' marks a mob as a teacher of that class (ninjutsu/taijutsu/genjutsu/bukijutsu); 'mset <vnum> teacher off' clears it back to not-a-teacher. Like shopkeepers and gamblers, a teacher can't be attacked. See 'help mset'.\n\nWorked example: 'mset create 5100 a ninjutsu instructor', then 'mset 5100 teacher ninjutsu', then 'mset spawn 5100 <room>' -- players sharing that room can now practice any Ninjutsu skill they know, plus any General Skills-category skill.\n\nDate: 2026-09-02",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

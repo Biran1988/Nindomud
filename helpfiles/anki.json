@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "anki",
+  "keywords": [
+    "anki"
+  ],
+  "title": "Anki",
+  "body": "Syntax: anki\n\nDescription: A General Skill known by every character from the start. Teleports you straight to your own village's Kage room -- unlike 'recall', which takes you home to your apartment. Can't be used while fighting, and has a 5-minute cooldown between uses.\n\nDate: 2026-09-07",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

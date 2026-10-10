@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "save",
+  "keywords": [
+    "save"
+  ],
+  "title": "Save",
+  "body": "Syntax: save\n\nDescription: Manually saves your character. Also happens automatically on quit, after every level-up, and periodically in the background.\n\nFor saving the WORLD itself (rooms/mobs/items), see 'help save world' -- a completely separate, Implementor-only command.\n\nDate: 2026-08-20",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

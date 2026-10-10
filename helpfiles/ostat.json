@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "ostat",
+  "keywords": [
+    "ostat"
+  ],
+  "title": "Ostat (staff)",
+  "body": "Syntax: ostat <vnum or name>\n\nDescription: Shows an item prototype's full stat block, including weapon resistances and timed medical healing. Wielded items show Hitroll, Damageroll, and Damage. Set them directly with 'oset <vnum> hitroll|damageroll|damage <n>'; damage overrides the weapontype default for that item.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

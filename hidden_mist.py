@@ -66,7 +66,8 @@ def cast(session) -> bool:
     player.chakra -= cost
     player.cooldowns[JUTSU_KEY] = now + jutsu["cooldown"]
     room.hidden_mist_caster = player.name
-    room.hidden_mist_expires_at = now + MIST_DURATION_SECONDS
+    import signature_moves
+    room.hidden_mist_expires_at = now + signature_moves.duration(player, jutsu, MIST_DURATION_SECONDS)
     session.send("&CA thick mist spreads through the room. Enemies lose sight of you; their defenses open to your attacks.&x")
     session.broadcast_room(f"&CThick mist rolls across the room around {player.name}.&x", exclude_self=True)
     combat.grow_skill_from_usage(player, jutsu["display_name"])

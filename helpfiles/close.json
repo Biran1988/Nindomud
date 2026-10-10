@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "close",
+  "keywords": [
+    "close"
+  ],
+  "title": "Close",
+  "body": "Syntax: close <direction>\n\nDescription: Closes an open door on one of the room's exits.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

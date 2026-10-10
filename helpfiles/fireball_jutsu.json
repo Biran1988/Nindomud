@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "fireball jutsu",
+  "keywords": [
+    "fireball jutsu",
+    "fireball"
+  ],
+  "title": "Fireball Jutsu",
+  "body": "Syntax: perform fireball jutsu <target>\n\nDescription: A Ninjutsu jutsu, unlocked at level 20. 24-29 damage, with a 40% chance to also set the target Burning -- steady damage each round for a few rounds. Costs 20 Chakra, 5 second cooldown.\n\nRequires your own chakra nature (primary or secondary) to genuinely be Fire -- this jutsu cannot be cast at all otherwise, even if it shows up in your learned skills. See 'help channel' for how to discover your chakra nature.\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

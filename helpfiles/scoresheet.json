@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "scoresheet",
+  "keywords": [
+    "scoresheet",
+    "score sheet"
+  ],
+  "title": "Score Sheet",
+  "body": "Syntax: score\n\nDescription: An overview of every 'score' sheet section not already covered by 'help attributes' or 'help combatstats'.\n\n&CRank&x - Your current village rank (e.g. Genin), raised through missions and time in service.\n  &G[Active]&x\n\n&CClan&x - A family affiliation chosen at creation, or changed later with 'clan join'.\n  &R[Not Yet Implemented -- cosmetic only, no mechanical bonus yet]&x\n\n&CLevel / Experience&x - Your overall combat level and progress toward the next one, gained from defeating enemies and completing missions.\n  &G[Active]&x\n\n&CRyo&x - Your spendable currency, earned from missions, corpses, and jobs, spent at shops and on crafting materials.\n  &G[Active]&x\n\n&CHealth / Chakra / Stamina&x - Your combat resources. Health reaching 0 defeats you; jutsu cost Chakra; physical actions cost Stamina. All three regenerate naturally over time, faster while resting.\n  &G[Active]&x\n\n&CPosition / Fighting&x - Whether you're standing, sitting, or resting, and who (if anyone) you're currently fighting.\n  &G[Active]&x\n\n&CPractice Points / Training Points&x - How many skill-practice and attribute-training uses you have banked right now (see 'help attributes').\n  &G[Active]&x\n\n&CPlayer Kills / Deaths&x - Your PvP record.\n  &G[Active]&x\n\n&CTotal Play Time&x - How long you've spent logged in and playing.\n  &G[Active]&x\n\n&D(See also: 'help attributes', 'help combatstats', 'help jobs')&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

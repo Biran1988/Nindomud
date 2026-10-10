@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "handsigns",
+  "keywords": [
+    "handsigns",
+    "hand signs",
+    "hand sign"
+  ],
+  "title": "Handsigns",
+  "body": "Syntax: (no command of its own -- happens automatically when you 'perform' a Ninjutsu or Genjutsu technique)\n\nDescription: Every Ninjutsu and Genjutsu technique requires forming a fixed sequence of hand signs before it actually goes off -- Taijutsu and Bukijutsu never do. The exact signs are specific to each jutsu, always the same sequence, and shown to EVERYONE in the room as you perform them, not just to you.\n\nForming the signs takes real time -- a genuine delay before the jutsu resolves. You can't start a different jutsu or move away during that time, but your ordinary attacks keep landing normally the whole while, and the jutsu lands separately on top once it resolves. Handsigns mastery shortens the delay considerably, from a few seconds down to under one at full mastery.\n\nHandsigns itself is granted automatically at level 20, regardless of your class. It's notoriously difficult to train directly -- practice can only ever bring it to 1%. Past that, the only way to improve it is landing real hits with hand-sign jutsu in actual combat.\n\nSince everyone in the room can see your hand signs, a sharp opponent can try to counter your jutsu with one of their own -- see 'help counter jutsu'.\n\nDate: 2026-08-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

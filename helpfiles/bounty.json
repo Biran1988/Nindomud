@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "bounty",
+  "keywords": [
+    "bounty"
+  ],
+  "title": "Bounty (staff)",
+  "body": "Syntax: bounty create mob <mob vnum> <village> <reward_ryo> <reward_mission_points> <description...>  |  bounty create player <name> <reward_ryo> <reward_mission_points> <description...>  |  bounty remove <id>\n\nDescription: Posts or removes a Bingo Book bounty on a mob prototype or a player. IDs are auto-assigned within the target's own village's fixed ID range. Unlike the player-facing 'place bounty', this requires no payment and isn't subject to the same-village restriction.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

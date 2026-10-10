@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "toxin binding",
+  "keywords": [
+    "toxin binding"
+  ],
+  "title": "Toxin Binding",
+  "body": "Syntax: toxin binding <weapon>\n\nDescription: Permanently binds poison to one carried or wielded weapon. A poisoned hit can inflict Poisoned. Disenchant the weapon before binding a different property. Bukijutsu unlocks at level 30. Costs 45 Chakra and 15 Stamina; 8 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

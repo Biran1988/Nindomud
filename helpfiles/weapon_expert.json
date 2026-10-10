@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "weapon expert",
+  "keywords": [
+    "weapon expert"
+  ],
+  "title": "Weapon Expert",
+  "body": "Syntax: help weapon expert (passive)\n\nDescription: A passive Bukijutsu weapon skill. Armed ordinary attacks can deal 50% extra damage, with a chance based on mastery. Bukijutsu unlocks at level 36. Costs 0 Chakra and 0 Stamina; 0 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

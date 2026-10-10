@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "water dragon jutsu",
+  "keywords": [
+    "water dragon jutsu",
+    "water dragon"
+  ],
+  "title": "Water Dragon Jutsu",
+  "body": "Syntax: perform water dragon jutsu <target>\n\nDescription: A Ninjutsu jutsu, unlocked at level 20. 24-29 damage, with a 40% chance to also inflict Drained -- steadily sapping the target's own chakra each round for a few rounds. Costs 20 Chakra, 5 second cooldown.\n\nRequires your own chakra nature (primary or secondary) to genuinely be Water -- this jutsu cannot be cast at all otherwise, even if it shows up in your learned skills.\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

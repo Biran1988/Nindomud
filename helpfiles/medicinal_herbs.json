@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "medicinal herbs",
+  "keywords": [
+    "medicinal herbs",
+    "herbs"
+  ],
+  "title": "Medicinal Herbs",
+  "body": "Syntax: craft pill medicine <level>  |  craft pill antidote <level>\n\nDescription: Buy Medicinal Herbs from a village general store. Bukijutsu at level 25 or higher consumes one herb to craft either pill at a chosen level no higher than the crafter's level. See 'help medicinal pill' and 'help antidote pill'.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

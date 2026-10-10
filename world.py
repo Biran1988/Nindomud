@@ -72,10 +72,9 @@ class Room:
     # Amaterasu's own real room-fire (Section 140, if rolled) --
     # confirmed directly: casting Amaterasu on a player ALSO sets
     # their current room ablaze, burning everyone in it except the
-    # caster, lasting a real 30 minutes from the cast (or until
-    # sealed early by a scroll-taught sealing jutsu, not yet built).
+    # caster, lasting five minutes from the cast.
     # Genuinely separate from a player's own real burn (mangekyo_
-    # amaterasu_burn_until on Player) -- if the original target
+    # amaterasu_burning on Player) -- if the original target
     # leaves, this stays behind and would burn anyone else who walks
     # in, exactly as confirmed.
     amaterasu_fire_caster: Optional[str] = None  # the caster's own name, exempt from this room's burn
@@ -207,6 +206,8 @@ def reconcile_apartment_ownership() -> None:
     existence and ownership tag."""
     import apartments
     import storage
+    deleted_ranges = [(entry["start"], entry["end"])
+                      for entry in storage.load_world_state().get("deleted_areas", [])]
     for player in storage.all_players():
         if player.apartment_room_vnum is not None:
             room = WORLD.get(player.apartment_room_vnum)
@@ -233,6 +234,10 @@ def reconcile_apartment_ownership() -> None:
                             continue  # parent not built yet this pass -- try again next pass
                         direction = entry["direction"]
                         new_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
+                        if any(start <= new_vnum <= end for start, end in deleted_ranges):
+                            del remaining[room_type]
+                            made_progress = True
+                            continue
                         new_room = Room(
                             new_vnum, f"{player.name}'s {room_type.capitalize()}",
                             apartments.ROOM_TYPE_DESCRIPTIONS[room_type],

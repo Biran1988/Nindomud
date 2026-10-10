@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "lightning strike jutsu",
+  "keywords": [
+    "lightning strike jutsu",
+    "lightning strike"
+  ],
+  "title": "Lightning Strike Jutsu",
+  "body": "Syntax: perform lightning strike jutsu <target>\n\nDescription: A Ninjutsu jutsu, unlocked at level 20. 24-29 damage, with a 30% chance to also Paralyze the target -- completely unable to act for their next couple of rounds. Costs 22 Chakra, 6 second cooldown.\n\nRequires your own chakra nature (primary or secondary) to genuinely be Lightning -- this jutsu cannot be cast at all otherwise, even if it shows up in your learned skills.\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

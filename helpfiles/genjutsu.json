@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "genjutsu",
+  "keywords": [
+    "genjutsu"
+  ],
+  "title": "Genjutsu",
+  "body": "Syntax: perform <jutsu name> <target>\n\nDescription: One of the four primary classes (see 'help classes'). Genjutsu techniques deal mental damage and often carry a lingering status effect, and (like Ninjutsu) require hand signs and a real casting delay before they land.\n\nJutsu unlocks expand across levels 5-65: Henge disguises, object illusions, disorientation and control attacks, Chisei, and room-wide Nehan Sh\u014dja. Use 'skills' or 'prac' for your complete level-sorted roster; 'help <jutsu name>' explains each technique.\n\nDate: 2026-08-26",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "rstat",
+  "keywords": [
+    "rstat"
+  ],
+  "title": "Rstat (staff)",
+  "body": "Syntax: rstat [vnum]\n\nDescription: Shows a room's full stat block -- the room you're standing in by default, or a specific vnum.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

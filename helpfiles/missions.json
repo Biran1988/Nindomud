@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "missions",
+  "keywords": [
+    "missions"
+  ],
+  "title": "Missions",
+  "body": "Syntax: missions\n\nDescription: At a village Mission Board, lists every D-Rank mission posted there and whether you've already accepted it or it's on cooldown. Away from the board, shows your active mission journal and progress instead -- both D-Rank and any dynamic C-Rank+ mission you've requested. For C-Rank and above, see 'help request' -- those aren't posted on any board.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

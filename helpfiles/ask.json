@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "ask",
+  "keywords": [
+    "ask"
+  ],
+  "title": "Ask",
+  "body": "Syntax: ask <name> <topic>\n\nDescription: Asks an NPC in the room about a topic -- some mobs (like a village Kage) respond to specific keywords such as 'promotion'.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

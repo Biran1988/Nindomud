@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "unlock",
+  "keywords": [
+    "unlock"
+  ],
+  "title": "Unlock",
+  "body": "Syntax: unlock <direction> [passcode]\n\nDescription: Unlocks a locked door. If the door requires a specific key item, you need it in your inventory. If it requires a passcode, type it as the second word.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

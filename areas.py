@@ -44,6 +44,7 @@ deliberate, honest limitation, just a narrower one than before.
 """
 
 import dataclasses
+from dataclasses import field
 from typing import Optional
 
 DEFAULT_BLOCK_SIZE = 1000
@@ -55,6 +56,9 @@ class Area:
     vnum_start: int
     vnum_end: int
     creator: str
+    builders: list = field(default_factory=list)
+    prototype: bool = False
+    prototype_owner: str = ""
     income: int = 0  # per-tick village treasury income when this area is controlled (see territory.py)
     # Area-wide atmospheric flavor line (Section: area reset messages),
     # per direct request -- shown periodically (server.py's own random-
@@ -173,10 +177,12 @@ def register_area(name: str, vnum_start: int, vnum_end: int, creator: str) -> Ar
             )
     areas[key] = {
         "name": name, "vnum_start": vnum_start, "vnum_end": vnum_end, "creator": creator,
+        "prototype": creator.lower() != "system", "prototype_owner": "",
     }
     import storage
     storage.save_areas(areas)
-    return Area(name=name, vnum_start=vnum_start, vnum_end=vnum_end, creator=creator)
+    return Area(name=name, vnum_start=vnum_start, vnum_end=vnum_end, creator=creator,
+                prototype=creator.lower() != "system")
 
 
 def create_area(name: str, creator: str, size: int = DEFAULT_BLOCK_SIZE) -> Area:
@@ -198,6 +204,39 @@ def set_income(name: str, income: int) -> Optional[Area]:
     areas[key]["income"] = income
     storage.save_areas(areas)
     return Area(**areas[key])
+
+
+def set_builder_assignment(name: str, account_name: str, assigned: bool) -> Optional[Area]:
+    """Persist the account names allowed to build inside this area."""
+    import storage
+
+    entries = all_areas()
+    key = name.strip().lower()
+    if key not in entries:
+        return None
+    builders = {value.lower() for value in entries[key].get("builders", [])}
+    if assigned:
+        builders = {account_name.lower()}
+        entries[key]["prototype_owner"] = account_name.lower()
+    else:
+        builders.discard(account_name.lower())
+        if entries[key].get("prototype_owner") == account_name.lower():
+            entries[key]["prototype_owner"] = ""
+    entries[key]["builders"] = sorted(builders)
+    storage.save_areas(entries)
+    return Area(**entries[key])
+
+
+def set_prototype(name: str, enabled: bool) -> Optional[Area]:
+    import storage
+
+    entries = all_areas()
+    key = name.strip().lower()
+    if key not in entries:
+        return None
+    entries[key]["prototype"] = enabled
+    storage.save_areas(entries)
+    return Area(**entries[key])
 
 
 def set_reset_message(name: str, message: Optional[str]) -> Optional[Area]:
@@ -350,6 +389,10 @@ def ensure_single_village_areas() -> None:
     new, wider village blocks."""
     import data_villages
 
+    import storage
+    if any(entry.get("name", "").lower() == "leaf"
+           for entry in storage.load_world_state().get("deleted_areas", [])):
+        return  # the owner explicitly deleted this built-in area
     existing = find_area("leaf")
     if existing and existing.vnum_start == 1 and existing.vnum_end == 2500:
         return

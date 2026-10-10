@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "classes",
+  "keywords": [
+    "classes",
+    "class",
+    "jutsu"
+  ],
+  "title": "Classes",
+  "body": "Syntax: help <class name>  (e.g. help ninjutsu)\n\nDescription: Your primary class, chosen at character creation, decides which jutsu you're granted automatically as you level -- see 'help <class name>' for each one's own full list. The four classes are:\n\n&CNinjutsu&x -- elemental and utility techniques, most of them requiring hand signs. See 'help ninjutsu'.\n\n&CGenjutsu&x -- illusion and mental techniques. See 'help genjutsu'.\n\n&CTaijutsu&x -- pure physical combat techniques, no hand signs, no chakra cost. See 'help taijutsu'.\n\n&CBukijutsu&x -- weapon and thrown-item techniques. See 'help bukijutsu'.\n\nYour primary class only decides which jutsu you're automatically granted -- it doesn't restrict which weapons you can wield or which skills you can practice.\n\nEach class also gives a real, one-time +4 boost to two attributes at character creation: Ninjutsu boosts Intelligence and Constitution, Genjutsu boosts Intelligence and Wisdom, Taijutsu boosts Strength and Dexterity, and Bukijutsu boosts Strength and Constitution.\n\nDate: 2026-09-05",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

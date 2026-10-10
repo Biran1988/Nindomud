@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "drink",
+  "keywords": [
+    "drink"
+  ],
+  "title": "Drink",
+  "body": "Syntax: drink <item>\n\nDescription: Drinks a beverage item for an immediate effect (typically restoring Chakra). Only accepts drink-category items.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

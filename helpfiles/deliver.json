@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "deliver",
+  "keywords": [
+    "deliver"
+  ],
+  "title": "Deliver",
+  "body": "Syntax: deliver\n\nDescription: Hands over every bundle of weeds you're carrying to a villager NPC in the room, advancing the 'Weed the Garden' mission. Partial delivery across multiple trips works fine.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

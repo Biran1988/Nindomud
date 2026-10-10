@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "skills",
+  "keywords": [
+    "skills"
+  ],
+  "title": "Skills",
+  "body": "Syntax: skills\n\nDescription: Lists every jutsu and passive skill you know, ordered by the level you unlocked it at (lowest first), each colored by its class (Ninjutsu, Taijutsu, Genjutsu, Bukijutsu, or General Skills). Doesn't show proficiency -- see 'prac' for that.\n\nDate: 2026-09-02",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

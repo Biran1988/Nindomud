@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "purge",
+  "keywords": [
+    "purge"
+  ],
+  "title": "Purge",
+  "body": "Syntax: purge\n\nDescription: (Staff only.) Deletes every mob, ground item, and corpse in the room you're currently standing in, all at once -- a quick way to clean up a test area or clear out clutter. Always targets your current room; no argument needed.\n\nMobs removed this way still respawn normally later if they're a respawning template -- purge clears the room right now, it doesn't permanently depopulate it.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

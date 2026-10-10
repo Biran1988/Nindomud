@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "kokohi arazu",
+  "keywords": [
+    "kokohi arazu"
+  ],
+  "title": "Kokohi Arazu",
+  "body": "Syntax: perform kokohi arazu <carried item> as <apparent name>\n\nDescription: Change the visible name of a carried item without altering the real item. Change how a carried item looks to other players who examine you; its real identity and properties stay intact. Usable with any chakra nature. Illusion lasts 20 pulses. Unlocks at level 18. Costs 20 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

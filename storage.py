@@ -413,6 +413,20 @@ def load_account(name: str) -> Optional[Account]:
         return Account.from_dict(json.load(f))
 
 
+def all_staff_accounts() -> List[Account]:
+    """Read staff names and ranks from persisted accounts."""
+    if not os.path.isdir(ACCOUNTS_DIR):
+        return []
+    staff = []
+    for filename in os.listdir(ACCOUNTS_DIR):
+        if not filename.endswith(".json"):
+            continue
+        account = load_account(filename[:-5])
+        if account and account.staff_level != "player":
+            staff.append(account)
+    return staff
+
+
 # --- Players ----------------------------------------------------------
 
 def player_path(name: str) -> str:
@@ -424,6 +438,8 @@ def player_exists(name: str) -> bool:
 
 
 def save_player(player: Player) -> None:
+    import data_kekkei_genkai
+    data_kekkei_genkai.sync_elemental_release(player)
     ensure_dirs()
     with open(player_path(player.name), "w", encoding="utf-8") as f:
         json.dump(player.to_dict(), f, indent=2)
@@ -466,6 +482,15 @@ def load_player(name: str) -> Optional[Player]:
     legacy_experience_curve = "experience_curve_version" not in raw
     legacy_sage_training = raw.get("sage_training_interval_version", 1) < 2
     player = Player.from_dict(raw)
+    removed_bloodline_migrated = player.bloodline_id in ("hydrification", "ice_release")
+    if removed_bloodline_migrated:
+        player.bloodline_id = None
+        player.bloodline_potential = 0
+        player.bloodline_talent = 0
+        player.bloodline_awakened = False
+        player.bloodline_mastery = 0
+    import data_kekkei_genkai
+    elemental_release_migrated = data_kekkei_genkai.sync_elemental_release(player)
     import data_summons
     chosen_summon = next((family for family in player.signed_summoning_contracts
                           if family in data_summons.CONTRACTS), "")
@@ -496,7 +521,7 @@ def load_player(name: str) -> Optional[Player]:
         player.experience_curve_version = 1
     import leveling
     experience_migrated = leveling.migrate_experience_curve(player)
-    if summon_contracts_migrated or sage_training_migrated or experience_migrated:
+    if summon_contracts_migrated or sage_training_migrated or experience_migrated or removed_bloodline_migrated or elemental_release_migrated:
         save_player(player)
     return player
 

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "laser current",
+  "keywords": [
+    "laser current"
+  ],
+  "title": "Laser Current",
+  "body": "Syntax: perform laser current <target>\n\nDescription: A Storm Release attack that strikes one target. A drained target loses Chakra over time.  Requires Storm Release and its revealed chakra natures, without a clan bloodline. Base damage: 40-48. 25% chance to inflict drained. Unlocks at level 25. Costs 24 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

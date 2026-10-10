@@ -14,6 +14,8 @@ from config import ADMIN_NAME
 def main():
     storage.ensure_dirs()
     content.populate()
+    import seasonal_events
+    seasonal_events.sync_visitors()
     from world import reconcile_apartment_ownership
     reconcile_apartment_ownership()
     import commands
@@ -30,4 +32,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if sys.argv[1:] == ["--preflight"]:
+        # Reboot validates the installed source in a fresh interpreter
+        # before disconnecting any players.
+        import session
+        import combat
+        import commands
+        import help_system
+        import jutsu_colors
+        import mangekyo_discovery
+    else:
+        main()

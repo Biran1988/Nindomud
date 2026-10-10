@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "poison gas bomb",
+  "keywords": [
+    "poison gas bomb"
+  ],
+  "title": "Poison Gas Bomb",
+  "body": "Syntax: poison gas bomb <target>\n\nDescription: Attaches a consumed Poison Gas Bomb. After two combat pulses it deals 12-23 damage and poisons the target unless disabled. Requires a carried poison gas bomb. Bukijutsu unlocks at level 40. Costs 40 Chakra and 15 Stamina; 8 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

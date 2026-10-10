@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "put",
+  "keywords": [
+    "put",
+    "backpack",
+    "container",
+    "containers"
+  ],
+  "title": "Put (containers)",
+  "body": "Syntax: put <item> in <container>  |  get <item> from <container>\n\nDescription: A real container item -- a backpack, or anything else a builder has set up this way -- has its own real, separate storage capacity, entirely apart from your normal 20-slot inventory. Items sitting inside a container don't count against that limit at all. 'put' moves an item from your ordinary inventory into a container you're carrying; 'get <item> from <container>' moves it back out. A container doesn't need to be worn to be used -- carrying it anywhere in your inventory is enough; wearing one (in the 'back' slot, if it has a real wear_loc set) is purely cosmetic.\n\nIf you're carrying more than one container with the exact same name, use the same real 'N.keyword' targeting every other command in the game supports -- 'put kunai in 2.backpack' means the SECOND backpack, not the first. Two identically-named containers never share contents; each one's own real, separate storage is tracked independently, no matter how many you're carrying.\n\nA container that's genuinely full refuses further items until something's taken back out. Staff sets a real item's own container capacity with 'oset <vnum> concap <n>' -- 0 (the default) means that item isn't a container at all; any positive number makes it one, holding up to that many items.\n\nDate: 2026-09-13",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

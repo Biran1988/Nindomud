@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "description",
+  "keywords": [
+    "description"
+  ],
+  "title": "Description",
+  "body": "Syntax: description [text]\n\nDescription: Shows or sets your character's physical description, shown to others who look at you.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

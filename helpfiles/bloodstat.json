@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "bloodstat",
+  "keywords": [
+    "bloodstat"
+  ],
+  "title": "Bloodstat (staff)",
+  "body": "Syntax: bloodstat <player>\n\nDescription: Shows a player's hidden Kekkei Genkai state: clan, bloodline (if any), Potential, Talent, awakened status, and mastery (shown as a fraction and percent of that player's own Potential, plus whether they meet BOTH conditions a future stage-2 awakening quest would require -- 90+ raw Potential AND fully-maxed mastery) -- plus, for a Sharingan specifically, tomoe count, active state, Mangekyo status, and both assigned eye techniques. Never shown to the player themselves -- see 'bloodset' to edit these values. The same information appears at the end of 'mstat <player>' for an administrator (or higher).\n\n&D(Staff only -- requires administrator access or higher.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

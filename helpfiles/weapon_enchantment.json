@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "weapon enchantment",
+  "keywords": [
+    "weapon enchantment"
+  ],
+  "title": "Weapon Enchantment",
+  "body": "Syntax: weapon enchantment <weapon> <flaming|frost|life|sharp|vorpal|shocking>\n\nDescription: Permanently binds one property to a carried or wielded weapon: flaming, frost, life, sharp, vorpal, or shocking. Disenchant before changing the property. Bukijutsu unlocks at level 55. Costs 60 Chakra and 20 Stamina; 10 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

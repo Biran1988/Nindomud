@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "staffconfig",
+  "keywords": [
+    "staffconfig",
+    "staff config"
+  ],
+  "title": "Staffconfig (staff)",
+  "body": "Syntax: staffconfig [setting] [on|off]\n\nDescription: Staff's own, separate set of personal settings -- distinct from the regular 'config' every player has. Covers staff-specific display/notification preferences: whether you get a live ping when a player submits a bug report, and whether you see vnums -- room headers, and any mob or item wherever it's listed (a room, your own inventory). Both default on. Run 'staffconfig' alone to see every setting and its current state.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

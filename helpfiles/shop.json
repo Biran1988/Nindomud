@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "shop",
+  "keywords": [
+    "shop",
+    "player shop",
+    "main street"
+  ],
+  "title": "Shop",
+  "body": "Syntax: buy shop  |  give <item> <shopkeeper>  |  price <item> <amount>  |  shop  |  shop name <text>  |  shop desc <text>  |  sell shop\n\nDescription: Player shops -- one per player, along Main Street (5 rooms north of the Hokage's Kage Chamber, with a shop slot east and west of each). Costs 1,000,000 ryo to claim. Meant for anyone leveling a job (Cooking, Farming, Weaponsmith, etc.) to actually sell what they produce.\n\nGive an item to your own shopkeeper, then set its price -- other players can then 'buy' it there like any other shop. Capped at 20 items in stock at once (the same item can appear more than once; each is a separate sale). 'shop name'/'shop desc' work only while standing inside your own shop, same as an apartment.\n\n'sell shop' closes it down: every unsold item is returned to your inventory if there's room, or dropped on the shop's floor otherwise, and the room becomes vacant again for someone else to claim. No refund of the purchase price.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

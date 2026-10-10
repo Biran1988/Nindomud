@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "wind blade jutsu",
+  "keywords": [
+    "wind blade jutsu",
+    "wind blade"
+  ],
+  "title": "Wind Blade Jutsu",
+  "body": "Syntax: perform wind blade jutsu <target>\n\nDescription: A Ninjutsu jutsu, unlocked at level 20. 24-29 damage, with a 40% chance to also knock the target Off Balance -- steadily draining their own stamina each round for a few rounds. Costs 20 Chakra, 5 second cooldown.\n\nRequires your own chakra nature (primary or secondary) to genuinely be Wind -- this jutsu cannot be cast at all otherwise, even if it shows up in your learned skills.\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

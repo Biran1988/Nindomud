@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "give",
+  "keywords": [
+    "give"
+  ],
+  "title": "Give",
+  "body": "Syntax: give <item> <player>\n\nDescription: Hands an item from your inventory to another player in the same room. Refuses if their inventory has no room for it.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

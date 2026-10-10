@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "trap",
+  "keywords": [
+    "trap",
+    "trap buy",
+    "bomb",
+    "snare",
+    "entangled"
+  ],
+  "title": "Trap",
+  "body": "Syntax: trap buy <type>  (types: snare, bomb)\n\nDescription: Places a trap in the room you're standing in, funded by your village's shared treasury -- guarding the APPROACH to a capture point rather than the point itself. Requires being that village's Kage, and standing within 1-2 rooms of a capture point your own village already controls.\n\nA snare trap deals moderate damage and entangles its target so they can't move for a while -- it stays in place and can trigger again on the next enemy who walks in. A bomb deals bigger damage but doesn't entangle, and is destroyed after going off once.\n\nA trap only ever triggers on a player from a DIFFERENT village than the one who placed it, and only while a war window is active -- it's inert the rest of the time. A trap is a real, visible mob standing in the room (not hidden), so an enemy who spots it can fight and destroy it before it goes off.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

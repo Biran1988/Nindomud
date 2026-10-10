@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "bloodset",
+  "keywords": [
+    "bloodset"
+  ],
+  "title": "Bloodset (staff)",
+  "body": "Syntax: bloodset <player> bloodline <kkg_id|none>  |  bloodset <player> potential <0-100>  |  bloodset <player> talent <0-100>  |  bloodset <player> awakened <yes|no>  |  bloodset <player> mangekyo <yes|no>  |  bloodset <player> mastery <int>  |  bloodset <player> tomoe <int>  |  bloodset <player> awaken\n\nDescription: Force-edits a player's hidden Kekkei Genkai state, for testing. 'awaken' calls the real awakening framework. 'mangekyo yes' requires an awakened Sharingan and assigns two distinct random eye techniques from the normal pool; repeating it preserves existing eyes. 'mangekyo no' disables Mangekyo but keeps the assigned eyes. You can also use 'mset <player> mangekyo on|off'. 'tomoe' only matters for a Sharingan. Assigning a bloodline with no Potential/Talent rolls both automatically.\n\n&D(Staff only -- requires administrator access or higher.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "lightsaber",
+  "keywords": [
+    "lightsaber",
+    "lightsabers",
+    "activate",
+    "deactivate",
+    "insert"
+  ],
+  "title": "Lightsabers",
+  "body": "Syntax: wield lightsaber | activate [lightsaber] | deactivate [lightsaber]\n        use lightsaber | insert <cut gem> [into <lightsaber>]\n        lightsaber | lightsaber on|off [lightsaber]\n        lightsaber gem <cut gem> [into <lightsaber>]\n\nA mysterious Jedi visits each Kage chamber on May 4 (America/Detroit time). Ask jedi lightsaber to receive one green lightsaber hilt per character per year. The Jedi leaves after May 4, but your weapon remains usable all year. An ignited blade uses Sword proficiency, adds 8 base weapon damage and +2 Hitroll. A retracted hilt uses Blunt Weapon proficiency with no blade damage or Hitroll bonus. Use lightsaber toggles ignition. Deactivate the blade before inserting a carried cut gem; crystal changes are unavailable during combat. Quartz makes white, sapphire blue, ruby red, and diamond cyan. Inserting consumes one cut gem and replaces the old crystal. The gem changes color only. Raw gems and ordinary uncut gems do not work. Color and ignition state survive saving, trading, and rebooting. Commands default to a lightsaber in your equipment, then inventory; use 2.lightsaber to select the second match.\n\nDate: 2026-10-10",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

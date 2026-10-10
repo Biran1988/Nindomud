@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "hold",
+  "keywords": [
+    "hold"
+  ],
+  "title": "Hold",
+  "body": "Syntax: hold <item>\n\nDescription: Equips a tool -- a fishing rod, pickaxe, axe, hoe, or cooking pot -- in its own slot, separate from your wielded weapon and worn armor, so you can hold a tool and still fight with your weapon equipped. Only accepts an actual tool -- armor or a weapon is refused here (see 'wear'/'wield' instead).\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

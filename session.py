@@ -12,6 +12,7 @@ account could be added later without changing the storage format much.
 """
 
 import time
+import unicodedata
 from enum import Enum, auto
 from typing import Callable, List, Optional
 
@@ -24,6 +25,7 @@ import data_appearance
 import data_clans
 import data_loadouts
 import data_jutsu
+import jutsu_colors
 import biomes
 import data_kekkei_genkai
 import leveling
@@ -37,6 +39,19 @@ from models import Account, Player
 from prompt import render_prompt
 
 ACTIVE_SESSIONS: List["Session"] = []
+
+
+def _terminal_safe_text(text: str) -> str:
+    """Send plain ASCII so legacy telnet clients show the same text as phones.
+
+    Preserve meaningful punctuation before transliterating accented names;
+    unsupported symbols and emoji are omitted from game output. The stored
+    names and player data are left intact.
+    """
+    punctuation = str.maketrans({"—": " - ", "–": "-", "‘": "'", "’": "'",
+                                 "“": '"', "”": '"', "…": "...", "\u00a0": " "})
+    text = text.translate(punctuation)
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
 
 
 class State(Enum):
@@ -126,6 +141,7 @@ class Session:
         # e.g. gambling's "the dice clatter...") and flavor_sent (how
         # many of those have already been shown). None when idle.
         self.pending_action: Optional[dict] = None
+        self.chakra_charge: Optional[dict] = None  # timed Chakra Charge channel; never persisted
 
         # Scratch chargen state
         self._pending_name: Optional[str] = None
@@ -149,13 +165,20 @@ class Session:
 
     # --- Output helpers ---------------------------------------------------
 
-    def send(self, text: str) -> None:
+    def send(self, text: str, *, highlight_jutsu: bool = False) -> None:
         # Per-unit crafted pill metadata lives in legacy item strings but is
         # never part of a player's visible item name; examine shows its level.
         from pill_crafting import display_name
         text = display_name(text)
+        text = _terminal_safe_text(text)
+        if highlight_jutsu:
+            text = jutsu_colors.highlight_names(text)
         rendered = colors.render(text, self.color_enabled)
         self.send_raw(rendered + "\r\n")
+
+    def send_jutsu(self, text: str) -> None:
+        """Highlight technique names in cast, hit, and help messages."""
+        self.send(text, highlight_jutsu=True)
 
     def send_prompt(self) -> None:
         if self.state != State.PLAYING or not self.player:
@@ -166,7 +189,7 @@ class Session:
             enemy = _PvpEnemyAdapter(self.pvp_target.player)
         p = render_prompt(self.player, mob=enemy, is_staff=is_staff)
         if p:
-            self.send_raw("\r\n" + colors.render(p, self.color_enabled) + "\r\n")
+            self.send_raw("\r\n" + colors.render(_terminal_safe_text(p), self.color_enabled) + "\r\n")
 
     def active_sessions(self) -> List["Session"]:
         return [s for s in ACTIVE_SESSIONS if s.state == State.PLAYING]
@@ -197,6 +220,10 @@ class Session:
                 other.send(text)
 
     def request_close(self) -> None:
+        if self.state == State.PLAYING and self.player:
+            import mangekyo
+            mangekyo.end_tsukuyomi_on_departure(self, world)
+            mangekyo.end_kamui_on_departure(self, world)
         if self.state == State.PLAYING and self.player:
             import commands
             import config
@@ -372,7 +399,7 @@ class Session:
         }
 
     def is_busy(self) -> bool:
-        return self.pending_action is not None
+        return self.pending_action is not None or self.chakra_charge is not None
 
     def process_pending_action(self) -> None:
         """Called every pulse (server.py) for every PLAYING session.
@@ -890,23 +917,35 @@ class Session:
                 other.send("\n&RYour connection has been taken over by a new login.&x")
                 other.request_close()
 
+        # Tsukuyomi rooms exist only in memory. A reboot, dropped link,
+        # or takeover can leave an older saved character frozen with no
+        # active caster to release them; restore their original room.
+        if player.tsukuyomi_frozen and not any(
+                s.player and s.player.tsukuyomi_active_target_name == player.name
+                for s in ACTIVE_SESSIONS if s is not self):
+            player.room_vnum = player.tsukuyomi_return_room_vnum or player.room_vnum
+            player.tsukuyomi_frozen = False
+            player.tsukuyomi_return_room_vnum = None
+            storage.save_player(player)
+        if player.tsukuyomi_active_target_name and world.WORLD.get(player.tsukuyomi_room_vnum) is None:
+            player.room_vnum = player.tsukuyomi_caster_return_vnum or player.room_vnum
+            player.tsukuyomi_active_target_name = None
+            player.tsukuyomi_actions_remaining = 0
+            player.tsukuyomi_room_vnum = None
+            player.tsukuyomi_caster_return_vnum = None
+            storage.save_player(player)
+
         self.player = player
         self.state = State.PLAYING
         self.color_enabled = player.color_enabled
+        player._immortal_skill_mastery = bool(self.account and self.account.staff_level != "player")
 
-        # Staff jutsu bypass (Section 83, per direct request: "make
-        # it so staff get every skill and jutsu regardless of primary
-        # class") -- confirmed design: immediate and level-independent,
-        # not gated by the character's own level at all. Weapon
-        # skills and passives (Strong Fist Style) are NOT class-gated
-        # in the first place -- confirmed directly before concluding
-        # jutsu was the only actual restriction needing a bypass here.
+        # Staff receive every skill and jutsu, including scroll and
+        # bloodline techniques, regardless of class or level.
         if self.account and self.account.staff_level != "player":
-            for key in data_jutsu.all_jutsu_keys():
-                display = data_jutsu.JUTSU[key]["display_name"]
-                if display not in player.learned_skills:
-                    player.learned_skills.append(display)
-                    player.skill_proficiencies[display] = 0
+            leveling.grant_immortal_jutsu(player)
+            for skill in player.learned_skills:
+                player.skill_proficiencies[skill] = 100
 
         # Re-point the storage room's ground_items at THIS player
         # object's own storage_room_items list, not whatever temporary
@@ -935,12 +974,20 @@ class Session:
         # Resetting to the player's own village starting room is a
         # safe, always-valid fallback -- it's static content.py-seeded
         # content, never something a builder could have removed.
+        if world.WORLD.get(player.room_vnum) is None and player.kamui_return_room_vnum is not None:
+            if world.WORLD.get(player.kamui_return_room_vnum) is not None:
+                player.room_vnum = player.kamui_return_room_vnum
+            player.kamui_return_room_vnum = None
+            player.kamui_pocket_dimension_vnum = None
+            player.kamui_pocket_dimension_active = False
         if world.WORLD.get(player.room_vnum) is None:
             from data_villages import VILLAGES
-            player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
+            village_start = VILLAGES[player.village]["starting_room_vnum"]
+            player.room_vnum = (village_start if world.WORLD.get(village_start)
+                                else next(iter(world.WORLD.rooms)))
             self.send(
                 "&Y(The room you were last in no longer exists -- you've been "
-                "returned to your village.)&x"
+                "moved to a safe room.)&x"
             )
 
         self.send(f"\n&GYou are now playing {player.name}.&x")
@@ -959,9 +1006,15 @@ class Session:
         # down to a single room) -- moved to their own village's real,
         # current starting room instead of left stranded.
         if world.WORLD.get(player.room_vnum) is None:
-            player.room_vnum = _VILLAGES[player.village]["starting_room_vnum"]
+            village_start = _VILLAGES[player.village]["starting_room_vnum"]
+            player.room_vnum = (village_start if world.WORLD.get(village_start)
+                                else next(iter(world.WORLD.rooms)))
         for line in leveling.sync_universal_skills(player):
             self.send(line)
+        if leveling.grant_immortal_jutsu(player):
+            storage.save_player(player)
+        import element_choice
+        element_choice.begin(self)
         commands.cmd_look(self, [])
         self.send_prompt()
 
@@ -970,7 +1023,21 @@ class Session:
         if not line:
             self.send_prompt()
             return
+        import element_choice
+        if element_choice.handle_command(self, line):
+            self.send_prompt()
+            return
+        previous_room = self.player.room_vnum
         commands.dispatch_line(self, line)
+        # Catch every teleport or special movement path, including future
+        # commands, in addition to the destination checks at their entry.
+        if self.account and self.account.staff_level == "builder":
+            import areas
+            destination_area = areas.find_area_for_vnum(self.player.room_vnum)
+            if (not destination_area or self.account.name.lower() not in
+                    {name.lower() for name in destination_area.builders}):
+                self.player.room_vnum = previous_room
+                self.send("That room is outside your assigned builder area.")
         # Keep color_enabled and player's saved prompt in sync.
         self.player.color_enabled = self.color_enabled
         self.send_prompt()

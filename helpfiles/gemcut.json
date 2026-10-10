@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "gemcut",
+  "keywords": [
+    "gemcut",
+    "gemcutting"
+  ],
+  "title": "Gemcut",
+  "body": "Syntax: gemcut <raw gem>\n\nDescription: Hold a Copper Chisel (item VNUM 20803), then cut a Rough Quartz, Raw Sapphire, Raw Ruby, or Raw Diamond found while mining. Gemcutter levels 1, 25, 55, and 80 unlock them respectively. Quartz is Uncommon (+2 Hitroll and +2 Damageroll), Sapphire and Ruby are Epic (+5 each), and Diamond is Legendary (+8 each). The cut gems store these stats for future weapon upgrades; carrying them does not yet boost combat. Cutting costs 1-2 Stamina and takes a few seconds. Each completed cut wears the chisel by one use; it breaks after 250 uses by default. Other job tools wear on every completed attempt, including failed gathers and burned meals. Remaining uses appear in inventory and eq.\n\nDate: 2026-09-25",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

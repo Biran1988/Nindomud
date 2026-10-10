@@ -68,6 +68,7 @@ def snapshot_world() -> dict:
     import world
     import combat
     import olc
+    import seasonal_events
 
     return {
         "rooms": {
@@ -77,6 +78,8 @@ def snapshot_world() -> dict:
         "mobs": {
             str(vnum): dict(template)
             for vnum, template in combat.MOB_TEMPLATES.items()
+            if vnum not in (seasonal_events.SANTA_VNUM, seasonal_events.TURKEY_VNUM,
+                            seasonal_events.UNCLE_SAM_VNUM, seasonal_events.JEDI_VNUM)
         },
         "items": {
             str(vnum): dict(template)
@@ -162,8 +165,38 @@ def apply_saved_world() -> int:
         olc.OBJECT_TEMPLATES[vnum] = item_data
         restored += 1
 
+    apply_deleted_areas(state)
+
     return restored
 
+
+def apply_deleted_areas(state=None) -> None:
+    """Keep removed built-in content gone, including late startup content."""
+    import storage
+    import world
+    import combat
+    import olc
+
+    if state is None:
+        state = storage.load_world_state()
+    for deleted in state.get("deleted_areas", []):
+        start, end = deleted["start"], deleted["end"]
+        removed_vnums = {v for v in world.WORLD.rooms if start <= v <= end}
+        for room in world.WORLD.rooms.values():
+            for direction, destination in list(room.exits.items()):
+                if destination in removed_vnums:
+                    del room.exits[direction]
+                    for attr in ("exit_flags", "exit_door_open", "exit_key_item", "exit_passcode"):
+                        getattr(room, attr, {}).pop(direction, None)
+        for vnum in removed_vnums:
+            world.WORLD.rooms.pop(vnum, None)
+        for vnum in deleted.get("mobs", []):
+            combat.MOB_TEMPLATES.pop(vnum, None)
+        for vnum in deleted.get("items", []):
+            olc.OBJECT_TEMPLATES.pop(vnum, None)
+        for room_vnum, mobs in list(combat.MOBS_BY_ROOM.items()):
+            combat.MOBS_BY_ROOM[room_vnum] = [m for m in mobs if m.room_vnum not in removed_vnums
+                                               and m.template_vnum not in deleted.get("mobs", [])]
 
 def save_world() -> dict:
     """Writes the current live world state to disk, per the 'save
@@ -176,6 +209,7 @@ def save_world() -> dict:
     import storage
 
     payload = snapshot_world()
+    payload["deleted_areas"] = storage.load_world_state().get("deleted_areas", [])
     storage.save_world_state(payload)
     # A shopkeeper/item can be edited after its spawn point was created.
     # Refresh those durable template copies at the same moment as the world

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "chishin",
+  "keywords": [
+    "chishin"
+  ],
+  "title": "Chishin",
+  "body": "Syntax: perform chishin <target>\n\nDescription: An earthquake that also strikes other attackable mobs in the room. An earthquake that damages other attackable mobs in the room as well. Requires Earth chakra nature. Base damage: 301-357. Unlocks at level 50. Costs 44 Chakra and 0 Stamina; 9 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

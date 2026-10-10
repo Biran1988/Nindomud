@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "restore",
+  "keywords": [
+    "restore"
+  ],
+  "title": "Restore",
+  "body": "Syntax: restore\n\nDescription: Administrator/Implementor only. Fills HP, chakra, and stamina to each online player's own maximum, including players in editors. Does not change maximum stats, clear effects, stop combat, or edit offline saves.\n\nDate: 2026-09-20",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

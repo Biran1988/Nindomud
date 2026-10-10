@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "disenchantment",
+  "keywords": [
+    "disenchantment"
+  ],
+  "title": "Disenchantment",
+  "body": "Syntax: disenchantment <weapon>\n\nDescription: Removes the item-bound Ninja Art property from a carried or wielded weapon. Bukijutsu unlocks at level 45. Costs 30 Chakra and 12 Stamina; 7 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

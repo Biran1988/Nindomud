@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "dual wield",
+  "keywords": [
+    "dual wield"
+  ],
+  "title": "Dual Wield",
+  "body": "Syntax: dual wield <carried weapon>  |  remove offhand\n\nDescription: Equip a second weapon in your off hand. Mastery can grant one extra off-hand attack each combat round for 5 Stamina. Bukijutsu unlocks at level 70. Costs 0 Chakra and 5 Stamina; 0 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

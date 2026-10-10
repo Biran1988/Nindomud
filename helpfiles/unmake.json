@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "unmake",
+  "keywords": [
+    "unmake"
+  ],
+  "title": "Unmake (Tsukuyomi)",
+  "body": "Syntax: unmake\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. Deals no direct Health damage, but drains 40-60 Chakra and 40-60 Stamina; advances the ordeal by one action. The ordeal ends when its hidden action limit is reached.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

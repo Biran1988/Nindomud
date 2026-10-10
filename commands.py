@@ -7,6 +7,7 @@ prompt/password management, score/who display, real combat
 missions, Kage interactions, shop buying, and staff OLC commands.
 """
 
+import jutsu_colors
 import random
 import re
 import time
@@ -43,6 +44,7 @@ import data_appearance
 import data_clans
 import biomes
 import data_jutsu
+import data_kekkei_genkai
 import data_rarity
 import data_passives
 import data_shops
@@ -109,6 +111,15 @@ def dispatch_line(session, line: str) -> None:
     if not words:
         return
     lower_words = [w.lower() for w in words]
+    # Tsukuyomi's target cannot initiate a new attack or jutsu while
+    # frozen. Check before bare-name jutsu and direction matching so
+    # staff commands and every combat entry point follow the same rule.
+    if (session.player and session.player.tsukuyomi_frozen
+            and lower_words[0] not in {"look", "l", "help", "who", "score", "inventory",
+                                       "inv", "skills", "prac", "imms", "immortal",
+                                       "immortals", "changes", "say", "ooc", "quit", "save"}):
+        session.send("You are frozen inside Tsukuyomi and cannot act.")
+        return
     if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
@@ -288,6 +299,8 @@ def cmd_move(session, direction: str) -> None:
                 return
 
     destination_vnum = room.exits[direction]
+    if not olc._require_assigned_vnum(session, destination_vnum):
+        return
     destination = WORLD.get(destination_vnum)
     if destination and not destination.enabled and not is_staff:
         session.send("That area is currently closed.")
@@ -298,6 +311,7 @@ def cmd_move(session, direction: str) -> None:
 
     session.broadcast_room(f"{player.name} leaves {direction}.", exclude_self=True)
     player.room_vnum = room.exits[direction]
+    player.stamina = max(0, player.stamina - random.randint(1, 2))
     session.broadcast_room(f"{player.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.", exclude_self=True)
 
     if session.trade is not None:
@@ -585,6 +599,8 @@ def cmd_flee(session, args: List[str]) -> None:
         return
 
     direction, destination_vnum = random.choice(valid_exits)
+    if not olc._require_assigned_vnum(session, destination_vnum):
+        return
 
     if session.pvp_target is not None:
         opponent = session.pvp_target
@@ -752,6 +768,93 @@ def cmd_rest(session, args: List[str]) -> None:
     session.send("You sit down and rest, recovering a bit faster than usual.")
 
 
+CHAKRA_CHARGE_STEP_SECONDS = 4
+CHAKRA_CHARGE_STEPS = 5  # 20% of the selected Stamina every four seconds
+
+
+def _finish_chakra_charge(session, interrupted: bool = False) -> None:
+    charge = session.chakra_charge
+    session.chakra_charge = None
+    if charge["spent"]:
+        combat.grow_skill_from_usage(session.player, "Chakra Charge")
+    outcome = "stops" if interrupted else "finishes"
+    session.send(f"&CChakra Charge {outcome}: {charge['spent']} Stamina became {charge['gained']} Chakra.&x")
+
+
+def process_chakra_charge(session, now: Optional[float] = None) -> None:
+    """Apply due fifths of the chosen amount; no cost is paid up front."""
+    charge = getattr(session, "chakra_charge", None)
+    if not charge:
+        return
+    if now is None:
+        now = time.time()
+    player = session.player
+    if player.position == "sleeping" or combat._is_action_blocked(player):
+        _finish_chakra_charge(session, interrupted=True)
+        session.send_prompt()
+        return
+    while charge["steps"] < CHAKRA_CHARGE_STEPS and now >= charge["next_at"]:
+        charge["steps"] += 1
+        charge["next_at"] += CHAKRA_CHARGE_STEP_SECONDS
+        # Fractional fifths carry forward, so an odd/small amount still
+        # transfers exactly the chosen Stamina by the fifth interval.
+        due = charge["total"] * charge["steps"] // CHAKRA_CHARGE_STEPS - charge["scheduled"]
+        charge["scheduled"] += due
+        missing = max(0, player.maximum_chakra - player.chakra)
+        spent = min(due, player.stamina, (missing + 1) // 2)
+        gained = min(missing, spent * 2)
+        player.stamina -= spent
+        player.chakra += gained
+        charge["spent"] += spent
+        charge["gained"] += gained
+        if charge["steps"] == CHAKRA_CHARGE_STEPS or player.stamina <= 0 or player.chakra >= player.maximum_chakra:
+            _finish_chakra_charge(session, interrupted=False)
+            session.send_prompt()
+            return
+
+
+def cmd_charge(session, args: List[str]) -> None:
+    """Channel a chosen amount of Stamina into Chakra over 20 seconds."""
+    player = session.player
+    if "Chakra Charge" not in player.learned_skills:
+        session.send(f"Chakra Charge unlocks at level {data_jutsu.CHAKRA_CHARGE_LEVEL}.")
+        return
+    if len(args) == 1 and args[0].lower() == "stop":
+        if getattr(session, "chakra_charge", None):
+            _finish_chakra_charge(session, interrupted=True)
+        else:
+            session.send("You are not charging Chakra.")
+        return
+    if args and (len(args) != 1 or not args[0].isdigit() or int(args[0]) < 1):
+        session.send("Syntax: charge [stamina amount] | charge stop")
+        return
+    if getattr(session, "chakra_charge", None):
+        session.send("You are already charging Chakra. Use 'charge stop' first.")
+        return
+    if session.is_busy() or getattr(session, "pending_cast", None) is not None:
+        session.send("You're already busy with something.")
+        return
+    if player.position == "sleeping" or combat._is_action_blocked(player):
+        session.send("You cannot focus your chakra right now.")
+        return
+    missing = player.maximum_chakra - player.chakra
+    if missing <= 0:
+        session.send("Your Chakra is already full.")
+        return
+    if player.stamina <= 0:
+        session.send("You don't have any Stamina to convert.")
+        return
+    requested = int(args[0]) if args else player.stamina
+    if requested > player.stamina:
+        session.send(f"You only have {player.stamina} Stamina to charge.")
+        return
+    total = min(requested, (missing + 1) // 2)
+    session.chakra_charge = {"total": total, "steps": 0, "scheduled": 0,
+                             "spent": 0, "gained": 0,
+                             "next_at": time.time() + CHAKRA_CHARGE_STEP_SECONDS}
+    session.send(f"&CYou begin charging {total} Stamina into Chakra over 20 seconds (20% every 4 seconds).&x")
+
+
 def cmd_sleep(session, args: List[str]) -> None:
     player = session.player
     if session.combat_target is not None:
@@ -861,14 +964,19 @@ def cmd_look(session, args: List[str]) -> None:
         # session instead, so this degrades gracefully instead of
         # crashing on room.name below.
         from data_villages import VILLAGES
-        player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
-        session.send("&Y(That room no longer exists -- you've been returned to your village.)&x")
+        village_start = VILLAGES[player.village]["starting_room_vnum"]
+        player.room_vnum = village_start if WORLD.get(village_start) else next(iter(WORLD.rooms))
+        session.send("&Y(That room no longer exists -- you've been moved to a safe room.)&x")
         room = WORLD.get(player.room_vnum)
 
     is_staff = session.account is not None and session.account.staff_level != "player"
 
     if args:
         query = " ".join(args).lower()
+        import seasonal_events
+        if "tree" in query and seasonal_events.tree_visible(player.room_vnum):
+            session.send("A decorated Christmas tree glows beside the Kage. Santa has presents for visitors.")
+            return
         if query in ("self", "me") or query in player.name.lower():
             lines = [f"&C{player.name}&x"]
             lines.append(player.description if player.description else "You haven't set a description.")
@@ -924,6 +1032,10 @@ def cmd_look(session, args: List[str]) -> None:
     lines = [room_header, ""]
     if room.description:
         lines.append(f"&Y{room.description}&x")
+        lines.append("")
+    import seasonal_events
+    if seasonal_events.tree_visible(room.vnum):
+        lines.append("&GAn ornamented Christmas tree sparkles beside the Kage.&x")
         lines.append("")
     if hidden_mist.room_active(room):
         lines.append("&CA dense hidden mist obscures the room.&x")
@@ -1080,6 +1192,14 @@ def cmd_say(session, args: List[str]) -> None:
     player = session.player
     session.send(f"&gYou say, '{message}'&x")
     session.broadcast_room(f"&g{player.name} says, '{message}'&x", exclude_self=True)
+    if message.strip().lower() in ("present", "gift", "merry christmas"):
+        import seasonal_events
+        if seasonal_events.claim_present(session):
+            return
+    if message.strip().lower() in ("fireworks", "fourth of july", "july 4", "happy fourth"):
+        import seasonal_events
+        if seasonal_events.claim_july_fourth(session):
+            return
 
     village_rooms = content._VILLAGE_ROOMS.get(player.village)
     if village_rooms and player.room_vnum == village_rooms["kage"] and "mission" in message.lower():
@@ -1203,6 +1323,20 @@ def cmd_ask(session, args: List[str]) -> None:
         session.send("Ask whom about what?")
         return
     topic = " ".join(args[1:]).lower()
+    if args[0].lower() == "jedi" and topic.replace("about ", "", 1) in ("gift", "gifts", "lightsaber", "may 4"):
+        import seasonal_events
+        if seasonal_events.claim_may_fourth(session):
+            return
+    if (args[0].lower() == "sam" and topic in ("gift", "gifts", "fireworks", "july 4")) or (
+            len(args) >= 3 and args[0].lower() == "uncle" and args[1].lower() == "sam"
+            and " ".join(args[2:]).lower() in ("gift", "gifts", "fireworks", "july 4")):
+        import seasonal_events
+        if seasonal_events.claim_july_fourth(session):
+            return
+    if "santa" in args[0].lower() and topic in ("present", "gift", "christmas"):
+        import seasonal_events
+        if seasonal_events.claim_present(session):
+            return
     player = session.player
     village_rooms = content._VILLAGE_ROOMS.get(player.village)
     if village_rooms and player.room_vnum == village_rooms["kage"] and "promotion" in topic:
@@ -1302,6 +1436,25 @@ def _who_tags(p) -> str:
     return tags
 
 
+def cmd_imms(session, args: List[str]) -> None:
+    """List staff accounts with rank and online status, without secrets."""
+    online = {s.account.name.lower(): s.account for s in session.active_sessions()
+              if s.player and s.account}
+    accounts = {account.name.lower(): account for account in storage.all_staff_accounts()}
+    accounts.update(online)
+    staff = sorted((account for account in accounts.values() if account.staff_level != "player"),
+                   key=lambda a: (-config.STAFF_LEVELS.index(a.staff_level)
+                                  if a.staff_level in config.STAFF_LEVELS else 0, a.name.lower()))
+    if not staff:
+        session.send("No immortals are listed yet.")
+        return
+    lines = ["&WImmortals and staff:&x"]
+    for account in staff:
+        status = "&Gonline&x" if account.name.lower() in online else "&Doffline&x"
+        lines.append(f"  {account.name} - {account.staff_level.title()} ({status})")
+    session.send("\n".join(lines))
+
+
 def cmd_who(session, args: List[str]) -> None:
     online = [s for s in session.active_sessions() if s.player]
 
@@ -1361,8 +1514,8 @@ def cmd_whois(session, args: List[str]) -> None:
     session.send("\n".join(lines))
 
 
-SHARINGAN_DODGE_BONUS_PERCENT = 15  # added on top of normal dodge_chance while active -- tomoe 1-5; tomoe 6 uses its own amplified value below
-SHARINGAN_DODGE_BONUS_PERCENT_TOMOE_6 = 25  # the tomoe-6 capstone's amplified version -- "major perception/combat bonus" per the fuller progression table
+SHARINGAN_DODGE_BONUS_PERCENT = 13.5  # 10% below the former 15-point additive bonus
+SHARINGAN_DODGE_BONUS_PERCENT_TOMOE_6 = 22.5  # 10% below the former 25-point additive bonus
 
 # 3-tomoe perks, per direct follow-up request and design confirmation:
 # a hitroll bonus (same shape as tomoe 1's dodge bonus, just offense
@@ -1489,6 +1642,9 @@ def cmd_sharingan(session, args: List[str]) -> None:
             "opponent's every movement.&x"
         )
     else:
+        import upkeep_reports
+        for message in upkeep_reports.flush(player, "Sharingan"):
+            session.send(message)
         session.send(f"&RYour {player.bloodline_tomoe}-tomoe Sharingan fades back to black.&x")
 
 
@@ -1617,20 +1773,28 @@ def cmd_izanagi(session, args: List[str]) -> None:
     genuine trigger (see combat.py's own defeat-check, which fires
     the actual save and sets izanagi_cooldown_until)."""
     player = session.player
-    if player.mangekyo_eye_1 != "izanagi" and player.mangekyo_eye_2 != "izanagi":
-        session.send("You haven't learned that skill or jutsu.")
+    import combat
+    if (not combat._staff_testing_mangekyo(player) and
+            (player.bloodline_id != "sharingan" or not player.bloodline_mangekyo
+             or (player.mangekyo_eye_1 != "izanagi" and player.mangekyo_eye_2 != "izanagi"))):
+        jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
+        return
+    if not player.sharingan_active and not player.izanagi_active and not combat._staff_testing_mangekyo(player):
+        jutsu_colors.send(session, "Activate your Sharingan before using Mangekyo techniques.")
         return
     now = time.time()
     if now < player.izanagi_cooldown_until:
         remaining = player.izanagi_cooldown_until - now
-        session.send(f"Izanagi is still recovering ({remaining / 3600:.1f} hours).")
+        jutsu_colors.send(session, f"Izanagi is still recovering ({remaining / 3600:.1f} hours).")
         return
 
     player.izanagi_active = not player.izanagi_active
     if player.izanagi_active:
-        session.send("&RReality bends around you -- fate itself now answers to your will.&x")
+        import mangekyo_discovery
+        mangekyo_discovery.record_use(player, "izanagi")
+        jutsu_colors.send(session, "&RReality bends around you -- fate itself now answers to your will.&x")
     else:
-        session.send("&RYou release your grip on fate. Izanagi fades.&x")
+        jutsu_colors.send(session, "&RYou release your grip on fate. Izanagi fades.&x")
 
 
 def cmd_tailed_beast_mode(session, args: List[str]) -> None:
@@ -1682,6 +1846,8 @@ def cmd_aff(session, args: List[str]) -> None:
         lines.append(f"&YTaijutsu stance: {data_jutsu.JUTSU[player.taijutsu_stance]['display_name']}&x")
     if player.sharingan_active:
         lines.append("&RYour Sharingan is active.&x")
+    if player.samurai_sabre_active:
+        lines.append("&CYour Samurai Sabre is active.&x")
     session.send("\n".join(lines))
 
 
@@ -1700,7 +1866,8 @@ def cmd_goto(session, args: List[str]) -> None:
     Bypasses any "locked"/"private" room restrictions the same way
     staff already can when walking normally -- this sets room_vnum
     directly rather than going through a directional move command."""
-    if not olc._require_builder(session):
+    if not olc.can_build(session):
+        session.send("You do not have builder access.")
         return
     if not args:
         session.send("Usage: goto <vnum>  OR  goto <player name>")
@@ -1709,6 +1876,8 @@ def cmd_goto(session, args: List[str]) -> None:
     query = " ".join(args)
     if query.isdigit():
         vnum = int(query)
+        if not olc._require_assigned_vnum(session, vnum):
+            return
         if vnum not in WORLD.rooms:
             WORLD.add_room(world.Room(vnum, "An Unfinished Room", "You see nothing special."))
             olc._log(session.player.name, "room", vnum, "auto-created via goto")
@@ -1727,6 +1896,9 @@ def cmd_goto(session, args: List[str]) -> None:
             return
         destination = target_session.player.room_vnum
 
+    if not olc._require_assigned_vnum(session, destination):
+        return
+
     session.player.room_vnum = destination
     session.send("You vanish in a puff of smoke.")
     cmd_look(session, [])
@@ -1744,6 +1916,9 @@ def cmd_transfer(session, args: List[str]) -> None:
     while already away just overwrites it with wherever they were at
     THAT moment, confirmed directly, not a stack of past locations."""
     if not olc._require_builder(session):
+        return
+    if session.account.staff_level == "builder":
+        session.send("Only higher staff can transfer players.")
         return
     if not args:
         session.send("Usage: transfer <player name>")
@@ -1780,6 +1955,9 @@ def cmd_return(session, args: List[str]) -> None:
     anymore, or has already been returned (or never had a saved room
     at all)."""
     if not olc._require_builder(session):
+        return
+    if session.account.staff_level == "builder":
+        session.send("Only higher staff can return transferred players.")
         return
     if not session.last_transferred_player_name:
         session.send("You haven't transferred anyone yet.")
@@ -1886,6 +2064,10 @@ def cmd_spawnpoint(session, args: List[str]) -> None:
 
     sub = args[0].lower()
     player = session.player
+    if (session.account and session.account.staff_level == "builder" and
+            len(args) > 2 and args[2].isdigit() and
+            not olc._require_assigned_vnum(session, int(args[2]))):
+        return
 
     if sub == "list":
         points = spawn_points.list_spawn_points(player.room_vnum)
@@ -2176,8 +2358,8 @@ def cmd_equipment(session, args: List[str]) -> None:
     lines = ["You are using:"]
     preferred_order = ("head", "neck", "piercing", "body", "back", "hands",
                        "finger", "waist", "legs", "feet", "chakra aura",
-                       "wielded", "tool")
-    slots = [slot for slot in preferred_order if slot in olc.WEAR_LOCATIONS]
+                       "wielded", "offhand", "tool")
+    slots = [slot for slot in preferred_order if slot in olc.WEAR_LOCATIONS or slot == "offhand"]
     slots.extend(sorted((olc.WEAR_LOCATIONS | player.equipment.keys()) - set(slots)))
     for slot in slots:
         item = player.equipment.get(slot)
@@ -2226,7 +2408,7 @@ def _learn_weapon_skill_if_new(player, weapon_type: str):
     if skill_name in player.learned_skills:
         return None
     player.learned_skills.append(skill_name)
-    player.skill_proficiencies[skill_name] = 0
+    player.skill_proficiencies[skill_name] = leveling.initial_proficiency(player)
     return f"&GYou've learned the basics of {skill_name}!&x"
 
 
@@ -2384,7 +2566,7 @@ def cmd_remove(session, args: List[str]) -> None:
         _remove_all(session)
         return
 
-    match_slot = next(
+    match_slot = "offhand" if query in ("offhand", "off hand") and player.equipment.get("offhand") else next(
         (slot for slot, item in player.equipment.items() if _item_matches(query, item)), None
     )
     if not match_slot:
@@ -2399,6 +2581,9 @@ def cmd_remove(session, args: List[str]) -> None:
     del player.equipment[match_slot]
     _apply_equipment_stat_bonuses(player, item, sign=-1)
     session.send(f"You remove {item}.")
+    if match_slot == "wielded" and player.equipment.get("offhand"):
+        player.equipment["wielded"] = player.equipment.pop("offhand")
+        session.send("Your off-hand weapon becomes your main weapon.")
 
 
 def _remove_all(session) -> None:
@@ -2526,6 +2711,33 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") in ("dual_wield", "chokkan", "instant_kill"):
+        import legacy_techniques
+        {"dual_wield": legacy_techniques.dual_wield,
+         "chokkan": legacy_techniques.chokkan,
+         "instant_kill": legacy_techniques.instant_kill}[jutsu_data["jutsu_type"]](session, target_words)
+        return
+    if jutsu_data.get("jutsu_type") == "combat_passive":
+        jutsu_colors.send(session, f"{jutsu_data['display_name']} works automatically in combat.")
+        return
+    if jutsu_key == "amaterasu" and target_words and target_words[0].lower() == "extinguish":
+        if (combat._staff_testing_mangekyo(player) or
+                (player.bloodline_id == "sharingan" and player.bloodline_mangekyo
+                 and "amaterasu" in (player.mangekyo_eye_1, player.mangekyo_eye_2))):
+            import mangekyo_mobs
+            mangekyo_mobs.extinguish(session, target_words[1:])
+        else:
+            jutsu_colors.send(session, "You cannot control Amaterasu's flames.")
+        return
+    if (jutsu_data.get("kkg_gate") == "mangekyo_technique" and not player.sharingan_active
+            and not combat._staff_testing_mangekyo(player)):
+        roster_key = jutsu_data.get("mangekyo_roster_key", jutsu_key)
+        if (player.bloodline_id == "sharingan" and player.bloodline_mangekyo
+                and roster_key in (player.mangekyo_eye_1, player.mangekyo_eye_2)):
+            jutsu_colors.send(session, "Activate your Sharingan before using Mangekyo techniques.")
+        else:
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
+        return
     fan_direction = None
     if jutsu_data.get("jutsu_type") == "fan_art" and target_words:
         for idx in (0, len(target_words) - 1):
@@ -2540,20 +2752,30 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if any(s is not session and s.player and s.player.room_vnum == player.room_vnum
                and query in s.player.name.lower() and hidden_mist.obscures(player, s.player)
                for s in getattr(session, "active_sessions", lambda: [])()):
-            session.send("The mist hides your target. You cannot lock onto them.")
+            jutsu_colors.send(session, "The mist hides your target. You cannot lock onto them.")
             return
+    if jutsu_key in ("amaterasu", "tsukuyomi", "izanami", "kamui pocket dimension", "kamui limb removal") and target_words:
+        query = " ".join(target_words).lower()
+        player_match = any(s is not session and s.player and s.player.room_vnum == player.room_vnum
+                           and query in s.player.name.lower() for s in session.active_sessions())
+        if not player_match and query not in ("self", "me") and query not in player.name.lower():
+            mob = combat.find_mob(player.room_vnum, query)
+            if mob:
+                import mangekyo_mobs
+                mangekyo_mobs.cast(session, jutsu_key, mob)
+                return
     if jutsu_data.get("jutsu_type") == "mist":
         if target_words:
-            session.send("Usage: perform hidden mist jutsu")
+            jutsu_colors.send(session, "Usage: perform hidden mist jutsu")
             return
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You have not learned Hidden Mist Jutsu or lack the water element.")
+            jutsu_colors.send(session, "You have not learned Hidden Mist Jutsu or lack the water element.")
             return
         if session.pending_cast is not None:
-            session.send("You're already forming hand signs for another jutsu!")
+            jutsu_colors.send(session, "You're already forming hand signs for another jutsu!")
             return
         if hidden_mist.active(player):
-            session.send("Your mist already fills this room.")
+            jutsu_colors.send(session, "Your mist already fills this room.")
             return
         combat.begin_pending_cast(session, jutsu_key, session, is_pvp=False)
         return
@@ -2562,13 +2784,13 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if jutsu_key == "water release: glue technique" and hasattr(session, "start_timed_action"):
             import data_handsigns
             if session.is_busy():
-                session.send("You're already busy with something.")
+                jutsu_colors.send(session, "You're already busy with something.")
                 return
             if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-                session.send("You don't know this Water Release technique or lack the water element.")
+                jutsu_colors.send(session, "You don't know this Water Release technique or lack the water element.")
                 return
             signs = data_handsigns.sequence_for(jutsu_key)
-            session.send(f"&WYou begin forming hand signs: {' -> '.join(signs)}...&x")
+            jutsu_colors.send(session, f"&WYou begin forming hand signs: {' -> '.join(signs)}...&x")
             session.broadcast_room(f"&W{player.name} forms hand signs: {' -> '.join(signs)}...&x", exclude_self=True)
             session.start_timed_action(jutsu_key, data_handsigns.casting_delay_seconds(player.skill_proficiencies.get("Handsigns", 0)),
                                        lambda: ninja_arts.use_weapon_art(session, jutsu_key, target_words))
@@ -2577,7 +2799,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "sabre_buff":
         if target_words:
-            session.send("Usage: samurai sabre")
+            jutsu_colors.send(session, "Usage: samurai sabre")
             return
         import ninja_arts
         ninja_arts.use_samurai_sabre(session)
@@ -2590,7 +2812,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
                                and s.player.room_vnum == player.room_vnum and query in s.player.name.lower()), None) if query else session.pvp_target
         target = mob or (target_session.player if target_session else player if not query else None)
         if target is None:
-            session.send("There is nobody here by that name.")
+            jutsu_colors.send(session, "There is nobody here by that name.")
             return
         ninja_arts.use_disable(session, target)
         return
@@ -2600,32 +2822,32 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "stance":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You don't know that stance.")
+            jutsu_colors.send(session, "You don't know that stance.")
             return
         if session.combat_target is not None or session.pvp_target is not None:
-            session.send("You cannot change stance while fighting.")
+            jutsu_colors.send(session, "You cannot change stance while fighting.")
             return
         if combat._is_action_blocked(player):
-            session.send("You are unable to act!")
+            jutsu_colors.send(session, "You are unable to act!")
             return
         if player.taijutsu_stance == jutsu_key:
             player.taijutsu_stance = ""
-            session.send(f"You leave {jutsu_data['display_name']} and return to a normal stance.")
+            jutsu_colors.send(session, f"You leave {jutsu_data['display_name']} and return to a normal stance.")
             return
         if player.stamina < jutsu_data["stamina_cost"]:
-            session.send("You don't have enough stamina.")
+            jutsu_colors.send(session, "You don't have enough stamina.")
             return
         player.stamina -= jutsu_data["stamina_cost"]
         player.taijutsu_stance = jutsu_key
         combat.grow_skill_from_usage(player, jutsu_data["display_name"])
-        session.send(f"You enter {jutsu_data['display_name']} stance.")
+        jutsu_colors.send(session, f"You enter {jutsu_data['display_name']} stance.")
         return
     if jutsu_data.get("jutsu_type") == "ambush":
         if session.combat_target is not None or session.pvp_target is not None:
-            session.send(f"You can't use {jutsu_data['display_name']} mid-fight. They already know you're there!")
+            jutsu_colors.send(session, f"You can't use {jutsu_data['display_name']} mid-fight. They already know you're there!")
             return
         if not target_words:
-            session.send(f"Sneak up on whom? Usage: perform {jutsu_key} <target>.")
+            jutsu_colors.send(session, f"Sneak up on whom? Usage: perform {jutsu_key} <target>.")
             return
     if jutsu_data.get("jutsu_type") == "buff":
         combat.use_barrier(session)
@@ -2643,15 +2865,15 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         import session as session_module
 
         if not target_words:
-            session.send("Track who or what?")
+            jutsu_colors.send(session, "Track who or what?")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("track", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WTrack&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WTrack&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
 
         query = " ".join(target_words)
@@ -2660,13 +2882,13 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if target_mob is None:
             target_player_session = tracking.find_online_player_anywhere(session_module, query)
         if target_mob is None and target_player_session is None:
-            session.send(f"You can't find any trace of '{query}' anywhere.")
+            jutsu_colors.send(session, f"You can't find any trace of '{query}' anywhere.")
             return
 
         target_room_vnum = target_mob.room_vnum if target_mob else target_player_session.player.room_vnum
         area = areas.find_area_for_vnum(target_room_vnum)
         if area is None:
-            session.send("You can't get a fix on their location.")
+            jutsu_colors.send(session, "You can't get a fix on their location.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2678,22 +2900,22 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             area_name=area.name,
         )
         target_name = target_mob.name if target_mob else target_player_session.player.name
-        session.send(f"&YYou focus your senses and pick up {target_name}'s trail...&x")
+        jutsu_colors.send(session, f"&YYou focus your senses and pick up {target_name}'s trail...&x")
         return
     if jutsu_data.get("jutsu_type") == "sealing":
         if not target_words:
-            session.send("Seal what?")
+            jutsu_colors.send(session, "Seal what?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         query = " ".join(target_words)
         mob = combat.find_mob(player.room_vnum, query)
         if mob is None or not getattr(mob, "tailed_beast_key", None):
-            session.send("There's no Tailed Beast here by that name.")
+            jutsu_colors.send(session, "There's no Tailed Beast here by that name.")
             return
         if mob.tailed_beast_downed_until == 0.0:
-            session.send(f"{mob.name} is still fighting back -- you can't seal it yet.")
+            jutsu_colors.send(session, f"{mob.name} is still fighting back -- you can't seal it yet.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2703,15 +2925,15 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         combat.remove_mob(mob)
         player.jinchuriki_beast_key = beast_key
         player.jinchuriki_mastery = 0
-        session.send(f"&RYou complete the seal -- {beast['display_name']} is bound within you now!&x")
+        jutsu_colors.send(session, f"&RYou complete the seal -- {beast['display_name']} is bound within you now!&x")
         _broadcast_globally(f"&R{player.name} has sealed {beast['display_name']} within themselves!&x")
         return
     if jutsu_data.get("jutsu_type") == "beast_release":
         if not target_words:
-            session.send("Release the beast from who?")
+            jutsu_colors.send(session, "Release the beast from who?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         query = " ".join(target_words).lower()
         target_session = next(
@@ -2719,10 +2941,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             None,
         )
         if not target_session or not target_session.player.jinchuriki_beast_key:
-            session.send("That player isn't a jinchuriki.")
+            jutsu_colors.send(session, "That player isn't a jinchuriki.")
             return
         if target_session.player.health > 0:
-            session.send(f"You must defeat {target_session.player.name} in combat first.")
+            jutsu_colors.send(session, f"You must defeat {target_session.player.name} in combat first.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2734,24 +2956,24 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         target_session.player.jinchuriki_beast_key = None
         target_session.player.jinchuriki_mastery = 0
         mob = tailed_beasts_module.release_beast(beast, world_module, combat)
-        session.send(f"&RYou tear {beast['display_name']} free from {target_session.player.name}!&x")
-        target_session.send(f"&R{player.name} rips {beast['display_name']} out of you!&x")
+        jutsu_colors.send(session, f"&RYou tear {beast['display_name']} free from {target_session.player.name}!&x")
+        jutsu_colors.send(target_session, f"&R{player.name} rips {beast['display_name']} out of you!&x")
         _broadcast_globally(f"&R{beast['display_name']} has been torn free and released back into the world!&x")
         return
     if jutsu_data.get("jutsu_type") == "beast_bomb":
         if not player.tailed_beast_mode_active:
-            session.send("You can only unleash this while Tailed Beast Mode is active.")
+            jutsu_colors.send(session, "You can only unleash this while Tailed Beast Mode is active.")
             return
         if not target_words:
-            session.send("Unleash the Tailed Beast Bomb on who?")
+            jutsu_colors.send(session, "Unleash the Tailed Beast Bomb on who?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("tailed beast bomb", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WTailed Beast Bomb&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WTailed Beast Bomb&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
 
         query = " ".join(target_words)
@@ -2763,7 +2985,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
                 None,
             )
         if mob is None and target_session is None:
-            session.send("There's nothing here by that name.")
+            jutsu_colors.send(session, "There's nothing here by that name.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2774,14 +2996,14 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         beast = data_tailed_beasts.TAILED_BEASTS_BY_KEY[player.jinchuriki_beast_key]
         if mob is not None:
             mob.health -= dmg
-            session.send(f"&RYou unleash a {beast['display_name']} Bomb on {mob.name} for {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(session, f"&RYou unleash a {beast['display_name']} Bomb on {mob.name} for {damage_messages.describe_damage(dmg)} damage!&x")
             if mob.health <= 0:
                 combat.handle_mob_defeat(session, mob)
         else:
             dmg = status_effects.reduce_incoming_damage(target_session.player.active_status_effects, dmg)
             target_session.player.health -= dmg
-            session.send(f"&RYou unleash a {beast['display_name']} Bomb on {target_session.player.name} for {damage_messages.describe_damage(dmg)} damage!&x")
-            target_session.send(f"&R{player.name} unleashes a {beast['display_name']} Bomb on you for {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(session, f"&RYou unleash a {beast['display_name']} Bomb on {target_session.player.name} for {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(target_session, f"&R{player.name} unleashes a {beast['display_name']} Bomb on you for {damage_messages.describe_damage(dmg)} damage!&x")
             if target_session.player.health <= 0:
                 if combat.is_immortal_immune_to_defeat(target_session):
                     combat.clamp_immortal_health(target_session)
@@ -2790,27 +3012,28 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_tsukuyomi":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if not target_words:
-            session.send("Trap who in Tsukuyomi?")
+            jutsu_colors.send(session, "Trap who in Tsukuyomi?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("tsukuyomi", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WTsukuyomi&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WTsukuyomi&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
 
         query = " ".join(target_words)
         target_session = next(
-            (s for s in session.active_sessions() if s is not session and s.player and query.lower() in s.player.name.lower()),
+            (s for s in session.active_sessions() if s is not session and s.player
+             and s.player.room_vnum == player.room_vnum and query.lower() in s.player.name.lower()),
             None,
         )
         if target_session is None:
-            session.send("There's nobody here by that name.")
+            jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2822,27 +3045,28 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_amaterasu":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if not target_words:
-            session.send("Unleash Amaterasu on who?")
+            jutsu_colors.send(session, "Unleash Amaterasu on who?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("amaterasu", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WAmaterasu&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WAmaterasu&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
 
         query = " ".join(target_words)
         target_session = next(
-            (s for s in session.active_sessions() if s is not session and s.player and query.lower() in s.player.name.lower()),
+            (s for s in session.active_sessions() if s is not session and s.player
+             and s.player.room_vnum == player.room_vnum and query.lower() in s.player.name.lower()),
             None,
         )
         if target_session is None:
-            session.send("There's nobody here by that name.")
+            jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2854,78 +3078,95 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_kamui_pocket_dimension":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if not target_words:
-            session.send("Open the pocket dimension on who?")
+            jutsu_colors.send(session, "Open the pocket dimension on who?")
             return
         query = " ".join(target_words).lower()
 
-        # Step 2: targeting oneself joins a dimension already opened.
-        if query in player.name.lower():
+        # A self cast enters an opened pocket or creates a new solo one.
+        if query in ("self", "me") or query in player.name.lower():
             import mangekyo
-            if mangekyo.enter_own_pocket_dimension(session):
-                session.send("&RYou step through the rift and into the pocket dimension you opened.&x")
-            else:
-                session.send("You haven't opened a pocket dimension yet.")
+            try:
+                entered = mangekyo.enter_own_pocket_dimension(session)
+            except ValueError as exc:
+                jutsu_colors.send(session, str(exc))
+                return
+            if not entered:
+                jutsu_colors.send(session, "You are already inside your pocket dimension.")
+                return
+            import mangekyo_discovery
+            mangekyo_discovery.record_use(player, jutsu_key)
+            jutsu_colors.send(session, "&RYou step through a rift into your pocket dimension.&x")
             return
 
         # Step 1: targeting another player opens it and sends them alone.
         target_session = next(
-            (s for s in session.active_sessions() if s is not session and s.player and query in s.player.name.lower()),
+            (s for s in session.active_sessions() if s is not session and s.player
+             and s.player.room_vnum == player.room_vnum and query in s.player.name.lower()),
             None,
         )
         if target_session is None:
-            session.send("There's nobody here by that name.")
+            jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
         import mangekyo
         import world as world_module
-        mangekyo.open_pocket_dimension(session, target_session, world_module)
-        session.send(f"&RYou tear open a rift and cast {target_session.player.name} into a pocket dimension.&x")
-        target_session.send(f"&R{player.name}'s eyes flash -- reality tears open and swallows you whole!&x")
+        try:
+            mangekyo.open_pocket_dimension(session, target_session, world_module)
+        except ValueError as exc:
+            jutsu_colors.send(session, str(exc))
+            return
+        import mangekyo_discovery
+        mangekyo_discovery.record_use(player, jutsu_key)
+        jutsu_colors.send(session, f"&RYou tear open a rift and cast {target_session.player.name} into a pocket dimension.&x")
+        jutsu_colors.send(target_session, f"&R{player.name}'s eyes flash -- reality tears open and swallows you whole!&x")
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_kamui_intangibility":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("kamui intangibility", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WKamui: Intangibility&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WKamui: Intangibility&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
         player.chakra -= jutsu_data["chakra_cost"]
         player.cooldowns["kamui intangibility"] = now + jutsu_data["cooldown"]
         import data_mangekyo
         player.kamui_intangibility_rounds_left = data_mangekyo.KAMUI_INTANGIBILITY_ROUNDS
-        session.send("&RYour body turns to mist -- nothing can touch you for a moment.&x")
+        import mangekyo_discovery
+        mangekyo_discovery.record_use(player, jutsu_key)
+        jutsu_colors.send(session, "&RYour body turns to mist -- nothing can touch you for a moment.&x")
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_kamui_limb_removal":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if not target_words:
-            session.send("Unleash Kamui: Limb Removal on who?")
+            jutsu_colors.send(session, "Unleash Kamui: Limb Removal on who?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("kamui limb removal", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WKamui: Limb Removal&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WKamui: Limb Removal&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
 
         query = " ".join(target_words)
         target_session = next(
-            (s for s in session.active_sessions() if s is not session and s.player and query.lower() in s.player.name.lower()),
+            (s for s in session.active_sessions() if s is not session and s.player
+             and s.player.room_vnum == player.room_vnum and query.lower() in s.player.name.lower()),
             None,
         )
         if target_session is None:
-            session.send("There's nobody here by that name.")
+            jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2934,31 +3175,32 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         import data_mangekyo
         delay = random.uniform(*data_mangekyo.KAMUI_LIMB_REMOVAL_CAST_SECONDS)
         session.pending_cast = combat.PendingCast("kamui limb removal", target_session, is_pvp=True, remaining_seconds=delay, start_combat_on_resolve=False)
-        session.send(f"&WYou begin tearing a rift through space, blade poised to strike {target_session.player.name}...&x")
+        jutsu_colors.send(session, f"&WYou begin tearing a rift through space, blade poised to strike {target_session.player.name}...&x")
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_izanami":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if not target_words:
-            session.send("Trap who in Izanami?")
+            jutsu_colors.send(session, "Trap who in Izanami?")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("izanami", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WIzanami&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WIzanami&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
 
         query = " ".join(target_words)
         target_session = next(
-            (s for s in session.active_sessions() if s is not session and s.player and query.lower() in s.player.name.lower()),
+            (s for s in session.active_sessions() if s is not session and s.player
+             and s.player.room_vnum == player.room_vnum and query.lower() in s.player.name.lower()),
             None,
         )
         if target_session is None:
-            session.send("There's nobody here by that name.")
+            jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -2970,15 +3212,15 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "mangekyo_kekkei_no_me":
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
-            session.send("You haven't learned that skill or jutsu.")
+            jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("kekkei no me", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WKekkei no Me&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WKekkei no Me&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
         player.chakra -= jutsu_data["chakra_cost"]
         player.cooldowns["kekkei no me"] = now + jutsu_data["cooldown"]
@@ -2989,20 +3231,19 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "illusion_walk":
         if not target_words:
-            session.send("Cast Illusion Walk on who?")
+            jutsu_colors.send(session, "Cast Illusion Walk on who?")
             return
         now = time.time()
         cooldown_ready_at = player.cooldowns.get("illusion walk", 0)
         if now < cooldown_ready_at:
-            session.send(f"&WIllusion Walk&x is still recovering ({cooldown_ready_at - now:.1f}s).")
+            jutsu_colors.send(session, f"&WIllusion Walk&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
         if player.chakra < jutsu_data["chakra_cost"]:
-            session.send("You don't have enough chakra.")
+            jutsu_colors.send(session, "You don't have enough chakra.")
             return
         if session.pending_cast is not None:
-            session.send("You're already in the middle of forming hand signs for another jutsu!")
+            jutsu_colors.send(session, "You're already in the middle of forming hand signs for another jutsu!")
             return
-
         query = " ".join(target_words).lower()
         target_session = next(
             (s for s in session.active_sessions() if s is not session and s.player
@@ -3010,7 +3251,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             None,
         )
         if not target_session:
-            session.send("There's nobody here by that name.")
+            jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
         player.chakra -= jutsu_data["chakra_cost"]
@@ -3021,7 +3262,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             combat.begin_pending_cast(session, "illusion walk", target_session, is_pvp=True, start_combat_on_resolve=False)
         return
     if jutsu_data.get("jutsu_type") in ("counter", "silent_genjutsu_passive"):
-        session.send(f"{jutsu_data['display_name']} is a passive ability -- it triggers automatically, you don't use it directly.")
+        jutsu_colors.send(session, f"{jutsu_data['display_name']} is a passive ability -- it triggers automatically, you don't use it directly.")
         return
     if jutsu_data.get("jutsu_type") == "area" and not target_words and session.combat_target is None:
         mob = next((m for m in combat.mobs_in_room(player.room_vnum)
@@ -3034,14 +3275,19 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         mob = session.combat_target
     if mob:
         if jutsu_data.get("jutsu_type") == "ambush" and mob.health < mob.max_health:
-            session.send(f"{mob.name} is hurt and alert; you cannot sneak up on them.")
+            jutsu_colors.send(session, f"{mob.name} is hurt and alert; you cannot sneak up on them.")
             return
         if combat.is_shopkeeper(mob) or combat.is_gambler(mob) or combat.is_teacher(mob) or combat.is_immortal_mob(mob):
-            session.send(f"{mob.name.capitalize()} is protected and cannot be attacked.")
+            jutsu_colors.send(session, f"{mob.name.capitalize()} is protected and cannot be attacked.")
             return
         if session.pending_cast is not None:
-            session.send("You're already in the middle of forming hand signs for another jutsu!")
+            jutsu_colors.send(session, "You're already in the middle of forming hand signs for another jutsu!")
             return
+        if session.combat_target is None and combat._can_use_jutsu(player, jutsu_data, jutsu_key):
+            shortfall = combat.jutsu_resource_shortfall(player, jutsu_data, jutsu_key)
+            if shortfall:
+                jutsu_colors.send(session, shortfall)
+                return
         import data_handsigns
         starting_fresh = session.combat_target is None
         if data_handsigns.has_handsigns(jutsu_data) and combat._can_use_jutsu(player, jutsu_data, jutsu_key) and not has_silent_genjutsu(player):
@@ -3076,25 +3322,31 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         target_session = session.pvp_target
 
     if not target_session:
-        session.send("There is nothing here to use that on.")
+        jutsu_colors.send(session, "There is nothing here to use that on.")
         return
     if player.illusion_walk_caster is not None:
-        session.send("There is nothing here to use that on.")
+        jutsu_colors.send(session, "There is nothing here to use that on.")
         return
 
     room = world.WORLD.get(player.room_vnum)
     if room and room.safe:
-        session.send("This is a PvP-safe zone. You cannot attack other players here.")
+        jutsu_colors.send(session, "This is a PvP-safe zone. You cannot attack other players here.")
         return
     if target_session.player.health <= 0:
-        session.send(f"{target_session.player.name} is already down.")
+        jutsu_colors.send(session, f"{target_session.player.name} is already down.")
         return
     if jutsu_data.get("jutsu_type") == "ambush" and target_session.player.health < target_session.player.maximum_health:
-        session.send(f"{target_session.player.name} is hurt and alert; you cannot sneak up on them.")
+        jutsu_colors.send(session, f"{target_session.player.name} is hurt and alert; you cannot sneak up on them.")
         return
     if session.pending_cast is not None:
-        session.send("You're already in the middle of forming hand signs for another jutsu!")
+        jutsu_colors.send(session, "You're already in the middle of forming hand signs for another jutsu!")
         return
+
+    if session.pvp_target is None and combat._can_use_jutsu(player, jutsu_data, jutsu_key):
+        shortfall = combat.jutsu_resource_shortfall(player, jutsu_data, jutsu_key)
+        if shortfall:
+            jutsu_colors.send(session, shortfall)
+            return
 
     import data_handsigns
     starting_fresh = session.pvp_target is None
@@ -3126,7 +3378,7 @@ def cmd_perform(session, args: List[str]) -> None:
         return
     jutsu = data_jutsu.JUTSU[jutsu_key]
     if jutsu["class_requirement"] in BARE_NAME_JUTSU_CATEGORIES:
-        session.send(f"{jutsu['display_name']} is a {jutsu['class_requirement'].capitalize()} technique -- just use its name directly, no 'perform' needed.")
+        jutsu_colors.send(session, f"{jutsu['display_name']} is a {jutsu['class_requirement'].capitalize()} technique -- just use its name directly, no 'perform' needed.")
         return
     cmd_use_jutsu(session, jutsu_key, args[consumed:])
 
@@ -3930,6 +4182,8 @@ def proficiency_level_name(pct: int) -> str:
     """Maps a raw percentage back to the familiar tier name for flavor
     text (score sheet, skills list) without that name being the actual
     stored value anymore."""
+    if pct >= 150:
+        return "signature mastered"
     if pct >= 100:
         return "mastered"
     if pct >= 80:
@@ -4009,7 +4263,12 @@ def cmd_practice(session, args: List[str]) -> None:
         session.send("You have no practice points left.")
         return
     current = player.skill_proficiencies.get(match, 0)
-    practice_cap = data_jutsu.PRACTICE_CAP_PERCENT.get(match, data_jutsu.DEFAULT_PRACTICE_CAP_PERCENT)
+    import signature_moves
+    practice_cap = (signature_moves.SIGNATURE_CAP if signature_moves.selected_name(player) == match
+                    and signature_moves.eligible(next((j for j in data_jutsu.JUTSU.values()
+                                                       if j["display_name"] == match), {}))
+                    and current >= 100 else
+                    data_jutsu.PRACTICE_CAP_PERCENT.get(match, data_jutsu.DEFAULT_PRACTICE_CAP_PERCENT))
     if current >= practice_cap:
         if practice_cap < 100:
             if match == "Handsigns":
@@ -4031,6 +4290,57 @@ def cmd_practice(session, args: List[str]) -> None:
         f"You practice {match} (+{new_pct - current}% from your Intelligence). "
         f"Proficiency is now {new_pct}% ({proficiency_level_name(new_pct)})."
     )
+    if new_pct == signature_moves.SIGNATURE_CAP and match == signature_moves.selected_name(player):
+        session.send(f"&Y{match} is now fully trained as your signature move: +25% damage or effect duration!&x")
+
+
+def cmd_signature(session, args: List[str]) -> None:
+    """Pick a mastered active move; changing choice removes old overmastery."""
+    import signature_moves
+    player = session.player
+    current = signature_moves.selected_name(player)
+    if not args:
+        status = (f"{current} ({player.skill_proficiencies.get(current, 0)}/150%)"
+                  if current else "none")
+        ready = sorted(j["display_name"] for j in data_jutsu.JUTSU.values()
+                       if signature_moves.eligible(j) and j["display_name"] in player.learned_skills
+                       and player.skill_proficiencies.get(j["display_name"], 0) >= 100)
+        session.send(f"Signature move: {status}. The +25% damage/effect-duration bonus starts at 150%.\n"
+                     f"Eligible mastered moves: {', '.join(ready) or 'none'}\n"
+                     "Use 'signature <move>' to choose or 'signature clear' to remove it. "
+                     "Switching returns the old move to 100%.")
+        return
+    query = " ".join(args).strip().lower()
+    if query == "clear":
+        if not current:
+            session.send("You have no signature move selected.")
+            return
+        player.skill_proficiencies[current] = min(100, player.skill_proficiencies.get(current, 0))
+        player.signature_move = ""
+        session.send(f"{current} is no longer your signature move; its proficiency returns to 100%.")
+        return
+    eligible = [j for j in data_jutsu.JUTSU.values()
+                if signature_moves.eligible(j) and j["display_name"] in player.learned_skills]
+    matches = [j for j in eligible if j["display_name"].lower() == query]
+    if not matches:
+        matches = [j for j in eligible if query in j["display_name"].lower()]
+    if len(matches) != 1:
+        session.send("Choose one eligible learned move by name. " +
+                     ("Matches: " + ", ".join(j["display_name"] for j in matches)
+                      if matches else "Use 'signature' to see your eligible mastered moves."))
+        return
+    name = matches[0]["display_name"]
+    if player.skill_proficiencies.get(name, 0) < 100:
+        session.send(f"{name} must reach 100% proficiency before you can select it.")
+        return
+    if name == current:
+        session.send(f"{name} is already your signature move ({player.skill_proficiencies.get(name, 0)}/150%).")
+        return
+    if current:
+        player.skill_proficiencies[current] = min(100, player.skill_proficiencies.get(current, 0))
+    player.signature_move = name
+    session.send(f"{name} is now your signature move. Practice it from 100% to 150% "
+                 "with a matching teacher before its +25% bonus activates.")
 
 
 def _skill_unlock_level(skill_name: str) -> Optional[int]:
@@ -4064,6 +4374,8 @@ def _skill_unlock_level(skill_name: str) -> Optional[int]:
         return data_jutsu.APPRAISAL_LEVEL_REQUIREMENT
     if skill_name == "Scan":
         return SCAN_LEVEL
+    if skill_name == "Chakra Charge":
+        return data_jutsu.CHAKRA_CHARGE_LEVEL
     import data_weapons
     if skill_name in {info["skill"] for info in data_weapons.WEAPON_TYPES.values()}:
         return 1
@@ -4222,6 +4534,7 @@ def _skill_catalog_for_category(category: str) -> list:
         import data_handsigns
         entries.append(("Handsigns", data_handsigns.HANDSIGNS_MIN_LEVEL))
         entries.append(("Anki", 1))  # confirmed directly: no real level requirement at all, shown as level 1 like every other level-1-effectively skill (matches how UNIVERSAL_STARTING_SKILLS is handled elsewhere)
+        entries.append(("Chakra Charge", data_jutsu.CHAKRA_CHARGE_LEVEL))
         # Second/Third/Fourth/Fifth Attack (data_jutsu.MULTI_ATTACK_SKILLS)
         # -- genuinely granted and practicable, but previously missing
         # from this catalog entirely, so a player who'd learned one
@@ -4284,17 +4597,17 @@ def _prac_header(category: str, width: int = 74) -> str:
     return f"&D{'-' * left}&x{color}{label}&x&D{'-' * right}&x"
 
 
-def _prac_entry(name: str, pct: int, width: int = 45) -> str:
+def _prac_entry(name: str, pct: int, width: int = 45, signature: bool = False) -> str:
     """A single colored skill entry, name and percentage colored by
     proficiency_color's own 256-color gradient. Padded to `width`
     against the VISIBLE text (computed before color codes are added)
     so the existing 2-column layout still lines up -- color codes are
     invisible characters that would otherwise throw off a plain
     len()-based right-justify."""
-    visible = f"{name}  {pct}%"
+    visible = f"{name}{' [Signature]' if signature else ''}  {pct}%"
     pad = max(0, width - len(visible))
     color = proficiency_color(pct)
-    return " " * pad + f"{color}{name}  {pct}%&x"
+    return " " * pad + f"{color}{visible}&x"
 
 
 def cmd_prac(session, args: List[str]) -> None:
@@ -4311,7 +4624,7 @@ def cmd_prac(session, args: List[str]) -> None:
         for name, level_req in catalog:
             if name in player.learned_skills:
                 pct = player.skill_proficiencies.get(name, 0)
-                entries.append(_prac_entry(name, pct))
+                entries.append(_prac_entry(name, pct, signature=name == getattr(player, "signature_move", "")))
         for i in range(0, len(entries), 2):
             pair = entries[i:i + 2]
             row = pair[0] + "  "
@@ -4811,13 +5124,15 @@ def cmd_sell(session, args: List[str]) -> None:
             return
         category = item_types.classify_item(match)
         buys_categories = combat.mob_shop_buys_categories(shopkeeper)
-        if buys_categories and category not in buys_categories:
+        import seasonal_events
+        is_feather = match == seasonal_events.TURKEY_FEATHER
+        if buys_categories and category not in buys_categories and not is_feather:
             session.send(f"{shopkeeper.name.capitalize()} doesn't buy {category} items.")
             return
         multiplier = 1.0 if buys_categories else 0.5
         dish_price = cooking.price_for_dish(match)
         base_price = dish_price if dish_price is not None else item_types.base_sell_price(match)
-        price = max(1, int(base_price * multiplier))
+        price = 500 if is_feather else max(1, int(base_price * multiplier))
         player.inventory.remove(match)
         player.ryo += price
         session.send(f"You sell {match} for {price} ryo.")
@@ -6390,7 +6705,8 @@ def rarity_colored_name(item_name: str) -> str:
     colors, e.g. "[Legendary] a legendary blade") still exists, but
     only in cmd_examine's own dedicated view -- see
     _examine_rarity_colored_name below."""
-    return item_name
+    import lightsabers
+    return lightsabers.display_name(item_name)
 
 
 def _examine_rarity_colored_name(item_name: str) -> str:
@@ -6417,42 +6733,18 @@ _CHAKRA_PAPER_REACTIONS = {
 }
 
 
-CHAKRA_NATURE_MIN_LEVEL = 25
-CHAKRA_NATURE_SECONDARY_MIN_LEVEL = 100
+CHAKRA_NATURE_MIN_LEVEL = 10
+CHAKRA_NATURE_SECONDARY_MIN_LEVEL = data_kekkei_genkai.ELEMENTAL_RELEASE_REVEAL_LEVEL
+CHAKRA_NATURE_TERTIARY_MIN_LEVEL = 100
 
 
 def cmd_channel(session, args: List[str]) -> None:
-    """Reveals a player's own hidden chakra nature/natures by
-    consuming a Chakra Paper. Confirmed design: a genuinely new,
-    dedicated verb (not the existing 'hold', which equips a tool
-    persistently rather than consuming it in one action) -- matching
-    how 'read' consumes a scroll in a single step. Chakra nature
-    itself is purely a personal identity/flavor trait for now (no
-    jutsu in the game currently carries an element to interact with
-    it) -- revealing it doesn't change anything mechanically, it's
-    information the player didn't have before.
+    """Consume paper to reveal the first nature at 10 or third at 100.
 
-    PRIMARY nature (rolled once, secretly, at character creation --
-    see session.py's _create_player, and biomes.roll_chakra_nature's
-    own docstring): gated to CHAKRA_NATURE_MIN_LEVEL (25), per a
-    direct follow-up request -- confirmed the paper is REFUSED, not
-    consumed, below that level, so a player who bought one early can
-    simply hold onto it and try again once they've actually reached
-    the requirement, rather than wasting the purchase on a request
-    made too soon.
-
-    SECONDARY nature (Section 84, per direct follow-up request): a
-    second, independent Chakra Paper channel, gated to
-    CHAKRA_NATURE_SECONDARY_MIN_LEVEL (100) instead -- but ALSO
-    requires the primary to already be revealed first, confirmed
-    directly rather than assumed, even for a character already well
-    past level 100. Rolled fresh at the moment of THIS reveal (see
-    biomes.roll_secondary_chakra_nature), guaranteed to differ from
-    the primary element with no thematic restriction on which one --
-    confirmed design explicitly allows a directly opposing element.
-    A character who already has both revealed is told plainly there's
-    nothing left to discover, rather than the paper doing anything
-    confusing."""
+    The distinct second nature is chosen at level 25 in a protected
+    Kage chamber; channeling a second paper starts that choice without
+    consuming the sheet. Existing revealed second natures remain valid.
+    """
     player = session.player
     if not args:
         session.send("Channel what?")
@@ -6468,15 +6760,17 @@ def cmd_channel(session, args: List[str]) -> None:
         session.send(f"You can't channel chakra into {match}.")
         return
 
-    if player.chakra_nature_revealed and player.chakra_nature_secondary_revealed:
+    if player.chakra_nature_tertiary_revealed:
         session.send(
             f"You channel a thread of your own chakra into {match}, but nothing happens -- "
             f"you've already learned everything about your own chakra nature that there is to know."
         )
         return
 
-    revealing_secondary = player.chakra_nature_revealed  # primary already known -> this reveal is the secondary
-    min_level = CHAKRA_NATURE_SECONDARY_MIN_LEVEL if revealing_secondary else CHAKRA_NATURE_MIN_LEVEL
+    revealing_tertiary = player.chakra_nature_secondary_revealed
+    revealing_secondary = player.chakra_nature_revealed and not revealing_tertiary
+    min_level = (CHAKRA_NATURE_TERTIARY_MIN_LEVEL if revealing_tertiary else
+                 CHAKRA_NATURE_SECONDARY_MIN_LEVEL if revealing_secondary else CHAKRA_NATURE_MIN_LEVEL)
 
     if player.level < min_level:
         session.send(
@@ -6486,22 +6780,28 @@ def cmd_channel(session, args: List[str]) -> None:
         )
         return
 
+    if revealing_secondary:
+        import element_choice
+        if not element_choice.begin(session):
+            session.send("Your village's Kage chamber is unavailable. Contact an administrator.")
+        return
+
     player.inventory.remove(match)
 
-    if revealing_secondary:
-        if player.chakra_nature is None:
-            # Genuinely shouldn't be reachable (revealing_secondary
-            # implies chakra_nature_revealed, which implies a real
-            # nature exists) -- defensive fallback only.
-            player.chakra_nature = biomes.roll_chakra_nature()
-        player.chakra_nature_secondary = biomes.roll_secondary_chakra_nature(player.chakra_nature)
-        nature = player.chakra_nature_secondary
-        player.chakra_nature_secondary_revealed = True
+    if revealing_tertiary:
+        player.chakra_nature_tertiary = biomes.roll_tertiary_chakra_nature(
+            player.chakra_nature, player.chakra_nature_secondary)
+        player.chakra_nature_tertiary_revealed = True
+        import data_kekkei_genkai
+        data_kekkei_genkai.sync_elemental_release(player)
+        nature = player.chakra_nature_tertiary
         reaction = _CHAKRA_PAPER_REACTIONS.get(nature, "reacts, but nothing seems to happen")
+        release = player.elemental_release_id
         session.send(
             f"You channel a thread of your own chakra into {match}...\n"
             f"The paper {reaction}!\n"
-            f"&WYou also carry a second chakra nature: {nature.capitalize()}.&x"
+            f"&WYour third chakra nature is {nature.capitalize()}.&x"
+            + (f"\n&YYour natures form {data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES[release]}!&x" if release else "")
         )
         return
 
@@ -6556,12 +6856,17 @@ def cmd_read(session, args: List[str]) -> None:
         return
 
     player.learned_skills.append(display)
-    player.skill_proficiencies[display] = 0
+    player.skill_proficiencies[display] = leveling.initial_proficiency(player)
     player.inventory.remove(match)
     session.send(f"You study {match} carefully... you have learned &Y{display}&x!")
 
 
 def cmd_eat(session, args: List[str]) -> None:
+    import seasonal_events
+    if seasonal_events.eat_july_fourth_food(session, " ".join(args)):
+        return
+    if seasonal_events.eat_turkey(session, " ".join(args)):
+        return
     consumables.consume(session, "eat", " ".join(args))
 
 
@@ -6570,6 +6875,14 @@ def cmd_drink(session, args: List[str]) -> None:
 
 
 def cmd_use(session, args: List[str]) -> None:
+    import lightsabers
+    if lightsabers.use(session, " ".join(args)):
+        return
+    import seasonal_events
+    if seasonal_events.use_fireworks(session, " ".join(args)):
+        return
+    if seasonal_events.use_holiday_item(session, " ".join(args)):
+        return
     consumables.consume(session, "use", " ".join(args))
 
 
@@ -6939,6 +7252,11 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
             lines.append(_row("Chakra Nature", p.chakra_nature.capitalize(), "Secondary Nature", p.chakra_nature_secondary.capitalize()))
         else:
             lines.append(_row("Chakra Nature", p.chakra_nature.capitalize()))
+    if p.chakra_nature_tertiary_revealed:
+        lines.append(_row("Third Nature", p.chakra_nature_tertiary.capitalize()))
+    if p.elemental_release_id:
+        import data_kekkei_genkai
+        lines.append(_row("Elemental Release", data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES[p.elemental_release_id]))
     lines += [
         "",
         _section("COMBAT INFORMATION"),
@@ -7151,7 +7469,40 @@ def _reboot_process() -> None:
     Restart=on-failure is watching for it."""
     import os
     import sys
-    os.execv(sys.executable, [sys.executable] + sys.argv)
+    script = os.path.abspath(sys.argv[0])
+    os.execv(sys.executable, [sys.executable, script] + sys.argv[1:])
+
+
+def _reboot_preflight() -> str:
+    """Import the installed source in a fresh interpreter before going offline.
+
+    This catches missing modules and syntax/import errors from an incomplete
+    extraction while the existing server is still accepting connections.
+    """
+    import os
+    import subprocess
+    import sys
+    script = os.path.abspath(sys.argv[0])
+    if not os.path.isfile(script):
+        return f"Launcher not found: {script}"
+    source_dir = os.path.dirname(script)
+    if os.path.basename(script) in ("main.py", "Nindo_mud"):
+        check_command = [sys.executable, script, "--preflight"]
+    else:
+        # A wrapper or test runner may not implement --preflight; still
+        # check imports from the installed source directory.
+        imports = ("import sys; sys.path.insert(0, sys.argv[1]); "
+                   "import main, session, combat, commands, help_system, "
+                   "jutsu_colors, mangekyo_discovery")
+        check_command = [sys.executable, "-c", imports, source_dir]
+    try:
+        result = subprocess.run(check_command,
+                                cwd=source_dir, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return str(exc)
+    if result.returncode:
+        return (result.stderr or result.stdout or "Unknown startup error").strip()[-1800:]
+    return ""
 
 
 def cmd_reboot(session, args: List[str]) -> None:
@@ -7163,6 +7514,11 @@ def cmd_reboot(session, args: List[str]) -> None:
         session.send("You don't have access to that.")
         return
 
+    error = _reboot_preflight()
+    if error:
+        session.send(f"&RReboot cancelled: the installed files failed the startup check. The server is still online.\n{error}&x")
+        return
+
     from session import ACTIVE_SESSIONS
     for other in list(ACTIVE_SESSIONS):
         other.send("&R*** The MUD is rebooting now -- please reconnect in a few seconds. ***&x")
@@ -7170,6 +7526,72 @@ def cmd_reboot(session, args: List[str]) -> None:
             storage.save_player(other.player)
 
     _reboot_process()
+
+
+def cmd_makeimm(session, args: List[str]) -> None:
+    """Promote an existing account to the entry-level immortal rank."""
+    if (not session.account or session.account.staff_level != "implementor"
+            or session.account.name.lower() != config.ADMIN_NAME):
+        session.send("You don't have access to that.")
+        return
+    if len(args) != 1 or not args[0].isascii() or not args[0].isalpha() or not (2 <= len(args[0]) <= 20):
+        session.send("Usage: makeimm <account>")
+        return
+    account = storage.load_account(args[0])
+    if account is None:
+        session.send("That account does not exist.")
+        return
+    if account.staff_level != "player":
+        session.send(f"{account.name} is already staff ({account.staff_level}).")
+        return
+    account.staff_level = "helper"
+    storage.save_account(account)
+    from session import ACTIVE_SESSIONS
+    for other in list(ACTIVE_SESSIONS):
+        if other.account and other.account.name.lower() == account.name.lower():
+            other.account.staff_level = "helper"
+            if other.player:
+                other.player._immortal_skill_mastery = True
+                if hasattr(other.player, "learned_skills"):
+                    import leveling
+                    leveling.grant_immortal_jutsu(other.player)
+                    storage.save_player(other.player)
+            other.send("Your account has been promoted to immortal (Helper). Your jutsu are ready to use.")
+    session.send(f"{account.name} is now an immortal (Helper). The account change is saved.")
+
+
+def cmd_promoteimm(session, args: List[str]) -> None:
+    """Raise an existing immortal to Builder, Area Leader, or Administrator."""
+    if (not session.account or session.account.staff_level != "implementor"
+            or session.account.name.lower() != config.ADMIN_NAME):
+        session.send("You don't have access to that.")
+        return
+    usage = "Usage: promoteimm <account> <builder|area leader|administrator>"
+    if len(args) < 2 or not args[0].isascii() or not args[0].isalpha() or not (2 <= len(args[0]) <= 20):
+        session.send(usage)
+        return
+    rank = " ".join(args[1:]).lower()
+    if rank not in ("builder", "area leader", "administrator"):
+        session.send(usage)
+        return
+    account = storage.load_account(args[0])
+    if account is None:
+        session.send("That account does not exist.")
+        return
+    if account.staff_level == "player":
+        session.send(f"{account.name} is not an immortal yet. Use makeimm {account.name} first.")
+        return
+    if account.staff_level not in config.STAFF_LEVELS or config.STAFF_LEVELS.index(rank) <= config.STAFF_LEVELS.index(account.staff_level):
+        session.send(f"{account.name} is already {account.staff_level}; choose a higher rank.")
+        return
+    account.staff_level = rank
+    storage.save_account(account)
+    from session import ACTIVE_SESSIONS
+    for other in list(ACTIVE_SESSIONS):
+        if other.account and other.account.name.lower() == account.name.lower():
+            other.account.staff_level = rank
+            other.send(f"Your immortal rank is now {rank.title()}.")
+    session.send(f"{account.name} is now {rank.title()}. The account change is saved.")
 
 
 def cmd_changes(session, args: List[str]) -> None:
@@ -7536,6 +7958,32 @@ def cmd_bank(session, args: List[str]) -> None:
         session.send(f"You withdraw {amount:,} ryo. Banked: {player.bank_balance:,} ryo.")
 
 
+def cmd_lottery(session, args: List[str]) -> None:
+    """View the daily jackpot or purchase a four-digit ticket."""
+    import datetime
+    import lottery
+    state = lottery.draw_due(session.active_sessions())
+    if len(args) == 2 and args[0].lower() == "buy":
+        error = lottery.buy(session.player, args[1], session.active_sessions())
+        if error:
+            session.send(error)
+        else:
+            ticket = next(t for t in lottery.load()["tickets"] if t["player"].casefold() == session.player.name.casefold())
+            session.send(f"Lottery ticket {ticket['number']} purchased for {lottery.TICKET_PRICE:,} ryo. "
+                         f"Current jackpot: {lottery.load()['jackpot']:,} ryo.")
+        return
+    if args:
+        session.send("Usage: lottery  |  lottery buy <four digits|random>")
+        return
+    date = datetime.datetime.fromtimestamp(state["next_draw"], datetime.timezone.utc)
+    mine = [t["number"] for t in state["tickets"] if t["player"] == session.player.name]
+    last = state.get("last_draw")
+    session.send(f"Jackpot: {state['jackpot']:,} ryo. Tickets: {lottery.TICKET_PRICE:,} ryo each.\n"
+                 f"Next draw: {date:%Y-%m-%d %H:%M} UTC. Buy one ticket with 'lottery buy 0042' or 'lottery buy random'.\n"
+                 f"Your tickets: {', '.join(mine) if mine else 'none'}.\n"
+                 f"Last draw: {last['number'] if last else 'none yet'}.")
+
+
 def cmd_place(session, args: List[str]) -> None:
     """'place bounty <player> <reward_ryo> <reward_mission_points>
     <description...>' -- posts a player bounty to the Bingo Book, in
@@ -7621,6 +8069,10 @@ def cmd_commands(session, args: List[str]) -> None:
     (north/south/etc. and their n/s/e/w/u/d shorthand) is handled
     outside the COMMANDS dict, so it's called out separately."""
     names = sorted(set(COMMANDS.keys()))
+    import lightsabers
+    import seasonal_events
+    if not seasonal_events.may_fourth_active() and not lightsabers.owns_saber(session.player):
+        names = [name for name in names if name not in lightsabers.COMMAND_NAMES]
     col_width = max(len(name) for name in names) + 2
     per_column = (len(names) + 2) // 3  # split into 3 roughly-even columns
     columns = [names[i:i + per_column] for i in range(0, len(names), per_column)]
@@ -7636,7 +8088,13 @@ def cmd_commands(session, args: List[str]) -> None:
     session.send("\n".join(lines))
 
 
+import lightsabers
+
 COMMANDS = {
+    "lightsaber": lightsabers.command,
+    "activate": lightsabers.activate, "deactivate": lightsabers.deactivate,
+    "insert": lightsabers.insert_gem,
+    "imms": cmd_imms, "immortal": cmd_imms, "immortals": cmd_imms,
     "sage": sage_mode.command,
     "summon": sage_mode.summon_command,
     "restore": cmd_restore, "respawn": cmd_respawn,
@@ -7663,6 +8121,7 @@ COMMANDS = {
     "afk": cmd_afk,
     "recall": cmd_recall,
     "anki": cmd_anki,
+    "charge": cmd_charge,
     "goto": cmd_goto,
     "transfer": cmd_transfer,
     "return": cmd_return,
@@ -7699,6 +8158,7 @@ COMMANDS = {
     "convert": cmd_convert_practice,
     "practice": cmd_practice,
     "prac": cmd_prac,
+    "signature": cmd_signature,
     "rest": cmd_rest,
     "sleep": cmd_sleep,
     "stand": cmd_stand, "wake": cmd_stand,
@@ -7752,12 +8212,15 @@ COMMANDS = {
     "quit": cmd_quit,
     "save": cmd_save,
     "reboot": cmd_reboot,
+    "makeimm": cmd_makeimm,
+    "promoteimm": cmd_promoteimm,
     "commands": cmd_commands,
     "changes": cmd_changes,
     "leaderboard": cmd_leaderboard, "leaderboards": cmd_leaderboard, "top": cmd_leaderboard,
     "bingobook": cmd_bingobook, "bounty": cmd_bounty, "place": cmd_place,
     "territory": cmd_territory, "war": cmd_territory, "garrison": cmd_garrison,
-    "bank": cmd_bank,
+    "bank": cmd_bank, "gold": cmd_bank,
+    "lottery": cmd_lottery,
     "trap": cmd_trap,
     "reload": cmd_reload,
     "spawnpoint": cmd_spawnpoint,

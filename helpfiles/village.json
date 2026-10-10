@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "village",
+  "keywords": [
+    "village",
+    "vchat",
+    "vc"
+  ],
+  "title": "Village Chat",
+  "body": "Syntax: village <message>  (aliases: vchat, vc)\n\nDescription: Sends a message to everyone in your own village, regardless of which room they're in.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

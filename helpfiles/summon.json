@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "summon",
+  "keywords": [
+    "summon",
+    "summoning",
+    "contract"
+  ],
+  "title": "Summoning Contracts",
+  "body": "Syntax: summon sign [family] (beside a Summon Elder) | summon <toad|snake|slug|ninken|monkey> | summon dismiss\n\nDescription: Five summoning families exist -- Toad, Snake, Slug, Ninken, and Monkey. A builder places a Summon Elder in that family's hideout. At level 20, stand beside it and use 'summon sign' to choose your one permanent contract. You cannot sign or summon another family afterward. Calling your family costs 40 Chakra and summons its highest tier allowed by your level.\n\nA summon's real strength is your own current level multiplied by that specific tier's own power -- so the same contract gets meaningfully stronger as you level, without needing to re-sign anything. Calling your family again replaces your current summon.\n\nEvery contract's strongest tier has its own genuinely unique battle role, not just bigger numbers -- some heal you, some trap or bind an enemy, one can save you from a killing blow, and one doesn't fight at all but makes your own attacks hit harder instead. Discovering exactly what each family's top tier does is part of the fun.\n\nDate: 2026-09-03",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "remtip",
+  "keywords": [
+    "remtip"
+  ],
+  "title": "Remtip (staff)",
+  "body": "Syntax: remtip <number>\n\nDescription: Removes a tip from the rotation by its number, matching the numbering 'addtip' (with no arguments) shows.\n\n&D(Staff only -- requires builder access.)&x\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

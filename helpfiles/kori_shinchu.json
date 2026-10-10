@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "kori shinchu",
+  "keywords": [
+    "kori shinchu"
+  ],
+  "title": "Kori Shinchu",
+  "body": "Syntax: perform kori shinchu <target>\n\nDescription: Mental damage that drains 20 Stamina and can disorient the target.  Also drains 20 Stamina on hit. Usable with any chakra nature. Base damage: 91-107. 65% chance to inflict disoriented. The effect lasts 20 seconds before resistance. Unlocks at level 32. Costs 31 Chakra and 0 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

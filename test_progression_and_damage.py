@@ -8,6 +8,7 @@ import combat
 import commands
 import content
 import damage_messages
+import help_system
 import legendary_items
 import leveling
 import olc
@@ -39,6 +40,22 @@ class DamageMessageTests(unittest.TestCase):
         colors_used = [color for _maximum, _label, color in damage_messages.DAMAGE_TIERS]
         self.assertEqual(len(colors_used), len(set(colors_used)))
         self.assertTrue(all(0 <= color <= 255 for color in colors_used))
+
+    def test_help_scale_matches_live_damage_ranges_and_words(self):
+        scale = damage_messages.help_scale_lines()
+        self.assertIn("0-1 damage", scale)
+        self.assertIn("600-899 damage", scale)
+        self.assertIn("10,000+ damage", scale)
+        for maximum, label, color in damage_messages.DAMAGE_TIERS:
+            self.assertIn(f"&[{color}]{label}&x", scale)
+        self.assertGreater(len(set(colors_used := [color for _, _, color in damage_messages.DAMAGE_TIERS if 110 <= color <= 220])), 10)
+        page = next(entry for entry in help_system.DEFAULT_HELP_ENTRIES if entry["primary_keyword"] == "damage messages")
+        self.assertIn("damage values", page["keywords"])
+        self.assertIn(scale, page["body"])
+
+    def test_impact_flavor_changes_with_damage(self):
+        self.assertNotEqual(damage_messages.impact_flavor(1), damage_messages.impact_flavor(100))
+        self.assertNotEqual(damage_messages.impact_flavor(100), damage_messages.impact_flavor(10000))
 
 
 class ProgressiveExperienceTests(unittest.TestCase):
@@ -111,7 +128,7 @@ class BuilderPersistenceTests(unittest.TestCase):
         player.room_vnum = 9000
         player.ryo = 100
         session = SimpleNamespace(player=player, send=Mock())
-        builder = SimpleNamespace(account=SimpleNamespace(staff_level="builder"),
+        builder = SimpleNamespace(account=SimpleNamespace(staff_level="implementor"),
                                   player=SimpleNamespace(name="Builder", room_vnum=9000), send=Mock())
         olc.cmd_oset(builder, ["9200", "short", "new", "kunai"])
         olc.cmd_oset(builder, ["9200", "cost", "30"])
@@ -143,7 +160,7 @@ class BuilderPersistenceTests(unittest.TestCase):
                              "item_vnum": playershops.item_vnum_for_stock("old kunai")},
                             {"item_name": "old kunai", "price": 20}]
         shopkeeper = SimpleNamespace(player_shop_owner="Owner", name="shopkeeper")
-        builder = SimpleNamespace(account=SimpleNamespace(staff_level="builder"),
+        builder = SimpleNamespace(account=SimpleNamespace(staff_level="implementor"),
                                   player=SimpleNamespace(name="Builder"), send=Mock())
         olc.cmd_oset(builder, ["9200", "short", "new", "kunai"])
         buyer = Player("Buyer", "Buyer")
@@ -204,7 +221,7 @@ class BuilderPersistenceTests(unittest.TestCase):
 
     def test_smaug_builder_convenience_commands(self):
         session = SimpleNamespace(
-            account=SimpleNamespace(staff_level="builder"),
+            account=SimpleNamespace(staff_level="implementor"),
             player=SimpleNamespace(name="Builder", room_vnum=9000),
             send=Mock(),
         )
@@ -217,7 +234,7 @@ class BuilderPersistenceTests(unittest.TestCase):
         self.assertIn("wooden kunai", world.WORLD.get(9000).ground_items)
 
     def test_copy_commands_duplicate_independent_prototypes_and_save(self):
-        builder = SimpleNamespace(account=SimpleNamespace(staff_level="builder"),
+        builder = SimpleNamespace(account=SimpleNamespace(staff_level="implementor"),
                                   player=SimpleNamespace(name="Builder", room_vnum=9000), send=Mock())
         combat.MOB_TEMPLATES[9101] = combat.default_template(9101, "academy shopkeeper")
         combat.MOB_TEMPLATES[9101]["shopkeeper"] = True
@@ -270,7 +287,7 @@ class BuilderPersistenceTests(unittest.TestCase):
 
     def test_ostat_unique_name_and_ambiguity(self):
         session = SimpleNamespace(
-            account=SimpleNamespace(staff_level="builder"),
+            account=SimpleNamespace(staff_level="implementor"),
             player=SimpleNamespace(name="Builder", room_vnum=9000),
             send=Mock(),
         )

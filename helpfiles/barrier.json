@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "barrier",
+  "keywords": [
+    "barrier"
+  ],
+  "title": "Barrier",
+  "body": "Syntax: perform barrier\n\nDescription: A defensive chakra barrier negates 25% of incoming damage for three minutes without changing Armor Class. Leaving the room breaks it. Raises a defensive barrier for three minutes (25% less incoming damage, no Armor Class bonus). Moving to another room breaks it. Usable with any chakra nature. Unlocks at level 35. Costs 30 Chakra and 0 Stamina; 12 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

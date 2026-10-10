@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "craft",
+  "keywords": [
+    "craft"
+  ],
+  "title": "Craft",
+  "body": "Syntax: craft weapon <type> <name>\n       craft armor <slot> <name>\n       craft pill antidote <level>\n       craft pill medicine <level>\n\nDescription: A real Bukijutsu skill -- unlocked at Bukijutsu level 25+, or any class at level 70+. Combines exactly 2 materials (see 'help materials') into a brand-new item you name yourself. Their own individual stat values simply add together: a weapon gets that combined number as both bonus Hit Roll and bonus Damage Roll; armor gets it as Armor Class (better defense).\n\n<type> is one of: kunai, sword, shuriken, blunt, polearm, exotic.\n<slot> is one of: head, body, legs, feet, hands, waist, finger, neck, piercing, back, chakra aura.\n\nAfter naming your item, you'll be asked which 2 materials to combine (e.g. 'iron ingot, yew log') -- the same material can be used twice for a weaker but simpler craft. Takes a short delay to resolve, and re-checks you still have both materials at that point.\n\nPill crafting is Bukijutsu-only from level 25 (the level-70 general weapon/armor unlock does not apply). Each pill uses one Medicinal Herbs, sold at village general stores, and takes a short crafting delay. Choose any pill level from 1 through your own current level. The plain item name does not reveal its strength: use 'examine <pill>' to see its level and effect. 'use <pill>' consumes it; use '2.pill' or 'examine 2.pill' to select the second matching pill when carrying multiple levels. Antidote Pill cures poison, and is saved if you are not poisoned. Medicinal Pill restores Health, Chakra, and Stamina (100 + six times its level), each over 30 seconds. It does not cure status effects. These herbs make the strongest medical restorative in the game. Medicinal Herbs are separate from the two-material weapon/armor recipes.\n\nDate: 2026-09-07",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

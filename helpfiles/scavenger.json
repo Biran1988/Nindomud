@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "scavenger",
+  "keywords": [
+    "scavenger",
+    "scavenger mob flag"
+  ],
+  "title": "Scavenger Mob Flag",
+  "body": "Syntax: mset <mob vnum> flags Scavenger\n\nDescription: Builder mob flag. Each server pulse, a living Scavenger collects takeable loose items lying on the ground in its current room. It never picks up no_take items or enters private apartment storage to clean it. Collected items are held on the live mob (visible in mstat), not saved; they disappear when the mob is removed, killed, or the server reboots. Combine with Wander to clean multiple rooms. Remove the flag with mset <mob vnum> flags -Scavenger.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

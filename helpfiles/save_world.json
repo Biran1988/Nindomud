@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "save world",
+  "keywords": [
+    "save world",
+    "world persistence",
+    "world save"
+  ],
+  "title": "Save World (staff)",
+  "body": "Syntax: save world\n\nDescription: Writes a full snapshot of every room, mob prototype, and item prototype currently live in the game to disk. From that point on, every future server restart -- a crash, a manual reboot, or deploying a newly packaged version of the code -- loads this exact saved state back in, on top of whatever the code itself would otherwise build, instead of silently discarding anything built or edited since the code was last written.\n\nThis is a full snapshot, not just what's new -- it captures the CURRENT state of everything, built-in content and anything you've built or edited alike. Saved data always wins: if you edit an existing room and save, that edit survives every future restart even though the code itself would otherwise rebuild that room differently. There's no autosave -- nothing is written to disk until you explicitly run this, matching the classic 'save the world when you're ready' convention this game's own design is built around, so you can build freely without every single edit hitting disk.\n\n&D(Staff only -- requires Implementor access, the same tier 'reboot' requires, given how much this affects: it permanently determines what every future restart loads from here on.)&x\n\nDate: 2026-08-20",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

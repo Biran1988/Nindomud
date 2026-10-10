@@ -9,6 +9,7 @@ Each topic is its own JSON file under data/help/, so it survives
 restarts and is easy to hand-edit/back up like any other save file.
 """
 
+import jutsu_colors
 import json
 import os
 import time
@@ -16,6 +17,8 @@ from typing import List, Optional
 
 import storage
 import data_jutsu
+import damage_messages
+import status_effects
 
 HELP_DIR = os.path.join(storage.DATA_DIR, "help")
 AUDIT_LOG_PATH = os.path.join(storage.DATA_DIR, "help_audit.log")
@@ -25,7 +28,9 @@ AUDIT_LOG_PATH = os.path.join(storage.DATA_DIR, "help_audit.log")
 STAFF_CAN_AUTHOR_HELP = {"helper", "builder", "area leader", "administrator", "implementor"}
 
 def _slug(keyword: str) -> str:
-    return keyword.strip().lower().replace(" ", "_")
+    # Help topics may contain punctuation (for example, "Water Release:")
+    # that Windows rejects in filenames, including packaged helpfiles.
+    return keyword.strip().lower().replace(":", "").replace(" ", "_")
 
 
 def ensure_dirs() -> None:
@@ -86,6 +91,25 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "holiday events",
+        "keywords": ["holiday events", "easter", "christmas", "santa", "easter egg", "thanksgiving", "turkey", "july 4", "fourth of july", "uncle sam"],
+        "title": "Holiday Events",
+        "body": (
+            "Syntax: use egg | use present | use <candy> | ask santa present | eat turkey | sell feather | ask uncle sam gifts\n"
+            "\n"
+            "Description: During the Monday through Sunday week ending on Easter, every ordinary defeated mob leaves a Painted Easter Egg in its corpse. Use an egg to discover candy. Candy restores Health, Chakra, or Stamina and grants +10% experience from mob kills for 15 real minutes; the perk does not stack.\n"
+            "\n"
+            "On U.S. Thanksgiving Thursday through Sunday, two turkeys appear in each built area. A killed turkey is replaced after 15 minutes. Its corpse carries roasted turkey and two feathers. Eat turkey to restore up to 100 each of Health, Chakra, and Stamina and receive +10% mob experience for 30 minutes. Any shopkeeper buys a feather for 500 ryo.\n"
+            "\n"
+            "On July 4, Uncle Sam visits every Kage chamber. Ask Uncle Sam about gifts for one box of fireworks, one Bomb Pop Popsicle, and one BBQ Platter per character per year. Use fireworks to light a colorful display; eat popsicle restores up to 60 Chakra and Stamina, and eat BBQ restores up to 100 Health and Stamina.\n"
+            "\n"
+            "From December 24 through 31, a Christmas tree and Santa appear in every Kage chamber. Ask Santa about a present (or say 'present') for one wrapped present per character per year. Use present to open it. Holiday dates follow Detroit time; gifts and food remain usable after the event.\n"
+            "\n"
+            "Date: 2026-09-29"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "attributes",
@@ -1001,13 +1025,13 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: help kekkei genkai\n"
             "\n"
-            "Description: A Kekkei Genkai is a rare bloodline ability, inherited (or not) at character creation based on which clan you were born into -- there's no way to earn one afterward, and no way to know for certain whether you have one until it's formally awakened. Most players don't have one at all, and that's by design: a character without a Kekkei Genkai is meant to stay every bit as viable as one with one.\n"
+            "Description: Clan Kekkei Genkai (Sharingan, Byakugan, Shikotsumyaku) are inherited at character creation. Elemental releases instead depend on your revealed chakra natures, regardless of clan. A character with a clan Kekkei Genkai cannot also gain an elemental release.\n"
             "\n"
             "Awakening isn't something you trigger yourself, and there's no quest to accept or command to type for it -- once you're level 50 or higher, it can happen at any moment during real combat, entirely on its own. When it does, everyone connected sees a global announcement that someone's bloodline has awakened, though it never says whose or which one -- that part stays yours to discover, or keep to yourself. Once awakened, a Kekkei Genkai can develop further the more it's actually used, becoming sharper and more capable with real experience rather than all at once.\n"
             "\n"
             "&WThe Sharingan&x is the one Kekkei Genkai with real, playable abilities right now. Its core: an active toggle ('sharingan' -- see 'help sharingan' for the command itself) that sharpens your senses in combat at a small ongoing cost, growing more capable the more tomoe you carry. Broadly, across its full progression: better instincts for reading and avoiding attacks, sharper offense, resistance to being caught off guard by illusion techniques, a technique of its own to cast, and -- at its rarest -- the fleeting ability to read and turn an opponent's own technique back on them. Not every Sharingan is destined to develop the same way or reach the same heights; some simply have more room to grow than others.\n"
             "\n"
-            "The other four known Kekkei Genkai (Byakugan, Shikotsumyaku, Ice Release, Hydrification) exist and can be inherited and awakened the same way, but don't have abilities built out yet.\n"
+            "Element combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. These elemental releases have no dedicated jutsu yet.\n"
             "\n"
             "Staff: see 'help bloodstat' and 'help bloodset' for the tools to inspect and edit a player's hidden Kekkei Genkai state, and 'help awaken' for force-awakening one directly.\n"
             "\n"
@@ -1024,7 +1048,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: sharingan  |  shar\n"
             "\n"
-            "Description: Toggles the 1-tomoe Sharingan's first ability: reading an opponent's attacks well enough to dodge them, a real bonus on top of your normal dodge chance while it's active. Costs chakra and stamina every combat round it stays on, and a smaller amount of chakra even while you're not fighting -- having it active costs something at all times, more so mid-combat -- and turns itself off automatically if you can't afford the upkeep anymore, rather than draining you into the negatives. Costs nothing to toggle off. At 2 tomoe, the chakra cost drops -- the technique becomes less taxing with more eyes open; the dodge bonus itself doesn't change.\n"
+            "Description: Toggles the 1-tomoe Sharingan's first ability: reading an opponent's attacks well enough to dodge them, a real bonus on top of your normal dodge chance while it's active. Costs chakra and stamina every combat round it stays on, and a smaller amount of chakra even while you're not fighting -- having it active costs something at all times, more so mid-combat -- and turns itself off automatically if you can't afford the upkeep anymore, rather than draining you into the negatives. Upkeep is combined with other maintained abilities in a report every six minutes, and any pending Sharingan total is reported when it turns off. Costs nothing to toggle off. At 2 tomoe, the chakra cost drops -- the technique becomes less taxing with more eyes open; the dodge bonus itself doesn't change.\n"
             "\n"
             "The Sharingan can develop further with real use in combat -- up to 3 tomoe in each eye. Each stage brings its own new edge, sharper than the last. How quickly, and exactly what each one brings, isn't something you can see directly; toggling this command will always tell you how many tomoe you currently have, so you'll know the moment your eyes sharpen. Not every Sharingan is destined to reach the full 6 -- some eyes simply have more to give than others.\n"
             "\n"
@@ -1213,12 +1237,14 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "area",
-        "keywords": ["area", "areas", "vnum reservation"],
+        "keywords": ["area", "areas", "vnum reservation", "area export", "area import", "offline area builder"],
         "title": "Area",
         "body": (
-            "Syntax: area create <name> [size]  |  area set <name> income <n>  |  area set <name> resetmsg <text|off>  |  area list\n"
+            "Syntax: area create <name> [size]  |  area export <area name>  |  area import <file.json> [check]  |  area set <name> income <n>  |  area set <name> resetmsg <text|off>  |  area list\n"
             "\n"
             "Description: (Staff only.) Reserves a contiguous block of room vnums for a named area -- 1000 by default -- so builders working on different areas can't accidentally collide with each other's rooms. 'area create' auto-allocates the next free block; 'area list' shows every reservation, who created it, and its territory income if set.\n"
+            "\n"
+            "Offline builder: open builder/Nindo_Area_Builder.html in a browser, draw and connect rooms, add mob/item placements, then export a JSON package. To edit an area already in the game, an Implementor runs 'area export <area name>' and copies the file from data/area_exports/ to the browser's Open / import area JSON control. The room layout, exits, and placed mob/item prototypes open for editing. Copy the resulting JSON to data/area_imports/. An Implementor uses 'area import <file.json> check' to validate without changing the world, then 'area import <file.json>' to add or update that area and save it for reboot. Updating checks for changes made in game since export, keeps advanced room/prototype fields, and refuses missing existing rooms or prototypes. Export again if the area changed in game. New packages refuse occupied VNUMs.\n"
             "\n"
             "'area set <name> income <n>' sets the area's per-tick territory income (see 'help territory') -- an area with income set and at least one room flagged CapturePoint (see 'help flags') becomes real, ownable war/territory content, no other setup needed. Use 'astat <name>' to see an area's full details, including how many of its rooms are actually built and which are capture points.\n"
             "\n"
@@ -1228,7 +1254,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Each of the 5 villages has its own core area (named leaf/stone/water/cloud/sand), covering its original 100-vnum block, PLUS a separate, genuinely-1000-vnum '<village>-expansion' area (e.g. leaf-expansion) for new building -- the core blocks sit packed too tightly against each other to widen in place without relocating already-built rooms, so the expansion areas are where new village content should actually go. Everything else pre-existing (Main Street, apartment/shop expansions) lives in legacy-world/legacy-expansions instead.\n"
             "\n"
-            "Date: 2026-08-17"
+            "Date: 2026-10-03"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -1368,7 +1394,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Tracking is scoped to the target's own area -- it won't path across the whole map, only within the region they're actually in. It respects closed and locked doors just like normal movement. It runs quietly in the background, so you can keep doing other things while it walks you there, but it automatically pauses the instant you're in a fight (PvE or PvP) and picks back up the moment that fight ends.\n"
             "\n"
-            "It costs a small amount of chakra every pulse it's active, and stops on its own if you run out. It also ends cleanly -- with a message telling you so -- the moment the trail goes cold: your target logs off, dies, leaves their own area, or you simply arrive.\n"
+            "It costs 5 Chakra every pulse it's active, summarized with other upkeep every six minutes, and stops on its own if you run out. Paid maintenance can improve Track mastery by 1% on a successful roll outside combat. It also ends cleanly -- with a message telling you so -- the moment the trail goes cold: your target logs off, dies, leaves their own area, or you simply arrive.\n"
             "\n"
             "Date: 2026-09-03"
         ),
@@ -1412,7 +1438,7 @@ DEFAULT_HELP_ENTRIES = [
             "All forms boost attack and jutsu damage by 20%, accuracy by 10, and reduce incoming combat damage by 10%. "
             "Toad adds 5 accuracy; Snake adds 10% jutsu damage; Slug heals 5% maximum health per combat round; "
             "Ninken grants one extra ordinary attack each combat round; Monkey adds 10% wielded weapon damage. "
-            "Your toggle is saved through logout; upkeep resumes while online.\n\n"
+            "Upkeep joins the combined report every six minutes; any pending Sage Mode total appears when it ends. Your toggle is saved through logout; upkeep resumes while online.\n\n"
             "Date: 2026-09-27"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
@@ -1710,7 +1736,7 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "taijutsu stances",
-        "keywords": ["taijutsu stances", "kihon dachi", "neko ashi dachi", "sanchin dachi"],
+        "keywords": ["taijutsu stances", "stance", "stances", "kihon dachi", "neko ashi dachi", "sanchin dachi"],
         "title": "Taijutsu Stances",
         "body": (
             "Syntax: kihon dachi | neko ashi dachi | sanchin dachi\n\n"
@@ -2172,11 +2198,11 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Reveals your own chakra nature -- one of the five elements (Fire, Water, Wind, Earth, Lightning), secretly decided the moment your character was created and never shown to you before now. Requires level 25 -- below that, the paper simply doesn't react and is NOT consumed, so you can hold onto it and try again once you're ready. Once it does react, the paper is consumed.\n"
             "\n"
-            "At level 100, a second Chakra Paper reveals a genuinely SECOND chakra nature -- a completely independent, freshly-rolled element, guaranteed different from your first but otherwise picked with no regard for whether the two make thematic sense together (fire and water can both be yours at once). You must have already revealed your first nature before the second can be revealed, even if you're already well past level 100.\n"
+            "At level 100, a second Chakra Paper reveals a second, distinct nature. A third paper at level 100 reveals a third distinct nature. You must reveal them in order. Element combinations can grant an elemental Kekkei Genkai, or Dust Release (Kekkei Tota) from Earth + Wind + Fire. A character with an inherited clan Kekkei Genkai cannot also gain an elemental release. See 'help kekkei genkai'.\n"
             "\n"
             "Once you've revealed everything there is to know, channeling further Chakra Paper does nothing at all and won't consume the sheet.\n"
             "\n"
-            "A nature you've genuinely revealed shows up on your 'score' sheet from then on -- a handy way to check whether you've already discovered one (or both) before buying another paper. An unrevealed nature never appears there.\n"
+            "Revealed natures and any elemental release appear on 'score'. Unrevealed natures stay hidden.\n"
             "\n"
             "Date: 2026-08-25"
         ),
@@ -2771,10 +2797,10 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "bank",
-        "keywords": ["bank", "banker", "deposit", "withdraw"],
+        "keywords": ["bank", "gold", "banker", "deposit", "withdraw"],
         "title": "Bank",
         "body": (
-            "Syntax: bank  |  bank deposit <amount>  |  bank withdraw <amount>\n"
+            "Syntax: bank or gold  |  gold deposit <amount>  |  gold withdraw <amount>\n"
             "\n"
             "Description: A safe place to store ryo away from death-penalty loss -- losing a fight (PvE or PvP) only ever costs you ryo you're carrying on hand, never anything sitting in the bank. There's no way for another player to take ryo from you directly either, so a banked balance is fully safe from other players too.\n"
             "\n"
@@ -2787,6 +2813,18 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "lottery",
+        "keywords": ["lottery", "lottery buy", "jackpot", "draw"],
+        "title": "Daily Lottery",
+        "body": (
+            "Syntax: lottery  |  lottery buy <four digits|random>\n\n"
+            "Description: Each ticket costs 1,000 ryo from your carried money. Pick exactly four digits, including leading zeroes, such as 0042, or type random for an automatic pick. You can buy one ticket per drawing. Every ticket adds its price to the shared jackpot.\n\n"
+            "A random number from 0000 through 9999 is drawn every 24 hours. You may buy one ticket per draw, choosing four digits or letting the game pick with 'random'. If no ticket matches, 25,000 ryo is added to the jackpot and it carries over. A match wins the jackpot, deposited directly into the winner's bank. Multiple matching players split the jackpot; then the next jackpot starts at 25,000 ryo plus new ticket purchases. 'lottery' shows the next draw in UTC, the current pot, your ticket and the last number.\n\n"
+            "Date: 2026-09-28"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "trap",
@@ -3000,14 +3038,16 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "damage messages",
-        "keywords": ["damage messages", "damage words", "damage colors", "colored damage"],
+        "keywords": ["damage messages", "damage values", "damage words", "damage colors", "colored damage"],
         "title": "Damage Messages",
         "body": (
             "Syntax: (automatic during combat)\n"
             "\n"
-            "Description: Combat reports damage with a colored severity word instead of exposing the raw number. The scale runs from TRIVIAL and GLANCING through DEVASTATING and OBLITERATING, then reaches REALITY-SHATTERING and EXTINCTION-LEVEL for the strongest hits. Every tier has its own 256-color shade.\n"
+            "Description: Every combat damage word corresponds to the actual damage dealt. The word is colored from a broad palette so you can judge a hit at a glance. The exact scale is:\n\n"
+            + damage_messages.help_scale_lines() + "\n\n"
+            "Hits beyond 10,000 stay EXTINCTION-LEVEL. Damaging jutsu base hits climb this word ladder with their unlock level: level 75 reaches CATASTROPHIC, and level 100 reaches EXTINCTION-LEVEL. Multi-strike jutsu split their base across strikes. Bonuses and defenses can move a final hit to another word. Damage words appear in combat instead of raw numbers.\n"
             "\n"
-            "Date: 2026-09-22"
+            "Date: 2026-10-03"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -3100,7 +3140,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: mstat <vnum or name>\n"
             "\n"
-            "Description: Shows a mob prototype's full stat block -- works on a live spawned mob or an offline prototype by vnum. Also works on a player's name, showing their score sheet instead. If you're an administrator (or higher), a player's mstat also appends their hidden Kekkei Genkai status (clan, bloodline, Potential, Talent, awakened, mastery) -- see 'help bloodstat'. Builder-level staff see the normal score sheet with nothing extra; this data stays hidden below administrator, same as 'bloodstat' itself.\n"
+            "Description: Shows a mob prototype's full stat block -- works on a live spawned mob or an offline prototype by vnum. Also works on a player's name, showing their score sheet instead. If you're an administrator (or higher), a player's mstat also appends hidden Kekkei Genkai status (clan, bloodline, Potential, Talent, awakened, mastery). For a Sharingan user it shows Mangekyo status and the assigned Eye 1 and Eye 2 techniques by name -- see 'help bloodstat'. Builder-level staff see the normal score sheet with nothing extra; this data stays hidden below administrator.\n"
             "\n"
             "&D(Staff only.)&x\n"
             "\n"
@@ -3117,7 +3157,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: bloodstat <player>\n"
             "\n"
-            "Description: Shows a player's hidden Kekkei Genkai state: clan, bloodline (if any), Potential, Talent, awakened status, and mastery (shown as a fraction and percent of that player's own Potential, plus whether they meet BOTH conditions a future stage-2 awakening quest would require -- 90+ raw Potential AND fully-maxed mastery) -- plus, for a Sharingan specifically, tomoe count against their Potential-based cap (not every Sharingan can reach the full 6; a lower Potential caps the ceiling itself, independent of mastery progress) and whether it's currently toggled active. Never shown to the player themselves anywhere else in the game -- see 'bloodset' to edit these values. The same information also appears automatically at the end of 'mstat <player>' if you're an administrator (or higher) -- 'bloodstat' is useful when you want just this, without the full score sheet around it.\n"
+            "Description: Shows a player's hidden Kekkei Genkai state: clan, bloodline (if any), Potential, Talent, awakened status, and mastery (shown as a fraction and percent of that player's own Potential, plus whether they meet BOTH conditions a future stage-2 awakening quest would require -- 90+ raw Potential AND fully-maxed mastery) -- plus, for a Sharingan specifically, tomoe count, active state, Mangekyo status, and both assigned eye techniques. Never shown to the player themselves -- see 'bloodset' to edit these values. The same information appears at the end of 'mstat <player>' for an administrator (or higher).\n"
             "\n"
             "&D(Staff only -- requires administrator access or higher.)&x\n"
             "\n"
@@ -3430,6 +3470,42 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "makeimm",
+        "keywords": ["makeimm", "promote immortal"],
+        "title": "Make Immortal (Implementor)",
+        "body": (
+            "Syntax: makeimm <account>\n"
+            "\n"
+            "Description: Promotes an existing player account to the Helper immortal rank and saves the change immediately, even if the target is offline. An online player should reconnect for the full staff skill set. Existing staff ranks are not changed.\n"
+            "\n"
+            "Only the Biran Implementor account can use this command.\n"
+            "\n"
+            "Example: makeimm Kakashi\n"
+            "\n"
+            "Date: 2026-09-29"
+        ),
+        "created_by": "System",
+        "updated_by": "System",
+        "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "promoteimm",
+        "keywords": ["promoteimm", "immortal ranks"],
+        "title": "Promote Immortal (Implementor)",
+        "body": (
+            "Syntax: promoteimm <account> <builder|area leader|administrator>\n"
+            "\n"
+            "Description: Raises an existing immortal account to a higher staff rank and saves the change immediately. Use makeimm <account> first for a player account. Only Biran's Implementor account can use this command. It cannot demote staff or grant Implementor.\n"
+            "\n"
+            "Examples: promoteimm Kakashi builder; promoteimm Kakashi area leader; promoteimm Kakashi administrator\n"
+            "\n"
+            "Date: 2026-09-29"
+        ),
+        "created_by": "System",
+        "updated_by": "System",
+        "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "reboot",
         "keywords": ["reboot"],
         "title": "Reboot (staff)",
@@ -3547,7 +3623,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: perform demonic illusion hell viewing technique <target>\n"
             "\n"
-            "Description: A Genjutsu jutsu, part of every character's starting kit. 4-8 mental damage and inflicts Frightened (reduces the target's own damage output for a while). Costs 10 Chakra, 3 second cooldown.\n"
+            "Description: A Genjutsu jutsu, part of every character's starting kit. 8-16 mental damage and inflicts Frightened for 20 seconds (reduces the target's own damage output). Costs 12 Chakra, 3 second cooldown. Active Sharingan resistance shortens the effect.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -3562,7 +3638,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: perform narakumi <target>\n"
             "\n"
-            "Description: A Genjutsu jutsu, unlocked at level 15. 10-18 mental damage, with a 50% chance to also inflict Narakumi -- dulling the target's reflexes and lowering their own chance to land hits for a few rounds. Costs 18 Chakra, 4 second cooldown.\n"
+            "Description: A Genjutsu jutsu, unlocked at level 15. 20-36 mental damage, with a 50% chance to inflict Narakumi for 24 seconds, dulling the target's reflexes and lowering their chance to land hits. Costs 22 Chakra, 4 second cooldown. Active Sharingan resistance shortens the effect.\n"
             "\n"
             "Date: 2026-08-22"
         ),
@@ -3611,7 +3687,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: samurai sabre\n"
             "\n"
-            "Description: Bukijutsu level 35. Requires a wielded sword. Flow chakra through the blade to increase ordinary sword hit damage by 20% for five pulses. Switching to another weapon does not benefit from the effect. Costs 35 Chakra and 10 Stamina; 25 second cooldown.\n"
+            "Description: Bukijutsu level 35. Requires a wielded sword. Toggle the chakra edge on to increase ordinary sword hit damage by 20% while sustained. Costs 35 Chakra and 10 Stamina to activate, then 4 Chakra every 10 seconds outside combat, or 6 Chakra and 2 Stamina each combat round. Use the command again to turn it off for free. Switching away from a sword or running out of resources ends it. Upkeep joins the combined six-minute report; pending costs are reported when it ends. 25 second cooldown on activation. Active upkeep can improve Samurai Sabre mastery by 1% on a successful roll, including outside combat.\n"
             "\nDate: 2026-09-27"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
@@ -3690,9 +3766,9 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Clones can be summoned before a fight and stick around independently -- they aren't tied to being in combat at all, and don't follow you if you walk away from them. Each clone has its own health (a flat 25% of your OWN current max health) and can be attacked directly by anyone, same as any other mob in the room; enough hits and one goes down, vanishing in a puff of smoke with nothing to loot and no reward for whoever did it. While you're actively fighting something, your clones automatically join in and attack it too, each using your own stats and weapon at half your own damage.\n"
             "\n"
-            "Active clones drain 25 Chakra per clone every round, combat or not, for as long as they're out -- if you can't afford the full upkeep, clones dispel one at a time rather than all at once. Recasting dismisses any clones you already have and resummons fresh at your current mastery, rather than stacking more on top.\n"
+            "Active clones drain an average 3.75 Chakra per clone every one-second pulse (15% of the previous 25), combat or not. Fractional costs carry forward and are charged as whole Chakra over subsequent pulses. If you can't afford the full upkeep, clones dispel one at a time rather than all at once. The charge is summarized with other upkeep every six minutes. Recasting dismisses any clones you already have and resummons fresh at your current mastery, rather than stacking more on top.\n"
             "\n"
-            "Mastery can be raised by 'practice' up to 20% -- past that, only actually casting this jutsu in combat raises it further, all the way to 100%.\n"
+            "Mastery can be raised by 'practice' up to 20%; casting and successful paid clone maintenance can improve it above that cap, even outside combat, all the way to 100%.\n"
             "\n"
             "Date: 2026-08-24"
         ),
@@ -3719,6 +3795,7 @@ DEFAULT_HELP_ENTRIES = [
 
 # These pages use live jutsu data for their costs, cooldowns, and effects.
 _EXPANSION_HELP_KEYS = (
+    "ice senbon", "ice prison", "demonic mirroring ice crystals",
     "chakra ball", "rasengan", "oodama rasengan", "nanairo no rasengan", "suigadan", "juuha shou",
     "karyuu endan", "retsudotensho", "chishin", "chidori", "dual chidori",
     "full body chidori", "maximum chidori", "raikiri", "fire rasengan",
@@ -3732,6 +3809,9 @@ _EXPANSION_HELP_KEYS = (
     "kokuangyou",
 )
 _EXPANSION_DESCRIPTIONS = {
+    "ice senbon": "Haku's needles of ice strike one enemy and may drain Stamina through off balance.",
+    "ice prison": "Encase one enemy in ice; a successful hit may briefly stop their actions.",
+    "demonic mirroring ice crystals": "Haku's signature mirror assault strikes one enemy hard and may blind them.",
     "chakra ball": "Forms a compact ball of chakra for a direct hit.",
     "rasengan": "A spinning chakra sphere that strikes one target.",
     "oodama rasengan": "A larger, stronger Rasengan.",
@@ -3755,13 +3835,13 @@ _EXPANSION_DESCRIPTIONS = {
     "mizu bunshin": "Summons one Water clone that fights with you and can drain Chakra.",
     "deido bunshin": "Summons one Earth clone that fights with you and deals 25% more clone-attack damage.",
     "suna bunshin": "Summons one Sand clone that fights with you and can entangle a target.",
-    "barrier": "A defensive chakra barrier reduces incoming damage by 10% for five pulses.",
+    "barrier": "A defensive chakra barrier negates 25% of incoming damage for three minutes without changing Armor Class. Leaving the room breaks it.",
     "henge": "Disguise yourself as a person in the room; casting without a target removes your disguise.",
     "greater henge": "A longer-lasting disguise as a person in the room; casting without a target removes it.",
     "ultimate henge": "The longest-lasting disguise as a person in the room; casting without a target removes it.",
     "kokohi arazu": "Change the visible name of a carried item without altering the real item.",
     "niju kokohi arazu": "Project a false copy of a carried item onto the ground; it cannot be taken or sold.",
-    "chisei": "Temporarily increases maximum Chakra and Genjutsu accuracy for six pulses.",
+    "chisei": "Temporarily increases maximum Chakra and Genjutsu accuracy for 60 seconds.",
     "distortion flame": "An illusion that deals mental damage.",
     "phantom soldiers": "An illusory assault that deals mental damage.",
     "soundless sound": "Mental damage with a chance to impair accuracy.",
@@ -3773,11 +3853,28 @@ _EXPANSION_DESCRIPTIONS = {
     "insect eyes": "Reflects the victim's own normal attack sequence as mental damage, including extra strikes.",
     "kasumi juusha": "Haze-like illusory warriors that sharply reduce accuracy.",
     "suzu senbon": "Bell sounds that can disrupt the target's accuracy.",
-    "nehan shouja": "Attempts to put eligible enemies in the room to sleep for two pulses; safe rooms prevent hostile PvP.",
+    "nehan shouja": "Attempts to put eligible enemies in the room to sleep for 12 seconds; safe rooms prevent hostile PvP.",
     "jubaku satsu": "A binding tree illusion that can stun the target.",
     "jigaku gouka": "A tormenting illusion that can dull the target's reflexes.",
     "kokuangyou": "A darkness illusion that can blind the target.",
 }
+import data_kekkei_genkai as _release_data
+for _release_key, _release_jutsu in data_jutsu.JUTSU.items():
+    _release_id = _release_jutsu.get("kkg_gate")
+    if _release_id in _release_data.ELEMENTAL_RELEASE_NAMES and _release_key not in _EXPANSION_DESCRIPTIONS:
+        _EXPANSION_HELP_KEYS += (_release_key,)
+        _EXPANSION_DESCRIPTIONS[_release_key] = (
+            f"A {_release_data.ELEMENTAL_RELEASE_NAMES[_release_id]} attack that strikes one target. "
+            + {
+                "off_balance": "An off-balance target loses Stamina over time.",
+                "drained": "A drained target loses Chakra over time.",
+                "weakened": "A weakened target deals 15% less damage.",
+                "paralyzed": "Paralysis briefly blocks the target's actions.",
+                "blinded": "Blindness reduces the target's accuracy.",
+                "burning": "Burning deals extra damage over time.",
+                "stunned": "A stun briefly blocks the target's actions.",
+            }[_release_jutsu["effect"]]
+        )
 for _key in _EXPANSION_HELP_KEYS:
     _jutsu = data_jutsu.JUTSU[_key]
     _type = _jutsu.get("jutsu_type")
@@ -3789,16 +3886,16 @@ for _key in _EXPANSION_HELP_KEYS:
     if _type == "item_decoy":
         _syntax = f"perform {_key} <carried item>"
     _details = _EXPANSION_DESCRIPTIONS[_key] + " " + {
-        "buff": "Raises a defensive barrier for five pulses (10% less incoming damage, no Armor Class bonus).",
-        "elemental_clone": "Summons one living clone that fights alongside you and costs 25 Chakra per round. Requires 100% Shadow Clone Jutsu mastery; recasting any clone replaces the existing clones.",
+        "buff": "Raises a defensive barrier for three minutes (25% less incoming damage, no Armor Class bonus). Moving to another room breaks it.",
+        "elemental_clone": "Summons one living clone that fights alongside you and costs an average 3.75 Chakra per round. Requires 100% Shadow Clone Jutsu mastery; recasting any clone replaces the existing clones.",
         "ambush": "An opening attack with 50% extra damage; cannot be used mid-fight or against a wounded target.",
         "area": "An earthquake that damages other attackable mobs in the room as well.",
         "sevenfold": "A level-cap Rasengan with seven separate strike rolls: fire, water, earth, wind, lightning, soul, and dark. A matching chakra nature strengthens its own color. Soul can poison and dark can blind; one cast pays one Chakra cost.",
         "disguise": "Take the appearance of a person in this room. Use without a target to release your disguise; higher Henge tiers last longer.",
         "item_illusion": "Change how a carried item looks to other players who examine you; its real identity and properties stay intact.",
         "item_decoy": "Project a false copy of a carried item on the ground. It cannot be picked up, equipped, or sold.",
-        "chisei": "Gain temporary maximum Chakra and +12 accuracy for Genjutsu attacks for six pulses.",
-        "room_sleep": "Put eligible enemies in your room to sleep for two pulses, each with an independent resistance check; no friendly fire or PvP in safe rooms.",
+        "chisei": "Gain temporary maximum Chakra and +12 accuracy for Genjutsu attacks for 60 seconds.",
+        "room_sleep": "Put eligible enemies in your room to sleep for 12 seconds, each with an independent resistance check; no friendly fire or PvP in safe rooms.",
         "mirror": "Mental damage scales with the opponent's own offensive strength.",
     }.get(_type, "")
     _specific = {
@@ -3811,10 +3908,15 @@ for _key in _EXPANSION_HELP_KEYS:
     }.get(_key, "")
     _nature = (f" Requires {_jutsu['element'].capitalize()} chakra nature."
                if _jutsu["element"] != "none" else " Usable with any chakra nature.")
+    if _jutsu.get("kkg_gate") in _release_data.ELEMENTAL_RELEASE_NAMES:
+        _release_name = _release_data.ELEMENTAL_RELEASE_NAMES[_jutsu["kkg_gate"]]
+        _nature = f" Requires {_release_name} and its revealed chakra natures, without a clan bloodline."
     if _jutsu.get("requires_water"):
         _nature += " Requires water in the room (ocean, river, lake, or swamp)."
     _effect = (f" { _jutsu.get('effect_chance_pct', 100)}% chance to inflict {_jutsu['effect'].replace('_', ' ')}."
                if _jutsu["effect"] else "")
+    if _jutsu["effect"] and _jutsu["class_requirement"] == "genjutsu":
+        _effect += f" The effect lasts {status_effects.genjutsu_duration(_jutsu['effect'])} seconds before resistance."
     _damage = (f" Base damage: {_jutsu['damage'][0]}-{_jutsu['damage'][1]}."
                if _jutsu['damage'] is not None else "")
     _duration = (f" Illusion lasts {_jutsu['duration']} pulses."
@@ -3833,19 +3935,172 @@ for _key in _EXPANSION_HELP_KEYS:
 # fuller entries; existing player-authored files still take precedence.
 import recent_help
 
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "lightsaber",
+    "keywords": ["lightsaber", "lightsabers", "activate", "deactivate", "insert"],
+    "title": "Lightsabers",
+    "body": (
+        "Syntax: wield lightsaber | activate [lightsaber] | deactivate [lightsaber]\n"
+        "        use lightsaber | insert <cut gem> [into <lightsaber>]\n"
+        "        lightsaber | lightsaber on|off [lightsaber]\n"
+        "        lightsaber gem <cut gem> [into <lightsaber>]\n\n"
+        "A mysterious Jedi visits each Kage chamber on May 4 (America/Detroit time). "
+        "Ask jedi lightsaber to receive one green lightsaber hilt per character per year. "
+        "The Jedi leaves after May 4, but your weapon remains usable all year. "
+        "An ignited blade uses Sword proficiency, adds 8 base weapon damage and +2 Hitroll. "
+        "A retracted hilt uses Blunt Weapon proficiency with no blade damage or Hitroll bonus. "
+        "Use lightsaber toggles ignition. Deactivate the blade before inserting a carried cut gem; "
+        "crystal changes are unavailable during combat. Quartz makes white, sapphire blue, "
+        "ruby red, and diamond cyan. Inserting consumes one cut gem and replaces the old crystal. "
+        "The gem changes color only. Raw gems and ordinary uncut gems do not work. "
+        "Color and ignition state survive saving, trading, and rebooting. "
+        "Commands default to a lightsaber in your equipment, then inventory; "
+        "use 2.lightsaber to select the second match.\n\n"
+        "Date: 2026-10-10"
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "signature",
+    "keywords": ["signature", "signature move", "signature skill"],
+    "title": "Signature Move",
+    "body": (
+        "Syntax: signature  |  signature <move name>  |  signature clear\n\n"
+        "Choose one eligible, learned active combat jutsu after it reaches 100% proficiency. "
+        "Normal practice still stops at 50%; reach 100% through use first. "
+        "Once selected, practice that move with a matching teacher to raise its cap to 150%. "
+        "The bonus begins only at 150%: +25% damage for an attack, and +25% "
+        "duration for status/utility effects (Chisei also boosts its temporary Chakra). "
+        "Switch or clear the signature whenever you want, but the old move "
+        "immediately drops back to 100%. A newly chosen move starts its own 100%-150% "
+        "training. Passive, binary, and other unsupported abilities cannot be selected.\n\n"
+        "Date: 2026-10-06"
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
 _recent_pages = {entry["primary_keyword"]: entry for entry in recent_help.PAGES}
 DEFAULT_HELP_ENTRIES = [entry for entry in DEFAULT_HELP_ENTRIES
                         if entry["primary_keyword"] not in _recent_pages]
 DEFAULT_HELP_ENTRIES.extend(recent_help.PAGES)
 
+# Several older authored pages include a fixed damage range in their prose.
+# Refresh that one range from the live jutsu table after level scaling, while
+# preserving their individual explanations, costs and command syntax.
+import re as _damage_re
+
+_SCALED_DAMAGE_HELP_TOPICS = set()
+for _entry in DEFAULT_HELP_ENTRIES:
+    _jutsu_key = _entry["primary_keyword"]
+    if _jutsu_key not in data_jutsu.JUTSU:
+        _jutsu_key = next((key for key in _entry["keywords"] if key in data_jutsu.JUTSU), None)
+    _live = data_jutsu.JUTSU.get(_jutsu_key)
+    if not _live or _live["damage"] is None:
+        continue
+    _new_range = f"{_live['damage'][0]}-{_live['damage'][1]}"
+    _body, _count = _damage_re.subn(
+        r"\b\d+-\d+(?=\s+(?:(?:physical|mental|chakra|raw|base)\s+)?damage\b)",
+        _new_range, _entry["body"], count=1,
+    )
+    if _jutsu_key == "explosive tag kunai":
+        _blast = _live["explosive_damage"]
+        _body = _damage_re.sub(r"\b\d+-\d+(?=\s+explosive hit\b)",
+                               f"{_blast[0]}-{_blast[1]}", _body, count=1)
+    if _jutsu_key == "earth wall crusher":
+        _body = _body.replace("noticeably harder-hitting than the other elemental jutsu, since Earth carries no lingering effect at all, just brute upfront force",
+                              "an upfront Earth hit without a lingering status effect")
+    if _body != _entry["body"]:
+        _entry["body"] = _body
+        _SCALED_DAMAGE_HELP_TOPICS.add(_entry["primary_keyword"])
+
+# Build the five nature choice guides and every elemental release help page
+# from the same mapping that grants releases in game.
+import data_kekkei_genkai as _elemental_kkg
+
+_ELEMENT_HELP_TOPICS = {"elements", "channel", "kekkei genkai", "fire", "water", "wind", "earth", "lightning"}
+_RELEASE_HELP_TOPICS = set()
+for _entry in DEFAULT_HELP_ENTRIES:
+    _topic = _entry["primary_keyword"]
+    if _topic in ("fire", "water", "wind", "earth", "lightning"):
+        _pairs = []
+        for _nature in ("fire", "water", "wind", "earth", "lightning"):
+            if _nature == _topic:
+                continue
+            _release = _elemental_kkg.ELEMENTAL_RELEASES[frozenset((_topic, _nature))]
+            _pairs.append(f"{_topic.capitalize()} + {_nature.capitalize()}: "
+                          f"{_elemental_kkg.ELEMENTAL_RELEASE_NAMES[_release]} "
+                          f"(help {_elemental_kkg.ELEMENTAL_RELEASE_NAMES[_release].lower()})")
+        _entry["body"] += "\n\nSecond nature choices at level 25:\n" + "\n".join(_pairs)
+    elif _topic == "channel":
+        _entry["body"] = (
+            "Syntax: channel <chakra paper>\n\nAt level 10, Chakra Paper reveals your first nature. "
+            "At level 25, you are brought to your village Kage chamber to choose a different "
+            "second nature. Type 'choose <element>' or the element's name. You are safe from "
+            "mobs and PvP, with only help and chat available until you choose. "
+            "Type 'help <your first element>' to compare all four possible releases. "
+            "The choice needs no second Chakra Paper. At level 100, a further paper can reveal "
+            "a third distinct nature. Clan bloodlines cannot also gain an elemental release."
+        )
+    elif _topic == "elements":
+        _entry["body"] = (
+            "Five base elements: Fire, Water, Wind, Earth, Lightning. Channel Chakra Paper "
+            "at level 10 to reveal your first nature. At level 25 you choose a different "
+            "second nature in your village Kage chamber. Type 'help fire', 'help water', "
+            "'help wind', 'help earth', or 'help lightning' to see every pairing and its "
+            "elemental Kekkei Genkai. A third paper at level 100 can reveal a third nature. "
+            "Elemental jutsu still require their matching nature."
+        )
+    elif _topic == "kekkei genkai":
+        _entry["body"] = _entry["body"].replace(
+            "The Sharingan&x is the one Kekkei Genkai with real, playable abilities right now.",
+            "The Sharingan&x and all elemental releases have playable abilities."
+        ).replace(
+            "These elemental releases have no dedicated jutsu yet.",
+            "Each elemental release has three dedicated techniques."
+        ) + (
+            "\n\nElemental releases unlock when you choose your second nature at level 25. "
+            "Every two-nature release has moves at levels 25, 45, and 70. "
+            "Dust Release has three moves at level 100 after its third nature reveal. "
+            "Each release has its own help page."
+        )
+
+for _release_id, _name in _elemental_kkg.ELEMENTAL_RELEASE_NAMES.items():
+    _topic = _name.lower()
+    _RELEASE_HELP_TOPICS.add(_topic)
+    _pair = next((sorted(pair) for pair, release in _elemental_kkg.ELEMENTAL_RELEASES.items()
+                  if release == _release_id), None)
+    _combination = (" + ".join(n.capitalize() for n in _pair) if _pair else "Earth + Fire + Wind")
+    _move_lines = [f"Level {j['level_requirement']}: {j['display_name']} (help {key})"
+                   for key, j in data_jutsu.JUTSU.items() if j.get("kkg_gate") == _release_id]
+    _body = (f"{_name} forms from {_combination}. Choose a second nature at level 25 after "
+             "revealing your first at level 10; Dust Release additionally requires a third "
+             "nature revealed at level 100. Clan Kekkei Genkai holders cannot gain an "
+             "elemental release.\n\n")
+    _body += ("Techniques:\n" + "\n".join(_move_lines) if _move_lines
+              else "Dedicated techniques for this release have not been added yet.")
+    DEFAULT_HELP_ENTRIES.append({
+        "primary_keyword": _topic,
+        "keywords": list(dict.fromkeys((_topic, _release_id.replace("_", " ")))),
+        "title": _name,
+        "body": _body, "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    })
+
 
 def seed_default_help() -> None:
     for entry in DEFAULT_HELP_ENTRIES:
         path = _path(entry["primary_keyword"])
+        # Preserve existing system and staff-authored pages from older Linux
+        # saves that used a colon in this topic's filename.
+        legacy_path = os.path.join(HELP_DIR, entry["primary_keyword"].strip().lower().replace(" ", "_") + ".json")
+        if legacy_path != path and os.path.isfile(legacy_path) and not os.path.isfile(path):
+            os.replace(legacy_path, path)
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "channel", "barrier", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "summon", "sage", "summon elder"}
-                                           | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)):
+        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
+                                           | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
+                                           | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
+                                           | _SCALED_DAMAGE_HELP_TOPICS):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
@@ -3899,6 +4154,14 @@ def find_by_keyword(query: str) -> Optional[dict]:
     for entry in entries:
         if query in [k.lower() for k in entry.get("keywords", [])]:
             return entry
+    # A player can cast an unambiguous abbreviated jutsu name, so the same
+    # name should find its individual help page ("help jubaku", "help kihon").
+    # Require the entire query to be consumed: an extra word must not resolve
+    # to an unrelated jutsu page, and ambiguous prefixes stay unresolved.
+    key, consumed = data_jutsu.match_prefix(query.split())
+    if key and consumed == len(query.split()):
+        return next((entry for entry in entries
+                     if entry["primary_keyword"].lower() == key), None)
     return None
 
 
@@ -3916,23 +4179,28 @@ def _log(staff_name: str, keyword: str, description: str) -> None:
 # --- Player-facing lookup -------------------------------------------------
 
 def cmd_help(session, args: List[str]) -> None:
+    import mangekyo_discovery
+    import lightsabers
     if not args:
         _show_help_index(session)
         return
     entry = find_by_keyword(" ".join(args))
-    if not entry:
+    if not entry or not mangekyo_discovery.can_read(session, entry) or not lightsabers.can_read(session, entry):
         session.send("This helpfile doesn't exist, contact an admin to create it.")
         return
     lines = [f"&Y{entry['title']}&x", "", entry["body"]]
     if len(entry.get("keywords", [])) > 1:
         lines.append("")
         lines.append("&D(Keywords: " + ", ".join(entry["keywords"]) + ")&x")
-    session.send("\n".join(lines))
+    jutsu_colors.send(session, "\n".join(lines))
 
 
 def _show_help_index(session) -> None:
+    import mangekyo_discovery
+    import lightsabers
     lines = ["Type 'commands' for a full list of commands."]
-    entries = all_entries()
+    entries = [entry for entry in all_entries() if mangekyo_discovery.can_read(session, entry)
+               and lightsabers.can_read(session, entry)]
     if entries:
         lines.append("")
         lines.append("&WHelp topics:&x " + ", ".join(sorted(e["primary_keyword"] for e in entries)))

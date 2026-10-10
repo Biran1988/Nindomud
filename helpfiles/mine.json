@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "mine",
+  "keywords": [
+    "mine"
+  ],
+  "title": "Mine",
+  "body": "Syntax: mine\n\nDescription: Swings a pickaxe for the Mining job. Needs a pickaxe held and a mountain biome to stand in. Costs 1-2 Stamina and takes a few seconds. A held pickaxe loses one use per attempt and breaks after 250 uses by default.\n\nThere are 6 pickaxes (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Tipped -- required levels 1/20/40/60/80/99). Rock Salt, Copper, Tin, and Silver ore each have a full Common-through-Legendary tier ladder, built around your pickaxe's own tier -- a better pickaxe always matters more than levels alone, and only the Diamond-Tipped pickaxe gives a real (though still not guaranteed) shot at Legendary ore. Iron/Steel/Chakra Steel ore (see 'help smelt') and raw gems (feeding Weaponsmith/Armorsmith/Gemcutter) are still findable at their usual fixed rarity alongside the tiered ore.\n\nThere's also a small, flat chance (the same no matter your pickaxe or job level) of a random bonus gem turning up alongside the normal find -- Quartz, Jade, Amber, Garnet, Amethyst, Topaz, Sapphire, Emerald, Ruby, or Diamond, each with its own color and rarity. Very rare across the board, especially the higher-rarity ones.\n\nMining also raises your Max Stamina -- each Mining level adds its own level number, stacking cumulatively (Farming and Lumberjack contribute to the same Max Stamina pool too, so leveling more than one adds up together). See 'help farm' for the exact math.\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

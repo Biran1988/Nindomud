@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "kumade",
+  "keywords": [
+    "kumade"
+  ],
+  "title": "Kumade",
+  "body": "Syntax: kumade <target>\n\nDescription: A clawing strike with a chance to blind the target. Base damage: 40-48. 35% chance to inflict blinded. Taijutsu unlocks at level 25. Costs 0 Chakra and 13 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

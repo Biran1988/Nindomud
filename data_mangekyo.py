@@ -47,23 +47,22 @@ design conversation:
   out (or an early-end command triggers), both players return, and
   the target is left with very little HP and no stamina.
 
-- Amaterasu: casting inflicts a real, PERMANENT burn on the target
-  (40-60 dmg/tick, no duration -- burns forever) AND simultaneously
+- Amaterasu: casting inflicts a persistent burn on the target
+  (40-60 dmg/tick, ends on defeat) AND simultaneously
   sets the room they're standing in on fire too, burning everyone in
   it except the caster (25-40 dmg/tick). If the burned target
   leaves, their own burn travels with them; the room's fire stays
   behind (confirmed directly) and would burn anyone else who walks
-  in. The room-fire lasts a real 30 minutes from the cast, or until
-  sealed early. The ONLY way to remove either burn (player or room)
-  is a real, scroll-taught sealing jutsu (not yet built) -- no other
-  cure works, confirmed directly.
+  in. The room-fire lasts five minutes from the cast. The player burn
+  ends when the target is defeated; there is no sealing cure yet.
 
 - Kamui: 3 SEPARATE real jutsu (confirmed directly), not one combined
   ability:
-    1. Pocket Dimension (transfer) -- a real, deliberate 2-step cast:
-       casting on a TARGET sends them alone to a real, dedicated room
-       with no normal exits; the caster then casts it again on
-       THEMSELVES to join. No chakra cost to enter. Once the caster
+    1. Pocket Dimension (transfer) -- casting on a TARGET sends them
+       alone to a dedicated room with no normal exits; the caster
+       then casts it again on THEMSELVES to join. Casting on oneself
+       first opens a solo dimension and enters immediately. No chakra
+       cost to enter. Once the caster
        is inside, real upkeep drains 15 chakra/tick with just the
        caster present, 35 chakra/tick once the target is also there.
        Ends when the caster leaves, or chakra runs out.
@@ -110,7 +109,7 @@ TECHNIQUE_ROSTER = {
     },
     "amaterasu": {
         "display_name": "Amaterasu",
-        "description": "Sets a target ablaze with real, permanent black flame that never goes out on its own -- and the room around them catches fire too.",
+        "description": "Sets a target ablaze with black flame that persists until defeat, while the room burns for five minutes.",
     },
     "kamui": {
         "display_name": "Kamui",
@@ -143,7 +142,7 @@ TSUKUYOMI_COMMANDS = {
 # Confirmed real numbers (Section 140 design conversation).
 AMATERASU_PLAYER_BURN_PER_TICK = (40, 60)
 AMATERASU_ROOM_BURN_PER_TICK = (25, 40)
-AMATERASU_ROOM_FIRE_DURATION_SECONDS = 30 * 60
+AMATERASU_ROOM_FIRE_DURATION_SECONDS = 5 * 60
 
 KAMUI_UPKEEP_ALONE_PER_TICK = 15
 KAMUI_UPKEEP_WITH_TARGET_PER_TICK = 35

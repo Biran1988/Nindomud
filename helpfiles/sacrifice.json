@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "sacrifice",
+  "keywords": [
+    "sacrifice",
+    "sac"
+  ],
+  "title": "Sacrifice",
+  "body": "Syntax: sacrifice <corpse>  |  sacrifice <item>  |  sacrifice all  (alias: sac)\n\nDescription: Destroys a corpse for a small flat ryo reward, regardless of what's still on it -- any un-looted ryo or items are forfeited, not transferred to you. Corpses are checked first.\n\nAn item lying on the ground can be sacrificed too, for half of what selling it would give (floored at 1 ryo) -- a way to get rid of anything you can't otherwise sell, not a substitute for 'sell' when a shop's actually available. An item still in your OWN inventory cannot be sacrificed at all -- drop it first.\n\n'sacrifice all' sacrifices everything currently in the ROOM -- every corpse and every item on the ground, all at once, for their combined ryo reward.\n\nA small number of special items may be flagged 'no_sac' (see 'help flags') to protect them from being destroyed this way; attempting to sacrifice one, individually or via 'sacrifice all', simply leaves it untouched.\n\nDate: 2026-08-24",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

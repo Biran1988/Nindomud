@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "samurai sabre",
+  "keywords": [
+    "samurai sabre"
+  ],
+  "title": "Samurai Sabre",
+  "body": "Syntax: samurai sabre\n\nDescription: Toggle a chakra edge on a wielded sword. Ordinary sword hits deal 20% more damage while active. Costs 4 Chakra per idle 10 seconds, or 6 Chakra and 2 Stamina per combat round. Switch weapons or use it again to turn it off. Requires a wielded sword. Bukijutsu unlocks at level 35. Costs 35 Chakra and 10 Stamina; 25 second cooldown.\n\nDate: 2026-09-27",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

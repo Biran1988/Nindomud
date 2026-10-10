@@ -1,0 +1,21 @@
+{
+  "primary_keyword": "flags",
+  "keywords": [
+    "flags",
+    "room flags",
+    "extra_flags",
+    "act_flags",
+    "capturepoint",
+    "no_sac",
+    "no_take",
+    "nosac",
+    "notake",
+    "banker",
+    "bountyoffice"
+  ],
+  "title": "Flags (staff)",
+  "body": "Syntax: rset flags <flagname>  (room flags -- toggle)\n        oset <vnum> flags <flagname>  (item flags -- prefix - to remove)\n        mset <vnum> flags <flagname>  (mob flags -- prefix - to remove)\n\nDescription: Only a recognized flag can be set on any of the three -- an unknown name (including a typo) is refused outright, telling you the valid list. Matching is case-insensitive; whichever way you type a valid flag, it's stored under its one correct/canonical casing shown below, so it's always recognized correctly by whatever system actually checks for it.\n\n&WRoom flags:&x\n  CapturePoint       -- makes this room a war/territory control point; see 'help territory'\n  accelerated_healing -- faster regen in this room (set automatically on every hospital; rarely needs setting by hand)\n\n&WItem flags:&x\n  no_sac             -- protects this item from being destroyed by 'sacrifice', including 'sacrifice all'\n  no_take            -- protects this item from being picked up with 'get' at all -- for cosmetic room decoration (furniture, signs, plants) placed via 'oset load' or a registered spawn point, meant to stay exactly where it's put\n\n&WMob flags:&x\n  Banker             -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob\n  BountyOffice       -- lets a player claim a bounty in person at this mob\n  Wander             -- gives this mob a small per-tick chance to move through a random available exit (moves roughly every few minutes, not constantly; never into an apartment room)\n  Sentinel           -- a hard override blocking wander behavior for this mob, even if Wander is also set\n  Garrison           -- war/territory defender designation; set automatically and accurately on every garrison mob, see 'help territory'\n  Trap               -- war/territory trap designation; set automatically and accurately on every trap mob, see 'help trap'\n  Npc                -- base flag every non-player mob carries; a pure category label, no mechanical effect of its own by design\n  Shopkeeper         -- the real shop mechanism is a separate field set elsewhere; this flag alone has no mechanical check\n\nDate: 2026-08-17",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}
