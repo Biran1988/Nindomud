@@ -2711,6 +2711,10 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") == "six_paths_recovery":
+        import six_paths
+        six_paths.vital_surge(session, target_words)
+        return
     if jutsu_data.get("jutsu_type") == "six_paths_mode":
         import six_paths
         if not six_paths.eligible(player, jutsu_data["kkg_gate"].removeprefix("six_paths_")):

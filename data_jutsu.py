@@ -808,6 +808,8 @@ MIN_MATCH_PREFIX_LENGTH = {
 }
 
 JUTSU_ALIASES = {
+    "vital surge": "six paths vital surge",
+    "six paths: vital surge": "six paths vital surge",
     "demonic": "demonic illusion hell viewing technique",  # preserve the established short command
     "ex": "explosive tag kunai",  # preserve the established two-letter shortcut
     "explosive": "explosive tag kunai",  # preserve it despite new Exploding Note/Clay

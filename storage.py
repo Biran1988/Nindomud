@@ -519,11 +519,13 @@ def load_player(name: str) -> Optional[Player]:
     for skill, value in list(player.skill_proficiencies.items()):
         if isinstance(value, str):
             player.skill_proficiencies[skill] = _LEGACY_PROFICIENCY_TO_PERCENT.get(value, 0)
+    import six_paths
+    vital_surge_migrated = six_paths.migrate_vital_surge(player)
     if legacy_experience_curve:
         player.experience_curve_version = 1
     import leveling
     experience_migrated = leveling.migrate_experience_curve(player)
-    if summon_contracts_migrated or sage_training_migrated or experience_migrated or removed_bloodline_migrated or elemental_release_migrated:
+    if vital_surge_migrated or summon_contracts_migrated or sage_training_migrated or experience_migrated or removed_bloodline_migrated or elemental_release_migrated:
         save_player(player)
     return player
 

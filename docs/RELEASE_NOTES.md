@@ -15,9 +15,12 @@ existing server installation, keeping the server's `data/` directory intact.
   Stamina. Fractional bonuses carry into later level gains. Use `reincarnation`,
   `score`, or administrator `bloodstat` to inspect the result.
   At level 75, Indra unlocks Six Paths Rinnegan, Almighty Push and Universal Pull;
-  Ashura unlocks Six Paths Sage Mode, Six Paths Rasenshuriken and Truth-Seeking
+  Ashura unlocks Six Paths Sage Mode, Six Paths Vital Surge and Truth-Seeking
   Orb Barrage. Use `sixpaths on|off|status`. Modes have Chakra/Stamina upkeep,
   proficiency-scaled combat bonuses, and cannot stack with summon Sage Mode.
+  Vital Surge restores 25% of maximum Health and Stamina and clears poison and
+  weakened effects, for 120 base Chakra with a two-minute cooldown. It is
+  self-only, works during combat, and preserves mastery from the retired art.
 
 - `gold` is an alias for `bank`. The daily `lottery` draws four digits every
   24 hours. Tickets cost 1,000 ryo, increase the jackpot, and a missed draw

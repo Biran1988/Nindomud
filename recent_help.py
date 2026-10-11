@@ -123,11 +123,12 @@ DESCRIPTIONS.update({
     "six paths sage mode": "Ashura's level-75 reincarnate form. Toggle with sixpaths on/off. Activate for 40 Chakra; upkeep is 18 Chakra every ten idle seconds or 24 Chakra and 8 Stamina each combat round. At 0-100% mode mastery, gain 10-20% damage, 5-15% incoming damage reduction and +5-10 accuracy. Summon Sage Mode cannot stack with it. Paid maintenance trains mode mastery.",
     "almighty push": "Release Rinnegan gravity against one target in your room, dealing chakra damage with a chance to throw it off balance. This implementation does not move the target to a different room.",
     "universal pull": "Draw a target off balance with Rinnegan gravity, dealing chakra damage and disrupting its footing. This implementation affects one target already in your room.",
-    "six paths rasenshuriken": "Hurl a Six Paths-enhanced Rasenshuriken against one target, dealing heavy chakra damage with a chance to weaken it. Reincarnate chakra supplies this technique's nature requirement.",
+    "six paths vital surge": "Channel Ashura's life force to restore 25% of your maximum Health and Stamina, capped at your current maximums, and clear poisoned and weakened effects. Self only; usable during combat. Costs 120 base Chakra with the normal Chakra Control discount; two-minute cooldown. Does not restore Chakra. At full resources with no relevant ailment, it consumes nothing.",
     "truth-seeking orb barrage": "Shape Truth-Seeking Orbs into a targeted barrage, dealing chakra damage with a chance to weaken the target. It does not instantly kill or permanently erase player equipment.",
 })
 SYNTAX.update({"six paths rinnegan": "sixpaths [on|off|status]",
-               "six paths sage mode": "sixpaths [on|off|status]"})
+               "six paths sage mode": "sixpaths [on|off|status]",
+               "six paths vital surge": "perform six paths vital surge"})
 PAGES = [_page(key) for key in DESCRIPTIONS]
 
 PAGES += [
