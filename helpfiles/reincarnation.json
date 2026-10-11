@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "reincarnation",
+  "keywords": [
+    "reincarnation",
+    "reincarnate",
+    "indra",
+    "ashura",
+    "asura"
+  ],
+  "title": "Indra and Ashura Reincarnation",
+  "body": "Syntax: reincarnation | score\n\nOnce character creation is confirmed, Uchiha characters receive one 1-in-100 chance to inherit Indra's chakra and will. Senju and Uzumaki characters receive one 1-in-100 chance to inherit Ashura's. Other clans have no eligible lineage. There are not two separate rolls: each eligible character has a 1% total chance. A successful roll permanently records the soul and creation clan. Changing clans, dying, reconnecting, rebooting, and loading a save never reroll it. Existing characters receive no retroactive roll.\n\nBoth reincarnations receive +5 to all nine starting attributes: Strength, Dexterity, Constitution, Intelligence, Wisdom, Luck, Perception, Willpower, and Chakra Control. This is a one-time bonus; the normal training cap stays the same. Indra grants 10% extra starting and level-up Chakra. Ashura grants 10% extra starting and level-up Health and Stamina. Fractional gains carry forward between levels so small increases are not lost. Healing, equipment bonuses, attribute training, and staff stat edits are not multiplied. These are game balance perks, separate from the existing Kekkei Genkai inheritance roll. Reincarnation does not automatically grant Sharingan or Wood Release at birth. At level 75, Indra awakens Six Paths Rinnegan, Almighty Push and Universal Pull; Ashura awakens Six Paths Sage Mode, Six Paths Rasenshuriken and Truth-Seeking Orb Barrage. See help sixpaths for activation, mastery and upkeep. The Uchiha line follows Madara and Sasuke; the Senju/Uzumaki lines follow Hashirama and Naruto. Any character sex or combat class can qualify.\n\nThe reincarnation command reports your result and bonuses; score shows a successful inherited soul and birth lineage. Administrators can inspect it with bloodstat <player>.\n\nDate: 2026-10-11",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

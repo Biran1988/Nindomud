@@ -2464,6 +2464,8 @@ def cmd_bloodstat(session, args: List[str]) -> None:
     lines = [
         f"&WKekkei Genkai status for {target.name}:&x",
         f"  Clan: {data_clans.display_name(target.clan)}",
+        f"  Reincarnation: {target.reincarnation.title() or 'None'} (birth lineage: {target.reincarnation_birth_clan.title() or 'Legacy/unknown'})",
+        f"  Reincarnation roll resolved: {target.reincarnation_roll_complete}",
         f"  Bloodline: {bloodline_line}",
         f"  Awakened: {'Yes' if target.bloodline_awakened else 'No'}",
     ]

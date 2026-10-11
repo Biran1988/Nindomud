@@ -837,6 +837,9 @@ class Session:
             f"\nWelcome, {player.name} of {VILLAGES[player.village]['village_name']}!\n"
             "You awaken in your village's Kage Chamber, a new academy student."
         )
+        if player.reincarnation:
+            import reincarnation
+            self.send("&[213]An ancient chakra stirs within you! " + reincarnation.description(player) + "&x")
         self._enter_world(player)
 
     @staticmethod
@@ -845,7 +848,8 @@ class Session:
                         sex: str = "male", skin_tone: str = "tan",
                         hair_color: str = "black", eye_color: str = "brown",
                         build: str = "athletic", personality_trait: str = "confident") -> Player:
-        player = Player(name=name, account_name=account_name)
+        player = Player(name=name, account_name=account_name, reincarnation_roll_complete=False,
+                        reincarnation_starting_perks_applied=False)
         player.village = village
         player.village_rank = "academy student"
         player.primary_class = primary_class
@@ -899,6 +903,10 @@ class Session:
         # above. Nothing about this is shown to the player until they
         # use a Chakra Paper (see commands.py).
         player.chakra_nature = biomes.roll_chakra_nature()
+
+        import reincarnation
+        reincarnation.assign_at_creation(player)
+        reincarnation.grant_starting_perks(player)
 
         return player
 

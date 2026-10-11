@@ -3936,6 +3936,67 @@ for _key in _EXPANSION_HELP_KEYS:
 import recent_help
 
 DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "sixpaths", "keywords": ["sixpaths", "six paths", "six paths powers"],
+    "title": "Six Paths Awakening",
+    "body": (
+        "Syntax: sixpaths [on|off|status]\n\n"
+        "At level 75, an Indra reincarnation learns Six Paths Rinnegan, Almighty Push "
+        "and Universal Pull. An Ashura reincarnation learns Six Paths Sage Mode, "
+        "Six Paths Rasenshuriken and Truth-Seeking Orb Barrage. This unlock works for "
+        "all combat classes and also catches eligible returning players at login. "
+        "The two lineages cannot use each other's exclusive techniques.\n\n"
+        "Activation costs 40 Chakra. While active, pay 18 Chakra every ten seconds "
+        "outside combat, or 24 Chakra and 8 Stamina each combat round. The form ends "
+        "when resources run out, you fall, or you log back in. Turn it off with "
+        "sixpaths off. Summon Sage Mode and Six Paths mode cannot stack. "
+        "At 0-100% mode mastery, gain 10-20% outgoing damage, 5-15% incoming damage "
+        "reduction, and +5-10 accuracy. Practice stops at the normal 50% cap; paid "
+        "maintenance can raise mode mastery toward 100%. Attack techniques have "
+        "their own normal proficiency, costs and cooldowns. See each individual "
+        "technique's help for details.\n\n"
+        "Use perform <technique> <target>; your mode must be active. These powers "
+        "use ordinary PvE/PvP targeting, safe-zone rules and damage handling. "
+        "Birth bonuses and reincarnation status stay permanent when the mode ends.\n\n"
+        "Date: 2026-10-11"
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "reincarnation",
+    "keywords": ["reincarnation", "reincarnate", "indra", "ashura", "asura"],
+    "title": "Indra and Ashura Reincarnation",
+    "body": (
+        "Syntax: reincarnation | score\n\n"
+        "Once character creation is confirmed, Uchiha characters receive one 1-in-100 "
+        "chance to inherit Indra's chakra and will. Senju and Uzumaki characters receive "
+        "one 1-in-100 chance to inherit Ashura's. Other clans have no eligible lineage. "
+        "There are not two separate rolls: each eligible character has a 1% total chance. "
+        "A successful roll permanently records the soul and creation clan. "
+        "Changing clans, dying, reconnecting, rebooting, and loading a save never reroll it. "
+        "Existing characters receive no retroactive roll.\n\n"
+        "Both reincarnations receive +5 to all nine starting attributes: Strength, "
+        "Dexterity, Constitution, Intelligence, Wisdom, Luck, Perception, Willpower, "
+        "and Chakra Control. This is a one-time bonus; the normal training cap stays the same. "
+        "Indra grants 10% extra starting and level-up Chakra. Ashura grants 10% extra "
+        "starting and level-up Health and Stamina. Fractional gains carry forward between "
+        "levels so small increases are not lost. Healing, equipment bonuses, attribute "
+        "training, and staff stat edits are not multiplied. These are game balance perks, "
+        "separate from the existing Kekkei Genkai inheritance roll. Reincarnation does not "
+        "automatically grant Sharingan or Wood Release at birth. At level 75, Indra "
+        "awakens Six Paths Rinnegan, Almighty Push and Universal Pull; Ashura awakens "
+        "Six Paths Sage Mode, Six Paths Rasenshuriken and Truth-Seeking Orb Barrage. "
+        "See help sixpaths for activation, mastery and upkeep. "
+        "The Uchiha line follows Madara and Sasuke; the Senju/Uzumaki lines follow "
+        "Hashirama and Naruto. Any character sex or combat class can qualify.\n\n"
+        "The reincarnation command reports your result and bonuses; score shows a "
+        "successful inherited soul and birth lineage. Administrators can inspect it with "
+        "bloodstat <player>.\n\nDate: 2026-10-11"
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "lightsaber",
     "keywords": ["lightsaber", "lightsabers", "activate", "deactivate", "insert"],
     "title": "Lightsabers",

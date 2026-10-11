@@ -137,6 +137,8 @@ def has_handsigns(jutsu: dict) -> bool:
     genuinely passive jutsu (never cast directly at all -- checked by
     its own jutsu_type, e.g. "counter" or "silent_genjutsu_passive")
     never uses hand signs either, regardless of its class."""
+    if jutsu.get("kkg_gate", "").startswith("six_paths_"):
+        return False
     if jutsu.get("jutsu_type") in ("counter", "silent_genjutsu_passive", "stance", "buff", "elemental_clone", "chokkan"):
         return False
     if jutsu.get("jutsu_type") == "ambush" and jutsu.get("jutsu_id") != "ninjutsu_raikiri":

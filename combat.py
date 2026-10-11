@@ -1035,6 +1035,8 @@ def tick_pending_casts() -> None:
             session.pending_cast = None
             session.send("&RYour Sharingan is no longer active -- the Mangekyo technique fades before it takes hold.&x"
                          if jutsu.get("kkg_gate") == "mangekyo_technique" else
+                         "&RYour Six Paths mode fades before the technique takes hold.&x"
+                         if jutsu.get("kkg_gate", "").startswith("six_paths_") else
                          "&RYour elemental release fades before the technique takes hold.&x")
             continue
 
@@ -2343,6 +2345,11 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
         if jutsu["element"] not in (player.chakra_nature, player.chakra_nature_secondary, player.chakra_nature_tertiary):
             return False
     gate = jutsu.get("kkg_gate")
+    if gate in ("six_paths_indra", "six_paths_ashura"):
+        import six_paths
+        return (six_paths.eligible(player, gate.removeprefix("six_paths_"))
+                and six_paths.active(player)
+                and jutsu["display_name"] in player.learned_skills)
     import data_kekkei_genkai
     if gate in data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES:
         return (_staff_testing_mangekyo(player)
@@ -3101,6 +3108,8 @@ def clamp_immortal_health(session) -> None:
 
 def handle_player_defeat(session) -> None:
     player = session.player
+    import six_paths
+    six_paths.stop(session, "Your Six Paths power fades as you fall.")
 
     if session.duel is not None and session.duel.accepted:
         # A duel ends ONLY on a genuine defeat (confirmed design, no

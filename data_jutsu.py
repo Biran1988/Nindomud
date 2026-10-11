@@ -736,6 +736,8 @@ JUTSU.update({
 
 import elemental_release_arts
 JUTSU.update(elemental_release_arts.jutsu_entries())
+import six_paths
+JUTSU.update(six_paths.jutsu_entries())
 _scale_base_damage_to_level()
 
 # The universal starting kit -- every player gets exactly these,

@@ -8,6 +8,7 @@ import time
 
 import data_summons
 import combat
+import six_paths
 MIN_LEVEL = 80
 TRAIN_INTERVAL = 60 * 60
 TRAIN_SUCCESS_PERCENT = 5
@@ -33,6 +34,8 @@ def active_contract(player):
 
 
 def outgoing(player, damage, jutsu=False, weapon=False):
+    if six_paths.active(player):
+        return six_paths.outgoing(player, damage)
     contract = active_contract(player)
     if not contract:
         return damage
@@ -41,6 +44,8 @@ def outgoing(player, damage, jutsu=False, weapon=False):
 
 
 def accuracy(player):
+    if six_paths.active(player):
+        return six_paths.accuracy(player)
     contract = active_contract(player)
     return 10 + (5 if contract == "toad" else 0) if contract else 0
 
@@ -51,10 +56,13 @@ def extra_attacks(player):
 
 
 def incoming(player, damage):
+    if six_paths.active(player):
+        return six_paths.incoming(player, damage)
     return max(0, damage * 90 // 100) if active_contract(player) else damage
 
 
 def combat_pulse(session):
+    six_paths.combat_pulse(session)
     import upkeep_reports
     player = session.player
     contract = active_contract(player)
@@ -200,6 +208,9 @@ def command(session, args):
     required_chakra = COMBAT_CHAKRA_UPKEEP if session.combat_target or session.pvp_target else IDLE_CHAKRA_UPKEEP
     if player.chakra < required_chakra or player.stamina < COMBAT_STAMINA_UPKEEP:
         session.send("You need chakra and stamina to sustain Sage Mode.")
+        return
+    if player.six_paths_active:
+        session.send("Release your Six Paths mode before entering summon Sage Mode.")
         return
     player.sage_active_contract = contract
     player.sage_preferred_contract = contract

@@ -95,7 +95,12 @@ def _page(key):
         details += f" The extra Chakra capacity lasts {status_effects.genjutsu_duration('chisei')} seconds."
     if key == "nehan shouja":
         details += f" Sleeping targets remain asleep for {status_effects.genjutsu_duration('asleep')} seconds before resistance."
-    if jutsu.get("kkg_gate"):
+    if jutsu.get("kkg_gate", "").startswith("six_paths_"):
+        soul = jutsu["kkg_gate"].removeprefix("six_paths_").title()
+        details += f" Unlocks at level 75 only for {soul} reincarnations of any combat class."
+        if kind != "six_paths_mode":
+            details += " Requires your Six Paths mode active. Train and use the technique to increase its mastery."
+    elif jutsu.get("kkg_gate"):
         details += " Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock."
         if kind in {"mangekyo_tsukuyomi", "mangekyo_amaterasu", "mangekyo_kamui_pocket_dimension",
                     "mangekyo_kamui_limb_removal", "mangekyo_izanami"}:
@@ -113,6 +118,16 @@ def _page(key):
     }
 
 
+DESCRIPTIONS.update({
+    "six paths rinnegan": "Indra's level-75 reincarnate form. Toggle with sixpaths on/off. This awakens Six Paths ocular power without replacing your inherited Kekkei Genkai. Activate for 40 Chakra; upkeep is 18 Chakra every ten idle seconds or 24 Chakra and 8 Stamina each combat round. At 0-100% mode mastery, gain 10-20% damage, 5-15% incoming damage reduction and +5-10 accuracy. Summon Sage Mode cannot stack with it. Paid maintenance trains mode mastery.",
+    "six paths sage mode": "Ashura's level-75 reincarnate form. Toggle with sixpaths on/off. Activate for 40 Chakra; upkeep is 18 Chakra every ten idle seconds or 24 Chakra and 8 Stamina each combat round. At 0-100% mode mastery, gain 10-20% damage, 5-15% incoming damage reduction and +5-10 accuracy. Summon Sage Mode cannot stack with it. Paid maintenance trains mode mastery.",
+    "almighty push": "Release Rinnegan gravity against one target in your room, dealing chakra damage with a chance to throw it off balance. This implementation does not move the target to a different room.",
+    "universal pull": "Draw a target off balance with Rinnegan gravity, dealing chakra damage and disrupting its footing. This implementation affects one target already in your room.",
+    "six paths rasenshuriken": "Hurl a Six Paths-enhanced Rasenshuriken against one target, dealing heavy chakra damage with a chance to weaken it. Reincarnate chakra supplies this technique's nature requirement.",
+    "truth-seeking orb barrage": "Shape Truth-Seeking Orbs into a targeted barrage, dealing chakra damage with a chance to weaken the target. It does not instantly kill or permanently erase player equipment.",
+})
+SYNTAX.update({"six paths rinnegan": "sixpaths [on|off|status]",
+               "six paths sage mode": "sixpaths [on|off|status]"})
 PAGES = [_page(key) for key in DESCRIPTIONS]
 
 PAGES += [

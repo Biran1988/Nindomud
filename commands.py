@@ -2711,6 +2711,13 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") == "six_paths_mode":
+        import six_paths
+        if not six_paths.eligible(player, jutsu_data["kkg_gate"].removeprefix("six_paths_")):
+            session.send("That Six Paths form does not match your level and inherited soul.")
+            return
+        six_paths.command(session, target_words)
+        return
     if jutsu_data.get("jutsu_type") in ("dual_wield", "chokkan", "instant_kill"):
         import legacy_techniques
         {"dual_wield": legacy_techniques.dual_wield,
@@ -7247,6 +7254,10 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
         _row("Build", data_appearance.build_display(p.build), "Personality", data_appearance.personality_trait_display(p.personality_trait)),
         _row("Total Play Time", _format_playtime(p.total_play_seconds)),
     ]
+    if p.reincarnation:
+        import reincarnation
+        lines.append(_row("Reincarnation", reincarnation.display_name(p),
+                          "Birth Lineage", p.reincarnation_birth_clan.title()))
     if p.chakra_nature_revealed:
         if p.chakra_nature_secondary_revealed:
             lines.append(_row("Chakra Nature", p.chakra_nature.capitalize(), "Secondary Nature", p.chakra_nature_secondary.capitalize()))
@@ -8089,8 +8100,12 @@ def cmd_commands(session, args: List[str]) -> None:
 
 
 import lightsabers
+import reincarnation
+import six_paths
 
 COMMANDS = {
+    "reincarnation": reincarnation.command,
+    "sixpaths": six_paths.command,
     "lightsaber": lightsabers.command,
     "activate": lightsabers.activate, "deactivate": lightsabers.deactivate,
     "insert": lightsabers.insert_gem,

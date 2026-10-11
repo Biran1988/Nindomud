@@ -195,6 +195,10 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         health_gain = HEALTH_PER_LEVEL + _constitution_health_bonus(player.constitution)
         chakra_gain = CHAKRA_PER_LEVEL + _chakra_gain_bonus(player.intelligence, player.wisdom)
         stamina_gain = STAMINA_PER_LEVEL + _dexterity_stamina_bonus(player.dexterity)
+        import reincarnation
+        health_gain = reincarnation.augment_resource_gain(player, "health", health_gain)
+        chakra_gain = reincarnation.augment_resource_gain(player, "chakra", chakra_gain)
+        stamina_gain = reincarnation.augment_resource_gain(player, "stamina", stamina_gain)
         training_gain = TRAINING_POINTS_PER_LEVEL
         practice_gain = PRACTICE_POINTS_BASE_PER_LEVEL + _wisdom_practice_bonus(player.wisdom)
 
@@ -261,6 +265,8 @@ def grant_experience(player: Player, amount: int) -> List[str]:
                 player.skill_proficiencies[skill_name] = initial_proficiency(player)
                 lines.append(f"You have unlocked:\n  {skill_name}")
 
+        import six_paths
+        lines.extend(six_paths.sync_skills(player))
         # Save immediately -- a crash right after a level-up shouldn't cost
         # the player the level they just earned.
         storage.save_player(player)
@@ -372,6 +378,8 @@ def sync_universal_skills(player: Player) -> List[str]:
         if name not in known_before:
             lines.append(f"&Y(New since your last login: you have learned {name}!)&x")
 
+    import six_paths
+    lines.extend(six_paths.sync_skills(player))
     if lines or ice_changed:
         storage.save_player(player)
 

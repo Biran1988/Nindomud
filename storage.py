@@ -482,6 +482,8 @@ def load_player(name: str) -> Optional[Player]:
     legacy_experience_curve = "experience_curve_version" not in raw
     legacy_sage_training = raw.get("sage_training_interval_version", 1) < 2
     player = Player.from_dict(raw)
+    # A maintained battle mode must be activated and paid for again on login.
+    player.six_paths_active = False
     removed_bloodline_migrated = player.bloodline_id in ("hydrification", "ice_release")
     if removed_bloodline_migrated:
         player.bloodline_id = None

@@ -92,6 +92,9 @@ def tick_idle_upkeep(session) -> None:
         visible = True
     if session.player.sage_active_contract:
         visible = sage_mode.idle_upkeep(session) or visible
+    if session.player.six_paths_active:
+        import six_paths
+        visible = six_paths.idle_upkeep(session) or visible
     if session.player.samurai_sabre_active:
         visible = ninja_arts.tick_samurai_sabre(session) or visible
     if visible:

@@ -212,6 +212,13 @@ class Player:
     # Clan is cosmetic-only for now (Section 48 defers bloodline mechanics);
     # freely changeable, unlike village/class.
     clan: str = "none"
+    reincarnation: str = ""
+    reincarnation_birth_clan: str = ""
+    # Existing saves default to resolved so login never gives a new roll.
+    reincarnation_roll_complete: bool = True
+    reincarnation_starting_perks_applied: bool = True
+    reincarnation_growth_carry: Dict[str, int] = field(default_factory=dict)
+    six_paths_active: bool = False
     # Kekkei Genkai (bloodline) -- rolled once at character creation
     # (session.py), never re-rolled. ALL of these are hidden from the
     # player entirely until a future Level 50 awakening quest (not
