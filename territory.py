@@ -233,7 +233,10 @@ def trap_mob_vnum(village: str, trap_type: str) -> int:
     import data_villages
     village_index = list(data_villages.VILLAGES.keys()).index(village)
     type_index = list(TRAP_TYPES.keys()).index(trap_type)
-    return 6850 + village_index * 10 + type_index
+    # Keep the first five villages' saved IDs; a sixth at the old base would
+    # collide with the Forest of Death guardian templates at 6900/6901.
+    return (6850 + village_index * 10 if village_index < 5 else
+            7100 + (village_index - 5) * 10) + type_index
 
 
 def rooms_within_steps(start_vnum: int, max_steps: int) -> set:

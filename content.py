@@ -42,6 +42,8 @@ from world import Room, WORLD
 SHOPS = {}
 
 _VILLAGE_ROOMS = {
+    "whirlpool": dict(square=None, hospital=None, kage=80001, board=None, outskirts=None, shop=None,
+                      weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5006),
     "leaf": dict(square=None, hospital=None, kage=1, board=None, outskirts=None, shop=None,
                  weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5001),
     "stone": dict(square=None, hospital=None, kage=2501, board=None, outskirts=None, shop=None,
@@ -370,16 +372,21 @@ def populate() -> None:
     import areas
 
     areas.ensure_single_village_areas()
+    areas.ensure_hidden_village_areas()
     _register_shared_items()
     import lightsabers
     lightsabers.register_items()
 
     # Shopkeeper mob template vnums: village index * 10 + role, in the
     # 6000 block (distinct from the 5000-block bandit templates).
-    village_index = {"leaf": 0, "stone": 1, "water": 2, "cloud": 3, "sand": 4}
+    village_index = {key: index for index, key in enumerate(VILLAGES)}
 
     for village, rooms in _VILLAGE_ROOMS.items():
         v = VILLAGES[village]
+        if v.get("hidden_at_creation", False):
+            area = areas.find_area(village)
+            if not area or not area.vnum_start <= rooms["kage"] <= area.vnum_end:
+                continue  # Do not seed a hidden home inside someone else's reservation.
         short = v["village_short_name"]
 
         # Per direct request/confirmation (Section 143): "convert
@@ -398,6 +405,13 @@ def populate() -> None:
         # 'spawnpoint add' at whatever new rooms they build.
         kage_room = Room(rooms["kage"], f"{short} Kage Chamber",
             f"The office of {kage_title(village)}. Try 'say mission' or 'ask kage promotion'.")
+        if village == "whirlpool":
+            kage_room.name = "Uzushio Sealing Hall"
+            kage_room.description = (
+                "Ocean winds circle a quiet hall carved with spiral seals. The Uzumaki "
+                "clan keeps the village's traditions here, under the care of its leader. "
+                "Try 'say mission' or 'ask kage promotion'."
+            )
         kage_room.safe = True
         kage_room.flags.append("accelerated_healing")
         WORLD.add_room(kage_room)
@@ -729,7 +743,7 @@ def register_default_spawn_points_for_testing() -> None:
     to actually spawn from what it just registered. Never called by
     the real game itself (main.py, session.py)."""
     from data_villages import VILLAGES
-    village_index = {"leaf": 0, "stone": 1, "water": 2, "cloud": 3, "sand": 4}
+    village_index = {key: index for index, key in enumerate(VILLAGES)}
 
     for village, rooms in _VILLAGE_ROOMS.items():
         idx = village_index[village]

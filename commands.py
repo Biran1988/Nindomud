@@ -1346,6 +1346,7 @@ def cmd_ask(session, args: List[str]) -> None:
 
 
 VILLAGE_FULL_NAME_COLORS = {
+    "whirlpool": (39, 87),
     "leaf": (34, 118),    # Konohagakure
     "cloud": (33, 255),   # Kumogakure
     "water": (38, 67),    # Kirigakure

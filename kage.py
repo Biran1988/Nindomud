@@ -15,6 +15,7 @@ from data_villages import VILLAGES
 from models import Player
 
 KAGE_NAMES = {
+    "whirlpool": "the Whirlpool Leader",
     "leaf": "the Hokage",
     "stone": "the Tsuchikage",
     "water": "the Mizukage",

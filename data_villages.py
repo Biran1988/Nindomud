@@ -73,6 +73,21 @@ VILLAGES = {
         "enemy_villages": [],
         "restricted_areas": [],
     },
+    "whirlpool": {
+        "village_id": 6,
+        "village_name": "Uzushiogakure",
+        "village_short_name": "Uzushio",
+        "kage_title": "Whirlpool Leader",
+        "starting_room_vnum": 80001,
+        "hospital_room_vnum": 80001,
+        "area_end_vnum": 82500,
+        "default_headband_vnum": 9006,
+        "default_reputation": 0,
+        "ally_villages": [],
+        "enemy_villages": [],
+        "restricted_areas": [],
+        "hidden_at_creation": True,
+    },
 }
 
 
@@ -87,6 +102,8 @@ def village_names_display() -> str:
     colors = {"leaf": 34, "cloud": 33, "water": 38, "sand": 214, "stone": 130}
     lines = []
     for key, v in VILLAGES.items():
+        if v.get("hidden_at_creation", False):
+            continue
         color = colors.get(key, 255)
         lines.append(f"  &[{color}]{key:8s} - {v['village_name']}&x")
     return "\n".join(lines)

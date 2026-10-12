@@ -634,6 +634,14 @@ class Session:
             self.send("That is not a valid village. Please choose one of the listed villages.")
             self._prompt_village_selection()
             return
+        if VILLAGES[village].get("hidden_at_creation", False):
+            import areas
+            home = VILLAGES[village]["starting_room_vnum"]
+            area = areas.find_area(village)
+            if not area or not area.vnum_start <= home <= area.vnum_end or world.WORLD.get(home) is None:
+                self.send("That is not an available starting village. Please choose a village.")
+                self._prompt_village_selection()
+                return
         self._pending_village = village
         self.state = State.CHARGEN_CLASS
         self.send("&YChoose your primary combat class (this choice is PERMANENT):&x")
@@ -841,7 +849,9 @@ class Session:
         storage.save_player(player)
         self.send(
             f"\nWelcome, {player.name} of {VILLAGES[player.village]['village_name']}!\n"
-            "You awaken in your village's Kage Chamber, a new academy student."
+            + ("You awaken in the Sealing Hall, a new academy student."
+               if player.village == "whirlpool" else
+               "You awaken in your village's Kage Chamber, a new academy student.")
         )
         if player.reincarnation:
             import reincarnation

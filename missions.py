@@ -29,6 +29,24 @@ from models import Player
 # village -> list of mission definitions (was a single dict per village;
 # restructured to a list once a second mission per village was added).
 MISSIONS = {
+    "whirlpool": [
+        {
+            "mission_id": "whirlpool_d1", "rank": "D-Rank", "village": "whirlpool",
+            "mission_type": "kill", "title": "Guard the Coast",
+            "description": "Defeat 3 wandering bandits near the Uzushio coast.",
+            "target_mob_template": 5006, "target_count": 3,
+            "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
+        },
+        {
+            "mission_id": "whirlpool_d2", "rank": "D-Rank", "village": "whirlpool",
+            "mission_type": "gather", "title": "Weed the Garden",
+            "description": "Deliver 5 bundles of weeds to an Uzushio villager.",
+            "target_item": "a bundle of weeds", "target_count": 5,
+            "delivery_mob_template": 6055,
+            "reward_xp": 80, "reward_ryo": 20, "reward_mission_points": 1,
+            "cooldown_seconds": 1200,
+        },
+    ],
     "leaf": [
         {
             "mission_id": "leaf_d1", "rank": "D-Rank", "village": "leaf",

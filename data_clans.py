@@ -12,6 +12,7 @@ belongs to their own village (see CLANS_BY_VILLAGE / commands.cmd_clan).
 """
 
 CLANS_BY_VILLAGE = {
+    "whirlpool": ["uzumaki"],
     "leaf": ["uchiha", "hyuga", "nara", "uzumaki",
              "akimichi", "yamanaka", "inuzuka", "aburame", "sarutobi", "senju"],
     "cloud": ["yotsuki", "chinoike", "kinkaku", "jugo",

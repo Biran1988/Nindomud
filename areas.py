@@ -406,7 +406,24 @@ def ensure_single_village_areas() -> None:
 
     for index, village_key in enumerate(data_villages.VILLAGES):
         start = 1 + index * 2500
+        if data_villages.VILLAGES[village_key].get("hidden_at_creation", False):
+            continue
         try:
             register_area(village_key, start, start + 2499, "system")
         except ValueError:
             pass  # already registered by a concurrent/earlier call this startup
+
+
+def ensure_hidden_village_areas() -> None:
+    """Add hidden village reservations without recreating existing builder areas."""
+    import data_villages
+    import storage
+    deleted = {entry.get("name", "").lower()
+               for entry in storage.load_world_state().get("deleted_areas", [])}
+    for key, info in data_villages.VILLAGES.items():
+        if not info.get("hidden_at_creation", False) or key in deleted or find_area(key):
+            continue
+        try:
+            register_area(key, info["starting_room_vnum"], info["area_end_vnum"], "system")
+        except ValueError:
+            pass  # Preserve any existing builder reservation occupying this range.
