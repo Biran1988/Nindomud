@@ -5,7 +5,7 @@
     "clans"
   ],
   "title": "Clan",
-  "body": "Syntax: clan join <clan name>  |  clan leave\n\nDescription: Joins or leaves a clan available to your village. Clans are cosmetic only right now -- no mechanical bonus yet.\n\nDate: 2026-08-17",
+  "body": "Syntax: clan join <clan name>\n\nDescription: Clan selection is required when creating a character. Choose one of your village's listed clans; blank answers and 'none' are not accepted. You can switch later with clan join <clan name>, but cannot leave without choosing another clan. Changing clans does not reroll inherited bloodlines or reincarnation. Existing clanless characters can use clan join to choose a clan.\n\nDate: 2026-10-12",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0.0

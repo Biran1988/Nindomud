@@ -5,6 +5,10 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Clan selection is mandatory during character creation. Choose a clan from
+  your village; blank answers and `none` are rejected. Confirmation also checks
+  the selection. Use `clan join <name>` later to switch to another valid clan.
+
 - New Uchiha characters have one 1-in-100 creation roll for Indra; Senju and
   Uzumaki characters have one 1-in-100 roll for Ashura. The result and birth
   lineage persist through saves, logins, and later clan changes. Existing

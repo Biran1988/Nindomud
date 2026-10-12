@@ -4653,7 +4653,7 @@ def cmd_clan(session, args: List[str]) -> None:
         current = data_clans.display_name(player.clan)
         session.send(
             f"Your clan: {current}\n"
-            "Usage: clan join <name>  (cosmetic only for now -- no bonuses attached)\n"
+            "Usage: clan join <name>  (choose a clan from your village)\n"
             f"Clans of your village:\n" + data_clans.clan_names_display(player.village)
         )
         return

@@ -148,7 +148,7 @@ class Session:
         self._pending_password: Optional[str] = None
         self._pending_village: Optional[str] = None
         self._pending_class: Optional[str] = None
-        self._pending_clan: str = "none"
+        self._pending_clan: str = ""
         self._pending_loadout: str = "balanced"
         self._pending_sex: str = "male"
         self._pending_skin_tone: str = "tan"
@@ -647,20 +647,20 @@ class Session:
         self._pending_class = cls
         self.state = State.CHARGEN_CLAN
         self.send(
-            "&YChoose a clan (optional -- type 'none' to skip; this can be changed "
+            "&YChoose a clan (required; this can be changed "
             "later with 'clan join'):&x\n" + data_clans.clan_names_display(self._pending_village)
         )
 
     def _handle_chargen_clan(self, line: str) -> None:
         key = line.strip().lower()
         village_clans = data_clans.clans_for_village(self._pending_village)
-        if key not in ("none", "") and key not in village_clans:
+        if key not in village_clans:
             self.send(
-                "That is not a clan of your village. Type 'none' to skip, or choose one:\n"
+                "You must choose a clan of your village. Please choose one:\n"
                 + data_clans.clan_names_display(self._pending_village)
             )
             return
-        self._pending_clan = key if key in village_clans else "none"
+        self._pending_clan = key
         self.state = State.CHARGEN_LOADOUT
         self.send(
             "&YChoose your starting loadout (this can't be changed later):&x\n"
@@ -821,6 +821,12 @@ class Session:
             self._prompt_village_selection()
             return
 
+        if self._pending_clan not in data_clans.clans_for_village(self._pending_village):
+            self.state = State.CHARGEN_CLAN
+            self.send("You must choose a clan before creating your character.\n"
+                      + data_clans.clan_names_display(self._pending_village))
+            return
+
         # Save account (unless this is the admin path, already saved).
         if self.account is None:
             salt_hex, hash_hex = security.hash_password(self._pending_password)
@@ -844,10 +850,12 @@ class Session:
 
     @staticmethod
     def _create_player(name: str, account_name: str, village: str, primary_class: str,
-                        clan: str = "none", loadout_key: str = "balanced",
+                        clan: str = "", loadout_key: str = "balanced",
                         sex: str = "male", skin_tone: str = "tan",
                         hair_color: str = "black", eye_color: str = "brown",
                         build: str = "athletic", personality_trait: str = "confident") -> Player:
+        if clan not in data_clans.clans_for_village(village):
+            raise ValueError("Character creation requires a clan from the selected village.")
         player = Player(name=name, account_name=account_name, reincarnation_roll_complete=False,
                         reincarnation_starting_perks_applied=False)
         player.village = village

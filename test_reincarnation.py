@@ -19,8 +19,9 @@ import storage
 
 class ReincarnationTests(unittest.TestCase):
     def create(self, clan="uchiha", roll=0, primary_class="ninjutsu"):
+        village = next(village for village, clans in data_clans.CLANS_BY_VILLAGE.items() if clan in clans)
         with patch.object(souls.secrets, "randbelow", return_value=roll):
-            return Session._create_player("Reborn", "Reborn", "leaf", primary_class, clan)
+            return Session._create_player("Reborn", "Reborn", village, primary_class, clan)
 
     def test_exactly_one_winning_face_of_100_for_each_supported_lineage(self):
         for clan, expected in souls.LINEAGES.items():
@@ -37,7 +38,7 @@ class ReincarnationTests(unittest.TestCase):
             self.assertEqual(hits, 1)
 
     def test_unrelated_clans_and_legacy_records_never_roll(self):
-        for clan in set(data_clans.CLANS) - souls.LINEAGES.keys():
+        for clan in set(data_clans.CLANS) - souls.LINEAGES.keys() - {"none"}:
             with patch.object(souls.secrets, "randbelow") as roll:
                 p = self.create(clan)
                 self.assertFalse(p.reincarnation)
