@@ -234,7 +234,7 @@ def _layout_rooms(rooms, prior):
     return {vnum: {"x": cell[0]*96, "y": cell[1]*96} for vnum, cell in positions.items()}
 
 
-def export_area(name: str, layout=None) -> tuple[str, dict]:
+def export_area(name: str, layout=None, *, write: bool = True) -> tuple[str, dict]:
     """Export one reserved live area as an editable package with a safety baseline."""
     area = areas.find_area(name)
     if not area:
@@ -306,9 +306,10 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
     encoded = (json.dumps(package, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     if len(encoded) > MAX_FILE_BYTES:
         raise ValueError("This area exceeds the 2 MB editor package limit.")
-    os.makedirs(directory, exist_ok=True)
-    with open(path, "wb") as handle:
-        handle.write(encoded)
+    if write:
+        os.makedirs(directory, exist_ok=True)
+        with open(path, "wb") as handle:
+            handle.write(encoded)
     return path, package
 
 
@@ -334,7 +335,7 @@ def export_world() -> tuple[str, dict]:
                 by_room[vnum] = entry["name"]
         if any(start <= v <= end for v in world.WORLD.rooms):
             try:
-                _, pkg = export_area(entry["name"])
+                _, pkg = export_area(entry["name"], write=False)
                 packages.append(pkg)
             except ValueError as exc:
                 warnings.append(f"{entry['name']}: {exc}")
