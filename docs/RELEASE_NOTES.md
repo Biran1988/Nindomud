@@ -24,23 +24,6 @@ existing server installation, keeping the server's `data/` directory intact.
   your village; blank answers and `none` are rejected. Confirmation also checks
   the selection. Use `clan join <name>` later to switch to another valid clan.
 
-- New Uchiha characters have one 1-in-100 creation roll for Indra; Senju and
-  Uzumaki characters have one 1-in-100 roll for Ashura. The result and birth
-  lineage persist through saves, logins, and later clan changes. Existing
-  characters do not receive retroactive rolls. Both reincarnations start with
-  +5 Strength, Dexterity, Constitution, Intelligence, Wisdom, Luck, Perception,
-  Willpower, and Chakra Control. Indra grants 10% extra starting
-  and level-up Chakra; Ashura grants 10% extra starting and level-up Health and
-  Stamina. Fractional bonuses carry into later level gains. Use `reincarnation`,
-  `score`, or administrator `bloodstat` to inspect the result.
-  At level 75, Indra unlocks Six Paths Rinnegan, Almighty Push and Universal Pull;
-  Ashura unlocks Six Paths Sage Mode, Six Paths Vital Surge and Truth-Seeking
-  Orb Barrage. Use `sixpaths on|off|status`. Modes have Chakra/Stamina upkeep,
-  proficiency-scaled combat bonuses, and cannot stack with summon Sage Mode.
-  Vital Surge restores 25% of maximum Health and Stamina and clears poison and
-  weakened effects, for 120 base Chakra with a two-minute cooldown. It is
-  self-only, works during combat, and preserves mastery from the retired art.
-
 - `gold` is an alias for `bank`. The daily `lottery` draws four digits every
   24 hours. Tickets cost 1,000 ryo, increase the jackpot, and a missed draw
   adds 25,000 ryo. Winning shares go into the players' banks; the next pot
