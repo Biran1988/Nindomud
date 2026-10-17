@@ -103,6 +103,12 @@ def _validated_settings(settings, defaults, allowed, label, program_key, trigger
     if not isinstance(settings, dict) or set(settings) - set(allowed):
         raise ValueError(f"{label} contains unknown or restricted builder fields.")
     for field, value in settings.items():
+        if field == "act_flags" and (not isinstance(value, list) or
+                                      any(flag not in olc.VALID_MOB_ACT_FLAGS for flag in value)):
+            raise ValueError(f"{label} has an invalid mob flag.")
+        if field == "extra_flags" and (not isinstance(value, list) or
+                                        any(flag not in olc.VALID_ITEM_EXTRA_FLAGS for flag in value)):
+            raise ValueError(f"{label} has an invalid item flag.")
         if field == program_key:
             _validate_programs(value, triggers, f"{label} {field}")
         else:
@@ -514,7 +520,9 @@ def validate(package: dict) -> dict:
             caps = _validated_caps(row, f"Mob {vnum}")
             if old and "spawn_caps" in row:
                 details = (baseline or {}).get("details", {}).get("caps", {}).get("mobs", {})
-                current = storage.load_spawn_points().get("points", {}).get(key, {})
+                old_location = source.get("placements", {}).get("mobs", {}).get(str(vnum), room_vnum)
+                old_key = spawn_points._key("mob", vnum, old_location)
+                current = storage.load_spawn_points().get("points", {}).get(old_key, {})
                 old_caps = {k: current.get(k) for k in ("total_cap", "per_period_cap")}
                 if str(vnum) not in details or _fingerprint(old_caps) != details[str(vnum)]:
                     raise ValueError(f"Mob {vnum} spawn caps changed since export. Export again.")
@@ -563,9 +571,11 @@ def validate(package: dict) -> dict:
             caps = _validated_caps(row, f"Item {vnum}")
             if old and "spawn_caps" in row:
                 details = (baseline or {}).get("details", {}).get("caps", {}).get("items", {})
-                current = storage.load_spawn_points().get("points", {}).get(key, {})
+                old_location = source.get("placements", {}).get("items", {}).get(str(vnum), room_vnum)
+                old_key = spawn_points._key("item", vnum, old_location)
+                current = storage.load_spawn_points().get("points", {}).get(old_key, {})
                 old_caps = {k: current.get(k) for k in ("total_cap", "per_period_cap")}
-                if str(vnum) not in details or _fingerprint({k: current.get(k) for k in ("total_cap", "per_period_cap")}) != details[str(vnum)]:
+                if str(vnum) not in details or _fingerprint(old_caps) != details[str(vnum)]:
                     raise ValueError(f"Item {vnum} spawn caps changed since export. Export again.")
             points[key] = {"kind": "item", "vnum": vnum, "room_vnum": room_vnum}
             points[key].update(caps)
