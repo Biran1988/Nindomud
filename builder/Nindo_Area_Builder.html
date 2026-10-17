@@ -6,7 +6,7 @@
 <style>
 :root{font:15px/1.4 system-ui,sans-serif;color:#e9eef7;background:#101826}
 *{box-sizing:border-box}button,input,select,textarea{font:inherit}button{background:#254a76;color:white;border:1px solid #4b79aa;border-radius:6px;padding:7px 10px;cursor:pointer}button:hover{background:#37679b}button.danger{background:#683844;border-color:#aa6262}button.active{background:#a66620}
-input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;border-radius:5px;padding:6px;width:100%}textarea{min-height:85px;resize:vertical}label{display:block;font-size:13px;margin:9px 0 3px;color:#b7c9df}input[type=checkbox]{width:auto}h1{margin:0;font-size:22px}h2{font-size:17px;margin:14px 0 5px}h3{font-size:14px;margin:13px 0 5px}.app{display:grid;grid-template-columns:minmax(280px,340px) minmax(440px,1fr) minmax(290px,350px);height:100vh}.panel{padding:16px;overflow:auto;border-right:1px solid #33445b}.panel:last-child{border-left:1px solid #33445b;border-right:0}.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.hint{color:#aabdd1;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mapwrap{overflow:auto;background:#0b1220;min-height:300px;position:relative}.map{width:4000px;height:3000px;position:relative;transform-origin:top left;background-image:linear-gradient(#203047 1px,transparent 1px),linear-gradient(90deg,#203047 1px,transparent 1px);background-size:96px 96px}svg{position:absolute;inset:0;pointer-events:none}.node{position:absolute;width:80px;height:52px;padding:4px 5px;font-size:12px;line-height:1.25;touch-action:none;border:2px solid #4d85c0;border-radius:9px;background:#1a304b;cursor:grab;user-select:none;box-shadow:0 4px 13px #0008;overflow:hidden}.node.selected{border-color:#f3bc4f;background:#35405a}.node small{display:block;color:#9dcde4;font-size:10px}.node strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.zoom{position:sticky;z-index:2;top:8px;left:8px;display:flex;align-items:center;gap:4px;width:max-content;height:38px;margin-bottom:-38px;padding:5px;background:#172437e8;border:1px solid #48617f;border-radius:7px}.zoom button{padding:3px 9px}.zoom span{min-width:49px;text-align:center}.entry{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #31435c}.entry span{overflow:hidden;text-overflow:ellipsis}.entry button{padding:3px 8px}.status{background:#213a32;color:#b9f5d3;padding:8px;border-radius:6px;min-height:34px}.status.error{background:#5d2d35;color:#ffd2d2}.hidden{display:none}.checkboxline{display:flex;align-items:center;gap:7px;margin:9px 0}.checkboxline label{margin:0}@media(max-width:1050px){.app{display:block;height:auto}.panel{height:auto;border:0;border-bottom:1px solid #33445b}.mapwrap{height:500px}}
+input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;border-radius:5px;padding:6px;width:100%}textarea{min-height:85px;resize:vertical}label{display:block;font-size:13px;margin:9px 0 3px;color:#b7c9df}input[type=checkbox]{width:auto}details{border:1px solid #344860;border-radius:6px;padding:9px;margin:8px 0}summary{cursor:pointer;color:#bedafc;font-weight:650}.builder-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}.builder-grid label{margin:3px 0}.small-button{padding:2px 7px!important;font-size:12px}.helper{padding:8px;border:1px dashed #56708d;border-radius:6px;color:#bdd1e6}.program-row{border-bottom:1px solid #344860;padding:6px 0;overflow-wrap:anywhere}input[type=checkbox]{width:auto}h1{margin:0;font-size:22px}h2{font-size:17px;margin:14px 0 5px}h3{font-size:14px;margin:13px 0 5px}.app{display:grid;grid-template-columns:minmax(280px,340px) minmax(440px,1fr) minmax(290px,350px);height:100vh}.panel{padding:16px;overflow:auto;border-right:1px solid #33445b}.panel:last-child{border-left:1px solid #33445b;border-right:0}.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.hint{color:#aabdd1;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mapwrap{overflow:auto;background:#0b1220;min-height:300px;position:relative}.map{width:4000px;height:3000px;position:relative;transform-origin:top left;background-image:linear-gradient(#203047 1px,transparent 1px),linear-gradient(90deg,#203047 1px,transparent 1px);background-size:96px 96px}svg{position:absolute;inset:0;pointer-events:none}.node{position:absolute;width:80px;height:52px;padding:4px 5px;font-size:12px;line-height:1.25;touch-action:none;border:2px solid #4d85c0;border-radius:9px;background:#1a304b;cursor:grab;user-select:none;box-shadow:0 4px 13px #0008;overflow:hidden}.node.selected{border-color:#f3bc4f;background:#35405a}.node small{display:block;color:#9dcde4;font-size:10px}.node strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.zoom{position:sticky;z-index:2;top:8px;left:8px;display:flex;align-items:center;gap:4px;width:max-content;height:38px;margin-bottom:-38px;padding:5px;background:#172437e8;border:1px solid #48617f;border-radius:7px}.zoom button{padding:3px 9px}.zoom span{min-width:49px;text-align:center}.entry{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #31435c}.entry span{overflow:hidden;text-overflow:ellipsis}.entry button{padding:3px 8px}.status{background:#213a32;color:#b9f5d3;padding:8px;border-radius:6px;min-height:34px}.status.error{background:#5d2d35;color:#ffd2d2}.hidden{display:none}.checkboxline{display:flex;align-items:center;gap:7px;margin:9px 0}.checkboxline label{margin:0}@media(max-width:1050px){.app{display:block;height:auto}.panel{height:auto;border:0;border-bottom:1px solid #33445b}.mapwrap{height:500px}}
 </style>
 </head>
 <body>
@@ -20,7 +20,13 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <div class="toolbar"><button id="addRoom">Add room</button><button id="connect">Connect rooms</button><button id="unlink">Remove exit</button><button id="deleteRoom" class="danger">Delete room</button></div>
 <div class="row"><label>Remove exit direction<select id="direction"><option>north</option><option>south</option><option>east</option><option>west</option><option>northeast</option><option>northwest</option><option>southeast</option><option>southwest</option><option>up</option><option>down</option><option>inside</option><option>outside</option></select></label><label>Connection type<select id="connectionType"><option value="auto">Auto from grid</option><option value="up">Up / down</option><option value="down">Down / up</option><option value="inside">Inside / outside</option><option value="outside">Outside / inside</option></select></label></div>
 <p class="hint">Rooms snap to the grid. Select a source room, press Connect rooms, then click a destination. The grid sets the compass direction and adds both exits. Use Connection type for vertical or inside/outside exits. Moving a linked room updates its compass exits.</p>
-<h2>Package</h2>
+<h2>Saved projects</h2>
+<p class="hint">Every change autosaves to this browser, even if the area is unfinished. Save a portable project backup to resume on another computer; area JSON is only for importing into the game.</p>
+<label>Saved draft<select id="draftList"></select></label>
+<div class="toolbar"><button id="newDraft">New project</button><button id="saveDraft">Save draft now</button><button id="loadDraft">Open selected</button><button id="deleteDraft" class="danger">Delete saved</button></div>
+<div class="toolbar"><button id="backupDraft">Download project backup</button><button id="openBackup">Open project backup</button><input type="file" class="hidden" id="backupFile" accept=".json,application/json"></div>
+<p id="draftStatus" class="hint" aria-live="polite">Autosave enabled.</p>
+<h2>Game package</h2>
 <div class="toolbar"><button id="export">Export area JSON</button><button id="open">Open / import area JSON</button><input id="file" type="file" accept=".json,application/json" class="hidden"></div>
 <p class="hint">On your server, place the exported file in <code>data/area_imports/</code>. In game, use <code>area import filename.json check</code>, then <code>area import filename.json</code> as Implementor. A game export can update its own area; a new package adds unused VNUMs. The check command validates without changing the game.</p>
 <p id="status" class="status" role="status">Ready.</p>
@@ -37,6 +43,12 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <label>Room flags<select id="roomFlagChoice"><option value="">Choose a flag...</option><option value="CapturePoint">CapturePoint — territory control</option><option value="accelerated_healing">accelerated_healing — faster recovery</option></select><div id="selectedFlags" class="hint"></div></label>
 <label>Room reset message<input id="roomReset" maxlength="500"></label>
 <h3>Exits</h3><div id="exitList" class="hint"></div>
+<details><summary>Room builder settings and programs</summary>
+<div id="roomAdvanced"></div><h3>Exit doors, locks and keys</h3>
+<label>Edit exit<select id="exitEditorDirection"></select></label>
+<div id="exitAdvanced" class="builder-grid"></div>
+<h3>Room programs</h3><div id="roomPrograms"></div><div id="roomProgramControls"></div>
+</details>
 <h3>Mobs placed here</h3><div id="mobList"></div>
 <div class="row"><label>Mob VNUM<input id="mobVnum" type="number" min="1"></label><label>Level<input id="mobLevel" type="number" min="1" max="100" value="1"></label></div>
 <label>Mob name<input id="mobName" maxlength="120"></label>
@@ -47,14 +59,44 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <label>Item name<input id="itemName" maxlength="120"></label>
 <label>Item type<input id="itemType" value="misc" maxlength="40"></label>
 <div class="toolbar"><button id="addItem">Add item and spawn</button></div>
+<details id="entityPanel" class="hidden" open><summary id="entityTitle">Edit prototype</summary>
+<div id="entityEditor"></div></details>
 </div>
 </section>
 </main>
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id), opposite={north:'south',south:'north',east:'west',west:'east',northeast:'southwest',southwest:'northeast',northwest:'southeast',southeast:'northwest',up:'down',down:'up',inside:'outside',outside:'inside'};
-let project={format:'nindo-area-v1',area:{name:'New Area',vnum_start:20000,vnum_end:20999,reset_message:''},rooms:[],mobs:[],items:[]};
-try{let saved=localStorage.getItem('nindo-area-draft');if(saved)project=JSON.parse(saved)}catch(e){}
+const emptyProject=()=>({format:'nindo-area-v1',area:{name:'New Area',vnum_start:20000,vnum_end:20999,reset_message:'',income:0},rooms:[],mobs:[],items:[]});
+let project=emptyProject(),projectId=localStorage.getItem('nindo-area-current-project')||newDraftId();
+const DRAFT_INDEX='nindo-area-project-index-v2',DRAFT_PREFIX='nindo-area-project-v2:';
+function newDraftId(){return 'draft-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)}
+function draftIndex(){try{let rows=JSON.parse(localStorage.getItem(DRAFT_INDEX)||'[]');return Array.isArray(rows)?rows:[]}catch(_){return []}}
+try{
+  const saved=localStorage.getItem(DRAFT_PREFIX+projectId)||localStorage.getItem('nindo-area-draft');
+  if(saved){const loaded=JSON.parse(saved);if(validProject(loaded))project=loaded}
+}catch(_){} 
+function validProject(p){return p&&p.format==='nindo-area-v1'&&p.area&&typeof p.area.name==='string'&&
+  Array.isArray(p.rooms)&&Array.isArray(p.mobs)&&Array.isArray(p.items)}
+function refreshDraftList(){
+  const list=$('draftList');if(!list)return;
+  list.replaceChildren();
+  for(const entry of draftIndex()){
+    const opt=document.createElement('option');opt.value=entry.id;
+    opt.textContent=entry.name+' — '+new Date(entry.savedAt).toLocaleString();list.append(opt);
+  }
+  list.value=projectId;
+}
+function recordDraft(){
+  const now=new Date().toISOString(),index=draftIndex().filter(d=>d.id!==projectId);
+  index.unshift({id:projectId,name:project.area.name||'Unnamed area',savedAt:now});
+  // Project payloads are stored separately so one bad file cannot destroy another.
+  localStorage.setItem(DRAFT_PREFIX+projectId,JSON.stringify(project));
+  localStorage.setItem(DRAFT_INDEX,JSON.stringify(index));
+  localStorage.setItem('nindo-area-current-project',projectId);
+  $('draftStatus').textContent='Saved '+new Date(now).toLocaleString()+' in this browser.';
+  refreshDraftList();
+}
 const GRID=96, TILE_W=80, TILE_H=52, MAP_W=4000, MAP_H=3000;
 const maxX=Math.floor((MAP_W-TILE_W)/GRID)*GRID, maxY=Math.floor((MAP_H-TILE_H)/GRID)*GRID;
 const compass=['east','northeast','north','northwest','west','southwest','south','southeast'];
@@ -123,13 +165,14 @@ function updateMovedExits(r,oldX,oldY){
   return true;
 }
 function report(message,error=false){$('status').textContent=message;$('status').className='status'+(error?' error':'')}
-function save(){try{localStorage.setItem('nindo-area-draft',JSON.stringify(project))}catch(e){report('Browser draft storage is full. Export your JSON to save it.',true)}}
+function save(){try{recordDraft()}catch(e){report('Browser storage is unavailable or full. Download a project backup to protect your changes.',true)}}
 function room(){return project.rooms.find(r=>r.vnum===selected)}
 function nextId(collection,start){let id=start;while(collection.some(x=>x.vnum===id))id++;return id}
 function validInt(x,min,max){return Number.isInteger(Number(x))&&Number(x)>=min&&Number(x)<=max}
-function select(v){selected=v;let r=room();$('roomFields').classList.toggle('hidden',!r);$('selectedTitle').textContent=r?`Room ${v}`:'Select a room';if(r){$('roomVnum').value=r.vnum;$('roomName').value=r.name;$('roomDesc').value=r.description;$('roomSector').value=r.sector||'inside';$('roomBiome').value=r.biome||'none';$('roomSafe').checked=!!r.safe;renderFlags();$('roomReset').value=r.reset_message||'';refreshContents()}renderMap()}
+function select(v){selected=v;let r=room();$('roomFields').classList.toggle('hidden',!r);$('selectedTitle').textContent=r?`Room ${v}`:'Select a room';if(r){$('roomVnum').value=r.vnum;$('roomName').value=r.name;$('roomDesc').value=r.description;$('roomSector').value=r.sector||'inside';$('roomBiome').value=r.biome||'none';$('roomSafe').checked=!!r.safe;renderFlags();$('roomReset').value=r.reset_message||'';refreshContents();renderRoomAdvanced()}else{$('entityPanel').classList.add('hidden')}renderMap()}
 function refreshContents(){let r=room();if(!r)return;$('exitList').textContent=Object.entries(r.exits||{}).map(([d,v])=>`${d} → ${v}`).join('  •  ')||'No exits yet';
-for(let [kind,element] of [['mobs','mobList'],['items','itemList']]){let list=$(element);list.replaceChildren();project[kind].filter(x=>x.room_vnum===selected).forEach(x=>{let div=document.createElement('div');div.className='entry';let text=document.createElement('span');text.textContent=`${x.vnum}: ${x.name}`;let button=document.createElement('button');button.textContent='Remove';button.className='danger';button.onclick=()=>{if(project.source?.baseline?.[kind]?.[x.vnum]){report('Remove existing prototypes in game, then export the area again.',true);return}project[kind]=project[kind].filter(y=>y!==x);save();refreshContents()};div.append(text,button);list.append(div)})}}
+for(let [kind,element] of [['mobs','mobList'],['items','itemList']]){let list=$(element);list.replaceChildren();project[kind].filter(x=>x.room_vnum===selected).forEach(x=>{let div=document.createElement('div');div.className='entry';let text=document.createElement('span');text.textContent=`${x.vnum}: ${x.name}`;let edit=document.createElement('button');edit.textContent='Edit';edit.className='small-button';edit.onclick=()=>editPrototype(kind,x.vnum);div.append(text,edit);
+let button=document.createElement('button');button.textContent='Remove';button.className='danger small-button';button.onclick=()=>{if(project.source?.baseline?.[kind]?.[x.vnum]){report('Remove existing prototypes in game, then export the area again.',true);return}project[kind]=project[kind].filter(y=>y!==x);save();refreshContents()};div.append(button);list.append(div)})}}
 function renderFlags(){
   const r=room(),list=$('selectedFlags');list.replaceChildren();
   if(!r)return;
@@ -209,7 +252,7 @@ $('addItem').onclick=()=>{if(!room())return;let v=Number($('itemVnum').value),co
 $('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;normalizePositions();save();fill();select(null);report(`Opened ${file.name}.`)}catch(err){report(err.message,true)}e.target.value=''};
 function fill(){$('areaName').value=project.area.name;$('start').value=project.area.vnum_start;$('end').value=project.area.vnum_end;$('areaReset').value=project.area.reset_message||'';$('mobVnum').value=nextId(project.mobs,30000);$('itemVnum').value=nextId(project.items,40000);$('mobDamage').value='1-4'}
 try{normalizePositions()}catch(e){report(e.message,true)}
-fill();select(null);setZoom(1);
+fill();select(null);setZoom(1);refreshDraftList();save();
 $('zoomIn').onclick=()=>setZoom(zoom*1.25);
 $('zoomOut').onclick=()=>setZoom(zoom/1.25);
 $('zoomReset').onclick=()=>setZoom(1);
