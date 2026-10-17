@@ -9,6 +9,8 @@ entry, oldest first.
 
 Add a new entry here whenever a player-facing change ships; this file
 is the single source of truth for the 'changes' command.
+Exception: Easter eggs, secret villages, hidden rewards and their discovery
+instructions must never appear here, including indirect announcement entries.
 """
 
 CHANGELOG = [
@@ -437,7 +439,7 @@ CHANGELOG = [
     ("15.284", "Targeted Mangekyo skills require the target in the same room when cast and when delayed effects resolve. Amaterasu's player burn goes out on defeat, and its room fire now lasts five minutes."),
     ("15.285", "Casting Kamui Pocket Dimension on yourself now creates a solo pocket and transfers you immediately. If you already opened a dimension on a target, self-casting joins it as before; upkeep and return on collapse apply to both paths."),
     ("15.286", "Gold aliases bank. Added a daily four-digit lottery with player-funded tickets, a 25,000 ryo base and 25,000 ryo rollovers for draws without a winner. Mangekyo targets mobs, Amaterasu can be extinguished by its caster, and positive dodge bonuses are 10% lower."),
-    ("15.287", "Bukijutsu gains Dual Wield and Weapon Expert; Genjutsu gains Chokkan; Taijutsu gains Soto Uke. 100 Years of Death is a scroll-only instant kill. Lottery purchases are limited to one ticket per draw and support random numbers."),
+    ("15.287", "Bukijutsu gains Dual Wield and Weapon Expert; Genjutsu gains Chokkan; Taijutsu gains Soto Uke. Lottery purchases are limited to one ticket per draw and support random numbers."),
     ("15.288", "Removed Hydrification inheritance and migrated existing holders. Sharingan Copy Jutsu now charges exactly twice the original caster's Chakra spend, with no second discount."),
     ("15.289", "Elemental Kekkei Genkai now derive from chakra nature pairs regardless of clan, excluding holders of clan bloodlines. Legacy clan Ice Release is migrated; a third nature can form Dust Release (Kekkei Tota)."),
     ("15.290", "Wind + Lightning now grants Storm Release, alongside the existing Water + Lightning combination."),
@@ -446,9 +448,6 @@ CHANGELOG = [
     ("15.293", "Wind + Lightning now grants Tempest Release, with no duplicate recipe for Storm. Existing saves with revealed Wind + Lightning natures gain Tempest on load."),
     ("15.294", "Added makeimm <account> for Biran's Implementor account to promote an existing player account to Helper immortal. The rank saves immediately; reconnect grants the full staff skill set."),
     ("15.295", "Added promoteimm <account> <builder|area leader|administrator> for Biran to raise an existing immortal's staff rank. Changes save immediately and update connected accounts."),
-    ("15.296", "Added seasonal Easter and Christmas events: ordinary mob kills drop painted eggs during Easter week; eggs yield restorative candy. Each Kage chamber displays a tree and Santa December 24-31. Santa grants one wrapped candy present per character per year."),
-    ("15.297", "Thanksgiving Thursday-Sunday now spawns up to two turkeys in each built area with 15-minute replacement after kills. Corpses carry a powerful turkey meal and two feathers; shopkeepers pay 500 ryo per feather."),
-    ("15.298", "On July 4, Uncle Sam visits all five Kage chambers. Each character can claim fireworks, a Bomb Pop Popsicle, and BBQ food once per year. Fireworks create a room celebration; food restores combat resources."),
     ("15.299", "Ice Release grants Ice Senbon, Ice Prison, and Demonic Mirroring Ice Crystals to eligible Water + Wind holders, with individual help and combat practice."),
     ("15.300", "First chakra nature reveals with Chakra Paper at level 10. At level 25, choose a distinct second nature in your protected village Kage chamber; only chat and help work until chosen. Every base element lists its four release pairings, and each elemental release has a help page. Ice moves start at level 25."),
     ("15.301", "Added three gated combat techniques and individual helpfiles for each remaining elemental release: Wood, Storm, Boil, Lava, Scorch, Magnet, Explosion, Flashfire, Tempest, and level-100 Dust. Two-nature moves match Ice's level 25/45/70 damage and cost curve."),
@@ -461,5 +460,4 @@ CHANGELOG = [
     ("15.308", "New Uchiha characters have a one-time 1-in-100 chance to inherit Indra's chakra; new Senju and Uzumaki characters can inherit Ashura's. Reincarnations start with +5 to all nine attributes. Indra gains 10% extra starting and level-up Chakra, while Ashura gains 10% extra Health and Stamina. At level 75, Indra awakens Six Paths Rinnegan with Almighty Push/Universal Pull; Ashura awakens Six Paths Sage Mode with Vital Surge/Truth-Seeking Orb Barrage. Use 'reincarnation', 'score' and 'sixpaths'."),
     ("15.309", "Six Paths Vital Surge replaces Ashura's Six Paths Rasenshuriken. This level-75 recovery art restores 25% of maximum Health and Stamina and clears poison and weakened effects while Six Paths mode is active. It costs 120 base Chakra, uses normal Chakra Control cost discounts, and has a two-minute cooldown. It targets only the caster and works in combat. Existing Ashura technique mastery carries over."),
     ("15.310", "New characters must select a clan from their starting village. Blank answers and none no longer skip clan selection, and creation confirmation enforces the choice. Clan join still allows switching between valid clans of your village. Updated clan help."),
-    ("15.311", "Village creation setup now handles additional village data consistently, including required clan selection, headbands, leadership and village template IDs. Existing builder areas and prototype IDs are preserved."),
 ]
