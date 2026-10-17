@@ -37,13 +37,15 @@ class WorldMapExportTests(unittest.TestCase):
                         or path.endswith("world_exports/nindo-world.json"))
         self.assertTrue(os.path.exists(path))
         self.assertEqual(exported["format"], "nindo-world-v1")
-        self.assertEqual(len(exported["markers"]), 3)
+        self.assertEqual(len(exported["markers"]), 4)
         self.assertEqual({p["area"]["name"] for p in exported["areas"]},
                          {"Test Forest", "South Road"})
         self.assertEqual(exported["links"],
                          [{"from": "South Road", "to": "Test Forest"}])
         self.assertEqual(next(m for m in exported["markers"]
                               if m["name"] == "Empty Reserve")["room_count"], 0)
+        self.assertEqual(next(m for m in exported["markers"]
+                              if m["name"] == "Unassigned rooms (unreserved)")["room_count"], 1)
         self.assertTrue(any("empty" in warning.lower()
                             for warning in exported["warnings"]))
         self.assertEqual(world.WORLD.rooms, before_rooms)
