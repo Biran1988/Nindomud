@@ -27,6 +27,13 @@ source files. Startup copies missing reference pages into `data/help/` and
 refreshes system-owned pages, while preserving staff-written help. The
 `helpfiles/` directory is for inspection and does not replace saved data.
 
+To build the current code into the required `Nindo_mud.zip` release locally, run
+`python3 scripts/build_release.py dist`. The GitHub Actions workflow
+`Validate Nindo_mud and package source` also runs the full test suite and
+publishes a downloadable `Nindo_mud` ZIP artifact when its run succeeds.
+Use a freshly built archive instead of any older archive checked into the
+repository. Never overwrite the live server's `data/` directory.
+
 ## Current release
 
 Version 15.312 expands the offline area editor with multi-project autosaves,
