@@ -249,7 +249,224 @@ $('unlink').onclick=()=>{let r=room();if(!r)return;let dir=$('direction').value,
 $('deleteRoom').onclick=()=>{let r=room();if(!r)return;if(project.source?.baseline?.rooms?.[r.vnum]){report('Delete existing rooms in game, then export the area again.',true);return}if(!confirm(`Delete room ${r.vnum}, its exits, and its placed mobs/items?`))return;project.rooms=project.rooms.filter(x=>x!==r);for(let x of project.rooms)for(let [dir,v] of Object.entries(x.exits))if(v===r.vnum)delete x.exits[dir];project.mobs=project.mobs.filter(x=>x.room_vnum!==r.vnum);project.items=project.items.filter(x=>x.room_vnum!==r.vnum);save();select(null);report('Room removed.')};
 $('addMob').onclick=()=>{if(!room())return;let v=Number($('mobVnum').value),level=Number($('mobLevel').value),hp=Number($('mobHealth').value),match=/^(\d+)\s*-\s*(\d+)$/.exec($('mobDamage').value.trim());if(!validInt(v,1,999999)||project.mobs.some(x=>x.vnum===v)||!$('mobName').value.trim()||!validInt(level,1,100)||!validInt(hp,1,1000000)||!match||Number(match[1])<1||Number(match[2])<Number(match[1])){report('Enter a unique mob VNUM, name, level, health, and damage like 2-6.',true);return}project.mobs.push({vnum:v,name:$('mobName').value.trim(),level,health:hp,damage_min:Number(match[1]),damage_max:Number(match[2]),room_vnum:selected,respawns:true});$('mobVnum').value=nextId(project.mobs,v+1);$('mobName').value='';save();refreshContents();report('Mob added with a persistent spawn point.')};
 $('addItem').onclick=()=>{if(!room())return;let v=Number($('itemVnum').value),cost=Number($('itemCost').value);if(!validInt(v,1,999999)||project.items.some(x=>x.vnum===v)||!$('itemName').value.trim()||!$('itemType').value.trim()||!validInt(cost,0,1000000000)){report('Enter a unique item VNUM, name, type, and nonnegative cost.',true);return}project.items.push({vnum:v,name:$('itemName').value.trim(),item_type:$('itemType').value.trim(),cost,room_vnum:selected});$('itemVnum').value=nextId(project.items,v+1);$('itemName').value='';save();refreshContents();report('Item added with a persistent spawn point.')};
-$('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;normalizePositions();save();fill();select(null);report(`Opened ${file.name}.`)}catch(err){report(err.message,true)}e.target.value=''};
+
+const MOB_FIELD_KINDS = {
+  keywords:'list',long_desc:'text',description:'textarea',sex:'text',alignment:'int',
+  position:'text',default_position:'text',attributes:'json',primary_class:'text-null',
+  mana:'int',move:'int',armor_class:'int',hit_roll:'int',damage_roll:'int',attacks:'int',
+  act_flags:'list',affected_by:'list',attack_verbs:'list',defenses:'list',resistant:'list',
+  immune:'list',susceptible:'list',body_parts:'list',gold:'int',special_function:'text',
+  speaks:'list',speaking:'list',experience_reward:'int',ryo_reward:'int',
+  loot_items:'list',enabled:'bool',shopkeeper:'bool',shop_items:'numbers',
+  shop_buys_categories:'list',gambler:'bool',teacher:'text',summon_family:'text'
+};
+const ITEM_FIELD_KINDS = {
+  keywords:'list',long_desc:'text',description:'textarea',weapon_type:'text',
+  extra_flags:'list',wear_flags:'list',damage:'int-null',wear_loc:'text',values:'numbers',
+  weight:'int',level:'int',condition:'int',enabled:'bool',max_uses:'int',
+  scroll_jutsu:'text',container_capacity:'int',rarity:'text',set_vnums:'numbers',
+  set_bonus_percent:'int',stat_bonuses:'json',gem_bonuses:'json',
+  weapon_resistances:'json',heal_amount:'int',heal_duration:'int',heal_flags:'list'
+};
+const PROGRAM_ACTIONS = ['say','emote','give','heal','teleport','drop_chance',
+  'give_mission_points','give_ryo','set_rank','take','give_xp','learn_skill',
+  'require_item','remember_keyword','min_level','max_level','wear_message',
+  'iruka_graduation_check'];
+function nodeEl(tag,text,className){
+  const n=document.createElement(tag);if(text!==undefined)n.textContent=text;
+  if(className)n.className=className;return n;
+}
+function elementLabel(title,control){
+  const label=nodeEl('label',title);label.append(control);return label;
+}
+function fieldControl(target,key,kind,labelText){
+  const current=target[key],label=nodeEl('label',labelText||key.replaceAll('_',' '));
+  let input;
+  if(kind==='bool'){
+    input=document.createElement('input');input.type='checkbox';
+    input.checked=current===undefined?key==='enabled':Boolean(current);
+  }else if(kind==='json'||kind==='textarea'){
+    input=document.createElement('textarea');input.rows=kind==='json'?3:4;
+    input.value=kind==='json'?JSON.stringify(current===undefined?{}:current,null,2):current||'';
+  }else{
+    input=document.createElement('input');input.type=(kind==='int'||kind==='int-null')?'number':'text';
+    input.value=current===undefined||current===null?'':Array.isArray(current)?current.join(', '):String(current);
+  }
+  input.title=key;label.append(input);
+  input.addEventListener(kind==='json'?'change':'change',()=>{
+    try{
+      let value;
+      if(kind==='bool')value=input.checked;
+      else if(kind==='int'||kind==='int-null'){
+        if(kind==='int-null'&&!input.value.trim())value=null;
+        else{value=Number(input.value);if(!input.value.trim()||!Number.isSafeInteger(value))throw Error('Enter a valid whole number.')}
+      }else if(kind==='list')value=input.value.split(',').map(v=>v.trim()).filter(Boolean);
+      else if(kind==='numbers'){
+        value=input.value.trim()?input.value.split(',').map(v=>{
+          const number=Number(v.trim());if(!Number.isSafeInteger(number))throw Error('Use comma-separated whole numbers.');
+          return number;
+        }):[];
+      }else if(kind==='json')value=JSON.parse(input.value);
+      else if(kind==='text-null')value=input.value.trim()||null;
+      else value=input.value;
+      target[key]=value;save();report('Builder field saved in project draft.');
+    }catch(e){report(key+': '+e.message,true)}
+  });
+  return label;
+}
+function builderFieldGroup(target,kinds,container){
+  container.replaceChildren();const grid=nodeEl('div',undefined,'builder-grid');
+  for(const [key,kind] of Object.entries(kinds))grid.append(fieldControl(target,key,kind));
+  container.append(grid);
+}
+function programBuilder(holder,key,triggers,list,controls){
+  const values=holder[key]||[],allowed=Array.from(triggers);
+  list.replaceChildren();
+  values.forEach((p,i)=>{
+    const row=nodeEl('div',undefined,'program-row');
+    const descr=nodeEl('span',String(i+1)+'. '+p.trigger+(p.keyword?' ('+p.keyword+')':'')+' → '+p.action+' '+p.args);
+    const remove=nodeEl('button','Remove','danger small-button');
+    remove.onclick=()=>{holder[key].splice(i,1);save();programBuilder(holder,key,triggers,list,controls)};
+    row.append(descr,remove);list.append(row);
+  });
+  controls.replaceChildren();
+  const trigger=document.createElement('select'),action=document.createElement('select');
+  for(const name of allowed){const opt=nodeEl('option',name);opt.value=name;trigger.append(opt)}
+  for(const name of PROGRAM_ACTIONS){const opt=nodeEl('option',name);opt.value=name;action.append(opt)}
+  const args=document.createElement('textarea');args.rows=2;args.placeholder='Action arguments (text, amount or VNUM)';
+  const keyword=document.createElement('input');keyword.placeholder='Speech keyword, when applicable';
+  const add=nodeEl('button','Add program');add.onclick=()=>{
+    const prog={trigger:trigger.value,action:action.value,args:args.value};
+    if(prog.trigger==='speech'&&!keyword.value.trim()){report('Speech programs need a keyword.',true);return}
+    if(prog.trigger==='speech')prog.keyword=keyword.value.trim();
+    if(!prog.args.trim()&&!['iruka_graduation_check'].includes(prog.action)){report('Enter action arguments.',true);return}
+    holder[key]=holder[key]||[];
+    holder[key].push(prog);save();programBuilder(holder,key,triggers,list,controls);
+  };
+  controls.append(elementLabel('Trigger',trigger),elementLabel('Action',action),
+    elementLabel('Arguments',args),elementLabel('Speech keyword',keyword),add);
+}
+function renderRoomAdvanced(){
+  const r=room();if(!r)return;
+  r.builder=r.builder||{};
+  builderFieldGroup(r.builder,{enabled:'bool',apartment:'bool',player_shop:'bool'},$('roomAdvanced'));
+  const directions=Object.keys(r.exits||{}),sel=$('exitEditorDirection');
+  const previous=sel.value;sel.replaceChildren();
+  for(const direction of directions){const option=nodeEl('option',direction+' → '+r.exits[direction]);option.value=direction;sel.append(option)}
+  sel.value=directions.includes(previous)?previous:directions[0]||'';
+  renderExitAdvanced();
+  programBuilder(r.builder,'programs',['enter','random'],$('roomPrograms'),$('roomProgramControls'));
+}
+function renderExitAdvanced(){
+  const r=room(),dir=$('exitEditorDirection').value,panel=$('exitAdvanced');panel.replaceChildren();
+  if(!r||!dir){panel.textContent='Connect a room first.';return}
+  const config=r.builder||(r.builder={});
+  for(const field of ['exit_flags','exit_door_open','exit_key_item','exit_passcode'])config[field]??={};
+  const flags=config.exit_flags[dir]||[];
+  for(const flag of ['door','locked','hidden']){
+    const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=flags.includes(flag);
+    checkbox.onchange=()=>{
+      let row=new Set(config.exit_flags[dir]||[]);
+      checkbox.checked?row.add(flag):row.delete(flag);
+      config.exit_flags[dir]=Array.from(row);save();
+    };
+    panel.append(elementLabel(flag,checkbox));
+  }
+  for(const [field,label] of [['exit_key_item','Required key item'],['exit_passcode','Passcode']]){
+    const input=document.createElement('input');input.value=config[field][dir]||'';
+    input.onchange=()=>{
+      if(input.value){config[field][dir]=input.value;const row=new Set(config.exit_flags[dir]||[]);row.add(field==='exit_key_item'?'keyitem':'passcode');config.exit_flags[dir]=Array.from(row)}
+      else{delete config[field][dir];config.exit_flags[dir]=(config.exit_flags[dir]||[]).filter(x=>x!==(field==='exit_key_item'?'keyitem':'passcode'))}
+      save();renderExitAdvanced();
+    };
+    panel.append(elementLabel(label,input));
+  }
+  const open=document.createElement('input');open.type='checkbox';
+  open.checked=config.exit_door_open[dir]??false;
+  open.onchange=()=>{config.exit_door_open[dir]=open.checked;save()};
+  panel.append(elementLabel('Door starts open',open));
+}
+$('exitEditorDirection').onchange=renderExitAdvanced;
+function editPrototype(kind,vnum){
+  const entity=project[kind].find(row=>row.vnum===vnum);if(!entity)return;
+  const panel=$('entityPanel'),container=$('entityEditor');
+  panel.classList.remove('hidden');$('entityTitle').textContent=(kind==='mobs'?'Mob':'Item')+' #'+vnum;
+  container.replaceChildren();const quick=nodeEl('div',undefined,'builder-grid');
+  const defaults=kind==='mobs'?{
+    name:'text',level:'int',health:'int',damage_min:'int',damage_max:'int',respawns:'bool',room_vnum:'int'
+  }:{name:'text',item_type:'text',cost:'int',room_vnum:'int'};
+  for(const [key,type] of Object.entries(defaults)){
+    const control=fieldControl(entity,key,type,key.replaceAll('_',' '));
+    const input=control.querySelector('input');
+    input.addEventListener('change',()=>refreshContents());
+    quick.append(control);
+  }
+  container.append(nodeEl('h3','Core fields'),quick);
+  entity.settings=entity.settings||{};
+  const details=document.createElement('details');details.open=true;
+  details.append(nodeEl('summary','Full prototype properties (mset / oset)'));
+  const holder=document.createElement('div');details.append(holder);container.append(details);
+  builderFieldGroup(entity.settings,kind==='mobs'?MOB_FIELD_KINDS:ITEM_FIELD_KINDS,holder);
+  entity.spawn_caps=entity.spawn_caps||{total_cap:null,per_period_cap:null};
+  container.append(nodeEl('h3','Spawn limits (blank = uncapped)'));
+  const caps=nodeEl('div',undefined,'builder-grid');
+  caps.append(fieldControl(entity.spawn_caps,'total_cap','int-null','Total area cap'),
+              fieldControl(entity.spawn_caps,'per_period_cap','int-null','Per-reset cap'));
+  container.append(caps);
+  container.append(nodeEl('h3','Programs'));
+  const list=nodeEl('div'),controls=nodeEl('div');container.append(list,controls);
+  programBuilder(entity.settings,kind==='mobs'?'mob_programs':'item_programs',
+    kind==='mobs'?['greet','death','random','speech','move']:['wear','get'],list,controls);
+  panel.scrollIntoView({block:'nearest'});
+}
+function resetEditorProject(next,id){
+  if(!validProject(next))throw Error('Not a valid Nindo area project.');
+  project=JSON.parse(JSON.stringify(next));projectId=id||newDraftId();
+  normalizePositions();connecting=false;selected=null;
+  $('connect').classList.remove('active');fill();select(null);setZoom(1);save();
+}
+function downloadJson(data,filename){
+  const blob=new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('saveDraft').onclick=()=>{save();report('Saved project draft in this browser.')};
+$('newDraft').onclick=()=>{
+  if(!confirm('Start a separate project? Your current project will stay saved.'))return;
+  save();resetEditorProject(emptyProject(),newDraftId());report('New blank project created.');
+};
+$('loadDraft').onclick=()=>{
+  const id=$('draftList').value;if(!id)return;
+  try{const raw=localStorage.getItem(DRAFT_PREFIX+id);if(!raw)throw Error('Saved draft unavailable.');
+    save();resetEditorProject(JSON.parse(raw),id);report('Opened saved project.');
+  }catch(e){report(e.message,true)}
+};
+$('deleteDraft').onclick=()=>{
+  const id=$('draftList').value;if(!id||!confirm('Permanently delete this browser draft? Download a backup first if needed.'))return;
+  try{
+    localStorage.removeItem(DRAFT_PREFIX+id);
+    localStorage.setItem(DRAFT_INDEX,JSON.stringify(draftIndex().filter(p=>p.id!==id)));
+    if(id===projectId){project=emptyProject();projectId=newDraftId();fill();select(null);save()}
+    else refreshDraftList();
+    report('Saved draft deleted.');
+  }catch(e){report(e.message,true)}
+};
+$('backupDraft').onclick=()=>{
+  downloadJson({format:'nindo-editor-project-v1',savedAt:new Date().toISOString(),project},
+    (project.area.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')||'nindo')+'.nindo-project.json');
+  report('Downloaded a portable, editable project backup.');
+};
+$('openBackup').onclick=()=>$('backupFile').click();
+$('backupFile').onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const obj=JSON.parse(await file.text());
+    if(obj.format!=='nindo-editor-project-v1'||!validProject(obj.project))throw Error('Invalid project backup.');
+    save();resetEditorProject(obj.project,newDraftId());report('Project restored from backup as a new saved draft.');
+  }catch(err){report(err.message,true)}e.target.value='';
+};
+
+$('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;projectId=newDraftId();normalizePositions();save();fill();select(null);report(`Opened ${file.name} as a new saved project.`)}catch(err){report(err.message,true)}e.target.value=''};
 function fill(){$('areaName').value=project.area.name;$('start').value=project.area.vnum_start;$('end').value=project.area.vnum_end;$('areaReset').value=project.area.reset_message||'';$('mobVnum').value=nextId(project.mobs,30000);$('itemVnum').value=nextId(project.items,40000);$('mobDamage').value='1-4'}
 try{normalizePositions()}catch(e){report(e.message,true)}
 fill();select(null);setZoom(1);refreshDraftList();save();
