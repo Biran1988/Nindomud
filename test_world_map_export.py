@@ -59,7 +59,7 @@ class WorldMapExportTests(unittest.TestCase):
         self.assertIn("Exported the full world map", self.owner.send.call_args.args[0])
         other = copy.copy(self.owner)
         other.account = copy.copy(self.owner.account)
-        other.account.staff_level = "admin"
+        other.account.staff_level = "administrator"
         other.send = __import__("unittest.mock", fromlist=["Mock"]).Mock()
         olc.cmd_area(other, ["exportworld"])
         self.assertIn("Only an Implementor", other.send.call_args.args[0])
