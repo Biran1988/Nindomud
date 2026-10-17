@@ -348,6 +348,20 @@ def export_world() -> tuple[str, dict]:
                         "x": 180 + (index % 5) * 270,
                         "y": 160 + (index // 5) * 170,
                         "notes": "", "category": "area"})
+    unassigned = sorted(v for v in world.WORLD.rooms if v not in by_room)
+    if unassigned:
+        name = "Unassigned rooms (unreserved)"
+        markers.append({"name": name, "vnum_start": min(unassigned),
+                        "vnum_end": max(unassigned), "room_count": len(unassigned),
+                        "x": 180 + ((len(markers) - 1) % 5) * 270,
+                        "y": 160 + ((len(markers) - 1) // 5) * 170,
+                        "notes": "Rooms outside registered area reservations. "
+                                 "Reference-only; reserve/import a proper area to edit.",
+                        "category": "region"})
+        for v in unassigned:
+            by_room[v] = name
+        warnings.append(f"{len(unassigned)} room(s) outside registered areas "
+                        "are shown as a reference marker, not importable area packages.")
     for room in world.WORLD.rooms.values():
         a = by_room.get(room.vnum)
         if a:
