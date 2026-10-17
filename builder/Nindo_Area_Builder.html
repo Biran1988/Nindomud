@@ -16,7 +16,7 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <p class="hint">Works offline in your browser. Open an exported in-game area or start a new one, edit the grid, then export one JSON package.</p>
 <label>Area name<input id="areaName" maxlength="80"></label>
 <div class="row"><label>First room VNUM<input id="start" type="number" min="1" max="999999"></label><label>Last room VNUM<input id="end" type="number" min="1" max="999999"></label></div>
-<label>Area reset message<input id="areaReset" maxlength="500"></label>
+<label>Area reset message<input id="areaReset" maxlength="500"></label><label>Territory income per tick<input id="areaIncome" type="number" min="0" max="1000000000"></label>
 <div class="toolbar"><button id="addRoom">Add room</button><button id="connect">Connect rooms</button><button id="unlink">Remove exit</button><button id="deleteRoom" class="danger">Delete room</button></div>
 <div class="row"><label>Remove exit direction<select id="direction"><option>north</option><option>south</option><option>east</option><option>west</option><option>northeast</option><option>northwest</option><option>southeast</option><option>southwest</option><option>up</option><option>down</option><option>inside</option><option>outside</option></select></label><label>Connection type<select id="connectionType"><option value="auto">Auto from grid</option><option value="up">Up / down</option><option value="down">Down / up</option><option value="inside">Inside / outside</option><option value="outside">Outside / inside</option></select></label></div>
 <p class="hint">Rooms snap to the grid. Select a source room, press Connect rooms, then click a destination. The grid sets the compass direction and adds both exits. Use Connection type for vertical or inside/outside exits. Moving a linked room updates its compass exits.</p>
@@ -144,6 +144,7 @@ function updateMovedExits(r,oldX,oldY){
   for(const [dir,v] of Object.entries(r.exits))if(planar.has(dir))links.add(v);
   for(const other of project.rooms)for(const [dir,v] of Object.entries(other.exits||{}))
     if(planar.has(dir)&&v===r.vnum)links.add(other.vnum);
+  const oldRoomExits=new Map(project.rooms.map(other=>[other.vnum,{...other.exits}]));
   const proposed=new Map(project.rooms.map(other=>[other.vnum,{...other.exits}]));
   for(const other of project.rooms){
     for(const [dir,v] of Object.entries(proposed.get(other.vnum)))
@@ -161,7 +162,10 @@ function updateMovedExits(r,oldX,oldY){
     }
     proposed.get(r.vnum)[dir]=v;proposed.get(v)[reverse]=r.vnum;
   }
-  for(const other of project.rooms)other.exits=proposed.get(other.vnum);
+  for(const other of project.rooms){
+    other.exits=proposed.get(other.vnum);
+    remapDoorSettings(other,oldRoomExits.get(other.vnum));
+  }
   return true;
 }
 function report(message,error=false){$('status').textContent=message;$('status').className='status'+(error?' error':'')}
@@ -183,6 +187,19 @@ function renderFlags(){
     const remove=document.createElement('button');remove.textContent='Remove';
     remove.onclick=()=>{r.flags=r.flags.filter(value=>value!==flag);save();renderFlags()};
     entry.append(name,remove);list.append(entry);
+  }
+}
+
+function remapDoorSettings(r,oldExits){
+  if(!r.builder)return;
+  const now=r.exits||{},prior=oldExits||{};
+  for(const field of ['exit_flags','exit_door_open','exit_key_item','exit_passcode']){
+    const original=r.builder[field]||{},remapped={};
+    for(const [direction,setting] of Object.entries(original)){
+      const target=prior[direction],nextDir=Object.keys(now).find(k=>now[k]===target);
+      if(nextDir)remapped[nextDir]=setting;
+    }
+    r.builder[field]=remapped;
   }
 }
 function renderLines(){let svg=$('lines');svg.replaceChildren();for(let r of project.rooms){for(let [dir,v] of Object.entries(r.exits||{})){let t=project.rooms.find(x=>x.vnum===v);if(!t)continue;let line=document.createElementNS('http://www.w3.org/2000/svg','line');line.setAttribute('x1',r.x+TILE_W/2);line.setAttribute('y1',r.y+TILE_H/2);line.setAttribute('x2',t.x+TILE_W/2);line.setAttribute('y2',t.y+TILE_H/2);line.setAttribute('stroke',dir==='up'||dir==='down'?'#dfad70':'#74b9cf');line.setAttribute('stroke-width','3');if(dir==='up'||dir==='down')line.setAttribute('stroke-dasharray','5 5');svg.append(line)}}}
@@ -235,17 +252,20 @@ function clicked(v){
   if(target.exits[reverse]&&target.exits[reverse]!==source.vnum){report(`Destination already has a ${reverse} exit.`,true);return}
   source.exits[dir]=v;target.exits[reverse]=source.vnum;
   connecting=false;$('connect').classList.remove('active');
-  save();refreshContents();renderMap();report(`Connected ${source.vnum} ${dir} → ${v} and ${v} ${reverse} → ${source.vnum}.`);
+  save();refreshContents();renderRoomAdvanced();renderMap();report(`Connected ${source.vnum} ${dir} → ${v} and ${v} ${reverse} → ${source.vnum}.`);
 }
-function updateArea(){project.area.name=$('areaName').value;project.area.vnum_start=Number($('start').value);project.area.vnum_end=Number($('end').value);project.area.reset_message=$('areaReset').value;save()}
+function updateArea(){project.area.name=$('areaName').value;project.area.vnum_start=Number($('start').value);project.area.vnum_end=Number($('end').value);project.area.reset_message=$('areaReset').value;project.area.income=$('areaIncome').value===''?undefined:Number($('areaIncome').value);save()}
 function check(){updateArea();let a=project.area;if(!a.name.trim()||!validInt(a.vnum_start,1,999999)||!validInt(a.vnum_end,a.vnum_start,999999)||(project.source?.mode!=='update'&&a.vnum_end-a.vnum_start>=1000))throw Error('Set an area name and an ascending VNUM range (at most 1,000 for a new area).');if(!project.rooms.length)throw Error('Add at least one room.');let ids=new Set();for(let r of project.rooms){if(!validInt(r.vnum,a.vnum_start,a.vnum_end)||ids.has(r.vnum)||!r.name.trim())throw Error('Room VNUMs must be unique, named, and inside the area range.');ids.add(r.vnum)}for(let r of project.rooms)for(let target of Object.values(r.exits||{}))if(!ids.has(target)&&project.source?.mode!=='update')throw Error(`Room ${r.vnum} has an exit to a missing room.`);for(let kind of ['mobs','items']){let seen=new Set();for(let row of project[kind]){if(seen.has(row.vnum)||!ids.has(row.room_vnum))throw Error(`A ${kind} VNUM repeats or refers to a missing room.`);seen.add(row.vnum)}}return true}
 function download(){try{check();let name=project.area.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'area';let blob=new Blob([JSON.stringify(project,null,2)+'\n'],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=`${name}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);report(`Exported ${a.download}: ${project.rooms.length} rooms, ${project.mobs.length} mobs, ${project.items.length} items.`)}catch(e){report(e.message,true)}}
-for(let [id,prop] of [['areaName','name'],['start','vnum_start'],['end','vnum_end'],['areaReset','reset_message']])$(id).addEventListener('input',updateArea);
+for(let [id,prop] of [['areaName','name'],['start','vnum_start'],['end','vnum_end'],['areaReset','reset_message'],['areaIncome','income']])$(id).addEventListener('input',updateArea);
 for(let [id,prop] of [['roomName','name'],['roomDesc','description'],['roomSector','sector'],['roomBiome','biome'],['roomSafe','safe'],['roomReset','reset_message']])$(id).addEventListener('input',()=>{let r=room();if(!r)return;r[prop]=id==='roomSafe'?$(id).checked:$(id).value;save();if(id==='roomName')renderMap()});
 $('roomFlagChoice').addEventListener('change',()=>{let r=room(),flag=$('roomFlagChoice').value;if(r&&flag&&!r.flags.includes(flag)){r.flags.push(flag);save();renderFlags()}$('roomFlagChoice').value=''});
 $('addRoom').onclick=()=>{updateArea();let id=nextId(project.rooms,Number(project.area.vnum_start));if(!validInt(id,project.area.vnum_start,project.area.vnum_end)){report('The area VNUM range is full.',true);return}let location=null;for(let y=0;y<=maxY&&!location;y+=GRID)for(let x=0;x<=maxX;x+=GRID){if(!project.rooms.some(r=>r.x===x&&r.y===y)){location={x,y};break}}if(!location){report('The map grid is full.',true);return}project.rooms.push({vnum:id,name:'New Room',description:'',sector:'inside',biome:'none',safe:false,flags:[],reset_message:'',exits:{},x:location.x,y:location.y});save();select(id);report(`Added room ${id}.`)};
 $('connect').onclick=()=>{if(!room()){report('Select a source room first.',true);return}connecting=!connecting;$('connect').classList.toggle('active',connecting);report(connecting?'Click the destination room.':'Connection canceled.')};
-$('unlink').onclick=()=>{let r=room();if(!r)return;let dir=$('direction').value,target=project.rooms.find(x=>x.vnum===r.exits[dir]);if(!target){report(`Room ${selected} has no ${dir} exit.`,true);return}if(target.exits[opposite[dir]]===selected)delete target.exits[opposite[dir]];delete r.exits[dir];save();refreshContents();renderMap();report('Exit removed.')};
+$('unlink').onclick=()=>{let r=room();if(!r)return;let dir=$('direction').value,target=project.rooms.find(x=>x.vnum===r.exits[dir]);if(!target){report(`Room ${selected} has no ${dir} exit.`,true);return}const prevR={...r.exits},prevTarget={...target.exits};
+if(target.exits[opposite[dir]]===selected)delete target.exits[opposite[dir]];
+delete r.exits[dir];remapDoorSettings(r,prevR);remapDoorSettings(target,prevTarget);
+save();refreshContents();renderRoomAdvanced();renderMap();report('Exit removed.')};
 $('deleteRoom').onclick=()=>{let r=room();if(!r)return;if(project.source?.baseline?.rooms?.[r.vnum]){report('Delete existing rooms in game, then export the area again.',true);return}if(!confirm(`Delete room ${r.vnum}, its exits, and its placed mobs/items?`))return;project.rooms=project.rooms.filter(x=>x!==r);for(let x of project.rooms)for(let [dir,v] of Object.entries(x.exits))if(v===r.vnum)delete x.exits[dir];project.mobs=project.mobs.filter(x=>x.room_vnum!==r.vnum);project.items=project.items.filter(x=>x.room_vnum!==r.vnum);save();select(null);report('Room removed.')};
 $('addMob').onclick=()=>{if(!room())return;let v=Number($('mobVnum').value),level=Number($('mobLevel').value),hp=Number($('mobHealth').value),match=/^(\d+)\s*-\s*(\d+)$/.exec($('mobDamage').value.trim());if(!validInt(v,1,999999)||project.mobs.some(x=>x.vnum===v)||!$('mobName').value.trim()||!validInt(level,1,100)||!validInt(hp,1,1000000)||!match||Number(match[1])<1||Number(match[2])<Number(match[1])){report('Enter a unique mob VNUM, name, level, health, and damage like 2-6.',true);return}project.mobs.push({vnum:v,name:$('mobName').value.trim(),level,health:hp,damage_min:Number(match[1]),damage_max:Number(match[2]),room_vnum:selected,respawns:true});$('mobVnum').value=nextId(project.mobs,v+1);$('mobName').value='';save();refreshContents();report('Mob added with a persistent spawn point.')};
 $('addItem').onclick=()=>{if(!room())return;let v=Number($('itemVnum').value),cost=Number($('itemCost').value);if(!validInt(v,1,999999)||project.items.some(x=>x.vnum===v)||!$('itemName').value.trim()||!$('itemType').value.trim()||!validInt(cost,0,1000000000)){report('Enter a unique item VNUM, name, type, and nonnegative cost.',true);return}project.items.push({vnum:v,name:$('itemName').value.trim(),item_type:$('itemType').value.trim(),cost,room_vnum:selected});$('itemVnum').value=nextId(project.items,v+1);$('itemName').value='';save();refreshContents();report('Item added with a persistent spawn point.')};
@@ -309,7 +329,9 @@ function fieldControl(target,key,kind,labelText){
       }else if(kind==='json')value=JSON.parse(input.value);
       else if(kind==='text-null')value=input.value.trim()||null;
       else value=input.value;
-      target[key]=value;save();report('Builder field saved in project draft.');
+      if((key==='hit_dice'||key==='damage_dice')&&!value){delete target[key]}
+      else target[key]=value;
+      save();report('Builder field saved in project draft.');
     }catch(e){report(key+': '+e.message,true)}
   });
   return label;
@@ -413,6 +435,16 @@ function editPrototype(kind,vnum){
   caps.append(fieldControl(entity.spawn_caps,'total_cap','int-null','Total area cap'),
               fieldControl(entity.spawn_caps,'per_period_cap','int-null','Per-reset cap'));
   container.append(caps);
+  if(kind==='mobs'){
+    entity.dice=entity.dice||{};
+    container.append(nodeEl('h3','Optional SMAUG dice overrides'));
+    const dice=nodeEl('div',undefined,'builder-grid');
+    for(const field of ['hit_dice','damage_dice']){
+      const input=fieldControl(entity.dice,field,'text',field.replace('_',' '));
+      dice.append(input);
+    }
+    container.append(dice);
+  }
   container.append(nodeEl('h3','Programs'));
   const list=nodeEl('div'),controls=nodeEl('div');container.append(list,controls);
   programBuilder(entity.settings,kind==='mobs'?'mob_programs':'item_programs',
@@ -467,7 +499,7 @@ $('backupFile').onchange=async e=>{
 };
 
 $('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;projectId=newDraftId();normalizePositions();save();fill();select(null);report(`Opened ${file.name} as a new saved project.`)}catch(err){report(err.message,true)}e.target.value=''};
-function fill(){$('areaName').value=project.area.name;$('start').value=project.area.vnum_start;$('end').value=project.area.vnum_end;$('areaReset').value=project.area.reset_message||'';$('mobVnum').value=nextId(project.mobs,30000);$('itemVnum').value=nextId(project.items,40000);$('mobDamage').value='1-4'}
+function fill(){$('areaName').value=project.area.name;$('start').value=project.area.vnum_start;$('end').value=project.area.vnum_end;$('areaReset').value=project.area.reset_message||'';$('areaIncome').value=project.area.income??'';$('mobVnum').value=nextId(project.mobs,30000);$('itemVnum').value=nextId(project.items,40000);$('mobDamage').value='1-4'}
 try{normalizePositions()}catch(e){report(e.message,true)}
 fill();select(null);setZoom(1);refreshDraftList();save();
 $('zoomIn').onclick=()=>setZoom(zoom*1.25);
