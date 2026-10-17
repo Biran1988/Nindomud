@@ -16,6 +16,9 @@ class AdvancedAreaEditorTests(unittest.TestCase):
     def setUp(self):
         AreaImportTests.setUp(self)
 
+    def write(self, payload):
+        AreaImportTests.write(self, payload)
+
     def test_advanced_builder_fields_apply_and_survive_export(self):
         data = package()
         data["area"]["income"] = 120
