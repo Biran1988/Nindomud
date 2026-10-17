@@ -312,6 +312,65 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
     return path, package
 
 
+
+WORLD_FORMAT = "nindo-world-v1"
+MAX_WORLD_FILE_BYTES = 25_000_000
+
+
+def export_world() -> tuple[str, dict]:
+    """Export the whole world as a read-only editor workspace, not a deployable import.
+
+    Empty area reservations appear as markers; only populated areas get
+    editable area packages. Never changes live rooms or saved world state.
+    """
+    registry = sorted(areas.all_areas().values(), key=lambda a: a["vnum_start"])
+    packages, markers, warnings = [], [], []
+    links = set()
+    by_room = {}
+    for entry in registry:
+        start, end = entry["vnum_start"], entry["vnum_end"]
+        for vnum in world.WORLD.rooms:
+            if start <= vnum <= end:
+                by_room[vnum] = entry["name"]
+        if any(start <= v <= end for v in world.WORLD.rooms):
+            try:
+                _, pkg = export_area(entry["name"])
+                packages.append(pkg)
+            except ValueError as exc:
+                warnings.append(f"{entry['name']}: {exc}")
+        else:
+            warnings.append(f"{entry['name']}: empty area reservation.")
+        index = len(markers)
+        markers.append({"name": entry["name"], "vnum_start": start,
+                        "vnum_end": end,
+                        "room_count": sum(start <= v <= end for v in world.WORLD.rooms),
+                        "x": 180 + (index % 5) * 270,
+                        "y": 160 + (index // 5) * 170,
+                        "notes": "", "category": "area"})
+    for room in world.WORLD.rooms.values():
+        a = by_room.get(room.vnum)
+        if a:
+            for vnum in room.exits.values():
+                b = by_room.get(vnum)
+                if b and b != a:
+                    links.add(tuple(sorted((a, b))))
+    bundle = {"format": WORLD_FORMAT,
+              "world": {"name": "Nindo_mud World", "width": 1600,
+                        "height": 1000, "image": None},
+              "markers": markers,
+              "links": [{"from": a, "to": b} for a, b in sorted(links)],
+              "areas": packages, "warnings": warnings}
+    encoded = (json.dumps(bundle, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    if len(encoded) > MAX_WORLD_FILE_BYTES:
+        raise ValueError("World export exceeds the 25 MB portable-world limit.")
+    directory = os.path.join(storage.DATA_DIR, "world_exports")
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, "nindo-world.json")
+    with open(path, "wb") as stream:
+        stream.write(encoded)
+    return path, bundle
+
+
 def load_package(filename: str) -> dict:
     """Read one basename under data/area_imports; never follow links out."""
     if not FILE_NAME.fullmatch(filename) or ".." in filename:
