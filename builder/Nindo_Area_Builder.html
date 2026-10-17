@@ -348,6 +348,11 @@ function fieldControl(target,key,kind,labelText){
   });
   return label;
 }
+function stagedEditorObject(owner,key){
+  if(owner[key])return owner[key];
+  const value={};
+  return new Proxy(value,{set(obj,field,change){obj[field]=change;owner[key]=obj;return true}});
+}
 function builderFieldGroup(target,kinds,container){
   container.replaceChildren();const grid=nodeEl('div',undefined,'builder-grid');
   for(const [key,kind] of Object.entries(kinds))grid.append(fieldControl(target,key,kind));
@@ -382,19 +387,19 @@ function programBuilder(holder,key,triggers,list,controls){
 }
 function renderRoomAdvanced(){
   const r=room();if(!r)return;
-  r.builder=r.builder||{};
-  builderFieldGroup(r.builder,{enabled:'bool',apartment:'bool',player_shop:'bool'},$('roomAdvanced'));
+  const settings=stagedEditorObject(r,'builder');
+  builderFieldGroup(settings,{enabled:'bool',apartment:'bool',player_shop:'bool'},$('roomAdvanced'));
   const directions=Object.keys(r.exits||{}),sel=$('exitEditorDirection');
   const previous=sel.value;sel.replaceChildren();
   for(const direction of directions){const option=nodeEl('option',direction+' → '+r.exits[direction]);option.value=direction;sel.append(option)}
   sel.value=directions.includes(previous)?previous:directions[0]||'';
   renderExitAdvanced();
-  programBuilder(r.builder,'programs',['enter','random'],$('roomPrograms'),$('roomProgramControls'));
+  programBuilder(settings,'programs',['enter','random'],$('roomPrograms'),$('roomProgramControls'));
 }
 function renderExitAdvanced(){
   const r=room(),dir=$('exitEditorDirection').value,panel=$('exitAdvanced');panel.replaceChildren();
   if(!r||!dir){panel.textContent='Connect a room first.';return}
-  const config=r.builder||(r.builder={});
+  const config=r.builder||{};
   for(const field of ['exit_flags','exit_door_open','exit_key_item','exit_passcode'])config[field]??={};
   const flags=config.exit_flags[dir]||[];
   for(const flag of ['door','locked','hidden']){
@@ -402,7 +407,7 @@ function renderExitAdvanced(){
     checkbox.onchange=()=>{
       let row=new Set(config.exit_flags[dir]||[]);
       checkbox.checked?row.add(flag):row.delete(flag);
-      config.exit_flags[dir]=Array.from(row);save();
+      config.exit_flags[dir]=Array.from(row);r.builder=config;save();
     };
     panel.append(elementLabel(flag,checkbox));
   }
@@ -411,18 +416,18 @@ function renderExitAdvanced(){
     input.onchange=()=>{
       if(input.value){config[field][dir]=input.value;const row=new Set(config.exit_flags[dir]||[]);row.add(field==='exit_key_item'?'keyitem':'passcode');config.exit_flags[dir]=Array.from(row)}
       else{delete config[field][dir];config.exit_flags[dir]=(config.exit_flags[dir]||[]).filter(x=>x!==(field==='exit_key_item'?'keyitem':'passcode'))}
-      save();renderExitAdvanced();
+      r.builder=config;save();renderExitAdvanced();
     };
     panel.append(elementLabel(label,input));
   }
   const open=document.createElement('input');open.type='checkbox';
   open.checked=config.exit_door_open[dir]??false;
-  open.onchange=()=>{config.exit_door_open[dir]=open.checked;save()};
+  open.onchange=()=>{config.exit_door_open[dir]=open.checked;r.builder=config;save()};
   panel.append(elementLabel('Door starts open',open));
 }
 $('exitEditorDirection').onchange=renderExitAdvanced;
 
-function flagPicker(entity,kind,container){
+function flagPicker(entity,kind,container,settings){
   const isMob=kind==='mobs',field=isMob?'act_flags':'extra_flags';
   const options=isMob?['SummonElder','Invis','Banker','BountyOffice','Npc',
     'Sentinel','Shopkeeper','Garrison','Trap','Wander','Scavenger','Mission','Immortal']:
@@ -433,15 +438,15 @@ function flagPicker(entity,kind,container){
   for(const flag of options){const option=nodeEl('option',flag);option.value=flag;select.append(option)}
   const add=nodeEl('button','Add selected flag');
   add.onclick=()=>{
-    const flags=entity.settings[field]||(entity.settings[field]=[]);
+    const flags=settings[field]||(settings[field]=[]);
     if(!flags.includes(select.value))flags.push(select.value);
     save();editPrototype(kind,entity.vnum);
   };
   row.append(select,add);box.append(row);
   const chosen=nodeEl('div');
-  for(const flag of entity.settings[field]||[]){
+  for(const flag of settings[field]||[]){
     const remove=nodeEl('button',flag+' ×','small-button');
-    remove.onclick=()=>{entity.settings[field]=entity.settings[field].filter(x=>x!==flag);save();editPrototype(kind,entity.vnum)};
+    remove.onclick=()=>{settings[field]=settings[field].filter(x=>x!==flag);save();editPrototype(kind,entity.vnum)};
     chosen.append(remove);
   }
   box.append(chosen);container.append(box);
@@ -461,31 +466,31 @@ function editPrototype(kind,vnum){
     quick.append(control);
   }
   container.append(nodeEl('h3','Core fields'),quick);
-  entity.settings=entity.settings||{};
+  const settings=stagedEditorObject(entity,'settings');
   const details=document.createElement('details');details.open=true;
   details.append(nodeEl('summary','Full prototype properties (mset / oset)'));
   const holder=document.createElement('div');details.append(holder);container.append(details);
-  builderFieldGroup(entity.settings,kind==='mobs'?MOB_FIELD_KINDS:ITEM_FIELD_KINDS,holder);
-  flagPicker(entity,kind,container);
-  entity.spawn_caps=entity.spawn_caps||{total_cap:null,per_period_cap:null};
+  builderFieldGroup(settings,kind==='mobs'?MOB_FIELD_KINDS:ITEM_FIELD_KINDS,holder);
+  flagPicker(entity,kind,container,settings);
+  const capsData=stagedEditorObject(entity,'spawn_caps');
   container.append(nodeEl('h3','Spawn limits (blank = uncapped)'));
   const caps=nodeEl('div',undefined,'builder-grid');
-  caps.append(fieldControl(entity.spawn_caps,'total_cap','int-null','Total area cap'),
-              fieldControl(entity.spawn_caps,'per_period_cap','int-null','Per-reset cap'));
+  caps.append(fieldControl(capsData,'total_cap','int-null','Total area cap'),
+              fieldControl(capsData,'per_period_cap','int-null','Per-reset cap'));
   container.append(caps);
   if(kind==='mobs'){
-    entity.dice=entity.dice||{};
+    const diceData=stagedEditorObject(entity,'dice');
     container.append(nodeEl('h3','Optional SMAUG dice overrides'));
     const dice=nodeEl('div',undefined,'builder-grid');
     for(const field of ['hit_dice','damage_dice']){
-      const input=fieldControl(entity.dice,field,'text',field.replace('_',' '));
+      const input=fieldControl(diceData,field,'text',field.replace('_',' '));
       dice.append(input);
     }
     container.append(dice);
   }
   container.append(nodeEl('h3','Programs'));
   const list=nodeEl('div'),controls=nodeEl('div');container.append(list,controls);
-  programBuilder(entity.settings,kind==='mobs'?'mob_programs':'item_programs',
+  programBuilder(settings,kind==='mobs'?'mob_programs':'item_programs',
     kind==='mobs'?['greet','death','random','speech','move']:['wear','get'],list,controls);
   panel.scrollIntoView({block:'nearest'});
 }
