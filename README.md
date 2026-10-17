@@ -36,6 +36,13 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.313 adds an uploadable, image-backed Full World Map tab. Use Implementor
+`area exportworld` to obtain the current world in one JSON file, upload it,
+position areas over a PNG/JPG/WebP background, inspect cross-area links and
+open individual imported areas in the room editor. Map autosave and a portable
+world backup carry linked area drafts with them. Editing a world overview
+never imports or replaces game world files. See `builder/README.md`.
+
 Version 15.312 expands the offline area editor with multi-project autosaves,
 portable backup/restore, full room/mob/item builder settings, programs, shop
 stock, exit door settings and spawn caps. Game imports validate advanced edits
