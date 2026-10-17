@@ -12,6 +12,27 @@ Open `builder/Nindo_Area_Builder.html` in a modern browser. No installation, con
 
 Browser storage has limited capacity. **Download project backup** regularly. A backup is a normal local file, not synced to GitHub or to the running game.
 
+## Full World Map (uploadable)
+
+Click **Full World Map** at the top of the same editor. This view is a world-level overview separate from the room grid.
+
+**Import the entire existing game world:** In game, as Implementor, run:
+
+```text
+area exportworld
+```
+
+
+Transfer the generated file from `data/world_exports/nindo-world.json` to your computer. Click **Upload full world JSON**. All registered areas appear as movable map markers; already-built areas also become editable area drafts. Known exits between different areas appear as lines. Empty area reservations are shown without inventing rooms. Existing area files are not overwritten during the world export.
+
+**Upload a background map:** Use **Background world image** with a PNG, JPG/JPEG, or WebP image (maximum input 12 MB). The editor resizes and compresses the image for portable offline storage. Place area pins by dragging them over your uploaded map. Use the zoom controls or scroll wheel.
+
+**Build and navigate:** Use **Add area marker** for future regions, **Place current area draft** for the area you're building, or **Upload area JSON files** for multiple existing/new area packages. Select markers to edit labels, category, notes, and VNUM ranges. Select one and click **Connect areas**, then another marker, to draw a *visual* world route. Double-click any linked marker to open its room grid in the Area Editor.
+
+**Save and upload later:** Your world overview autosaves in the current browser. **Download world backup** creates a portable `*-world.json` containing the world image, all markers, connections, and linked area packages. Re-upload it later with **Upload full world JSON** on this or another device. The backup protects unfinished work.
+
+**Important safety boundary:** Uploading or changing the world *map* does **not** alter the server. World bundles are **not** accepted by `area import`. To deploy edits, open one linked area, **Export area JSON**, and run `area import <file.json> check` then `area import <file.json>` in-game. This protects saved world data and enforces the current per-area stale-export checks. The world route lines are visual planning links; they do not create game exits. Browser storage capacity varies, so download portable backups regularly.
+
 ## Build areas
 
 1. For an existing area, run `area export <area name>` as Implementor. Transfer the file from `data/area_exports/` and open it with **Open / import area JSON**. For a new area, enter its name and a non-overlapping room VNUM range (maximum 1,000 room numbers).
