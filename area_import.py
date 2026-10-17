@@ -278,7 +278,7 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
                 items[vnum] = row
     baseline = {"area": _fingerprint(area.reset_message or ""),
                 "rooms": {str(row["vnum"]): _fingerprint({k: v for k, v in row.items()
-                                                          if k not in ("x", "y")}) for row in rows},
+                                                          if k not in ("x", "y", "builder")}) for row in rows},
                 "mobs": {str(v): _fingerprint({k: row[k] for k in ("vnum", "name", "level", "health", "damage_min", "damage_max", "room_vnum", "respawns")}) for v, row in mobs.items()},
                 "items": {str(v): _fingerprint({k: row[k] for k in ("vnum", "name", "item_type", "cost", "room_vnum")}) for v, row in items.items()}}
     baseline["details"] = {
@@ -497,8 +497,15 @@ def validate(package: dict) -> dict:
         mobs[vnum] = template
         if room_vnum is not None:
             key = spawn_points._key("mob", vnum, room_vnum)
+            caps = _validated_caps(row, f"Mob {vnum}")
+            if old and "spawn_caps" in row:
+                details = (baseline or {}).get("details", {}).get("caps", {}).get("mobs", {})
+                current = storage.load_spawn_points().get("points", {}).get(key, {})
+                old_caps = {k: current.get(k) for k in ("total_cap", "per_period_cap")}
+                if str(vnum) not in details or _fingerprint(old_caps) != details[str(vnum)]:
+                    raise ValueError(f"Mob {vnum} spawn caps changed since export. Export again.")
             points[key] = {"kind": "mob", "vnum": vnum, "room_vnum": room_vnum}
-            points[key].update(_validated_caps(row, f"Mob {vnum}"))
+            points[key].update(caps)
 
     for row in item_rows:
         if not isinstance(row, dict):
@@ -533,8 +540,15 @@ def validate(package: dict) -> dict:
         items[vnum] = template
         if room_vnum is not None:
             key = spawn_points._key("item", vnum, room_vnum)
+            caps = _validated_caps(row, f"Item {vnum}")
+            if old and "spawn_caps" in row:
+                details = (baseline or {}).get("details", {}).get("caps", {}).get("items", {})
+                current = storage.load_spawn_points().get("points", {}).get(key, {})
+                old_caps = {k: current.get(k) for k in ("total_cap", "per_period_cap")}
+                if str(vnum) not in details or _fingerprint({k: current.get(k) for k in ("total_cap", "per_period_cap")}) != details[str(vnum)]:
+                    raise ValueError(f"Item {vnum} spawn caps changed since export. Export again.")
             points[key] = {"kind": "item", "vnum": vnum, "room_vnum": room_vnum}
-            points[key].update(_validated_caps(row, f"Item {vnum}"))
+            points[key].update(caps)
 
     if not updating and any(key in storage.load_spawn_points().get("points", {}) for key in points):
         raise ValueError("A spawn point in this package already exists.")
