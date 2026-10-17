@@ -64,7 +64,7 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <div class="toolbar"><button id="worldUploadAreas">Upload area JSON files</button><input id="worldAreasFile" class="hidden" type="file" accept=".json,application/json" multiple></div>
 <p class="hint">For your current server, run <code>area exportworld</code> as Implementor, then upload <code>data/world_exports/nindo-world.json</code> here. Or add any area export individually.</p>
 <h2>Build map</h2>
-<div class="toolbar"><button id="worldAdd">Add area marker</button><button id="worldLink">Connect areas</button><button id="worldDelete" class="danger">Remove marker</button></div>
+<div class="toolbar"><button id="worldAdd">Add area marker</button><button id="worldAddCurrent">Place current area draft</button><button id="worldLink">Connect areas</button><button id="worldDelete" class="danger">Remove marker</button></div>
 <p class="hint">Drag markers to position them. Click to inspect. Double-click a linked marker to open its area in the room editor. Connections are visual references, not automatic gameplay exits.</p>
 <h2>World projects</h2>
 <div class="toolbar"><button id="worldSave">Save world map</button><button id="worldBackup">Download world backup</button></div>
@@ -613,6 +613,381 @@ $('zoomReset').onclick=()=>setZoom(1);
 $('mapwrap').addEventListener('wheel',e=>{
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();setZoom(zoom*(e.deltaY<0?1.1:1/1.1),e.clientX,e.clientY)}
 },{passive:false});
+
+
+// Full-world overview is a separate, portable, offline draft. World JSON is
+// deliberately NOT accepted by the game's area importer (which accepts only
+// nindo-area-v1 packages with per-area validation and baseline checks).
+const WORLD_KEY='nindo-world-map-project-v1', WORLD_FORMAT='nindo-world-v1';
+function emptyWorld(){return {format:WORLD_FORMAT,world:{name:'Nindo_mud World',width:1600,height:1000,image:null},markers:[],links:[]}}
+let worldProject=emptyWorld(),worldSelected=null,worldZoom=1,worldLinking=false,worldDrag=null;
+try{const raw=localStorage.getItem(WORLD_KEY);if(raw){const parsed=JSON.parse(raw);if(parsed?.format===WORLD_FORMAT&&Array.isArray(parsed.markers)&&Array.isArray(parsed.links))worldProject=parsed}}catch(_){}
+function worldReport(message,error=false){$('worldStatus').textContent=message;$('worldStatus').className='status'+(error?' error':'')}
+function markerId(){return 'area-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9)}
+function validArea(p){return validProject(p)&&Number.isInteger(Number(p.area.vnum_start))&&Number.isInteger(Number(p.area.vnum_end))}
+function validWorld(p){
+  if(!p||p.format!==WORLD_FORMAT||!p.world||!Array.isArray(p.markers)||!Array.isArray(p.links)||
+     p.markers.length>500||p.links.length>2500||!p.markers.every(m=>m&&typeof m.name==='string'))throw Error('Invalid Nindo_mud world package.');
+  const image=p.world.image;
+  if(image!==null&&image!==undefined&&(typeof image!=='string'||image.length>3500000||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(image)))throw Error('World image must be a compressed PNG, JPEG or WebP data URL.');
+  if(p.areas!==undefined&&(!Array.isArray(p.areas)||p.areas.length>500||!p.areas.every(validArea)))throw Error('A world area package is invalid.');
+}
+function worldSave(){
+  try{
+    localStorage.setItem(WORLD_KEY,JSON.stringify(worldProject));
+    worldReport('World map saved in this browser. Download a world backup for another computer.');
+  }catch(e){worldReport('Could not autosave world map. Browser storage may be full. Download a backup now.',true)}
+}
+function safeCoord(number,max){number=Number(number);return Number.isFinite(number)?Math.max(35,Math.min(max-35,number)):max/2}
+function worldDims(){
+  const data=worldProject.world||{};
+  return {width:Math.max(900,Math.min(3000,Number(data.width)||1600)),
+          height:Math.max(600,Math.min(2500,Number(data.height)||1000))}
+}
+function worldMarker(){return worldProject.markers.find(m=>m.id===worldSelected)}
+function draftForMarker(m){
+  if(!m?.draftId)return null;
+  try{const data=JSON.parse(localStorage.getItem(DRAFT_PREFIX+m.draftId)||'null');return validArea(data)?data:null}catch(_){return null}
+}
+function markerForArea(p){
+  return worldProject.markers.find(m=>Number(m.vnum_start)===Number(p.area.vnum_start)&&
+    Number(m.vnum_end)===Number(p.area.vnum_end))||
+    worldProject.markers.find(m=>m.name.toLowerCase()===p.area.name.toLowerCase());
+}
+function addWorldMarker({name,vnum_start=0,vnum_end=0,room_count=0,category='area',x,y,notes='',draftId=null}={}){
+  const {width,height}=worldDims(),i=worldProject.markers.length;
+  let marker={id:markerId(),name:String(name||'New Area').slice(0,100),
+    vnum_start:Number(vnum_start)||0,vnum_end:Number(vnum_end)||0,
+    room_count:Number(room_count)||0,category:String(category||'area'),
+    x:safeCoord(x??(140+i%5*270),width),
+    y:safeCoord(y??(130+Math.floor(i/5)*150),height),
+    notes:String(notes||'').slice(0,2000),draftId};
+  worldProject.markers.push(marker);return marker;
+}
+function attachPackageToWorld(p){
+  if(!validArea(p))throw Error('Expected a nindo-area-v1 package.');
+  const id=newDraftId(),name=p.area.name;
+  // Store imported projects separately; never silently overwrite existing work.
+  const index=draftIndex();
+  localStorage.setItem(DRAFT_PREFIX+id,JSON.stringify(p));
+  index.unshift({id,name,savedAt:new Date().toISOString()});
+  localStorage.setItem(DRAFT_INDEX,JSON.stringify(index));
+  refreshDraftList();
+  let marker=markerForArea(p);
+  if(!marker)marker=addWorldMarker({name,vnum_start:p.area.vnum_start,vnum_end:p.area.vnum_end,room_count:p.rooms.length});
+  marker.name=name;marker.vnum_start=p.area.vnum_start;marker.vnum_end=p.area.vnum_end;
+  marker.room_count=p.rooms.length;marker.draftId=id;
+  return marker;
+}
+function worldZoomTo(scale){
+  worldZoom=Math.max(.35,Math.min(2.5,Math.round(scale*100)/100));
+  const wrap=$('worldwrap'),{width,height}=worldDims(),canvas=$('worldCanvas'),stage=$('worldStage');
+  canvas.style.width=width+'px';canvas.style.height=height+'px';
+  canvas.style.transform='scale('+worldZoom+')';
+  stage.style.width=width*worldZoom+'px';stage.style.height=height*worldZoom+'px';
+  $('worldZoomLabel').textContent=Math.round(worldZoom*100)+'%';
+}
+function worldFit(){
+  const d=worldDims(),wrap=$('worldwrap');
+  worldZoomTo(Math.min(1.3,Math.max(.35,Math.min((wrap.clientWidth-25)/d.width,(wrap.clientHeight-40)/d.height))));
+  wrap.scrollLeft=0;wrap.scrollTop=0;
+}
+function worldRender(){
+  const d=worldDims();worldZoomTo(worldZoom);
+  $('worldName').value=worldProject.world.name||'Nindo_mud World';
+  const img=worldProject.world.image;
+  $('worldBackground').classList.toggle('hidden',!img);
+  if(img&&$('worldBackground').src!==img)$('worldBackground').src=img;
+  else if(!img)$('worldBackground').removeAttribute('src');
+  const svg=$('worldRoutes'),nodes=$('worldPins');
+  svg.replaceChildren();nodes.replaceChildren();
+  const markers=new Map(worldProject.markers.map(m=>[m.id,m]));
+  for(const link of worldProject.links){
+    const a=markers.get(link.from),b=markers.get(link.to);if(!a||!b)continue;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',safeCoord(a.x,d.width));
+    line.setAttribute('y1',safeCoord(a.y,d.height));
+    line.setAttribute('x2',safeCoord(b.x,d.width));
+    line.setAttribute('y2',safeCoord(b.y,d.height));
+    line.setAttribute('stroke','#c8d5e5');line.setAttribute('stroke-width','4');
+    line.setAttribute('stroke-opacity','.85');line.setAttribute('stroke-dasharray','12 7');
+    svg.append(line);
+  }
+  for(const m of worldProject.markers){
+    const pin=document.createElement('button');pin.type='button';
+    pin.className='worldpin'+(worldSelected===m.id?' active':'')+(draftForMarker(m)?' draft':'');
+    pin.style.left=safeCoord(m.x,d.width)+'px';pin.style.top=safeCoord(m.y,d.height)+'px';
+    const title=document.createElement('strong');title.textContent=m.name;
+    const desc=document.createElement('small');desc.textContent=(m.category||'area')+' · '+(m.room_count||0)+' rooms';
+    pin.append(title,desc);pin.title='Select / drag. Double-click to open this area.';
+    pin.addEventListener('pointerdown',e=>{
+      if(worldLinking)return;
+      worldDrag={id:m.id,startX:e.clientX,startY:e.clientY,
+                 x:safeCoord(m.x,d.width),y:safeCoord(m.y,d.height),moved:false};
+      pin.setPointerCapture(e.pointerId);
+    });
+    pin.addEventListener('pointermove',e=>{
+      if(!worldDrag||worldDrag.id!==m.id)return;
+      const dx=(e.clientX-worldDrag.startX)/worldZoom,dy=(e.clientY-worldDrag.startY)/worldZoom;
+      if(Math.abs(dx)+Math.abs(dy)>4)worldDrag.moved=true;
+      if(worldDrag.moved){
+        m.x=safeCoord(worldDrag.x+dx,d.width);m.y=safeCoord(worldDrag.y+dy,d.height);
+        pin.style.left=m.x+'px';pin.style.top=m.y+'px';
+        // The line overlay refreshes at the end of the drag.
+      }
+    });
+    pin.addEventListener('pointerup',()=>{
+      if(!worldDrag)return;
+      const moved=worldDrag.moved;worldDrag=null;
+      if(moved){worldSave();worldRender();worldSelect(m.id)}
+    });
+    pin.addEventListener('pointercancel',()=>{worldDrag=null;worldRender()});
+    pin.addEventListener('click',()=>{
+      if(worldLinking){worldConnect(m.id);return}
+      if(worldDrag?.moved)return;
+      worldSelect(m.id);
+    });
+    pin.addEventListener('dblclick',()=>{worldSelect(m.id);openWorldArea()});
+    nodes.append(pin);
+  }
+  const list=$('worldList');list.replaceChildren();
+  for(const m of worldProject.markers){
+    const row=document.createElement('div');row.className='entry';
+    const label=document.createElement('span');label.textContent=m.name+' ('+(m.room_count||0)+' rooms)';
+    const open=document.createElement('button');open.textContent='Select';open.className='small-button';
+    open.onclick=()=>{worldSelect(m.id);$('worldwrap').scrollLeft=m.x*worldZoom-200;$('worldwrap').scrollTop=m.y*worldZoom-180};
+    row.append(label,open);list.append(row);
+  }
+}
+function worldSelect(id){
+  worldSelected=id;
+  const m=worldMarker(),exists=Boolean(m);
+  $('worldSelectedFields').classList.toggle('hidden',!exists);
+  $('worldEmptyHint').classList.toggle('hidden',exists);
+  $('worldSelectedTitle').textContent=m?'Area: '+m.name:'Select an area';
+  if(m){
+    $('worldMarkerName').value=m.name;
+    $('worldMarkerType').value=['area','village','forest','road','dungeon','region'].includes(m.category)?m.category:'area';
+    $('worldMarkerStart').value=m.vnum_start||'';
+    $('worldMarkerEnd').value=m.vnum_end||'';
+    $('worldMarkerNotes').value=m.notes||'';
+    const pack=draftForMarker(m);
+    $('worldMarkerDetails').textContent=(m.room_count||0)+' room(s), '+
+      (m.vnum_start||'?')+'–'+(m.vnum_end||'?')+'. '+
+      (pack?'Linked to an editable area project.':'Overview marker only; upload an area JSON to edit rooms.');
+    $('worldOpenArea').disabled=!pack;
+    $('worldDetachArea').disabled=!pack;
+    const connected=$('worldConnections');connected.replaceChildren();
+    for(const link of worldProject.links.filter(l=>l.from===m.id||l.to===m.id)){
+      const next=worldProject.markers.find(a=>a.id===(link.from===m.id?link.to:link.from));
+      if(!next)continue;
+      const row=document.createElement('div');row.className='entry';
+      const name=document.createElement('span');name.textContent=next.name;
+      const remove=document.createElement('button');remove.textContent='Disconnect';remove.className='small-button danger';
+      remove.onclick=()=>{worldProject.links=worldProject.links.filter(l=>l!==link);worldSave();worldRender();worldSelect(m.id)};
+      row.append(name,remove);connected.append(row);
+    }
+    if(!connected.childNodes.length)connected.textContent='No mapped connections.';
+  }
+  // Re-render border emphasis without replacing nodes mid-pointer gesture.
+  for(const node of $('worldPins').children){
+    const index=Array.prototype.indexOf.call($('worldPins').children,node);
+    node.classList.toggle('active',worldProject.markers[index]?.id===id);
+  }
+}
+function worldConnect(id){
+  if(!worldSelected){worldReport('Select the source area first.',true);return}
+  if(id===worldSelected){worldReport('Choose a different destination.',true);return}
+  const duplicate=worldProject.links.some(l=>(l.from===worldSelected&&l.to===id)||(l.to===worldSelected&&l.from===id));
+  worldLinking=false;$('worldLink').classList.remove('active');
+  if(duplicate){worldReport('These areas are already connected.');return}
+  worldProject.links.push({from:worldSelected,to:id});
+  worldSave();worldRender();worldSelect(worldSelected);worldReport('Connected areas visually. In-game exits are unchanged.');
+}
+function openWorldArea(){
+  const m=worldMarker();const pack=draftForMarker(m);
+  if(!pack){worldReport('Upload the JSON export for this area first.',true);return}
+  try{resetEditorProject(pack,m.draftId);setBuilderView(false);report('Opened '+m.name+' from the full world map.')}
+  catch(e){worldReport(e.message,true)}
+}
+function setBuilderView(world){
+  $('areaControls').classList.toggle('hidden',world);
+  $('worldControls').classList.toggle('hidden',!world);
+  $('mapwrap').classList.toggle('hidden',world);
+  $('worldwrap').classList.toggle('hidden',!world);
+  $('roomPanel').classList.toggle('hidden',world);
+  $('worldInspector').classList.toggle('hidden',!world);
+  $('areaView').classList.toggle('active',!world);
+  $('worldView').classList.toggle('active',world);
+  if(world){worldRender();worldFit();worldSelect(worldSelected)}
+}
+$('areaView').onclick=()=>setBuilderView(false);
+$('worldView').onclick=()=>setBuilderView(true);
+$('worldZoomIn').onclick=()=>worldZoomTo(worldZoom*1.25);
+$('worldZoomOut').onclick=()=>worldZoomTo(worldZoom/1.25);
+$('worldZoomFit').onclick=worldFit;
+$('worldwrap').addEventListener('wheel',e=>{
+  if(e.ctrlKey||e.metaKey)return;
+  e.preventDefault();
+  const wrap=$('worldwrap'),rect=wrap.getBoundingClientRect();
+  const x=(wrap.scrollLeft+e.clientX-rect.left)/worldZoom;
+  const y=(wrap.scrollTop+e.clientY-rect.top)/worldZoom;
+  worldZoomTo(worldZoom*(e.deltaY<0?1.1:1/1.1));
+  wrap.scrollLeft=x*worldZoom-(e.clientX-rect.left);
+  wrap.scrollTop=y*worldZoom-(e.clientY-rect.top);
+},{passive:false});
+$('worldName').oninput=()=>{worldProject.world.name=$('worldName').value.slice(0,100);worldSave()};
+$('worldAdd').onclick=()=>{
+  const m=addWorldMarker({name:'New Area'});worldSave();worldRender();worldSelect(m.id)
+};
+$('worldAddCurrent').onclick=()=>{
+  if(!validArea(project)){worldReport('Open or create an area draft first.',true);return}
+  save();
+  let m=markerForArea(project);
+  if(!m)m=addWorldMarker({name:project.area.name,vnum_start:project.area.vnum_start,
+    vnum_end:project.area.vnum_end,room_count:project.rooms.length,draftId:projectId});
+  m.draftId=projectId;m.name=project.area.name;m.room_count=project.rooms.length;
+  worldSave();worldRender();worldSelect(m.id);worldReport('Placed and linked the current area draft.');
+};
+$('worldLink').onclick=()=>{
+  if(!worldMarker()){worldReport('Select a starting area first.',true);return}
+  worldLinking=!worldLinking;$('worldLink').classList.toggle('active',worldLinking);
+  worldReport(worldLinking?'Click the destination area on the map.':'Connection canceled.');
+};
+$('worldDelete').onclick=()=>{
+  const m=worldMarker();if(!m)return;
+  if(!confirm('Remove '+m.name+' from this world overview? Its saved area project will remain untouched.'))return;
+  worldProject.markers=worldProject.markers.filter(a=>a.id!==m.id);
+  worldProject.links=worldProject.links.filter(l=>l.from!==m.id&&l.to!==m.id);
+  worldSelected=null;worldSave();worldRender();worldSelect(null);
+};
+for(const [field,key] of [['worldMarkerName','name'],['worldMarkerType','category'],
+                          ['worldMarkerStart','vnum_start'],['worldMarkerEnd','vnum_end'],
+                          ['worldMarkerNotes','notes']]){
+  $(field).addEventListener('change',()=>{
+    const m=worldMarker();if(!m)return;
+    const value=$(field).value;
+    if(key==='vnum_start'||key==='vnum_end'){
+      if(value&&(!Number.isInteger(Number(value))||Number(value)<0||Number(value)>999999)){worldReport('VNUM must be 0–999999.',true);return}
+      m[key]=value?Number(value):0;
+    }else m[key]=value;
+    worldSave();worldRender();worldSelect(m.id);
+  });
+}
+$('worldOpenArea').onclick=openWorldArea;
+$('worldDetachArea').onclick=()=>{
+  const m=worldMarker();if(!m)return;
+  m.draftId=null;worldSave();worldRender();worldSelect(m.id);
+  worldReport('Area draft detached. The draft itself was not deleted.');
+};
+$('worldSave').onclick=worldSave;
+$('worldBackup').onclick=()=>{
+  const data=JSON.parse(JSON.stringify(worldProject));
+  const ids=new Set(),areas=[];
+  for(const m of data.markers){
+    const pack=draftForMarker(m);
+    if(pack&&!ids.has(m.draftId)){ids.add(m.draftId);areas.push(pack)}
+  }
+  data.areas=areas;
+  downloadJson(data,(data.world.name||'nindo-world').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-world.json');
+  worldReport('Downloaded portable full-world backup with background image and '+areas.length+' linked area drafts.');
+};
+$('worldClearImage').onclick=()=>{
+  if(!worldProject.world.image)return;
+  if(!confirm('Remove the background image from the world map? Area markers stay in place.'))return;
+  worldProject.world.image=null;worldSave();worldRender();
+};
+$('worldImageFile').onchange=async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>12000000)
+      throw Error('Choose PNG, JPG or WebP no larger than 12 MB.');
+    const url=URL.createObjectURL(file),img=new Image();
+    try{
+      await new Promise((resolve,reject)=>{
+        img.onload=resolve;img.onerror=()=>reject(Error('Unable to decode image.'));
+        img.src=url;
+      });
+      if(!img.naturalWidth||!img.naturalHeight)throw Error('Empty image.');
+      const scale=Math.min(1,1600/img.naturalWidth,1600/img.naturalHeight);
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+      const ctx=canvas.getContext('2d');if(!ctx)throw Error('Image canvas unavailable.');
+      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const encoded=canvas.toDataURL('image/jpeg',.78);
+      if(encoded.length>3000000)throw Error('Compressed map image is too large; upload a smaller one.');
+      const prev=worldDims();
+      worldProject.world.width=1600;
+      worldProject.world.height=Math.round(1600*canvas.height/canvas.width);
+      worldProject.world.height=Math.max(600,Math.min(2500,worldProject.world.height));
+      for(const marker of worldProject.markers){
+        marker.x=marker.x*worldProject.world.width/prev.width;
+        marker.y=marker.y*worldProject.world.height/prev.height;
+      }
+      worldProject.world.image=encoded;worldSave();worldRender();worldFit();
+      worldReport('Map image uploaded. Place your areas over it and download a world backup.');
+    }finally{URL.revokeObjectURL(url)}
+  }catch(err){worldReport(err.message,true)}e.target.value='';
+};
+$('worldUploadBundle').onclick=()=>$('worldBundleFile').click();
+$('worldUploadAreas').onclick=()=>$('worldAreasFile').click();
+$('worldAreasFile').onchange=async e=>{
+  const files=Array.from(e.target.files||[]);
+  try{
+    if(files.length>100)throw Error('Upload at most 100 area files at a time.');
+    let imported=0;
+    for(const file of files){
+      if(file.size>2500000)throw Error(file.name+' exceeds the 2.5 MB area limit.');
+      const pkg=JSON.parse(await file.text());if(!validArea(pkg))throw Error(file.name+' is not a valid area package.');
+      attachPackageToWorld(pkg);imported++;
+    }
+    worldSave();worldRender();worldReport('Imported '+imported+' area project(s) onto the world map.');
+  }catch(err){worldReport(err.message,true)}
+  e.target.value='';
+};
+$('worldBundleFile').onchange=async e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  try{
+    if(file.size>26000000)throw Error('World file exceeds the 26 MB upload limit.');
+    const loaded=JSON.parse(await file.text());validWorld(loaded);
+    if((worldProject.markers.length||worldProject.world.image)&&
+       !confirm('Replace the current WORLD MAP layout? Saved individual area drafts will NOT be deleted. Download a world backup first if needed.'))return;
+    const fresh=emptyWorld();fresh.world={
+      name:String(loaded.world.name||'Nindo_mud World').slice(0,100),
+      width:Math.max(900,Math.min(3000,Number(loaded.world.width)||1600)),
+      height:Math.max(600,Math.min(2500,Number(loaded.world.height)||1000)),
+      image:loaded.world.image||null};
+    for(const entry of loaded.markers){
+      const m={id:typeof entry.id==='string'&&entry.id.length<=80?entry.id:markerId(),
+        name:String(entry.name).slice(0,100),
+        category:['area','village','forest','road','dungeon','region'].includes(entry.category)?entry.category:'area',
+        vnum_start:Number(entry.vnum_start)||0,vnum_end:Number(entry.vnum_end)||0,
+        room_count:Number(entry.room_count)||0,
+        x:safeCoord(entry.x,fresh.world.width),y:safeCoord(entry.y,fresh.world.height),
+        notes:String(entry.notes||'').slice(0,2000),draftId:null};
+      if(fresh.markers.some(other=>other.id===m.id))m.id=markerId();
+      fresh.markers.push(m);
+    }
+    const old=worldProject;worldProject=fresh;
+    for(const link of loaded.links){
+      if(!link||typeof link.from!=='string'||typeof link.to!=='string')continue;
+      const resolve=value=>fresh.markers.find(m=>m.id===value||m.name===value)?.id;
+      const a=resolve(link.from),b=resolve(link.to);
+      if(a&&b&&a!==b&&!fresh.links.some(l=>(l.from===a&&l.to===b)||(l.from===b&&l.to===a)))
+        fresh.links.push({from:a,to:b});
+    }
+    let count=0;
+    try{for(const pack of loaded.areas||[]){attachPackageToWorld(pack);count++}}
+    catch(err){worldReport('Imported '+count+' areas, then stopped: '+err.message,true)}
+    worldSelected=null;worldSave();worldRender();worldFit();worldSelect(null);
+    worldReport('World map uploaded with '+fresh.markers.length+' areas, '+fresh.links.length+
+      ' connections and '+count+' editable area packages. Existing server data is untouched.');
+  }catch(err){worldReport(err.message,true)}
+  e.target.value='';
+};
+
 })();
 </script>
 </body>
