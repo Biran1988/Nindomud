@@ -7,11 +7,33 @@
 :root{font:15px/1.4 system-ui,sans-serif;color:#e9eef7;background:#101826}
 *{box-sizing:border-box}button,input,select,textarea{font:inherit}button{background:#254a76;color:white;border:1px solid #4b79aa;border-radius:6px;padding:7px 10px;cursor:pointer}button:hover{background:#37679b}button.danger{background:#683844;border-color:#aa6262}button.active{background:#a66620}
 input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;border-radius:5px;padding:6px;width:100%}textarea{min-height:85px;resize:vertical}label{display:block;font-size:13px;margin:9px 0 3px;color:#b7c9df}input[type=checkbox]{width:auto}details{border:1px solid #344860;border-radius:6px;padding:9px;margin:8px 0}summary{cursor:pointer;color:#bedafc;font-weight:650}.builder-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}.builder-grid label{margin:3px 0}.small-button{padding:2px 7px!important;font-size:12px}.helper{padding:8px;border:1px dashed #56708d;border-radius:6px;color:#bdd1e6}.program-row{border-bottom:1px solid #344860;padding:6px 0;overflow-wrap:anywhere}input[type=checkbox]{width:auto}h1{margin:0;font-size:22px}h2{font-size:17px;margin:14px 0 5px}h3{font-size:14px;margin:13px 0 5px}.app{display:grid;grid-template-columns:minmax(280px,340px) minmax(440px,1fr) minmax(290px,350px);height:100vh}.panel{padding:16px;overflow:auto;border-right:1px solid #33445b}.panel:last-child{border-left:1px solid #33445b;border-right:0}.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.hint{color:#aabdd1;font-size:13px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mapwrap{overflow:auto;background:#0b1220;min-height:300px;position:relative}.map{width:4000px;height:3000px;position:relative;transform-origin:top left;background-image:linear-gradient(#203047 1px,transparent 1px),linear-gradient(90deg,#203047 1px,transparent 1px);background-size:96px 96px}svg{position:absolute;inset:0;pointer-events:none}.node{position:absolute;width:80px;height:52px;padding:4px 5px;font-size:12px;line-height:1.25;touch-action:none;border:2px solid #4d85c0;border-radius:9px;background:#1a304b;cursor:grab;user-select:none;box-shadow:0 4px 13px #0008;overflow:hidden}.node.selected{border-color:#f3bc4f;background:#35405a}.node small{display:block;color:#9dcde4;font-size:10px}.node strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.zoom{position:sticky;z-index:2;top:8px;left:8px;display:flex;align-items:center;gap:4px;width:max-content;height:38px;margin-bottom:-38px;padding:5px;background:#172437e8;border:1px solid #48617f;border-radius:7px}.zoom button{padding:3px 9px}.zoom span{min-width:49px;text-align:center}.entry{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #31435c}.entry span{overflow:hidden;text-overflow:ellipsis}.entry button{padding:3px 8px}.status{background:#213a32;color:#b9f5d3;padding:8px;border-radius:6px;min-height:34px}.status.error{background:#5d2d35;color:#ffd2d2}.hidden{display:none}.checkboxline{display:flex;align-items:center;gap:7px;margin:9px 0}.checkboxline label{margin:0}@media(max-width:1050px){.app{display:block;height:auto}.panel{height:auto;border:0;border-bottom:1px solid #33445b}.mapwrap{height:500px}}
+
+/* Full-world image, area markers and route overlay */
+.worldwrap{min-width:0;overflow:auto;position:relative;background:#091321;height:100%;border-right:1px solid #30445f}
+.worldcanvas{position:relative;transform-origin:top left;background-color:#101e30;background-image:linear-gradient(#3447624f 1px,transparent 1px),linear-gradient(90deg,#3447624f 1px,transparent 1px);background-size:80px 80px}
+.worldcanvas>img{width:100%;height:100%;object-fit:fill;position:absolute;inset:0;pointer-events:none}
+.worldcanvas>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.worldpins{position:absolute;inset:0;pointer-events:none}
+.worldpin{position:absolute;transform:translate(-50%,-50%);z-index:1;min-width:98px;max-width:158px;min-height:48px;border:2px solid #78acd0;border-radius:9px;background:#152d46e9;color:#e9f4ff;padding:5px 8px;cursor:grab;touch-action:none;text-align:center;pointer-events:auto;font-size:12px;box-shadow:0 4px 12px #000a}
+.worldpin strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.worldpin small{display:block;color:#aed5ee}
+.worldpin.active{border-color:#ffcb58;background:#4d3b28e9}
+.worldpin.draft{border-color:#69bc96}
+.worldpin:focus-visible{outline:3px solid #fff}
+.world-fields{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.world-stat{display:inline-flex;gap:4px;align-items:center;margin:4px 9px 4px 0;color:#a9c6dd}
+.world-list{max-height:230px;overflow:auto}
+.world-selected{border-bottom:1px solid #344860;padding-bottom:9px;margin-bottom:8px}
+.worldhint{padding:9px;border:1px solid #48617f;border-radius:8px}
+#worldwrap .zoom{z-index:5}
+@media(max-width:1050px){.worldwrap{height:540px}.world-fields{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <main class="app">
 <section class="panel">
+<div class="toolbar" aria-label="Builder view"><button id="areaView" class="active">Area Editor</button><button id="worldView">Full World Map</button></div>
+<div id="areaControls">
 <h1>Nindo_mud Visual Builder</h1>
 <p class="hint">Works offline in your browser. Open an exported in-game area or start a new one, edit the grid, then export one JSON package.</p>
 <label>Area name<input id="areaName" maxlength="80"></label>
@@ -30,9 +52,36 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <div class="toolbar"><button id="export">Export area JSON</button><button id="open">Open / import area JSON</button><input id="file" type="file" accept=".json,application/json" class="hidden"></div>
 <p class="hint">On your server, place the exported file in <code>data/area_imports/</code>. In game, use <code>area import filename.json check</code>, then <code>area import filename.json</code> as Implementor. A game export can update its own area; a new package adds unused VNUMs. The check command validates without changing the game.</p>
 <p id="status" class="status" role="status">Ready.</p>
+</div>
+<div id="worldControls" class="hidden">
+<h1>Full World Map</h1>
+<p class="hint">Upload your own map image and position every area over it. Import a complete world export or multiple individual area packages. The map is a planning workspace, not a live-world replacement.</p>
+<label>World name<input id="worldName" maxlength="100" placeholder="Nindo_mud World"></label>
+<h2>Upload</h2>
+<label>Background world image<input id="worldImageFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<div class="toolbar"><button id="worldClearImage" class="danger">Remove image</button></div>
+<div class="toolbar"><button id="worldUploadBundle">Upload full world JSON</button><input id="worldBundleFile" class="hidden" type="file" accept=".json,application/json"></div>
+<div class="toolbar"><button id="worldUploadAreas">Upload area JSON files</button><input id="worldAreasFile" class="hidden" type="file" accept=".json,application/json" multiple></div>
+<p class="hint">For your current server, run <code>area exportworld</code> as Implementor, then upload <code>data/world_exports/nindo-world.json</code> here. Or add any area export individually.</p>
+<h2>Build map</h2>
+<div class="toolbar"><button id="worldAdd">Add area marker</button><button id="worldLink">Connect areas</button><button id="worldDelete" class="danger">Remove marker</button></div>
+<p class="hint">Drag markers to position them. Click to inspect. Double-click a linked marker to open its area in the room editor. Connections are visual references, not automatic gameplay exits.</p>
+<h2>World projects</h2>
+<div class="toolbar"><button id="worldSave">Save world map</button><button id="worldBackup">Download world backup</button></div>
+<p class="hint">Autosaves in this browser. Download a backup to preserve the map image and all linked area drafts together.</p>
+<p id="worldStatus" class="status" role="status">World map ready.</p>
+<h3>Areas on map</h3>
+<div id="worldList" class="world-list"></div>
+</div>
 </section>
 <section id="mapwrap" class="mapwrap"><div class="zoom"><button id="zoomOut" title="Zoom out">−</button><span id="zoomValue">100%</span><button id="zoomIn" title="Zoom in">+</button><button id="zoomReset" title="Reset zoom">Reset</button></div><div id="mapStage"><div id="map" class="map"><svg id="lines" width="4000" height="3000"></svg><div id="nodes"></div></div></div></section>
-<section class="panel">
+<section id="worldwrap" class="worldwrap hidden">
+<div class="zoom"><button id="worldZoomOut">−</button><span id="worldZoomLabel">100%</span><button id="worldZoomIn">+</button><button id="worldZoomFit">Fit</button></div>
+<div id="worldStage"><div id="worldCanvas" class="worldcanvas">
+<img id="worldBackground" alt="Uploaded world map background" class="hidden">
+<svg id="worldRoutes" xmlns="http://www.w3.org/2000/svg"></svg><div id="worldPins" class="worldpins"></div>
+</div></div></section>
+<section class="panel" id="roomPanel">
 <h2 id="selectedTitle">Select a room</h2>
 <div id="roomFields" class="hidden">
 <label>Room VNUM<input id="roomVnum" type="number" disabled></label>
@@ -62,6 +111,19 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <details id="entityPanel" class="hidden" open><summary id="entityTitle">Edit prototype</summary>
 <div id="entityEditor"></div></details>
 </div>
+</section>
+<section class="panel hidden" id="worldInspector">
+<h2 id="worldSelectedTitle">Select an area</h2>
+<div id="worldSelectedFields" class="hidden">
+<label>Area marker name<input id="worldMarkerName" maxlength="100"></label>
+<label>Type<select id="worldMarkerType"><option>area</option><option>village</option><option>forest</option><option>road</option><option>dungeon</option><option>region</option></select></label>
+<div class="world-fields"><label>VNUM start<input id="worldMarkerStart" type="number" min="0"></label><label>VNUM end<input id="worldMarkerEnd" type="number" min="0"></label></div>
+<label>Notes<textarea id="worldMarkerNotes" maxlength="2000"></textarea></label>
+<p id="worldMarkerDetails" class="worldhint hint"></p>
+<div class="toolbar"><button id="worldOpenArea">Open area editor</button><button id="worldDetachArea">Unlink area draft</button></div>
+<h3>Connected areas</h3><div id="worldConnections"></div>
+</div>
+<p id="worldEmptyHint" class="hint">Select an area marker, or upload a full-world export to populate the map.</p>
 </section>
 </main>
 <script>
