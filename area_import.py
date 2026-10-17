@@ -17,6 +17,7 @@ import areas
 import biomes
 import combat
 import olc
+import programs
 import spawn_points
 import storage
 import world
@@ -26,6 +27,127 @@ FORMAT = "nindo-area-v1"
 MAX_FILE_BYTES = 2_000_000
 FILE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,79}\.json\Z")
 
+
+
+# Only persistent, builder-editable properties are accepted from the offline
+# editor. Dynamic room effects, player ownership and runtime entities are never
+# exposed or written by an area package.
+ROOM_BUILDER_KEYS = ("enabled", "apartment", "player_shop", "programs",
+                     "exit_flags", "exit_door_open", "exit_key_item", "exit_passcode")
+MOB_BASIC_KEYS = {"short_desc", "level", "hit_dice", "damage_dice", "respawns"}
+ITEM_BASIC_KEYS = {"short_desc", "item_type", "cost"}
+MOB_BUILDER_KEYS = frozenset(combat.DEFAULT_MOB_FIELDS) - MOB_BASIC_KEYS
+ITEM_BUILDER_KEYS = frozenset(olc.DEFAULT_OBJECT_FIELDS) - ITEM_BASIC_KEYS - {"previous_short_descs"}
+
+
+def _room_builder(room):
+    return {key: copy.deepcopy(getattr(room, key)) for key in ROOM_BUILDER_KEYS}
+
+
+def _template_builder(template, keys):
+    return {key: copy.deepcopy(template.get(key))
+            for key in sorted(keys) if key in template}
+
+
+def _validate_programs(rows, triggers, label):
+    if not isinstance(rows, list) or len(rows) > 100:
+        raise ValueError(f"{label}: use at most 100 programs.")
+    for entry in rows:
+        if not isinstance(entry, dict) or set(entry) - {"trigger", "action", "args", "keyword"}:
+            raise ValueError(f"{label}: program must contain only trigger/action/args/keyword.")
+        trigger, action, args = entry.get("trigger"), entry.get("action"), entry.get("args")
+        keyword = entry.get("keyword")
+        if (not isinstance(trigger, str) or not isinstance(action, str)
+                or not isinstance(args, str) or len(args) > 2000
+                or (keyword is not None and (not isinstance(keyword, str) or len(keyword) > 120))):
+            raise ValueError(f"{label}: program fields must be bounded text.")
+        failures = programs.validate_program(trigger, action, args, triggers, keyword)
+        if failures:
+            raise ValueError(f"{label}: {failures[0]}")
+
+
+def _validate_builder_value(value, default, label):
+    """Check exact JSON types, size and nesting; no arbitrary object keys."""
+    if default is None:
+        if value is not None and (not isinstance(value, str) or len(value) > 200):
+            raise ValueError(f"{label} must be text or null.")
+    elif isinstance(default, bool):
+        if type(value) is not bool:
+            raise ValueError(f"{label} must be true or false.")
+    elif type(default) is int:
+        if type(value) is not int or not -1000000000 <= value <= 1000000000:
+            raise ValueError(f"{label} must be an integer.")
+    elif isinstance(default, str):
+        if not isinstance(value, str) or len(value) > 5000:
+            raise ValueError(f"{label} must be text of at most 5000 characters.")
+    elif isinstance(default, list):
+        if (not isinstance(value, list) or len(value) > 100
+                or any(type(x) not in (str, int) or
+                       (type(x) is str and len(x) > 200) or
+                       (type(x) is int and not 0 <= x <= 999999)
+                       for x in value)):
+            raise ValueError(f"{label} must be a short list of text or VNUMs.")
+    elif isinstance(default, dict):
+        if (not isinstance(value, dict) or len(value) > 100
+                or any(not isinstance(k, str) or len(k) > 60 or
+                       type(v) not in (str, int) or
+                       (type(v) is str and len(v) > 200) or
+                       (type(v) is int and not -100000 <= v <= 100000)
+                       for k, v in value.items())):
+            raise ValueError(f"{label} must be a short dictionary.")
+    else:
+        raise ValueError(f"{label} has an unsupported type.")
+
+
+def _validated_settings(settings, defaults, allowed, label, program_key, triggers):
+    if not isinstance(settings, dict) or set(settings) - set(allowed):
+        raise ValueError(f"{label} contains unknown or restricted builder fields.")
+    for field, value in settings.items():
+        if field == program_key:
+            _validate_programs(value, triggers, f"{label} {field}")
+        else:
+            _validate_builder_value(value, defaults[field], f"{label} {field}")
+    return copy.deepcopy(settings)
+
+
+def _validated_room_builder(data, room, label):
+    if not isinstance(data, dict) or set(data) - set(ROOM_BUILDER_KEYS):
+        raise ValueError(f"{label} has unknown or restricted room fields.")
+    for field, value in data.items():
+        if field == "programs":
+            _validate_programs(value, programs.ROOM_TRIGGERS, label)
+        elif field in ("enabled", "apartment", "player_shop"):
+            _validate_builder_value(value, False, f"{label} {field}")
+        else:
+            if not isinstance(value, dict) or len(value) > 12:
+                raise ValueError(f"{label} {field} must be a direction dictionary.")
+            for direction, setting in value.items():
+                if direction not in room.exits:
+                    raise ValueError(f"{label} {field}: {direction} has no exit.")
+                if field == "exit_flags":
+                    if (not isinstance(setting, list) or len(setting) > 5
+                            or any(x not in olc.EXIT_FLAG_NAMES for x in setting)):
+                        raise ValueError(f"{label}: invalid exit flags.")
+                else:
+                    _validate_builder_value(setting, field == "exit_door_open"
+                                            if field == "exit_door_open" else "",
+                                            f"{label} {field}")
+        setattr(room, field, copy.deepcopy(value))
+
+
+def _validated_caps(row, label):
+    data = row.get("spawn_caps")
+    if data is None:
+        return {}
+    if not isinstance(data, dict) or set(data) - {"total_cap", "per_period_cap"}:
+        raise ValueError(f"{label} has invalid spawn caps.")
+    result = {}
+    for key in ("total_cap", "per_period_cap"):
+        value = data.get(key)
+        if value is not None and (type(value) is not int or not 1 <= value <= 100000):
+            raise ValueError(f"{label} {key} must be 1-100000 or null.")
+        result[key] = value
+    return result
 
 def _fingerprint(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
@@ -133,6 +255,7 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
     for room in rooms:
         row = _room_row(room)
         row.update(positions[room.vnum])
+        row["builder"] = _room_builder(room)
         rows.append(row)
     room_ids = {room.vnum for room in rooms}
     points = sorted((p for p in spawn_points.list_spawn_points()
@@ -142,14 +265,31 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
     for point in points:
         vnum = point["vnum"]
         if point["kind"] == "mob" and vnum in combat.MOB_TEMPLATES:
-            mobs.setdefault(vnum, _mob_row(vnum, combat.MOB_TEMPLATES[vnum], point["room_vnum"]))
+            if vnum not in mobs:
+                row = _mob_row(vnum, combat.MOB_TEMPLATES[vnum], point["room_vnum"])
+                row["settings"] = _template_builder(combat.MOB_TEMPLATES[vnum], MOB_BUILDER_KEYS)
+                row["spawn_caps"] = {k: point.get(k) for k in ("total_cap", "per_period_cap")}
+                mobs[vnum] = row
         if point["kind"] == "item" and vnum in olc.OBJECT_TEMPLATES:
-            items.setdefault(vnum, _item_row(vnum, olc.OBJECT_TEMPLATES[vnum], point["room_vnum"]))
+            if vnum not in items:
+                row = _item_row(vnum, olc.OBJECT_TEMPLATES[vnum], point["room_vnum"])
+                row["settings"] = _template_builder(olc.OBJECT_TEMPLATES[vnum], ITEM_BUILDER_KEYS)
+                row["spawn_caps"] = {k: point.get(k) for k in ("total_cap", "per_period_cap")}
+                items[vnum] = row
     baseline = {"area": _fingerprint(area.reset_message or ""),
                 "rooms": {str(row["vnum"]): _fingerprint({k: v for k, v in row.items()
                                                           if k not in ("x", "y")}) for row in rows},
-                "mobs": {str(v): _fingerprint(row) for v, row in mobs.items()},
-                "items": {str(v): _fingerprint(row) for v, row in items.items()}}
+                "mobs": {str(v): _fingerprint({k: row[k] for k in ("vnum", "name", "level", "health", "damage_min", "damage_max", "room_vnum", "respawns")}) for v, row in mobs.items()},
+                "items": {str(v): _fingerprint({k: row[k] for k in ("vnum", "name", "item_type", "cost", "room_vnum")}) for v, row in items.items()}}
+    baseline["details"] = {
+        "rooms": {str(room.vnum): _fingerprint(_room_builder(room)) for room in rooms},
+        "mobs": {str(v): _fingerprint(_template_builder(combat.MOB_TEMPLATES[v], MOB_BUILDER_KEYS))
+                 for v in mobs},
+        "items": {str(v): _fingerprint(_template_builder(olc.OBJECT_TEMPLATES[v], ITEM_BUILDER_KEYS))
+                  for v in items},
+        "caps": {kind: {str(v): _fingerprint(row["spawn_caps"]) for v, row in collection.items()}
+                 for kind, collection in (("mobs", mobs), ("items", items))},
+    }
     package = {"format": FORMAT,
                "area": {"name": area.name, "vnum_start": area.vnum_start,
                         "vnum_end": area.vnum_end, "reset_message": area.reset_message or ""},
@@ -299,6 +439,12 @@ def validate(package: dict) -> dict:
                 for direction in list(value):
                     if old.exits.get(direction) != room.exits.get(direction):
                         del value[direction]
+        if "builder" in row:
+            details = (baseline or {}).get("details", {}).get("rooms", {})
+            if old and (str(vnum) not in details or
+                        _fingerprint(_room_builder(old)) != details[str(vnum)]):
+                raise ValueError(f"Room {vnum} advanced fields changed since export. Export again.")
+            _validated_room_builder(row["builder"], room, f"Room {vnum}")
         rooms[vnum] = room
     for room in rooms.values():
         for target in room.exits.values():
@@ -340,10 +486,19 @@ def validate(package: dict) -> dict:
             template["hit_dice"] = f"1d1+{health - 1}"
         if old_row is None or (low, high) != (old_row["damage_min"], old_row["damage_max"]):
             template["damage_dice"] = f"1d{high - low + 1}+{low - 1}"
+        if "settings" in row:
+            details = (baseline or {}).get("details", {}).get("mobs", {})
+            if old and (str(vnum) not in details or
+                        _fingerprint(_template_builder(old, MOB_BUILDER_KEYS)) != details[str(vnum)]):
+                raise ValueError(f"Mob {vnum} advanced fields changed since export. Export again.")
+            template.update(_validated_settings(row["settings"], combat.DEFAULT_MOB_FIELDS,
+                                                MOB_BUILDER_KEYS, f"Mob {vnum}",
+                                                "mob_programs", programs.MOB_TRIGGERS))
         mobs[vnum] = template
         if room_vnum is not None:
             key = spawn_points._key("mob", vnum, room_vnum)
             points[key] = {"kind": "mob", "vnum": vnum, "room_vnum": room_vnum}
+            points[key].update(_validated_caps(row, f"Mob {vnum}"))
 
     for row in item_rows:
         if not isinstance(row, dict):
@@ -367,10 +522,19 @@ def validate(package: dict) -> dict:
                 raise ValueError(f"Item {vnum} changed since export. Export again.")
         template = copy.deepcopy(old) if old else olc.default_object(vnum, item_name)
         template.update(short_desc=item_name, item_type=item_type, cost=cost)
+        if "settings" in row:
+            details = (baseline or {}).get("details", {}).get("items", {})
+            if old and (str(vnum) not in details or
+                        _fingerprint(_template_builder(old, ITEM_BUILDER_KEYS)) != details[str(vnum)]):
+                raise ValueError(f"Item {vnum} advanced fields changed since export. Export again.")
+            template.update(_validated_settings(row["settings"], olc.DEFAULT_OBJECT_FIELDS,
+                                                ITEM_BUILDER_KEYS, f"Item {vnum}",
+                                                "item_programs", programs.ITEM_TRIGGERS))
         items[vnum] = template
         if room_vnum is not None:
             key = spawn_points._key("item", vnum, room_vnum)
             points[key] = {"kind": "item", "vnum": vnum, "room_vnum": room_vnum}
+            points[key].update(_validated_caps(row, f"Item {vnum}"))
 
     if not updating and any(key in storage.load_spawn_points().get("points", {}) for key in points):
         raise ValueError("A spawn point in this package already exists.")
@@ -422,7 +586,10 @@ def import_package(staged: dict, creator: str) -> dict:
     for key in staged["removed_points"]:
         point_state.setdefault("points", {}).pop(key, None)
     for key, point in staged["points"].items():
-        point_state.setdefault("points", {}).setdefault(key, point)
+        stored = point_state.setdefault("points", {}).setdefault(key, point)
+        if "total_cap" in point:
+            stored["total_cap"] = point["total_cap"]
+            stored["per_period_cap"] = point["per_period_cap"]
 
     # All collisions and references have been checked before these writes.
     # Keep existing world content in the snapshot rather than replacing it
