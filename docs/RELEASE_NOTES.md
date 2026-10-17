@@ -5,6 +5,21 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- Visual area builder version 15.312: named browser autosave drafts, explicit save,
+  a switchable project library, and portable `*.nindo-project.json` backup
+  files. Work-in-progress backups are separate from game-ready area exports.
+- Extended offline editor forms cover room programs, doors/locks/key items,
+  shopkeepers and shop inventory, all persistent prototype attributes,
+  class/teacher fields, item equipment and medical properties, mob/item programs,
+  spawn caps, SMAUG dice overrides, and area treasury income.
+- Server import/export now round-trips supported advanced settings with
+  validation and stale-state checks; no runtime/player ownership data is exposed.
+  Legacy basic packages still import. Existing live data/ and other builder-created
+  areas are never replaced by this editor.
+- The release workflow runs unit tests and builds `Nindo_mud.zip` via
+  `scripts/build_release.py`; check the workflow result before deployment.
+
+
 - Clan selection is mandatory during character creation. Choose a clan from
   your village; blank answers and `none` are rejected. Confirmation also checks
   the selection. Use `clan join <name>` later to switch to another valid clan.
