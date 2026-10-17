@@ -29,7 +29,12 @@ refreshes system-owned pages, while preserving staff-written help. The
 
 ## Current release
 
-Version 15.312 expands the offline area editor with multi-project autosaves,\nportable backup/restore, full room/mob/item builder settings, programs, shop\nstock, exit door settings and spawn caps. Game imports validate advanced edits\nagainst the original server export before applying them.\n\nVersion 15.307 added a trainable signature move: select a 100%-mastered active
+Version 15.312 expands the offline area editor with multi-project autosaves,
+portable backup/restore, full room/mob/item builder settings, programs, shop
+stock, exit door settings and spawn caps. Game imports validate advanced edits
+against the original server export before applying them.
+
+Version 15.307 added a trainable signature move: select a 100%-mastered active
 jutsu with `signature <move>`, practice it to 150%, then gain a 25% bonus to
 its damage or effect duration. Switching drops the old move back to 100%.
 The visual area editor remains at `builder/Nindo_Area_Builder.html`.
