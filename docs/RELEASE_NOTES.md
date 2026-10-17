@@ -171,3 +171,12 @@ existing server installation, keeping the server's `data/` directory intact.
 Verification: `python3 -m unittest discover -p 'test_*.py'` and
 `python3 test_smoke.py`. The tests cover damage tiers, shop persistence,
 leveling, mob XP, and the older gameplay smoke checks.
+
+- Version 15.313 world-map editor: the offline builder accepts uploaded PNG/JPG/WebP
+  backgrounds, displays and connects draggable area markers, imports many area
+  packages or one full-world JSON file, and provides a portable backup containing
+  map image plus linked area drafts. World map connections are visual only.
+- Implementor `area exportworld` writes a complete map workspace under
+  `data/world_exports/` without replacing individual area exports. The operation
+  never changes rooms, mob data, or the live world; world bundles cannot be fed
+  into the game's `area import` command. `test_world_map_export.py` covers this.
