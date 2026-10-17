@@ -1,38 +1,31 @@
-# Offline area builder
+# Offline Nindo_mud visual builder
 
-Open `Nindo_Area_Builder.html` in a browser. It needs no installation or
-internet connection. Your current draft is kept in that browser's local
-storage; use **Export area JSON** to make a portable backup or import package.
+Open `builder/Nindo_Area_Builder.html` in a modern browser. No installation, connection, or MUD login is needed to edit. The editor works with the server's existing `nindo-area-v1` JSON format.
 
-1. For an area already in the game, run `area export <area name>` as Implementor
-   and copy the reported file from `data/area_exports/` to your computer. Click
-   **Open / import area JSON** in the editor. Its existing rooms, exits, and
-   placed mob/item prototypes will load. For a new area, set a unique room
-   VNUM range and name; a matching empty reservation is allowed.
-2. Add rooms and drag them onto the snap grid. Scroll over the map or use the
-   zoom controls to see more rooms or inspect them closely. Select a room, press
-   **Connect rooms**, then click its destination. The builder determines north,
-   northeast, east, and other compass exits from grid placement and always
-   creates the matching reverse exit. Choose a special connection type for
-   up/down or inside/outside. Moving a linked room updates its compass exits;
-   conflicting moves are rejected. Choose room flags from the dropdown. Edit descriptions, sector, biome,
-   safety, and reset messages.
-3. Select a room to create basic mob and item prototypes with spawn points.
-   More detailed shop, equipment, and program settings can be added through
-   `mset`, `oset`, and `rset` after import.
-4. Export the JSON file and copy it to the server's `data/area_imports/` folder.
-   Keep its filename unchanged. Do not replace the server's `data/` directory.
-5. As an Implementor, run `area import filename.json check` to validate the
-   entire package without changing the game. Then run `area import filename.json`.
-   The area is available immediately and saved across restarts.
+## Save progress and resume later
 
-An exported existing area can update its own rooms and placed mob/item
-prototypes, add new content, and retain advanced settings such as programs,
-shop fields, and spawn caps. Existing rooms and prototypes cannot be deleted
-through the editor; remove them in game, then export again. The import checks
-whether editable content changed in game since export and refuses stale edits.
-Existing links to other areas are kept. An area export includes prototypes with
-spawn points inside the area's rooms; prototypes without one remain in game.
+- **Automatic save:** every completed field edit, room addition, link, and drag updates the current named draft in that browser's local storage.
+- **Save draft now:** records your work even when the area is incomplete. The editor can hold more than one project. **Saved draft** lets you select and reopen any of them; **New project** creates a separate blank draft without deleting the current one.
+- **Download project backup:** saves a portable `*.nindo-project.json` file with rooms, prototypes, settings, and the existing-area safety baseline. Use **Open project backup** to resume on a different device, after clearing browser storage, or after a browser reinstall. Keep this file in a safe location; autosaved drafts remain only in the original browser/profile.
+- **Open / import area JSON:** imports a server-exported area or previously exported *game package* into a new editable draft. This differs from a project backup.
+- **Export area JSON:** builds the validated game import file; unlike Save draft, it requires at least one valid room and complete references.
 
-New area packages add unused VNUMs and refuse collisions or broken links. Link
-new imported rooms to other areas using `rset exit` or `rset bexit` in game.
+Browser storage has limited capacity. **Download project backup** regularly. A backup is a normal local file, not synced to GitHub or to the running game.
+
+## Build areas
+
+1. For an existing area, run `area export <area name>` as Implementor. Transfer the file from `data/area_exports/` and open it with **Open / import area JSON**. For a new area, enter its name and a non-overlapping room VNUM range (maximum 1,000 room numbers).
+2. Place rooms on the snap grid. Mouse-wheel and zoom buttons change scale. Dragging a room snaps it back to the grid. **Connect rooms** creates matched two-way compass exits from their positions; use connection type for up/down and inside/outside.
+3. Edit room names, descriptions, sectors, biomes, safety, room flags, reset messages, enabled/apartment/player-shop status, and declarative room programs. Doors, hidden exits, locks, keys and passcodes are configured per exit. Rooms retain exit settings when a linked room moves to another compass direction.
+4. In each selected room, add mobs and items with persistent spawn points. **Edit** on a placed prototype opens the full mset/oset-style properties, including mob attributes, attack information, loot, flags, teachers, shop stock, item equipment/wear settings, rarity, stat bonuses, resistances, healing fields, and programs. Configure total/per-reset spawn limits. Optional SMAUG mob dice overrides take precedence over the initial damage/health inputs.
+5. Edit area income and reset message. **Save draft now** or download a project backup at any time, including before rooms, mobs, and items are finished.
+
+Only declarative program triggers/actions supported by the game engine are available: this does **not** provide arbitrary Python execution, in-game player editing, staff promotion, or unrestricted administration. Those are not ordinary area-building features.
+
+## Deploy an area into the game
+
+1. Click **Export area JSON** after editing and validation.
+2. Transfer that JSON file (not the `*.nindo-project.json` backup) to the server's **existing** `data/area_imports/` folder. Never extract source releases over `data/`.
+3. As Implementor, run `area import filename.json check`. Inspect any errors. Then run `area import filename.json` to apply. Imported content is saved across restarts.
+
+Existing-area imports compare room, prototype, advanced field and spawn-cap baselines against the current server. If the area changed since export, **export a fresh copy from the game and merge changes**, instead of forcing a stale package into the world. Older editor packages without advanced baselines remain usable for their original basic fields, but advanced editing requires a fresh server export. Existing rooms and prototypes cannot be removed in the offline editor; remove them in game and export again. Links outside the area remain protected. The importer does not replace another area, player accounts, or saved world data.
