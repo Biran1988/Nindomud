@@ -955,6 +955,7 @@ def cmd_area(session, args: List[str]) -> None:
         return
     usage = ("Usage: area create <name> [size]\n       area export <area name>  (Implementor)\n"
              "       area import <file.json> [check]  (Implementor)\n"
+             "       area exportworld  (Implementor, full world map)\n"
              "       area set <name> income <n>\n"
              "       area set <name> resetmsg <text|off>\n"
              "       area assign|unassign <name> <builder account>  (Biran only)\n"
@@ -965,6 +966,26 @@ def cmd_area(session, args: List[str]) -> None:
         return
 
     subcommand = args[0].lower()
+
+    if subcommand == "exportworld":
+        if not session.account or session.account.staff_level != "implementor":
+            session.send("Only an Implementor can export the entire world.")
+            return
+        if len(args) != 1:
+            session.send("Usage: area exportworld")
+            return
+        import area_import
+        try:
+            path, bundle = area_import.export_world()
+        except ValueError as exc:
+            session.send(f"World map export refused: {exc}")
+            return
+        session.send(f"Exported the full world map: {len(bundle['markers'])} area reservations, "
+                     f"{len(bundle['areas'])} populated areas and {len(bundle['links'])} cross-area connections. "
+                     f"Copy {path} to your computer and upload it into the World Map tab of the offline builder. "
+                     "This is a read-only export of your live world; editing the map alone never deploys area changes.")
+        _log(session.player.name, "area", "world", "full world map exported")
+        return
 
     if subcommand == "export":
         if session.account.staff_level != "implementor":
