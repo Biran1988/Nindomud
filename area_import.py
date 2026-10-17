@@ -276,7 +276,7 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
                 row["settings"] = _template_builder(olc.OBJECT_TEMPLATES[vnum], ITEM_BUILDER_KEYS)
                 row["spawn_caps"] = {k: point.get(k) for k in ("total_cap", "per_period_cap")}
                 items[vnum] = row
-    baseline = {"area": _fingerprint(area.reset_message or ""),
+    baseline = {"area": _fingerprint(area.reset_message or ""), "area_income": _fingerprint(area.income),
                 "rooms": {str(row["vnum"]): _fingerprint({k: v for k, v in row.items()
                                                           if k not in ("x", "y", "builder")}) for row in rows},
                 "mobs": {str(v): _fingerprint({k: row[k] for k in ("vnum", "name", "level", "health", "damage_min", "damage_max", "room_vnum", "respawns")}) for v, row in mobs.items()},
@@ -292,7 +292,7 @@ def export_area(name: str, layout=None) -> tuple[str, dict]:
     }
     package = {"format": FORMAT,
                "area": {"name": area.name, "vnum_start": area.vnum_start,
-                        "vnum_end": area.vnum_end, "reset_message": area.reset_message or ""},
+                        "vnum_end": area.vnum_end, "reset_message": area.reset_message or "", "income": area.income},
                "rooms": rows, "mobs": list(mobs.values()), "items": list(items.values()),
                "source": {"mode": "update", "baseline": baseline,
                           "placements": {kind: {str(v): row["room_vnum"] for v, row in collection.items()}
@@ -350,6 +350,9 @@ def validate(package: dict) -> dict:
         raise ValueError("The area range must be ascending.")
     message = info.get("reset_message", "")
     _text(message, "Reset message", 500, required=False)
+    income = info.get("income")
+    if income is not None:
+        _integer(income, "Area income", 0, 1000000000)
 
     existing_areas = areas.all_areas()
     existing = existing_areas.get(name.lower())
@@ -396,6 +399,9 @@ def validate(package: dict) -> dict:
             raise ValueError("An existing room is missing. Remove rooms in game, then export again.")
         if _fingerprint(existing.get("reset_message") or "") != baseline.get("area"):
             raise ValueError("The area's reset message changed since export. Export again.")
+        if income is not None and (baseline.get("area_income") is None or
+                                   _fingerprint(existing.get("income", 0)) != baseline["area_income"]):
+            raise ValueError("The area's income changed since export. Export again.")
     for row in room_rows:
         if not isinstance(row, dict):
             raise ValueError("Every room must be an object.")
@@ -486,6 +492,14 @@ def validate(package: dict) -> dict:
             template["hit_dice"] = f"1d1+{health - 1}"
         if old_row is None or (low, high) != (old_row["damage_min"], old_row["damage_max"]):
             template["damage_dice"] = f"1d{high - low + 1}+{low - 1}"
+        if "dice" in row:
+            dice = row["dice"]
+            if not isinstance(dice, dict) or set(dice) - {"hit_dice", "damage_dice"}:
+                raise ValueError(f"Mob {vnum} has invalid dice overrides.")
+            for field, value in dice.items():
+                if not isinstance(value, str) or not re.fullmatch(r"[1-9]\d{0,2}d[1-9]\d{0,5}(?:[+-]\d{1,7})?", value):
+                    raise ValueError(f"Mob {vnum} has an invalid {field} dice expression.")
+                template[field] = value
         if "settings" in row:
             details = (baseline or {}).get("details", {}).get("mobs", {})
             if old and (str(vnum) not in details or
@@ -534,7 +548,13 @@ def validate(package: dict) -> dict:
             if old and (str(vnum) not in details or
                         _fingerprint(_template_builder(old, ITEM_BUILDER_KEYS)) != details[str(vnum)]):
                 raise ValueError(f"Item {vnum} advanced fields changed since export. Export again.")
-            template.update(_validated_settings(row["settings"], olc.DEFAULT_OBJECT_FIELDS,
+            settings = dict(row["settings"])
+            if "damage" in settings:
+                amount = settings.pop("damage")
+                if amount is not None and (type(amount) is not int or not 0 <= amount <= 1000000):
+                    raise ValueError(f"Item {vnum} damage must be a nonnegative integer or null.")
+                template["damage"] = amount
+            template.update(_validated_settings(settings, olc.DEFAULT_OBJECT_FIELDS,
                                                 ITEM_BUILDER_KEYS, f"Item {vnum}",
                                                 "item_programs", programs.ITEM_TRIGGERS))
         items[vnum] = template
@@ -565,6 +585,7 @@ def validate(package: dict) -> dict:
                         raise ValueError(f"{kind.capitalize()} {row['vnum']} placement changed since export.")
                     removed_points.add(old_key)
     return {"name": name, "start": start, "end": end, "message": message,
+            "income": income,
             "existing": bool(existing), "rooms": rooms, "mobs": mobs,
             "items": items, "points": points, "updating": updating,
             "removed_points": removed_points,
@@ -586,9 +607,12 @@ def import_package(staged: dict, creator: str) -> dict:
     if not staged["existing"]:
         area_state[staged["name"].lower()] = dataclasses.asdict(
             areas.Area(staged["name"], staged["start"], staged["end"], creator,
-                       prototype=True, reset_message=staged["message"] or None))
+                       prototype=True, reset_message=staged["message"] or None,
+                       income=staged["income"] or 0))
     elif staged["updating"]:
         area_state[staged["name"].lower()]["reset_message"] = staged["message"] or None
+        if staged["income"] is not None:
+            area_state[staged["name"].lower()]["income"] = staged["income"]
     for vnum, room in staged["rooms"].items():
         world_state["rooms"][str(vnum)] = dataclasses.asdict(room)
     for kind, payload, collection in (("mobs", staged["mobs"], "mobs"),
