@@ -266,7 +266,13 @@ $('unlink').onclick=()=>{let r=room();if(!r)return;let dir=$('direction').value,
 if(target.exits[opposite[dir]]===selected)delete target.exits[opposite[dir]];
 delete r.exits[dir];remapDoorSettings(r,prevR);remapDoorSettings(target,prevTarget);
 save();refreshContents();renderRoomAdvanced();renderMap();report('Exit removed.')};
-$('deleteRoom').onclick=()=>{let r=room();if(!r)return;if(project.source?.baseline?.rooms?.[r.vnum]){report('Delete existing rooms in game, then export the area again.',true);return}if(!confirm(`Delete room ${r.vnum}, its exits, and its placed mobs/items?`))return;project.rooms=project.rooms.filter(x=>x!==r);for(let x of project.rooms)for(let [dir,v] of Object.entries(x.exits))if(v===r.vnum)delete x.exits[dir];project.mobs=project.mobs.filter(x=>x.room_vnum!==r.vnum);project.items=project.items.filter(x=>x.room_vnum!==r.vnum);save();select(null);report('Room removed.')};
+$('deleteRoom').onclick=()=>{let r=room();if(!r)return;if(project.source?.baseline?.rooms?.[r.vnum]){report('Delete existing rooms in game, then export the area again.',true);return}if(!confirm(`Delete room ${r.vnum}, its exits, and its placed mobs/items?`))return;project.rooms=project.rooms.filter(x=>x!==r);
+for(let x of project.rooms){
+  const previous={...x.exits};
+  for(let [dir,v] of Object.entries(x.exits))if(v===r.vnum)delete x.exits[dir];
+  remapDoorSettings(x,previous);
+}
+project.mobs=project.mobs.filter(x=>x.room_vnum!==r.vnum);project.items=project.items.filter(x=>x.room_vnum!==r.vnum);save();select(null);report('Room removed.')};
 $('addMob').onclick=()=>{if(!room())return;let v=Number($('mobVnum').value),level=Number($('mobLevel').value),hp=Number($('mobHealth').value),match=/^(\d+)\s*-\s*(\d+)$/.exec($('mobDamage').value.trim());if(!validInt(v,1,999999)||project.mobs.some(x=>x.vnum===v)||!$('mobName').value.trim()||!validInt(level,1,100)||!validInt(hp,1,1000000)||!match||Number(match[1])<1||Number(match[2])<Number(match[1])){report('Enter a unique mob VNUM, name, level, health, and damage like 2-6.',true);return}project.mobs.push({vnum:v,name:$('mobName').value.trim(),level,health:hp,damage_min:Number(match[1]),damage_max:Number(match[2]),room_vnum:selected,respawns:true});$('mobVnum').value=nextId(project.mobs,v+1);$('mobName').value='';save();refreshContents();report('Mob added with a persistent spawn point.')};
 $('addItem').onclick=()=>{if(!room())return;let v=Number($('itemVnum').value),cost=Number($('itemCost').value);if(!validInt(v,1,999999)||project.items.some(x=>x.vnum===v)||!$('itemName').value.trim()||!$('itemType').value.trim()||!validInt(cost,0,1000000000)){report('Enter a unique item VNUM, name, type, and nonnegative cost.',true);return}project.items.push({vnum:v,name:$('itemName').value.trim(),item_type:$('itemType').value.trim(),cost,room_vnum:selected});$('itemVnum').value=nextId(project.items,v+1);$('itemName').value='';save();refreshContents();report('Item added with a persistent spawn point.')};
 
@@ -305,6 +311,12 @@ function fieldControl(target,key,kind,labelText){
   if(kind==='bool'){
     input=document.createElement('input');input.type='checkbox';
     input.checked=current===undefined?key==='enabled':Boolean(current);
+  }else if(key==='rarity'||key==='primary_class'||key==='teacher'){
+    input=document.createElement('select');
+    const values=key==='rarity'?['common','uncommon','rare','epic','legendary']:
+      ['', 'taijutsu','ninjutsu','genjutsu','bukijutsu'];
+    for(const value of values){const opt=nodeEl('option',value||'None');opt.value=value;input.append(opt)}
+    input.value=current??(key==='rarity'?'common':'');
   }else if(kind==='json'||kind==='textarea'){
     input=document.createElement('textarea');input.rows=kind==='json'?3:4;
     input.value=kind==='json'?JSON.stringify(current===undefined?{}:current,null,2):current||'';
@@ -409,6 +421,31 @@ function renderExitAdvanced(){
   panel.append(elementLabel('Door starts open',open));
 }
 $('exitEditorDirection').onchange=renderExitAdvanced;
+
+function flagPicker(entity,kind,container){
+  const isMob=kind==='mobs',field=isMob?'act_flags':'extra_flags';
+  const options=isMob?['SummonElder','Invis','Banker','BountyOffice','Npc',
+    'Sentinel','Shopkeeper','Garrison','Trap','Wander','Scavenger','Mission','Immortal']:
+    ['invis','no_sac','no_take'];
+  const box=nodeEl('div',undefined,'helper');
+  box.append(nodeEl('strong',isMob?'Mob flags':'Item flags'));
+  const row=nodeEl('div',undefined,'toolbar'),select=document.createElement('select');
+  for(const flag of options){const option=nodeEl('option',flag);option.value=flag;select.append(option)}
+  const add=nodeEl('button','Add selected flag');
+  add.onclick=()=>{
+    const flags=entity.settings[field]||(entity.settings[field]=[]);
+    if(!flags.includes(select.value))flags.push(select.value);
+    save();editPrototype(kind,entity.vnum);
+  };
+  row.append(select,add);box.append(row);
+  const chosen=nodeEl('div');
+  for(const flag of entity.settings[field]||[]){
+    const remove=nodeEl('button',flag+' ×','small-button');
+    remove.onclick=()=>{entity.settings[field]=entity.settings[field].filter(x=>x!==flag);save();editPrototype(kind,entity.vnum)};
+    chosen.append(remove);
+  }
+  box.append(chosen);container.append(box);
+}
 function editPrototype(kind,vnum){
   const entity=project[kind].find(row=>row.vnum===vnum);if(!entity)return;
   const panel=$('entityPanel'),container=$('entityEditor');
@@ -429,6 +466,7 @@ function editPrototype(kind,vnum){
   details.append(nodeEl('summary','Full prototype properties (mset / oset)'));
   const holder=document.createElement('div');details.append(holder);container.append(details);
   builderFieldGroup(entity.settings,kind==='mobs'?MOB_FIELD_KINDS:ITEM_FIELD_KINDS,holder);
+  flagPicker(entity,kind,container);
   entity.spawn_caps=entity.spawn_caps||{total_cap:null,per_period_cap:null};
   container.append(nodeEl('h3','Spawn limits (blank = uncapped)'));
   const caps=nodeEl('div',undefined,'builder-grid');
