@@ -1237,10 +1237,10 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "area",
-        "keywords": ["area", "areas", "vnum reservation", "area export", "area import", "offline area builder"],
+        "keywords": ["area", "areas", "vnum reservation", "area export", "area import", "area exportworld", "world map", "offline area builder"],
         "title": "Area",
         "body": (
-            "Syntax: area create <name> [size]  |  area export <area name>  |  area import <file.json> [check]  |  area set <name> income <n>  |  area set <name> resetmsg <text|off>  |  area list\n"
+            "Syntax: area create <name> [size]  |  area export <area name>  |  area exportworld  |  area import <file.json> [check]  |  area set <name> income <n>  |  area set <name> resetmsg <text|off>  |  area list\n"
             "\n"
             "Description: (Staff only.) Reserves a contiguous block of room vnums for a named area -- 1000 by default -- so builders working on different areas can't accidentally collide with each other's rooms. 'area create' auto-allocates the next free block; 'area list' shows every reservation, who created it, and its territory income if set.\n"
             "\n"
