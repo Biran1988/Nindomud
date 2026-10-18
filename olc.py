@@ -2561,10 +2561,14 @@ def cmd_mset(session, args: List[str]) -> None:
             session.send(f"'{value_text}' isn't valid dice notation (expected e.g. '2d6+4').")
             return
         if field == "aggro_village":
-            allowed = set(config.VILLAGES)
+            import data_villages
+            # Validate every genuinely configured village without
+            # disclosing secret village options in public help/error text.
+            allowed = set(data_villages.VILLAGES)
+            public = set(config.VILLAGES)
             val = value_text.strip().lower()
             if val not in allowed and val not in ("none", "off"):
-                session.send("Choose a target village: " + ", ".join(sorted(allowed)) + ", or off.")
+                session.send("Choose a target village: " + ", ".join(sorted(public)) + ", or off.")
                 return
             value_text = "" if val in ("none", "off") else val
         if field == "aggro_clan":
