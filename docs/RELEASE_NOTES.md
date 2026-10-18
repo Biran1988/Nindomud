@@ -205,3 +205,21 @@ leveling, mob XP, and the older gameplay smoke checks.
   immortal force commands are audit-logged. Legacy mpforce shorthand
   remains supported. Added targeted regression tests in
   `test_force_commands.py`.
+
+- Version 15.318 adds `clone control` / `clone status` /
+  `clone disperse` for a real, live elemental clone mastered at 100%
+  proficiency in its specific elemental Bunshin skill. Entry is blocked
+  during PvE/PvP combat and other pending actions. The player's original
+  body never changes rooms and cannot execute combat/body commands while
+  linked. The clone travels physically through real rooms and observes
+  through its own location. The connection ends on explicit dispersal,
+  the clone's defeat, insufficient Chakra upkeep, or disconnect.
+- Mobile prototypes now support `aggressive_village`,
+  `aggressive_clan`, and `aggressive_everyone` act flags. The first
+  two require configuring `aggro_village` or `aggro_clan` target
+  fields; matching either flag starts ordinary automatic PvE combat.
+  Hostile mobs can also attack a player's remotely controlled scout
+  clone, using the clone's real HP. Protected mobs, staff and safe rooms
+  remain exempt. Flags and targets are available in mset and the
+  visual builder. These changes use existing world save/import logic,
+  never replace live data files. Tests: test_clone_recon_aggression.py.
