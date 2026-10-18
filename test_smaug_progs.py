@@ -254,7 +254,7 @@ endif"""
         player.stamina = 0
         player.health = 70
         self.assertEqual(smaug_progs.validate_script(
-            "mphealmana 20\nmphealmove 10\nmpdamage 100"), [])
+            "mphealchakra 20\nmphealstamina 10\nmpdamage 100"), [])
         self.assertTrue(smaug_progs.execute(
             "mphealmana 20\nmphealmove 10\nmpdamage 100",
             self.session, self.mob.name, self.mob))
