@@ -226,7 +226,15 @@ class Session:
                 other.send(text)
 
     def request_close(self) -> None:
-        self.controlled_clone = None  # disconnect ends the transient link, never moves saved body
+        # A link is not persistent across disconnects. Disperse that
+        # physical Mob immediately so no orphan remote scout stays in
+        # the world indefinitely without an owner paying Chakra upkeep.
+        clone = getattr(self, "controlled_clone", None)
+        self.controlled_clone = None
+        if clone is not None:
+            import combat
+            if any(m is clone for m in combat.MOBS_BY_ROOM.get(clone.room_vnum, ())):
+                combat.remove_mob(clone)
         if self.state == State.PLAYING and self.player:
             import mangekyo
             mangekyo.end_tsukuyomi_on_departure(self, world)
