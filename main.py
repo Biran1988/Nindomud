@@ -18,6 +18,9 @@ def main():
     seasonal_events.sync_visitors()
     from world import reconcile_apartment_ownership
     reconcile_apartment_ownership()
+    # Money piles have their own automatic ledger; never replace world/area saves.
+    import currency_piles
+    currency_piles.restore_piles()
     import commands
     commands.force_all_player_configs_on()
     import help_system
