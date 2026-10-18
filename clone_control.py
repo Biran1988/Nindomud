@@ -210,6 +210,14 @@ def _say(session, text):
         session.send("Say what?")
         return
     import session as session_module
+    import commands
+    import chat_moderation
+    if commands._is_silenced(session):
+        return
+    if chat_moderation.record_and_check_spam(session):
+        session.send("&D(You're talking too fast! You have been silenced for 10 minutes.)&x")
+        return
+    text = chat_moderation.censor(text)
     clone = session.controlled_clone
     session.send(f'&CThrough {clone.name}, you say:&x "{text}"')
     for other in session_module.ACTIVE_SESSIONS:
@@ -226,6 +234,13 @@ def _social(session, name):
         session.send("Unknown social. Type 'emotes' after dispersing for a list.")
         return
     own, other_text = action
+    import chat_moderation
+    import commands
+    if commands._is_silenced(session):
+        return
+    if chat_moderation.record_and_check_spam(session):
+        session.send("&D(You're talking too fast! You have been silenced for 10 minutes.)&x")
+        return
     clone = session.controlled_clone
     session.send(f"You {own} through {clone.name}")
     for other in session_module.ACTIVE_SESSIONS:
