@@ -384,6 +384,13 @@ def cmd_mstat(session, args: List[str]) -> None:
     if live_mob:
         hp_color = colors.resource_color(live_mob.health, live_mob.max_health)
         lines.append(f"&WCurrent HP:&x {hp_color}{live_mob.health}/{live_mob.max_health}&x")
+        # Inspect the *specific* mob instance by name/2.name. A VNUM
+        # lookup describes its shared prototype, not an individual clock.
+        if combat.is_wandering(live_mob):
+            remaining = max(0, int(live_mob.next_wander_at - time.time()))
+            schedule = f"{remaining}s" if live_mob.next_wander_at else "scheduling"
+            lines.append(f"&WInstance ID:&x {live_mob.instance_id}   "
+                         f"&WNext Wander:&x {schedule} (independent mob timer)")
     lines += [
         f"&WArmor Class:&x {t['armor_class']}   &WHit Roll:&x {t['hit_roll']}   &WDamage Roll:&x {t['damage_roll']}",
         f"&WDamage Dice:&x {t['damage_dice']}   &WAttacks:&x {t['attacks']}",
