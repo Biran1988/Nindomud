@@ -461,4 +461,5 @@ CHANGELOG = [
     ("15.312", "Expanded the offline visual area editor with named, autosaved projects, portable project backups, complete room/mob/item prototype settings, program editing, shop stock, door/key controls, spawn caps, and area income. Area imports validate advanced fields and preserve server-built content."),
     ("15.313", "Added a full-world image map to the offline builder, draggable area markers, visual area connections, multi-area file upload, world backup/restore, and the Implementor-only 'area exportworld' command."),
     ("15.314", "Wandering mobs now receive independently seeded movement schedules as soon as they spawn. Same-room populations stagger their departures, each mob moves at most once per pulse, and mstat reports an individual mob's next Wander countdown."),
+    ("15.315", "Added multiline Smaug-style mob, room and object programs with mpedit/mpstat, nested conditionals, game-context variables, safe NPC scripting commands, combat, item hand-in and bribe triggers. Original addprogram entries remain compatible and scripts persist with save world."),
 ]
