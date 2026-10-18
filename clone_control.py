@@ -42,6 +42,9 @@ def notify_clone_removed(mob, reason="disperses"):
     """Called from all clone-removal paths, including combat defeats."""
     import session as session_module
     for session in list(session_module.ACTIVE_SESSIONS):
+        if getattr(session, "combat_target", None) is mob:
+            session.combat_target = None
+            session.send(f"&D{mob.name} vanishes; your fight ends.&x")
         if getattr(session, "controlled_clone", None) is mob:
             _notice_end(session, reason)
 
