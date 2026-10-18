@@ -223,3 +223,12 @@ leveling, mob XP, and the older gameplay smoke checks.
   remain exempt. Flags and targets are available in mset and the
   visual builder. These changes use existing world save/import logic,
   never replace live data files. Tests: test_clone_recon_aggression.py.
+
+- Version 15.320 improves the existing clone recon system without touching
+  server world or area data: elemental clones now use their owner's visible
+  name, the pilot's original body looks like a normal player (including
+  `look <name>`), and other players see normal leave/arrive and speech/emote
+  output rather than a clone label. The pilot receives one room view per
+  movement with no extra guidance echo. The clone remains an independent,
+  attackable Mob and its original caster stays at their physical location.
+  Regression tests cover both viewing locations, speech, emotes and travel.
