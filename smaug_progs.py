@@ -6,6 +6,7 @@ Legacy one-action programs continue to run in programs.py unchanged.
 """
 import random
 import re
+import time
 
 MAX_SCRIPT_CHARS = 12000
 MAX_LINES = 160
@@ -13,6 +14,11 @@ MAX_DEPTH = 8
 MAX_ACTIONS = 60
 MAX_CALL_DEPTH = 4
 MAX_PROGRAMS = 60
+MAX_PENDING = 256  # global queued delayed continuations
+MAX_PENDING_PER_PLAYER = 8
+MAX_WAIT_SECONDS = 120
+MAX_TOTAL_WAIT_SECONDS = 300
+_PENDING = []  # ephemeral per-server runtime, never world/player save data
 TRIGGERS = {
     "mob": {"greet", "speech", "death", "fight", "random", "move", "give", "bribe"},
     "room": {"enter", "random"},
@@ -21,7 +27,8 @@ TRIGGERS = {
 COMMANDS = {
     "say", "emote", "mpecho", "mpechoat", "mpechoaround",
     "mptransfer", "mpmload", "mpoload", "mpforce", "mpgive",
-    "mpheal", "mpgoto",
+    "mpheal", "mpgoto", "mphealmana", "mphealmove", "mpdamage",
+    "mpasound", "mpjunk", "mpremember", "wait",
 }
 COMPARISONS = {"==", "!=", "<", "<=", ">", ">="}
 _CONDITION = re.compile(r"^([a-z_]+)\s*\(([^()]*)\)\s*(==|!=|<=|>=|<|>)?\s*(.*?)\s*$", re.I)
@@ -107,12 +114,19 @@ def compile_script(script):
                 raise ValueError(f"Line {number}: unknown MUD program command '{word}'.")
             if not args.strip():
                 raise ValueError(f"Line {number}: {word} requires arguments.")
-            if word in {"mptransfer", "mpmload", "mpoload", "mpgive", "mpheal", "mpgoto"}:
-                if not re.fullmatch(r"\d{1,7}", args.strip()):
+            if word in {"mptransfer", "mpmload", "mpoload", "mpgive", "mpheal", "mpgoto",
+                        "mphealmana", "mphealmove", "mpdamage", "wait", "mpjunk"}:
+                if word == "mpjunk" and args.strip().lower() == "all":
+                    pass
+                elif not re.fullmatch(r"\d{1,7}", args.strip()):
                     raise ValueError(f"Line {number}: {word} expects a numeric VNUM/amount.")
-                value = int(args.strip())
-                if value <= 0 or value > (10000 if word == "mpheal" else 999999):
-                    raise ValueError(f"Line {number}: {word} value is out of range.")
+                if word != "mpjunk" or args.strip().lower() != "all":
+                    value = int(args.strip())
+                    cap = (MAX_WAIT_SECONDS if word == "wait" else
+                           10000 if word in {"mpheal", "mphealmana", "mphealmove"} else
+                           500 if word == "mpdamage" else 999999)
+                    if value <= 0 or value > cap:
+                        raise ValueError(f"Line {number}: {word} value is out of range.")
             if word == "mpforce":
                 forced = args.strip().split(None, 1)
                 if not forced or forced[0].lower() not in {"look", "say", "emote"}:
@@ -216,6 +230,40 @@ def _command(session, command, args, speaker_name, mob, budget):
         amount = int(args)
         player.health = min(player.maximum_health, player.health + amount)
         session.send(f"{speaker_name} restores {amount} health.")
+    elif command == "mphealmana":
+        amount = int(args)
+        player.chakra = min(player.maximum_chakra, player.chakra + amount)
+    elif command == "mphealmove":
+        amount = int(args)
+        player.stamina = min(player.maximum_stamina, player.stamina + amount)
+    elif command == "mpdamage":
+        # Scripted attacks cannot bypass the game\'s death/combat pipeline.
+        player.health = max(1, player.health - int(args))
+        session.send(f"{speaker_name} strikes you with a scripted attack!")
+    elif command == "mpasound":
+        # Echo once to players in immediately adjacent enabled rooms.
+        if room:
+            import session as session_module
+            dests = {v for v in room.exits.values() if world.WORLD.get(v) and world.WORLD.get(v).enabled}
+            for other in session_module.ACTIVE_SESSIONS:
+                if other.player and other.player.room_vnum in dests:
+                    other.send(args)
+    elif command == "mpjunk" and room:
+        if args == "all":
+            del room.ground_items[:20]
+        else:
+            template = olc.OBJECT_TEMPLATES.get(int(args))
+            if template and template["short_desc"] in room.ground_items:
+                room.ground_items.remove(template["short_desc"])
+    elif command == "mpremember" and mob:
+        # Saved per prototype like legacy remember_keyword, not an arbitrary variable.
+        template = combat.MOB_TEMPLATES.get(mob.template_vnum)
+        if template is not None:
+            memory = template.setdefault("script_memory", {})
+            key = args.casefold()[:60]
+            names = memory.setdefault(key, [])
+            if player.name not in names and len(names) < 300:
+                names.append(player.name)
     elif command == "mpgive":
         import inventory
         item = olc.OBJECT_TEMPLATES.get(int(args))
@@ -260,37 +308,81 @@ def _command(session, command, args, speaker_name, mob, budget):
 
 
 def execute(script, session, speaker_name="Something", mob=None):
-    """Run at most 60 approved actions, with recursion bounded per session.
+    """Execute a bounded script, suspending after a validated wait N line.
 
-    Errors in stale/corrupt saved scripts are contained and do not kill
-    the whole server pulse or corrupt a player/world save.
+    Continuations are in-memory only, released on disconnect or restart.
+    Script conditions are evaluated when their branch is reached, while
+    each wait pauses only its own invocation and never the event loop.
     """
     if not getattr(session, "player", None):
         return False
-    depth = getattr(session, "_mudprog_depth", 0)
-    if depth >= MAX_CALL_DEPTH:
+    if getattr(session, "_mudprog_depth", 0) >= MAX_CALL_DEPTH:
         return False
     try:
         statements = compile_script(script)
     except ValueError:
         return False
-    budget = {"actions": 0, "loads": 0}
+    def instructions(nodes):
+        for node in nodes:
+            if node["kind"] == "if":
+                chosen = (node["then"] if any(_evaluate(cond, session)
+                                            for cond in node["conditions"])
+                          else node["otherwise"])
+                yield from instructions(chosen)
+            else:
+                yield node["command"], node["args"]
+    state = {"steps": instructions(statements), "session": session,
+             "speaker_name": speaker_name, "mob": mob,
+             "budget": {"actions": 0, "loads": 0, "waits": 0},
+             "context": {key: getattr(session, key, None) for key in
+                         ("_mudprog_direction", "_mudprog_object_vnum",
+                          "_mudprog_object_name", "_mudprog_bribe")}}
+    return _advance(state, time.time())
+
+
+def _advance(state, now):
+    session = state["session"]
+    depth = getattr(session, "_mudprog_depth", 0)
+    if depth >= MAX_CALL_DEPTH:
+        return False
+    old_context = {k: getattr(session, k, None) for k in state["context"]}
     session._mudprog_depth = depth + 1
+    for key, value in state["context"].items():
+        setattr(session, key, value)
     try:
-        def walk(nodes):
-            for node in nodes:
-                if budget["actions"] >= MAX_ACTIONS:
-                    return
-                if node["kind"] == "if":
-                    walk(node["then"] if any(_evaluate(expr, session)
-                                             for expr in node["conditions"])
-                         else node["otherwise"])
-                else:
-                    budget["actions"] += 1
-                    _command(session, node["command"], node["args"], speaker_name, mob, budget)
-        walk(statements)
+        for command, args in state["steps"]:
+            if command == "wait":
+                amount = int(args)
+                state["budget"]["waits"] += amount
+                if (state["budget"]["waits"] > MAX_TOTAL_WAIT_SECONDS or
+                    len(_PENDING) >= MAX_PENDING or
+                    sum(item["session"] is session for _, item in _PENDING) >= MAX_PENDING_PER_PLAYER):
+                    return False
+                _PENDING.append((now + amount, state))
+                return True
+            if state["budget"]["actions"] >= MAX_ACTIONS:
+                return True
+            state["budget"]["actions"] += 1
+            _command(session, command, args, state["speaker_name"],
+                     state["mob"], state["budget"])
         return True
-    except (ValueError, TypeError, AttributeError, KeyError, IndexError):
+    except (ValueError, TypeError, AttributeError, KeyError, IndexError, RuntimeError):
         return False
     finally:
+        for key, value in old_context.items():
+            setattr(session, key, value)
         session._mudprog_depth = depth
+
+
+def process_delayed(now=None):
+    """Run due continuations on normal server pulses, not blocking sleeps."""
+    if now is None:
+        now = time.time()
+    import session as session_module
+    # Drain a snapshot: a resumed script may schedule its next wait safely.
+    due = [(timestamp, state) for timestamp, state in _PENDING if timestamp <= now]
+    _PENDING[:] = [(timestamp, state) for timestamp, state in _PENDING if timestamp > now]
+    for _, state in due:
+        s = state["session"]
+        if s in session_module.ACTIVE_SESSIONS and getattr(s, "player", None):
+            _advance(state, now)
