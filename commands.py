@@ -1001,8 +1001,8 @@ def cmd_look(session, args: List[str]) -> None:
                 and original_body.room_vnum == player.room_vnum):
             # To the pilot, examining their body looks the same as
             # examining any other player. Never expose a control status.
-            session.send(f"&C{original_body.name}&x\n"
-                         f"{original_body.description if original_body.description else original_body.name + ' hasn\'t set a description.'}")
+            description = original_body.description or f"{original_body.name} hasn't set a description."
+            session.send(f"&C{original_body.name}&x\n{description}")
             return
         if query in ("self", "me") or query in player.name.lower():
             lines = [f"&C{player.name}&x"]
