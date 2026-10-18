@@ -36,6 +36,16 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.317 introduces the immortal `force <player> <command>`
+command and full targeted SMAUG `mpforce $n <command>` support.
+Approved movement, social, informational and combat commands execute
+through the target character's ordinary game handler; builder, account,
+economy and security commands are excluded. Administrator/Implementor
+`force all` is restricted to safe social/status actions. Each forced
+target sees a notice; immortal actions are logged. Older NPC
+`mpforce say`, `mpforce look` and freeform `mpforce emote` scripts
+remain compatible. See docs/SMAUG_MOB_PROGRAMS.md.
+
 Version 15.316 expands the SmaugFUSS-inspired script engine with
 non-blocking `wait` continuations, mob `entry` events, HP/Chakra/
 Stamina conditions, remembered quest markers, ambient echoes, and
