@@ -1368,7 +1368,7 @@ def _register_shadow_clone_template(player) -> int:
     template = default_template(vnum, player.name)
     template["short_desc"] = player.name
     template["long_desc"] = f"{player.name} is here."
-    template["description"] = player.description if player.description else f"You see nothing special about {player.name}."
+    template["description"] = player.description if player.description else f"{player.name} hasn't set a description."
     template["keywords"] = [player.name]
     template["level"] = player.level
     template["act_flags"] = ["Npc", "Sentinel", "ShadowClone"]
