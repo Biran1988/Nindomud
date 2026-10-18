@@ -91,6 +91,8 @@ def run_forced_player_command(target_session, command, actor):
     account = getattr(target_session, "account", None)
     if not target or not account:
         return False, "The target is not a connected character."
+    if getattr(target_session, "controlled_clone", None) is not None:
+        return False, "That character is remotely controlling an elemental clone."
     if account.staff_level != "player":
         return False, "Staff characters cannot be forced."
     state = getattr(target_session, "state", None)
