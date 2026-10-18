@@ -36,6 +36,15 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.314 fixes the synchronized-Wander problem: each live mob receives
+its own independently seeded first movement timer at spawn. Groups that spawn
+at the same instant stagger their departures, and a mob is only processed once
+per pulse, regardless of which room it enters. Subsequent moves retain the
+normal 2–4 minute independent interval. Staff can use `mstat <mob name>` or
+`mstat 2.<mob keyword>` in the mob's room to see that specific instance's
+next Wander countdown. Updating source requires a server restart; existing
+area/world saves remain untouched.
+
 Version 15.313 adds an uploadable, image-backed Full World Map tab. Use Implementor
 `area exportworld` to obtain the current world in one JSON file, upload it,
 position areas over a PNG/JPG/WebP background, inspect cross-area links and
