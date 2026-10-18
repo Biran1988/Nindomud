@@ -4541,3 +4541,65 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "clone control",
+    "keywords": ["clone", "clone control", "clone disperse", "clone scout",
+                 "elemental clone reconnaissance", "reconnaissance"],
+    "title": "Mastered Elemental Clone Reconnaissance",
+    "body": (
+        "Syntax: clone control  |  clone status  |  clone disperse\n\n"
+        "Master one elemental clone jutsu to 100% practice: "
+        "Raiton Kage Bunshin, Mizu Bunshin, Deido Bunshin or Suna Bunshin. "
+        "First create the clone with 'perform <elemental bunshin>'. "
+        "Shadow Clone Jutsu 100% is still required to create it.\n"
+        "You cannot enter clone control during combat, while being attacked "
+        "by another player, or while casting/performing a timed action.\n\n"
+        "Once connected, directions physically move the actual clone Mob "
+        "through the game while YOUR ORIGINAL BODY stays in the room where "
+        "you cast it. The clone looks/scans/examines, speaks and uses socials "
+        "from its location, but does not fight or use your body equipment. "
+        "Your original body is exposed and helpless while you're connected. "
+        "The clone can be attacked and loses its own HP.\n"
+        "There is no free 'return' or exit command while linked. "
+        "'clone disperse' destroys the clone and restores your viewpoint. "
+        "The same happens when its HP reaches zero in combat or when Chakra "
+        "upkeep causes the clone to disperse. Logout/reboot does not save "
+        "the link; your real body never moves in player saves.\n"
+        "An aggressive NPC can attack your real clone while scouting. "
+        "Room no_wander flags do not block intentional clone movement."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "aggressive mob",
+    "keywords": ["aggressive", "aggressive mob", "aggressive_village",
+                 "aggressive_clan", "aggressive_everyone", "mob aggro",
+                 "mset aggro_village", "mset aggro_clan"],
+    "title": "Mobile Aggression Flags",
+    "body": (
+        "Mob builder commands:\n"
+        "  mset <mob vnum> flags aggressive_everyone\n"
+        "  mset <mob vnum> flags aggressive_village\n"
+        "  mset <mob vnum> aggro_village leaf\n"
+        "  mset <mob vnum> flags aggressive_clan\n"
+        "  mset <mob vnum> aggro_clan uchiha\n\n"
+        "aggressive_everyone attacks any online ordinary player who comes "
+        "into the NPC's room. aggressive_village attacks only players "
+        "belonging to the configured target village; aggressive_clan "
+        "attacks only players belonging to the configured target clan. "
+        "Multiple flags combine; either matching village OR clan makes "
+        "the mob hostile. A village/clan flag without a configured target "
+        "does not attack anyone on that basis. Set a target to off to "
+        "clear it; use mset flags -aggressive_everyone to remove a flag.\n"
+        "Automatic aggression starts normal NPC combat and keeps existing "
+        "loot, XP and death rules. Safe rooms, staff players and protected "
+        "NPCs are exempt. Hostile mobs will also physically attack a "
+        "matching player's controlled elemental clone if they encounter "
+        "one. Save world to preserve the prototype flags.\n"
+        "Flags and target fields are available in the offline visual builder."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
