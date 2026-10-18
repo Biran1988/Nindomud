@@ -180,7 +180,8 @@ class CloneAndAggressionTests(unittest.TestCase):
                            controlled_clone=None, combat_target=None,
                            pvp_target=None, send=Mock())
         clone_observer = NS(player=Player("CloneWitness", "CloneWitness", room_vnum=5002),
-                            controlled_clone=None, send=Mock())
+                            controlled_clone=None, combat_target=None,
+                            pvp_target=None, send=Mock())
         session_module.ACTIVE_SESSIONS.extend([body_observer, clone_observer])
         clone_control.cmd_clone(self.session, ["control"])
         clone_control.handle_playing_command(self.session, "north")
