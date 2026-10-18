@@ -6,6 +6,7 @@ created.  The controlled Mob retains its real position and HP, so defeating
 that mob, dismissing it or running out of Chakra ends the link.
 """
 from contextlib import contextmanager
+from copy import copy
 
 ELEMENT_SKILLS = {
     "lightning": "Raiton Kage Bunshin",
@@ -132,18 +133,25 @@ def _disperse(session, clone):
 
 @contextmanager
 def _eyes(session):
-    """Temporarily borrow the clone's room for read-only perception.
+    """Look through the scout WITHOUT relocating the real player object.
 
-    Always restore the real body's room, even when a look/scan/examine
-    handler returns early or raises. No world/player save sees the clone's
-    room as the body's room.
+    A shallow, read-only viewpoint copy is exposed to look/scan/examine
+    while the original character remains physically in its own room.
+    The actual Player instance (and all player saves) never acquires
+    the clone's room vnum, even momentarily. Existing room commands
+    receive the same room data through the viewpoint copy.
     """
-    original = session.player.room_vnum
+    body = session.player
+    former_body = getattr(session, "_clone_original_player", None)
+    viewpoint = copy(body)
+    viewpoint.room_vnum = session.controlled_clone.room_vnum
     try:
-        session.player.room_vnum = session.controlled_clone.room_vnum
+        session._clone_original_player = body
+        session.player = viewpoint
         yield
     finally:
-        session.player.room_vnum = original
+        session.player = body
+        session._clone_original_player = former_body
 
 
 def _look(session, args=None):
@@ -192,7 +200,8 @@ def _move(session, direction):
     # 'no_wander' stops RANDOM movement only. A manually piloted clone
     # is a deliberate reconnaissance action rather than an ambient wander.
     origin = clone.room_vnum
-    combat._broadcast_to_room(origin, f"{clone.name} travels {direction}.")
+    combat._broadcast_to_room(origin, f"{clone.name} travels {direction}.",
+                              exclude_session=session)
     current = combat.MOBS_BY_ROOM.get(origin, ())
     if clone not in current:
         _notice_end(session, "disperses")
@@ -201,7 +210,8 @@ def _move(session, direction):
     clone.room_vnum = dest.vnum
     combat.MOBS_BY_ROOM.setdefault(dest.vnum, []).append(clone)
     session.send(f"&CYou guide your clone {direction}.&x")
-    combat._broadcast_to_room(dest.vnum, f"{clone.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
+    combat._broadcast_to_room(dest.vnum, f"{clone.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.",
+                              exclude_session=session)
     _look(session)
 
 
