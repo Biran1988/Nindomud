@@ -50,6 +50,13 @@ arrival `entry` triggers, HP-percentage boss conditions, quest
 memory markers, adjacent room messages, and bounded Chakra/Stamina
 restoration.
 
+SMAUG scripts now support `mpforce $n <allowed player command>`, which
+runs a permitted movement, social, information or combat command
+through the triggering player's normal command interpreter. The original
+`mpforce say TEXT` shorthand remains usable. Immortals can use the
+in-game `force <online player> <command>` command. Staff targets, account,
+economy, file and builder commands are excluded for safety.
+
 See [SMAUG scripting documentation](../docs/SMAUG_MOB_PROGRAMS.md)
 for full editor commands, variables, grammar, examples and safety limits.
 
