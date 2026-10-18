@@ -1073,6 +1073,8 @@ def cmd_look(session, args: List[str]) -> None:
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
     mobs = combat.mobs_in_room(player.room_vnum)
     for mob in mobs:
+        if mob is getattr(session, "controlled_clone", None):
+            continue  # first-person scout view never lists the clone as a separate bystander
         if _is_invisible_mob(mob):
             continue
         if combat.is_shadow_clone(mob):
