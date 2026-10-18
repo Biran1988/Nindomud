@@ -1924,6 +1924,67 @@ def cmd_goto(session, args: List[str]) -> None:
     _fire_enter_triggers(session)
 
 
+
+def cmd_force(session, args: List[str]) -> None:
+    """Immortal force: execute a reviewed ordinary command as an online player.
+
+    Matching is case-insensitive, exact name preferred, unambiguous prefix
+    allowed. Higher staff may force ordinary players, never staff peers;
+    only administrators/Implementors may use a safe mass-social 'all'.
+    """
+    import force_commands
+    if not session.account or session.account.staff_level not in config.STAFF_LEVELS[1:]:
+        session.send("Only immortals can force a player command.")
+        return
+    if len(args) < 2:
+        session.send("Usage: force <player name> <allowed command>  |  force all <safe social command> (administrator+)")
+        return
+    who, cmd = args[0].strip(), " ".join(args[1:])
+    error = force_commands.validate_forced_command(cmd)
+    if error:
+        session.send(error)
+        return
+    online = [s for s in session.active_sessions()
+              if s.player and s.account and
+              getattr(getattr(s, "state", None), "name", None) == "PLAYING"]
+    if who.lower() == "all":
+        if session.account.staff_level not in {"administrator", "implementor"}:
+            session.send("Only administrators and Implementors may use force all.")
+            return
+        # Bulk force is deliberately informational/social, not a way to
+        # move or attack the entire server in one command.
+        if cmd.split()[0].lower() not in {"look", "l", "say", "emote", "stand", "wake", "rest"}:
+            session.send("force all is limited to look, say, emote, stand, wake and rest.")
+            return
+        targets = [s for s in online if s is not session and s.account.staff_level == "player"]
+        if not targets:
+            session.send("No ordinary players are online to force.")
+            return
+        if len(targets) > 50:
+            session.send("Refused: force all is limited to 50 online characters.")
+            return
+    else:
+        matches = [s for s in online if s.player.name.casefold() == who.casefold()]
+        if not matches:
+            matches = [s for s in online if s.player.name.casefold().startswith(who.casefold())]
+        if len(matches) != 1:
+            session.send("No unique online character matches that name.")
+            return
+        targets = matches
+    successes = 0
+    for target in targets:
+        ok, why = force_commands.run_forced_player_command(
+            target, cmd, f"Immortal {session.player.name}")
+        if ok:
+            successes += 1
+            olc._log(session.player.name, "force", target.player.name,
+                     f"command: {cmd}")
+        elif len(targets) == 1:
+            session.send(why)
+    if successes:
+        session.send(f"Forced {successes} character(s) to execute: {cmd}")
+
+
 def cmd_transfer(session, args: List[str]) -> None:
     """Teleports another (real, online) player directly to the
     caller's own current room -- per direct request/confirmation
@@ -8233,6 +8294,7 @@ COMMANDS = {
     "charge": cmd_charge,
     "goto": cmd_goto,
     "transfer": cmd_transfer,
+    "force": cmd_force,
     "return": cmd_return,
     "apartment": cmd_apartment,
     "description": cmd_description,
