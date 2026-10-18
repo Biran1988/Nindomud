@@ -80,6 +80,39 @@ class AdvancedAreaEditorTests(unittest.TestCase):
         self.assertEqual(olc.OBJECT_TEMPLATES[40000]["rarity"], "uncommon")
         self.assertEqual(areas.find_area("Test Forest").income, 10)
 
+    def test_multiline_scripts_survive_area_import_and_export(self):
+        data = package()
+        data["rooms"][0]["builder"] = {
+            "programs": [{"trigger": "enter", "script":
+                          "if level($n) >= 10\nmpechoat Welcome to the forest.\nendif",
+                          "chance": 100}]}
+        data["mobs"][0]["settings"] = {
+            "mob_programs": [{"trigger": "fight", "script":
+                              "if random(30)\nsay This fight is not over!\nendif",
+                              "chance": 30},
+                             {"trigger": "give", "script":
+                              "if object($o) == 40000\nmpheal 10\nendif",
+                              "chance": 100}]}
+        data["items"][0]["settings"] = {
+            "item_programs": [{"trigger": "get", "script":
+                               "mpechoat You found a rare item.", "chance": 100}]}
+        staged = area_import.validate(data)
+        area_import.import_package(staged, "Biran")
+        self.assertIn("if level", world.WORLD.rooms[20000].programs[0]["script"])
+        self.assertIn("if random", combat.MOB_TEMPLATES[30000]["mob_programs"][0]["script"])
+        self.assertEqual(olc.OBJECT_TEMPLATES[40000]["item_programs"][0]["trigger"], "get")
+        _, exported = area_import.export_area("Test Forest")
+        self.assertIn("mpheal 10", exported["mobs"][0]["settings"]["mob_programs"][1]["script"])
+        self.assertEqual(exported["items"][0]["settings"]["item_programs"][0]["chance"], 100)
+
+    def test_reject_privileged_multiline_program_during_import(self):
+        data = package()
+        data["mobs"][0]["settings"] = {
+            "mob_programs": [{"trigger": "greet",
+                              "script": "mpforce promoteimm $n", "chance": 100}]}
+        with self.assertRaisesRegex(ValueError, "mpforce"):
+            area_import.validate(data)
+
     def test_reject_restricted_fields_and_executable_programs(self):
         data = package()
         data["mobs"][0]["settings"] = {"__class__": "oops"}
