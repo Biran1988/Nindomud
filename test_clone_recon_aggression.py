@@ -114,6 +114,17 @@ class CloneAndAggressionTests(unittest.TestCase):
             self.assertIn("  &GScout&x is here.", returned)
             self.assertEqual(self.player.room_vnum, 5001)
 
+    def test_clone_scan_shows_real_body_without_a_remote_control_label(self):
+        self.player.learned_skills.add("Scan")
+        clone_control.cmd_clone(self.session, ["control"])
+        clone_control.handle_playing_command(self.session, "north")
+        self.session.send.reset_mock()
+        clone_control.handle_playing_command(self.session, "scan south")
+        messages = "\n".join(c.args[0] for c in self.session.send.call_args_list)
+        self.assertIn("  &GScout&x is here.", messages)
+        self.assertNotIn("motionless", messages)
+        self.assertNotIn("controlling a clone", messages)
+
     def test_pilot_sees_only_the_room_while_observers_see_normal_travel(self):
         observer_a = NS(player=Player("Watcher", "Watcher", room_vnum=5001),
                         combat_target=None, pvp_target=None, send=Mock())
