@@ -140,9 +140,10 @@ def compile_script(script):
             if word in {"mpremember", "mpforget"} and not re.fullmatch(r"[A-Za-z0-9_-]{1,60}", args.strip()):
                 raise ValueError(f"Line {number}: {word} requires a short quest marker identifier.")
             if word == "mpforce":
-                forced = args.strip().split(None, 1)
-                if not forced or forced[0].lower() not in {"look", "say", "emote"}:
-                    raise ValueError("mpforce is restricted to look, say and emote; no staff/player commands.")
+                import force_commands
+                _, problem = force_commands.parse_mpforce_args(args)
+                if problem:
+                    raise ValueError(f"Line {number}: {problem}")
             current.append({"kind": "cmd", "command": word, "args": args})
     if stack:
         raise ValueError("Missing endif for one or more if blocks.")
@@ -242,6 +243,7 @@ def _command(session, command, args, speaker_name, mob, budget):
     import olc
     import world
     player = session.player
+    source_args = args  # retain literal $n in mpforce target syntax
     args = _substitute(args, session, speaker_name, mob)
     room_vnum = mob.room_vnum if mob else player.room_vnum
     room = world.WORLD.get(room_vnum)
@@ -334,16 +336,17 @@ def _command(session, command, args, speaker_name, mob, budget):
                 combat.spawn_mob(vnum, room.vnum)
                 budget["loads"] += 1
     elif command == "mpforce":
-        # Deliberately never call the general command dispatcher: it
-        # would let scripts invoke staff/admin commands as a player.
-        forced, _, value = args.partition(" ")
-        if forced.lower() == "look":
-            import commands
-            commands.cmd_look(session, [])
-        elif forced.lower() == "say" and value.strip():
-            _broadcast(session, f"{player.name} says, '{value}'")
-        elif forced.lower() == "emote" and value.strip():
-            _broadcast(session, f"{player.name} {value}")
+        # Smaug syntax: mpforce $n <player command>. The original
+        # Nindo_mud shorthand "mpforce <command>" still works.
+        # Never dispatch arbitrary admin/account verbs, and never
+        # force immortal characters, including via a scripted trigger.
+        import force_commands
+        forced_command, error = force_commands.parse_mpforce_args(source_args)
+        if error:
+            return
+        forced_command = _substitute(forced_command, session, speaker_name, mob)
+        force_commands.run_forced_player_command(
+            session, forced_command, f"{speaker_name}")
 
 
 def execute(script, session, speaker_name="Something", mob=None):
