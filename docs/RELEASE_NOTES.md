@@ -232,3 +232,13 @@ leveling, mob XP, and the older gameplay smoke checks.
   movement with no extra guidance echo. The clone remains an independent,
   attackable Mob and its original caster stays at their physical location.
   Regression tests cover both viewing locations, speech, emotes and travel.
+
+- Version 15.321 enables drop/pickup/transfer of any positive whole Ryo
+  amount using real, numbered ground coin piles. Visible piles are ordinary
+  room contents rather than mintable inventory names; picking them up credits
+  their full balance and giving Ryo debits/credits the two players directly.
+  Drop/get/give immediately save changed player wallets. A separate,
+  auto-written data/ground_ryo.json file restores piles after startup,
+  independent of save world and without replacing any builder room or area.
+  Currency is intentionally excluded from world_state.json room snapshots
+  to avoid double-spawning after reboot. Tests: test_currency_piles.py.
