@@ -10,7 +10,7 @@ import smaug_progs
 
 def fake_session(name, rank="player", state="PLAYING"):
     return NS(
-        player=NS(name=name), account=NS(name=name, staff_level=rank),
+        player=NS(name=name, room_vnum=1), account=NS(name=name, staff_level=rank),
         state=NS(name=state), send=Mock(), send_prompt=Mock(),
     )
 
@@ -106,7 +106,7 @@ class ForceCommandsTests(unittest.TestCase):
         commands.cmd_force(self.imm, ["Sakura", "emote", "unknown"])
         self.dispatch.assert_not_called()
 
-    def test_mpforce_accepts_smawg_target_and_legacy_format(self):
+    def test_mpforce_accepts_smaug_target_and_legacy_format(self):
         self.assertEqual(smaug_progs.validate_script("mpforce $n north"), [])
         self.assertEqual(smaug_progs.validate_script("mpforce $n say Greetings."), [])
         self.assertEqual(smaug_progs.validate_script("mpforce say Greetings."), [])
