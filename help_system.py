@@ -4547,6 +4547,28 @@ DEFAULT_HELP_ENTRIES.append({
 
 
 DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "ryo",
+    "keywords": ["ryo", "drop ryo", "get ryo", "give ryo", "currency piles"],
+    "title": "Physical Ryo and Player Payments",
+    "body": (
+        "Ryo can be carried in your wallet or left as physical coin piles.\\n\\n"
+        "drop 500 ryo -- take 500 Ryo from your wallet and leave one pile.\\n"
+        "drop all ryo -- drop your entire wallet as one pile.\\n"
+        "look ryo -- examine a pile on the ground.\\n"
+        "get ryo -- collect the first pile into your wallet.\\n"
+        "get 500 ryo -- collect a pile worth exactly 500.\\n"
+        "get 2.ryo -- collect the second pile in a room.\\n"
+        "get all ryo -- collect every Ryo pile in the room.\\n"
+        "give 500 ryo <player> -- pay another player in your room.\\n"
+        "give all ryo <player> -- hand over your entire wallet.\\n\\n"
+        "All amounts must be positive whole numbers and cannot exceed "
+        "the Ryo you possess. Physical piles persist across server restarts; "
+        "picking up Ryo does not require an inventory item slot."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "clone control",
     "keywords": ["clone", "clone control", "clone disperse", "clone scout",
                  "elemental clone reconnaissance", "reconnaissance"],
