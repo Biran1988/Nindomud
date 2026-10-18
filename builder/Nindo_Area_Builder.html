@@ -437,7 +437,7 @@ function programBuilder(holder,key,triggers,list,controls){
   const keyword=document.createElement('input');keyword.placeholder='Speech keyword (only for speech triggers)';
   const chance=document.createElement('input');chance.type='number';chance.min=1;chance.max=100;chance.value=100;
   const legacyFields=nodeEl('div'),scriptFields=nodeEl('div');
-  const help=nodeEl('div','Commands: say, emote, mpecho, mpechoat, mpechoaround, mpheal, mphealmana, mphealmove, mpdamage, mpgive, mptransfer, mpmload, mpoload, mpgoto, mpasound, mpjunk, mpremember, mpforget, wait 1–120, mpforce (look/say/emote only). Branches: if, or, else, endif. Variables: $n player, $i mob, $r room, $v mob VNUM, $d direction, $o item, $b bribe. Conditions include hitprcnt($i), roomflag($r, no_wander), remembered($n, marker).','helper');
+  const help=nodeEl('div','Commands: say, emote, mpecho, mpechoat, mpechoaround, mpheal, mphealmana/mphealchakra, mphealmove/mphealstamina, mpdamage, mpgive, mptransfer, mpmload, mpoload, mpgoto, mpasound, mpjunk, mpremember, mpforget, wait 1–120, mpforce (look/say/emote only). Branches: if, or, else, endif. Variables: $n player, $i mob, $r room, $v mob VNUM, $d direction, $o item, $b bribe. Conditions include hitprcnt($i), roomflag($r, no_wander), remembered($n, marker).','helper');
   legacyFields.append(elementLabel('Action',action),elementLabel('Arguments',args));
   scriptFields.append(elementLabel('Trigger chance %',chance),elementLabel('Multiline script',script),help);
   const updateMode=()=>{legacyFields.classList.toggle('hidden',mode.value!=='legacy');scriptFields.classList.toggle('hidden',mode.value!=='script')};
@@ -456,7 +456,7 @@ function programBuilder(holder,key,triggers,list,controls){
       if(verb==='if'){if(!clean.includes('('))throw Error('Line '+(i+1)+': invalid condition.');nesting++;if(nesting>8)throw Error('Maximum eight nested if blocks.')}
       else if(verb==='endif'){nesting--;if(nesting<0)throw Error('Unmatched endif on line '+(i+1))}
       else if(verb==='else'||verb==='or'){if(nesting<1)throw Error('Unmatched '+verb+' on line '+(i+1))}
-      else if(!['say','emote','mpecho','mpechoat','mpechoaround','mpheal','mphealmana','mphealmove','mpdamage','mpgive','mptransfer','mpmload','mpoload','mpgoto','mpforce','mpasound','mpjunk','mpremember','mpforget','wait'].includes(verb))throw Error('Unsupported script command on line '+(i+1)+': '+verb);
+      else if(!['say','emote','mpecho','mpechoat','mpechoaround','mpheal','mphealmana','mphealmove','mphealchakra','mphealstamina','mpdamage','mpgive','mptransfer','mpmload','mpoload','mpgoto','mpforce','mpasound','mpjunk','mpremember','mpforget','wait'].includes(verb))throw Error('Unsupported script command on line '+(i+1)+': '+verb);
       else actions++;
     }
     if(nesting)throw Error('Script is missing endif.');
