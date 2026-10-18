@@ -105,6 +105,9 @@ def run_forced_player_command(target_session, command, actor):
             commands.dispatch_line(target_session, "@" + command.split()[1])
         else:
             commands.dispatch_line(target_session, command)
+        prompt = getattr(target_session, "send_prompt", None)
+        if callable(prompt):
+            prompt()
         return True, ""
     finally:
         target_session._force_command_depth -= 1
