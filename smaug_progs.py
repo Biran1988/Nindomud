@@ -299,6 +299,8 @@ def _command(session, command, args, speaker_name, mob, budget):
                 combat.MOBS_BY_ROOM[origin].remove(mob)
                 mob.room_vnum = dest.vnum
                 combat.MOBS_BY_ROOM.setdefault(dest.vnum, []).append(mob)
+                import programs
+                programs.fire_mob_entry(mob)
     elif command == "mpoload" and room and budget["loads"] < 2:
         item = olc.OBJECT_TEMPLATES.get(int(args))
         if item and item.get("enabled", True) and len(room.ground_items) < 30:
