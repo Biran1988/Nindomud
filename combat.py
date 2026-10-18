@@ -431,15 +431,17 @@ def _mob_is_being_fought(mob: Mob) -> bool:
     return any(s.combat_target is mob for s in session_module.ACTIVE_SESSIONS)
 
 
-def _broadcast_to_room(room_vnum: int, text: str) -> None:
-    """Sends text to every playing session physically standing in
-    room_vnum right now -- used for mob movement messages (process_
-    wander below), which have no owning Session the way player
-    movement (commands.cmd_move's own session.broadcast_room) does."""
+def _broadcast_to_room(room_vnum: int, text: str, *, exclude_session=None) -> None:
+    """Broadcast mob movement to room observers, optionally excluding its pilot.
+
+    A player controlling an elemental clone already gets direct movement
+    feedback and a room description; showing both room broadcasts to the
+    pilot caused a redundant three-message movement sequence.
+    """
     import session as session_module
+    import clone_control
     for s in session_module.ACTIVE_SESSIONS:
-        if s.player:
-            import clone_control
+        if s is not exclude_session and s.player:
             if clone_control.view_room(s) == room_vnum:
                 s.send(text)
 
