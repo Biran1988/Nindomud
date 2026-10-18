@@ -113,6 +113,17 @@ class AdvancedAreaEditorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mpforce"):
             area_import.validate(data)
 
+    def test_no_wander_flag_round_trips_with_area_and_world_save(self):
+        import world_persistence
+        data = package()
+        data["rooms"][0]["flags"] = ["no_wander"]
+        area_import.import_package(area_import.validate(data), "Biran")
+        self.assertIn("no_wander", world.WORLD.rooms[20000].flags)
+        _, exported = area_import.export_area("Test Forest")
+        self.assertIn("no_wander", exported["rooms"][0]["flags"])
+        world_persistence.save_world()
+        self.assertIn("no_wander", storage.load_world_state()["rooms"]["20000"]["flags"])
+
     def test_reject_restricted_fields_and_executable_programs(self):
         data = package()
         data["mobs"][0]["settings"] = {"__class__": "oops"}
