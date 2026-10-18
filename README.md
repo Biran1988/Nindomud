@@ -36,6 +36,15 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.316 expands the SmaugFUSS-inspired script engine with
+non-blocking `wait` continuations, mob `entry` events, HP/Chakra/
+Stamina conditions, remembered quest markers, ambient echoes, and
+additional bounded NPC actions. Adds the **no_wander** room flag
+(`rset flags no_wander`) to prevent random wandering mobs and
+tailed beasts entering that room; players and deliberate spawns are
+unaffected. Saved room flags are preserved by existing world/area
+persistence. See docs/SMAUG_MOB_PROGRAMS.md for details.
+
 Version 15.315 adds a real, multiline SmaugFUSS-inspired program editor:
 mob mpedit/mpstat/mpset, room rpedit/rpstat, object opedit/opstat,
 nested if/or/else/endif, $n/$i and other context variables, bounded
