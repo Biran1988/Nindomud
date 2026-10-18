@@ -113,8 +113,8 @@ Approved commands:
     mpforce say TEXT          Narrate player's speech
     mpforce emote TEXT        Narrate player's action
     wait SECONDS              Non-blocking script delay (1–120 s)
-    mphealmana AMOUNT         Recover triggering player's chakra
-    mphealmove AMOUNT         Recover triggering player's stamina
+    mphealmana AMOUNT         Recover triggering player's chakra (also mphealchakra)
+    mphealmove AMOUNT         Recover triggering player's stamina (also mphealstamina)
     mpdamage AMOUNT           Damage player without bypassing defeat flow (minimum 1 HP)
     mpasound TEXT             Announce to adjacent occupied rooms
     mpjunk ITEM_VNUM          Remove one matching room ground item (or all, up to 20)
