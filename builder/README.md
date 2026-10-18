@@ -42,6 +42,14 @@ format is validated when imported into the server. Supported mob triggers
 include greet, speech, death, fight, random, move, give and bribe. Speech
 scripts require a keyword. Existing simple programs continue working.
 
+The room flag picker now includes **no_wander**, which blocks random
+NPC movement into that room (including tailed beasts), without
+blocking players, explicit spawns or scripted `mpgoto` actions.
+Scripts now support `wait` (non-blocking delayed continuation),
+arrival `entry` triggers, HP-percentage boss conditions, quest
+memory markers, adjacent room messages, and bounded Chakra/Stamina
+restoration.
+
 See [SMAUG scripting documentation](../docs/SMAUG_MOB_PROGRAMS.md)
 for full editor commands, variables, grammar, examples and safety limits.
 
