@@ -172,3 +172,12 @@ leveling, mob XP, and the older gameplay smoke checks.
   inspect that instance's timer with `mstat <mob name>` (or `2.name`).
   `test_independent_mob_wandering.py` covers independent clocks, same-time
   spawn waves, Sentinel override, combat pauses and single moves per pulse.
+
+- Version 15.315 adds validated multiline Smaug-style scripts alongside
+  unchanged one-action mob/room/item programs. Includes staff mpedit/mpstat,
+  rpedit/rpstat, opedit/opstat, editable scripts in the HTML area builder,
+  nested conditions, event variables, and safe scripted NPC actions.
+  Fight, give, bribe and movement events now trigger NPC scripts.
+  Saved templates and imported area packages retain bounded script data.
+  Regression coverage is in test_smaug_progs.py. See
+  docs/SMAUG_MOB_PROGRAMS.md for syntax and limitations.
