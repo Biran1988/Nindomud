@@ -20,7 +20,7 @@ MAX_WAIT_SECONDS = 120
 MAX_TOTAL_WAIT_SECONDS = 300
 _PENDING = []  # ephemeral per-server runtime, never world/player save data
 TRIGGERS = {
-    "mob": {"greet", "speech", "death", "fight", "random", "move", "give", "bribe"},
+    "mob": {"greet", "speech", "death", "fight", "random", "move", "give", "bribe", "entry"},
     "room": {"enter", "random"},
     "item": {"get", "wear"},
 }
@@ -50,9 +50,10 @@ def _condition_parts(expression):
         raise ValueError("Condition syntax: if level($n) < 10, if hasitem($n, 100), or if random(30).")
     func, arguments, operator, expected = match.groups()
     func = func.lower()
-    if func not in {"level", "room", "ryo", "rank", "clan", "name", "direction", "object", "bribe", "hasitem", "random", "ispc"}:
+    if func not in {"level", "room", "ryo", "rank", "clan", "name", "direction", "object", "bribe", "hasitem", "random", "ispc",
+                    "hitprcnt", "moblevel", "health", "chakra", "stamina", "roomflag"}:
         raise ValueError(f"Unsupported condition '{func}()'.")
-    if func in {"random", "hasitem", "ispc"}:
+    if func in {"random", "hasitem", "ispc", "roomflag"}:
         if operator or expected:
             raise ValueError(f"{func}() is a boolean test (no comparison).")
         if func == "random" and (not arguments.isdigit() or not 1 <= int(arguments) <= 100):
@@ -61,10 +62,14 @@ def _condition_parts(expression):
             raise ValueError("hasitem($n, OBJECT_VNUM) requires a numeric object VNUM.")
         if func == "ispc" and arguments.lower() != "$n":
             raise ValueError("Use ispc($n).")
+        if func == "roomflag" and not re.fullmatch(r"\$r\s*,\s*[A-Za-z_]{1,40}", arguments, re.I):
+            raise ValueError("Use roomflag($r, no_wander).")
     else:
-        if arguments.lower() != {"direction": "$d", "object": "$o", "bribe": "$b"}.get(func, "$n") or operator not in COMPARISONS or not expected:
+        if arguments.lower() != {"direction": "$d", "object": "$o", "bribe": "$b",
+                                  "hitprcnt": "$i", "moblevel": "$i"}.get(func, "$n") or operator not in COMPARISONS or not expected:
             raise ValueError(f"Use {func}($n) == value (or <, <=, >, >=, !=).")
-        if func in {"level", "room", "ryo", "object", "bribe"} and not re.fullmatch(r"-?\d{1,9}", expected):
+        if func in {"level", "room", "ryo", "object", "bribe", "hitprcnt", "moblevel",
+                    "health", "chakra", "stamina"} and not re.fullmatch(r"-?\d{1,9}", expected):
             raise ValueError(f"{func}() needs an integer comparison value.")
         if func in {"rank", "clan", "name", "direction"} and (operator not in {"==", "!="} or len(expected) > 60):
             raise ValueError(f"{func}() accepts only == or != and bounded text.")
@@ -156,13 +161,19 @@ def validate_entry(entry, allowed):
     return validate_script(entry.get("script"))
 
 
-def _evaluate(expression, session):
+def _evaluate(expression, session, mob=None):
     func, arguments, comparison, expected = _condition_parts(expression)
     player = session.player
     if func == "random":
         return random.randint(1, 100) <= int(arguments)
     if func == "ispc":
         return bool(player)
+    if func == "roomflag":
+        import world
+        vnum = player.room_vnum
+        flag = arguments.split(",", 1)[1].strip()
+        room = world.WORLD.get(vnum)
+        return bool(room and flag in room.flags)
     if func == "hasitem":
         import olc
         vnum = int(arguments.split(",", 1)[1].strip())
@@ -176,8 +187,14 @@ def _evaluate(expression, session):
         "direction": getattr(session, "_mudprog_direction", ""),
         "object": getattr(session, "_mudprog_object_vnum", 0),
         "bribe": getattr(session, "_mudprog_bribe", 0),
+        "hitprcnt": max(0, 100 * mob.health // max(1, mob.max_health)) if mob else -1,
+        "moblevel": mob.level if mob else -1,
+        "health": player.health,
+        "chakra": player.chakra,
+        "stamina": player.stamina,
     }[func]
-    if func in {"level", "room", "ryo", "object", "bribe"}:
+    if func in {"level", "room", "ryo", "object", "bribe", "hitprcnt", "moblevel",
+                "health", "chakra", "stamina"}:
         expected = int(expected)
     else:
         actual = str(actual).casefold()
@@ -325,7 +342,7 @@ def execute(script, session, speaker_name="Something", mob=None):
     def instructions(nodes):
         for node in nodes:
             if node["kind"] == "if":
-                chosen = (node["then"] if any(_evaluate(cond, session)
+                chosen = (node["then"] if any(_evaluate(cond, session, mob)
                                             for cond in node["conditions"])
                           else node["otherwise"])
                 yield from instructions(chosen)
