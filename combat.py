@@ -2220,6 +2220,20 @@ def resolve_pulse(session) -> None:
         reset_summon_round_state(player)
         return
 
+    # Full multiline fight programs fire while an actual player is
+    # fighting this specific live NPC; chance is per script entry.
+    # Existing one-action programs have no fight trigger, so they are
+    # unchanged. Recheck placement because a script may teleport.
+    template = MOB_TEMPLATES.get(mob.template_vnum)
+    if template and any(p.get("trigger") == "fight" for p in template.get("mob_programs", ())):
+        import programs
+        programs.fire_programs(session, template["mob_programs"], "fight",
+                               speaker_name=mob.name.capitalize(), mob=mob)
+        if mob.room_vnum != player.room_vnum or mob.health <= 0:
+            session.combat_target = None
+            reset_summon_round_state(player)
+            return
+
     if player.jinchuriki_beast_key and player.rampage_until == 0.0:
         import tailed_beasts as tailed_beasts_module
         tailed_beasts_module.tick_jinchuriki_mastery(player)
@@ -2990,7 +3004,7 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if t and t.get("mob_programs"):
         import programs
-        programs.fire_programs(session, t["mob_programs"], "death", speaker_name=mob.name.capitalize())
+        programs.fire_programs(session, t["mob_programs"], "death", speaker_name=mob.name.capitalize(), mob=mob)
 
     import bounties
     bounty_id, bounty_entry = bounties.find_bounty_for_mob(mob.template_vnum)
