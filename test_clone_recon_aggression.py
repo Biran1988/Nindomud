@@ -146,10 +146,10 @@ class CloneAndAggressionTests(unittest.TestCase):
     def test_clone_and_real_body_both_look_like_ordinary_players(self):
         body_observer = NS(player=Player("BodyWitness", "BodyWitness", room_vnum=5001),
                            account=NS(staff_level="player"), controlled_clone=None,
-                           send=Mock())
+                           combat_target=None, pvp_target=None, send=Mock())
         clone_observer = NS(player=Player("CloneWitness", "CloneWitness", room_vnum=5002),
                             account=NS(staff_level="player"), controlled_clone=None,
-                            send=Mock())
+                            combat_target=None, pvp_target=None, send=Mock())
         session_module.ACTIVE_SESSIONS.extend([body_observer, clone_observer])
         for observer in (body_observer, clone_observer):
             observer.active_sessions = lambda: session_module.ACTIVE_SESSIONS
@@ -177,7 +177,8 @@ class CloneAndAggressionTests(unittest.TestCase):
         import chat_moderation
         import emotes
         body_observer = NS(player=Player("BodyWitness", "BodyWitness", room_vnum=5001),
-                           controlled_clone=None, send=Mock())
+                           controlled_clone=None, combat_target=None,
+                           pvp_target=None, send=Mock())
         clone_observer = NS(player=Player("CloneWitness", "CloneWitness", room_vnum=5002),
                             controlled_clone=None, send=Mock())
         session_module.ACTIVE_SESSIONS.extend([body_observer, clone_observer])
