@@ -60,7 +60,7 @@ used, though -- a sentence that happens to contain two configured
 keywords only triggers the one found first, not both.
 """
 
-MOB_TRIGGERS = {"greet", "death", "random", "speech", "move"}
+MOB_TRIGGERS = {"greet", "death", "random", "speech", "move", "fight"}
 ITEM_TRIGGERS = {"wear", "get"}
 ROOM_TRIGGERS = {"enter", "random"}
 
@@ -300,17 +300,22 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
     return True
 
 
-def fire_programs(session, programs: list, trigger: str, speaker_name: str = "Something") -> None:
+def fire_programs(session, programs: list, trigger: str, speaker_name: str = "Something", mob=None) -> None:
     """Runs every program in `programs` matching `trigger`, in order.
     Not used for 'speech' -- see fire_speech_programs, which also needs
     to match the spoken text against each program's keyword. A real
     require_item action returning False (per direct confirmation, a
     genuinely new conditional gate) halts the REST of this program's
     own actions entirely, not just that one action."""
-    for prog in programs:
-        if prog.get("trigger") == trigger:
-            if not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name):
-                break
+    import smaug_progs
+    for prog in list(programs):
+        if prog.get("trigger") != trigger:
+            continue
+        if "script" in prog:
+            if random.randint(1, 100) <= prog.get("chance", 100):
+                smaug_progs.execute(prog["script"], session, speaker_name, mob)
+        elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name):
+            break
 
 
 def check_level_gate(session, mob_programs: list, direction: str, speaker_name: str = "Something") -> bool:
@@ -369,7 +374,7 @@ def check_level_gate(session, mob_programs: list, direction: str, speaker_name: 
     return False
 
 
-def fire_speech_programs(session, programs: list, spoken_text: str, speaker_name: str = "Something", mob_template: dict = None) -> bool:
+def fire_speech_programs(session, programs: list, spoken_text: str, speaker_name: str = "Something", mob_template: dict = None, mob=None) -> bool:
     """Checks every 'speech' program's keyword against `spoken_text`
     (case-insensitive substring match). Finds the FIRST DIFFERENT
     keyword that matches, then fires EVERY program sharing that exact
@@ -411,9 +416,13 @@ def fire_speech_programs(session, programs: list, spoken_text: str, speaker_name
         if session.player.name in remembered.get(matched_keyword, []):
             return False
 
-    for prog in programs:
+    import smaug_progs
+    for prog in list(programs):
         if prog.get("trigger") == "speech" and (prog.get("keyword") or "").lower() == matched_keyword:
-            if not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name, mob_template=mob_template, keyword=matched_keyword):
+            if "script" in prog:
+                if random.randint(1, 100) <= prog.get("chance", 100):
+                    smaug_progs.execute(prog["script"], session, speaker_name, mob)
+            elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name, mob_template=mob_template, keyword=matched_keyword):
                 break
     return True
 
@@ -443,4 +452,4 @@ def process_random_triggers() -> None:
         for mob in combat.mobs_in_room(s.player.room_vnum):
             t = combat.MOB_TEMPLATES.get(mob.template_vnum)
             if t and t.get("mob_programs") and random.randint(1, 100) <= RANDOM_TRIGGER_CHANCE_PCT:
-                fire_programs(s, t["mob_programs"], "random", speaker_name=mob.name.capitalize())
+                fire_programs(s, t["mob_programs"], "random", speaker_name=mob.name.capitalize(), mob=mob)
