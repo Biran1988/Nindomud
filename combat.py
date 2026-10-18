@@ -82,6 +82,9 @@ DEFAULT_MOB_FIELDS = {
     "body_parts": ["head", "arms", "legs", "torso"],
     "gold": 0, "special_function": "None", "speaks": ["common"], "speaking": ["common"],
     "mob_programs": [],
+    # Hostile targeting config: flags decide which category attacks;
+    # these prototype fields name the specific village/clan.
+    "aggro_village": "", "aggro_clan": "",
     # Gameplay-critical fields combat.py actually resolves against:
     "experience_reward": 0, "ryo_reward": 0, "loot_items": [], "respawns": True,
     "enabled": True,  # immortal-only toggle -- disabled prototypes refuse to spawn
