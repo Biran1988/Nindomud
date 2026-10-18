@@ -14,6 +14,9 @@ from models import Player
 
 class CloneAndAggressionTests(unittest.TestCase):
     def setUp(self):
+        # Most tests mock room rendering; retain the real look handler for
+        # first-person visibility tests.
+        self.real_cmd_look = commands.cmd_look
         self.patches = [
             patch.object(combat, "MOBS_BY_ROOM", {}),
             patch.object(combat, "MOB_TEMPLATES", {}),
@@ -74,6 +77,55 @@ class CloneAndAggressionTests(unittest.TestCase):
         self.assertTrue(clone_control.handle_playing_command(self.session, "east"))
         self.assertEqual(self.clone.room_vnum, 5003)
         self.assertEqual(clone_control.view_room(self.session), 5003)
+        self.assertEqual(self.player.room_vnum, 5001)
+
+    def test_clone_look_sees_own_unmoved_body_in_original_room(self):
+        clone_control.cmd_clone(self.session, ["control"])
+        self.assertIs(self.session.player, self.player)
+        with patch.object(commands, "cmd_look", self.real_cmd_look):
+            self.session.send.reset_mock()
+            clone_control.handle_playing_command(self.session, "look")
+            text = "\n".join(call.args[0] for call in self.session.send.call_args_list)
+            self.assertIn("Scout", text)
+            self.assertIn("motionless", text)
+            self.assertIs(self.session.player, self.player)
+            self.assertEqual(self.player.room_vnum, 5001)
+            self.session.send.reset_mock()
+            clone_control.handle_playing_command(self.session, "look Scout")
+            text = "\n".join(call.args[0] for call in self.session.send.call_args_list)
+            self.assertIn("original body", text)
+
+            clone_control.handle_playing_command(self.session, "north")
+            self.session.send.reset_mock()
+            clone_control.handle_playing_command(self.session, "look")
+            away = "\n".join(call.args[0] for call in self.session.send.call_args_list)
+            self.assertNotIn("motionless", away)
+            self.assertEqual(self.player.room_vnum, 5001)
+            self.assertIs(self.session.player, self.player)
+
+            clone_control.handle_playing_command(self.session, "south")
+            self.session.send.reset_mock()
+            clone_control.handle_playing_command(self.session, "look")
+            returned = "\n".join(call.args[0] for call in self.session.send.call_args_list)
+            self.assertIn("motionless", returned)
+            self.assertEqual(self.player.room_vnum, 5001)
+
+    def test_pilot_receives_one_move_message_while_observers_see_travel(self):
+        observer_a = NS(player=Player("Watcher", "Watcher", room_vnum=5001),
+                        send=Mock())
+        observer_b = NS(player=Player("Guard", "Guard", room_vnum=5002),
+                        send=Mock())
+        session_module.ACTIVE_SESSIONS.extend([observer_a, observer_b])
+        clone_control.cmd_clone(self.session, ["control"])
+        self.session.send.reset_mock()
+        clone_control.handle_playing_command(self.session, "north")
+        messages = "\n".join(call.args[0] for call in self.session.send.call_args_list)
+        self.assertEqual(messages.count("You guide your clone north."), 1)
+        self.assertNotIn("travels north", messages)
+        self.assertNotIn("arrives from the south", messages)
+        self.assertIn("travels north", observer_a.send.call_args.args[0])
+        self.assertIn("arrives from the south", observer_b.send.call_args.args[0])
+        self.assertIs(self.session.player, self.player)
         self.assertEqual(self.player.room_vnum, 5001)
 
     def test_clone_cannot_revert_using_quit_recall_combat_or_other_body_commands(self):
