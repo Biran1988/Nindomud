@@ -581,6 +581,9 @@ def find_mob(room_vnum: int, query: str) -> Optional[Mob]:
 
 
 def remove_mob(mob: Mob) -> None:
+    if is_shadow_clone(mob):
+        import clone_control
+        clone_control.notify_clone_removed(mob, "disperses")
     room_mobs = MOBS_BY_ROOM.get(mob.room_vnum, [])
     if mob in room_mobs:
         room_mobs.remove(mob)
@@ -1423,6 +1426,8 @@ def dismiss_shadow_clones(player) -> int:
         removed_here = 0
         for mob in room_mobs:
             if mob.shadow_clone_owner == player.name:
+                import clone_control
+                clone_control.notify_clone_removed(mob, "disperses")
                 removed_here += 1
             else:
                 still_here.append(mob)
@@ -1598,6 +1603,8 @@ def tick_shadow_clone_upkeep(player) -> list:
             upkeep_reports.maintain_skill(player, skill)
             return messages
         popped = clones.pop()
+        import clone_control
+        clone_control.notify_clone_removed(popped, "collapses when you run out of Chakra")
         room_mobs = MOBS_BY_ROOM.get(popped.room_vnum, [])
         if popped in room_mobs:
             room_mobs.remove(popped)
@@ -2978,6 +2985,8 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         # +1 ryo from that separate mechanism even with the clone's
         # own ryo_reward correctly at 0.
         session.send(f"&Y{mob.name} dispels in a puff of smoke!&x")
+        import clone_control
+        clone_control.notify_clone_removed(mob, "is defeated in combat")
         room_mobs = MOBS_BY_ROOM.get(mob.room_vnum, [])
         if mob in room_mobs:
             room_mobs.remove(mob)
