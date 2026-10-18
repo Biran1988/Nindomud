@@ -80,6 +80,49 @@ class IndependentMobWanderTests(unittest.TestCase):
         self.assertGreater(first.next_wander_at, self.now)
         self.broadcast.assert_not_called()
 
+    def test_no_wander_destination_is_excluded_without_blocking_exits(self):
+        protected = world.WORLD.rooms[1102]
+        protected.flags.append("no_wander")
+        mob = combat.spawn_mob(91001, 1101)
+        mob.next_wander_at = 1001.0
+        self.now = 1002.0
+        combat.process_wander()
+        self.assertEqual(mob.room_vnum, 1101)
+        self.broadcast.assert_not_called()
+        self.assertGreater(mob.next_wander_at, self.now)
+
+        protected.flags.remove("no_wander")
+        mob.next_wander_at = 1001.0
+        combat.process_wander()
+        self.assertEqual(mob.room_vnum, 1102)
+
+    def test_mob_can_wander_out_of_no_wander_room_if_spawned_there(self):
+        world.WORLD.rooms[1102].flags.append("no_wander")
+        mob = combat.spawn_mob(91001, 1102)
+        mob.next_wander_at = 1001.0
+        self.now = 1002.0
+        combat.process_wander()
+        self.assertIn(mob.room_vnum, (1101, 1103))
+
+    def test_tailed_beast_roam_also_respects_no_wander(self):
+        import tailed_beasts
+        import session as session_module
+        protected = world.WORLD.rooms[1102]
+        protected.flags.append("no_wander")
+        mob = combat.spawn_mob(91001, 1101)
+        mob.tailed_beast_key = "one_tail"
+        mob.tailed_beast_despawn_at = 100000.0
+        mob.next_wander_at = 1001.0
+        self.now = 1002.0
+        with patch.object(tailed_beasts.time, "time", side_effect=lambda: self.now), \
+             patch.object(session_module, "ACTIVE_SESSIONS", []):
+            tailed_beasts.process_tailed_beasts(combat, world, session_module)
+            self.assertEqual(mob.room_vnum, 1101)
+            protected.flags.remove("no_wander")
+            mob.next_wander_at = 1001.0
+            tailed_beasts.process_tailed_beasts(combat, world, session_module)
+            self.assertEqual(mob.room_vnum, 1102)
+
     def test_sentinel_never_gets_a_wander_clock(self):
         combat.MOB_TEMPLATES[91001]["act_flags"] = ["Npc", "Wander", "Sentinel"]
         mob = combat.spawn_mob(91001, 1101)
