@@ -204,8 +204,10 @@ class Session:
         for other in self.active_sessions():
             if exclude_self and other is self:
                 continue
-            if other.player and other.player.room_vnum == self.player.room_vnum:
-                other.send(text)
+            if other.player:
+                import clone_control
+                if clone_control.view_room(other) == clone_control.view_room(self):
+                    other.send(text)
 
     def broadcast_all(self, text: str, exclude_self: bool = False) -> None:
         """Server-wide channel (e.g. OOC) -- every connected, playing session."""
@@ -224,6 +226,7 @@ class Session:
                 other.send(text)
 
     def request_close(self) -> None:
+        self.controlled_clone = None  # disconnect ends the transient link, never moves saved body
         if self.state == State.PLAYING and self.player:
             import mangekyo
             mangekyo.end_tsukuyomi_on_departure(self, world)
