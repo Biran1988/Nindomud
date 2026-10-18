@@ -4444,3 +4444,37 @@ def _begin_guided_edit(session, entry: dict) -> None:
         f"Enter additional keywords, comma-separated (current: {current_extra}), or press enter to keep them:",
         ask_keywords,
     )
+
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "mpedit",
+    "keywords": ["mpedit", "mob program", "mobprog", "mprog", "mpstat",
+                 "rpedit", "rpstat", "opedit", "opstat", "mpset",
+                 "smaug scripts", "smaugfuss programs"],
+    "title": "Multiline Mob, Room and Object Programs",
+    "body": (
+        "Syntax (Builder or higher with area access):\n"
+        "  mpedit <mob vnum> <greet|speech|fight|death|random|move|give|bribe> [speech keyword]\n"
+        "  mpedit <mob vnum> #<script index>  |  mpstat <mob vnum>\n"
+        "  mpset <mob vnum> <script index> <chance 1-100>\n"
+        "  rpedit <enter|random>  |  rpedit #<index>  |  rpstat\n"
+        "  opedit <item vnum> <get|wear>  |  opedit <vnum> #<index>  |  opstat <vnum>\n\n"
+        "Multiline editor: type one script instruction per line; use /l to list, /c to clear, "
+        "/a to cancel, /s or a single period to save. Save world when finished.\n\n"
+        "Branching: if level($n) < 10, or ..., else, endif. Nested branches allowed. "
+        "Other conditions: rank($n), clan($n), room($n), ryo($n), name($n), "
+        "hasitem($n, 9101), random(25), ispc($n), direction($d), "
+        "object($o), bribe($b).\n"
+        "Commands: say, emote, mpecho, mpechoat, mpechoaround, "
+        "mpgive, mpheal, mptransfer, mpgoto, mpmload, mpoload, "
+        "mpforce look/say/emote (restricted).\n"
+        "Variables: $n player, $i NPC, $r room, $v mob vnum, $d direction, "
+        "$o given object, $b bribe amount. Double-dollar $$ emits a literal dollar.\n\n"
+        "Legacy addprogram remains supported. To remove programs use mset/oset/rset "
+        "removeprogram with the zero-based index. Give items with 'give <item> <npc>'; "
+        "offer ryo with 'bribe <amount> <npc>'. All scripts are validated sandboxed "
+        "data and cannot execute Python, shell commands or privileged commands.\n"
+        "More details: docs/SMAUG_MOB_PROGRAMS.md (shipped with Nindo_mud source)."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
