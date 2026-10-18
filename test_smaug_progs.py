@@ -230,6 +230,38 @@ endif"""
                        "mpdamage 99999", "mphealmana 0", "mpjunk 1000000"):
             self.assertTrue(smaug_progs.validate_script(script), script)
 
+    def test_remembered_quest_flag_is_per_player_and_template_persistent(self):
+        dialogue = ("if remembered($n, academy_pass)\n"
+                    "mpechoat You have already passed.\n"
+                    "else\n"
+                    "mpechoat You passed the exam today.\n"
+                    "mpremember academy_pass\n"
+                    "endif")
+        self.assertEqual(smaug_progs.validate_script(dialogue), [])
+        self.assertTrue(smaug_progs.execute(dialogue, self.session, self.mob.name, self.mob))
+        self.assertIn("passed the exam today", self.session.send.call_args_list[-1].args[0])
+        self.assertIn("Tester", combat.MOB_TEMPLATES[9501]["script_memory"]["academy_pass"])
+        self.session.send.reset_mock()
+        self.assertTrue(smaug_progs.execute(dialogue, self.session, self.mob.name, self.mob))
+        self.assertIn("already passed", self.session.send.call_args_list[-1].args[0])
+        self.assertTrue(smaug_progs.execute("mpforget academy_pass", self.session,
+                                            self.mob.name, self.mob))
+        self.assertNotIn("Tester", combat.MOB_TEMPLATES[9501]["script_memory"]["academy_pass"])
+
+    def test_chakra_stamina_and_nonlethal_script_damage(self):
+        player = self.session.player
+        player.chakra = 0
+        player.stamina = 0
+        player.health = 70
+        self.assertEqual(smaug_progs.validate_script(
+            "mphealmana 20\nmphealmove 10\nmpdamage 100"), [])
+        self.assertTrue(smaug_progs.execute(
+            "mphealmana 20\nmphealmove 10\nmpdamage 100",
+            self.session, self.mob.name, self.mob))
+        self.assertEqual(player.chakra, 20)
+        self.assertEqual(player.stamina, 10)
+        self.assertEqual(player.health, 1)
+
     def test_mob_entry_trigger_fires_after_real_wandering_move(self):
         import session as session_module
         self.session.player.room_vnum = 9002
