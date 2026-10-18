@@ -298,6 +298,24 @@ def cmd_move(session, direction: str) -> None:
             if t and t.get("mob_programs") and programs.check_level_gate(session, t["mob_programs"], direction, speaker_name=mob.name.capitalize()):
                 return
 
+    # Scripted mob "move" trigger: fire before leaving while the
+    # triggering player and guard still share a room. A script may
+    # transfer the player, in which case do not perform a second move.
+    if not is_staff:
+        previous_direction = getattr(session, "_mudprog_direction", "")
+        session._mudprog_direction = direction
+        try:
+            for mob in list(combat.mobs_in_room(player.room_vnum)):
+                template = combat.MOB_TEMPLATES.get(mob.template_vnum)
+                if template and any(p.get("trigger") == "move" and "script" in p
+                                    for p in template.get("mob_programs", ())):
+                    programs.fire_programs(session, template["mob_programs"], "move",
+                                           speaker_name=mob.name.capitalize(), mob=mob)
+                    if player.room_vnum != room.vnum:
+                        return
+        finally:
+            session._mudprog_direction = previous_direction
+
     destination_vnum = room.exits[direction]
     if not olc._require_assigned_vnum(session, destination_vnum):
         return
