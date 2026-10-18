@@ -543,7 +543,7 @@ $('exitEditorDirection').onchange=renderExitAdvanced;
 function flagPicker(entity,kind,container,settings){
   const isMob=kind==='mobs',field=isMob?'act_flags':'extra_flags';
   const options=isMob?['SummonElder','Invis','Banker','BountyOffice','Npc',
-    'Sentinel','Shopkeeper','Garrison','Trap','Wander','Scavenger','Mission','Immortal']:
+    'Sentinel','Shopkeeper','Garrison','Trap','Wander','Scavenger','Mission','Immortal','aggressive_village','aggressive_clan','aggressive_everyone']:
     ['invis','no_sac','no_take'];
   const box=nodeEl('div',undefined,'helper');
   box.append(nodeEl('strong',isMob?'Mob flags':'Item flags'));
