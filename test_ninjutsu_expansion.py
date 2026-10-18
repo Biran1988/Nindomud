@@ -79,7 +79,7 @@ class NinjutsuExpansionTests(unittest.TestCase):
             clones = combat.active_shadow_clones(p)
             self.assertEqual(len(clones), 1)
             self.assertEqual(clones[0].clone_element, "water")
-            self.assertIn("water clone", clones[0].name)
+            self.assertEqual(clones[0].name, p.name)
             self.assertEqual(clones[0].max_health, p.maximum_health // 4)
 
     def test_barrier_and_room_earthquake(self):
