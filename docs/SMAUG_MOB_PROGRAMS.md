@@ -31,6 +31,9 @@ script trigger, command, and condition.
     opedit 9101 #0
     oset removeprogram 9101 0
 
+    rset flags no_wander             On the current room, toggle no_wander
+    rstat                            Display current room flags
+
 The in-game multiline editor already supports /l to list text, /c to clear,
 /a to abort, and . or /s to save. Follow with **save world** to make scripts
 persistent after reboot. All builder area/VNUM permissions remain enforced.
@@ -81,6 +84,13 @@ Examples:
     if direction($d) == north
     if object($o) == 9101
     if bribe($b) >= 500
+    if hitprcnt($i) <= 25
+    if moblevel($i) >= 50
+    if health($n) <= 50
+    if chakra($n) <= 20
+    if stamina($n) < 20
+    if roomflag($r, no_wander)
+    if remembered($n, academy_pass)
 
 Variables: $n = triggering player, $i = NPC or room/item speaker,
 $r = player's room VNUM, $v = NPC template VNUM, $d = attempted move
@@ -102,15 +112,42 @@ Approved commands:
     mpforce look              Safely cause a look
     mpforce say TEXT          Narrate player's speech
     mpforce emote TEXT        Narrate player's action
+    wait SECONDS              Non-blocking script delay (1–120 s)
+    mphealmana AMOUNT         Recover triggering player's chakra
+    mphealmove AMOUNT         Recover triggering player's stamina
+    mpdamage AMOUNT           Damage player without bypassing defeat flow (minimum 1 HP)
+    mpasound TEXT             Announce to adjacent occupied rooms
+    mpjunk ITEM_VNUM          Remove one matching room ground item (or all, up to 20)
+    mpremember KEY            Remember the triggering player on this NPC prototype
+    mpforget KEY              Clear the player's remembered marker
 
-Triggers: mob greet/speech/death/fight/random/move/give/bribe;
-room enter/random; item get/wear.
+Triggers: mob greet/speech/death/fight/random/move/give/bribe/entry;
+room enter/random; item get/wear; mob entry when an NPC enters a
+player-occupied room by roaming or an explicit scripted NPC move.
 
 Players can trigger the new give event by handing an item to a matching
 scripted NPC with give ITEM NPCNAME. The item leaves the player's
 inventory. The bribe event uses bribe RYO NPCNAME; ryo is deducted before
 the script runs. Conditions object($o) and bribe($b) inspect these values.
 Existing player-to-player give and player-shop stocking take priority.
+
+The **no_wander** flag affects NPC exits, not player movement. Mark a
+room using `rset flags no_wander` or the visual room flag picker, then
+`save world`. Roaming Wander mobs and roaming tailed beasts cannot enter.
+Mobs already inside can leave; scripted `mpgoto`, scripted spawning,
+and intentional manual spawning are not blocked.
+
+NPC quest memory uses `mpremember academy_pass` followed by
+`if remembered($n, academy_pass)`. These markers are saved in the
+mob template by `save world`, shared by all instances of that VNUM.
+`mpforget academy_pass` clears one player's marker.
+
+`wait 5` delays just that particular program continuation, allowing
+further lines and nested branches to resume on normal one-second server
+pulses; it does not block other players or the server. Delays are
+transient and canceled on disconnect/restart. Limits are 120 seconds
+per wait, 300 total seconds per invocation, and eight pending
+continuations per player.
 
 A 15% per-pulse random check is retained before mob/room random scripts
 are considered; a script's own configured chance is applied additionally.
@@ -131,6 +168,6 @@ Area import/export allows validated scripts while retaining stale-import
 protection. Deploy code without replacing the live data directory.
 
 **Current limitation:** This is the usable core of a SmaugFUSS-style
-interpreter, not 100% parity. Historical wait timers, every SMAUG trigger,
+interpreter, not 100% parity. Some historical triggers and ifchecks,
 the full ifcheck library, arbitrary mpforce commands and unrestricted
 builder scripts have not been implemented.
