@@ -462,4 +462,5 @@ CHANGELOG = [
     ("15.313", "Added a full-world image map to the offline builder, draggable area markers, visual area connections, multi-area file upload, world backup/restore, and the Implementor-only 'area exportworld' command."),
     ("15.314", "Wandering mobs now receive independently seeded movement schedules as soon as they spawn. Same-room populations stagger their departures, each mob moves at most once per pulse, and mstat reports an individual mob's next Wander countdown."),
     ("15.315", "Added multiline Smaug-style mob, room and object programs with mpedit/mpstat, nested conditionals, game-context variables, safe NPC scripting commands, combat, item hand-in and bribe triggers. Original addprogram entries remain compatible and scripts persist with save world."),
+    ("15.316", "Expanded multiline Smaug-style NPC scripts with non-blocking wait delays, mob entry events, boss HP and room flag conditions, persistent quest memory, ambient echoes, Chakra/Stamina effects and bounded damage; added the no_wander room flag to stop random mobs and roaming tailed beasts entering flagged rooms."),
 ]
