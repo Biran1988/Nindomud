@@ -38,15 +38,21 @@ ability list:
 - The real body stays physically in its original room, never teleports,
   and remains vulnerable to any attack there. Scout `look` uses a
   separate viewpoint copy so the original character object is never
-  repositioned, not even temporarily during room inspection. When the
-  clone is in the same room as its original body, `look` lists the
-  caster standing motionless; `look <your-name>` examines that body.
-- The controlling player receives one `You guide your clone <direction>`
-  message plus the destination room description upon moving. Other
-  players still see the clone's departure/arrival, but the pilot does
-  not receive duplicate third-person movement messages.
-- The clone Mob instance physically walks through real enabled exits,
-  observes rooms, can look, scan, examine and speak using its own identity.
+  repositioned, not even temporarily during room inspection. The pilot
+  can see and examine the original body when returning to its room,
+  but **neither the pilot nor observers see a "motionless", "remote",
+  or "controlling a clone" marker**. It appears as an ordinary player.
+- Clone movement matches regular player movement: the pilot receives only
+  the destination room view. Nearby observers see
+  `<player> leaves <direction>.` and
+  `<player> arrives from the <opposite direction>.` once each, with no
+  `You guide your clone` message or repeated movement echo.
+- Shadow and elemental clone Mob instances share the caster's visible
+  name and description, even before entering clone control. They retain
+  their own element data internally for combat/upkeep and physically walk
+  through real enabled exits. `look` on the clone shows a normal character,
+  and `say` / `@emote` use the caster's ordinary player name and formatting
+  without exposing which body is speaking.
   It cannot enter disabled areas, private apartments, player shops,
   or bypass hidden/closed doors.
 - The clone has its *own existing HP*, is fully attackable, and does not
