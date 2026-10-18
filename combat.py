@@ -3439,6 +3439,13 @@ def resolve_pvp_pulse(session) -> None:
     if target.izanami_trapped:
         return
 
+    if getattr(session, "controlled_clone", None) is not None:
+        # The original body cannot defend or strike while its user is
+        # remotely controlling an elemental scout. Incoming PvP rounds
+        # from other players still resolve normally on their sessions.
+        session.send("&DYour body cannot attack while your senses inhabit your clone.&x")
+        return
+
     if player.jinchuriki_beast_key and player.rampage_until == 0.0:
         import tailed_beasts as tailed_beasts_module
         tailed_beasts_module.tick_jinchuriki_mastery(player)
