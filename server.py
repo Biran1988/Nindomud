@@ -161,6 +161,8 @@ async def pulse_loop() -> None:
         auction.process_expired_auctions()
         combat.process_wander()
         combat.process_scavengers()
+        import mob_aggression
+        mob_aggression.process_aggression()
         smaug_progs.process_delayed()
         import tailed_beasts
         import world as world_module
