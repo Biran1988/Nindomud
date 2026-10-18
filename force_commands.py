@@ -69,6 +69,11 @@ def parse_mpforce_args(raw):
         command = parts[1]
     else:
         command = raw.strip()
+        # Retain the pre-SMAUG Nindo_mud shorthand: "mpforce emote
+        # <freeform text>" was a harmless room narration action, not
+        # a player command. Genuine socials still use @yawn/emote yawn.
+        if command.lower().startswith("emote ") and len(command) <= MAX_FORCED_COMMAND_LENGTH:
+            return command, None
     error = validate_forced_command(command)
     return (None, error) if error else (command, None)
 
