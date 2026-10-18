@@ -91,7 +91,7 @@ def drop(session, args):
 
 
 def is_get_command(query):
-    return bool(re.fullmatch(r"(?:ryo|all ryo|[0-9]+ ryo|[0-9]+\\.ryo)", query))
+    return bool(re.fullmatch(r"(?:ryo|all ryo|[0-9]+ ryo|[0-9]+\.ryo)", query))
 
 
 def pickup(session, query):
