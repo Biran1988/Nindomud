@@ -1176,9 +1176,17 @@ def cmd_scan(session, args: List[str]) -> None:
     for other in session.active_sessions():
         if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.")
+    # Scanning with the clone must also reveal the original character
+    # standing in the neighboring room, without a special status tag.
+    original_body = getattr(session, "_clone_original_player", None)
+    if original_body is not None and original_body.room_vnum == target.vnum:
+        lines.append(f"  &G{original_body.name}&x is here.")
     for mob in combat.mobs_in_room(target.vnum):
         if not _is_invisible_mob(mob):
-            lines.append(f"  {mob.name} is here.")
+            if combat.is_shadow_clone(mob):
+                lines.append(f"  &G{mob.name}&x is here.")
+            else:
+                lines.append(f"  {mob.name} is here.")
     for corpse in corpses.corpses_in_room(target.vnum):
         lines.append(f"  &D{corpse.name}&x is here.")
     for name, count in inventory.slot_counts(target.ground_items).items():
