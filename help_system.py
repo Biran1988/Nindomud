@@ -4467,7 +4467,8 @@ DEFAULT_HELP_ENTRIES.append({
         "object($o), bribe($b), hitprcnt($i), health($n), chakra($n), stamina($n), "\n        "roomflag($r, no_wander), remembered($n, academy_pass).\n"
         "Commands: say, emote, mpecho, mpechoat, mpechoaround, "
         "mpgive, mpheal, mptransfer, mpgoto, mpmload, mpoload, "
-        "mpforce look/say/emote (restricted), wait 1-120 (non-blocking), "\n        "mphealmana/mphealchakra, mphealmove/mphealstamina, mpdamage, mpasound, mpjunk, mpremember, mpforget.\n"
+        "mpforce $n <approved game command> (or legacy mpforce <command>), "
+        "wait 1-120 (non-blocking), "\n        "mphealmana/mphealchakra, mphealmove/mphealstamina, mpdamage, mpasound, mpjunk, mpremember, mpforget.\n"
         "Variables: $n player, $i NPC, $r room, $v mob vnum, $d direction, "
         "$o given object, $b bribe amount. Double-dollar $$ emits a literal dollar.\n\n"
         "Legacy addprogram remains supported. To remove programs use mset/oset/rset "
@@ -4499,6 +4500,44 @@ DEFAULT_HELP_ENTRIES.append({
         "Monsters already inside a no_wander room may still wander out. "
         "This flag is also available in the offline Nindo_mud visual "
         "area builder's room flag selector, and remains in area exports."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "force",
+    "keywords": ["force", "immortal force", "mpforce", "mforce", "force all"],
+    "title": "Immortal Force / Mob Program MPforce",
+    "body": (
+        "Immortal command (Helper rank or higher):\n"
+        "  force <online player name> <allowed player command>\n"
+        "  force Sakura north\n"
+        "  force Sakura say Prepare for the Chuunin Exams!\n"
+        "  force Sakura @yawn\n"
+        "  force Sakura attack bandit\n"
+        "Administrators and Implementors only (limited safe social actions):\n"
+        "  force all say The Chuunin Exams have begun!\n\n"
+        "Mob program script command:\n"
+        "  mpforce $n <allowed player command>\n"
+        "  mpforce $n north\n"
+        "  mpforce $n say Welcome, student.\n"
+        "  mpforce $n attack bandit\n"
+        "  mpforce look  (older shorthand; targets triggering player)\n\n"
+        "Forces a normal command through the target player's real command "
+        "dispatcher, not a fake movement or action. Regular game rules and "
+        "checks still apply. Only online ordinary player characters in the "
+        "PLAYING state may be forced; staff, offline characters and "
+        "characters in editors cannot be forced. The target receives a "
+        "notification, and immortals' successful force actions are audited.\n\n"
+        "Allowed: directional movement, look/scan, say/ask, native @social "
+        "emotes, information/status commands, rest/sleep/stand, recall, "
+        "ordinary combat attack/kill/flee and perform. Staff, account, "
+        "bank/economy, equipment drop/trade/purchase, save, quit, world "
+        "editor, force and other privileged commands are blocked. "
+        "Recursive force loops are blocked. Bulk force all is limited "
+        "to 50 ordinary players and basic harmless social/status commands.\n\n"
+        "Full documentation: docs/SMAUG_MOB_PROGRAMS.md."
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
