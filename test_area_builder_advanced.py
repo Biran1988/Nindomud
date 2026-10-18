@@ -132,6 +132,26 @@ class AdvancedAreaEditorTests(unittest.TestCase):
         world_persistence.save_world()
         self.assertIn("no_wander", storage.load_world_state()["rooms"]["20000"]["flags"])
 
+    def test_mob_aggression_flags_target_fields_roundtrip(self):
+        data = package()
+        data["mobs"][0]["settings"] = {
+            "act_flags": ["Npc", "aggressive_village", "aggressive_clan",
+                          "aggressive_everyone"],
+            "aggro_village": "leaf",
+            "aggro_clan": "uchiha",
+        }
+        staged = area_import.validate(data)
+        area_import.import_package(staged, "Biran")
+        template = combat.MOB_TEMPLATES[30000]
+        self.assertIn("aggressive_village", template["act_flags"])
+        self.assertIn("aggressive_clan", template["act_flags"])
+        self.assertIn("aggressive_everyone", template["act_flags"])
+        self.assertEqual(template["aggro_village"], "leaf")
+        self.assertEqual(template["aggro_clan"], "uchiha")
+        _, exported = area_import.export_area("Test Forest")
+        self.assertEqual(exported["mobs"][0]["settings"]["aggro_village"], "leaf")
+        self.assertEqual(exported["mobs"][0]["settings"]["aggro_clan"], "uchiha")
+
     def test_reject_restricted_fields_and_executable_programs(self):
         data = package()
         data["mobs"][0]["settings"] = {"__class__": "oops"}
