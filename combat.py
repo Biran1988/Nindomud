@@ -438,8 +438,10 @@ def _broadcast_to_room(room_vnum: int, text: str) -> None:
     movement (commands.cmd_move's own session.broadcast_room) does."""
     import session as session_module
     for s in session_module.ACTIVE_SESSIONS:
-        if s.player and s.player.room_vnum == room_vnum:
-            s.send(text)
+        if s.player:
+            import clone_control
+            if clone_control.view_room(s) == room_vnum:
+                s.send(text)
 
 
 WANDER_MIN_SECONDS = 120.0  # Each mob's normal interval: 2–4 real minutes
