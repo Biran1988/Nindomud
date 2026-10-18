@@ -114,6 +114,9 @@ def cmd_clone(session, args):
     if combat._mob_is_being_fought(clone):
         session.send("That clone is already fighting; you cannot enter its body during combat.")
         return
+    # Preserve the ordinary player's identity, including clones summoned
+    # before the disguise was added. No observer should see an element tag.
+    clone.name = player.name
     session.controlled_clone = clone
     session.send(f"&CYour consciousness enters {clone.name}. Your real body remains "
                  f"in room {player.room_vnum}; you now see through your clone.&x")
@@ -200,7 +203,7 @@ def _move(session, direction):
     # 'no_wander' stops RANDOM movement only. A manually piloted clone
     # is a deliberate reconnaissance action rather than an ambient wander.
     origin = clone.room_vnum
-    combat._broadcast_to_room(origin, f"{clone.name} travels {direction}.",
+    combat._broadcast_to_room(origin, f"{clone.name} leaves {direction}.",
                               exclude_session=session)
     current = combat.MOBS_BY_ROOM.get(origin, ())
     if clone not in current:
@@ -209,7 +212,8 @@ def _move(session, direction):
     current.remove(clone)
     clone.room_vnum = dest.vnum
     combat.MOBS_BY_ROOM.setdefault(dest.vnum, []).append(clone)
-    session.send(f"&CYou guide your clone {direction}.&x")
+    # Just like ordinary walking, show the destination room once.
+    # Both room broadcasts exclude the pilot to prevent echo spam.
     combat._broadcast_to_room(dest.vnum, f"{clone.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.",
                               exclude_session=session)
     _look(session)
@@ -229,11 +233,12 @@ def _say(session, text):
         return
     text = chat_moderation.censor(text)
     clone = session.controlled_clone
-    session.send(f'&CThrough {clone.name}, you say:&x "{text}"')
+    # Match ordinary say exactly. No "through your clone" reveal.
+    session.send(f"&gYou say, '{text}'&x")
     for other in session_module.ACTIVE_SESSIONS:
         if (other is not session and other.player and
                 view_room(other) == clone.room_vnum):
-            other.send(f'{clone.name} says, "{text}"')
+            other.send(f"&g{session.player.name} says, '{text}'&x")
 
 
 def _social(session, name):
@@ -252,11 +257,11 @@ def _social(session, name):
         session.send("&D(You're talking too fast! You have been silenced for 10 minutes.)&x")
         return
     clone = session.controlled_clone
-    session.send(f"You {own} through {clone.name}")
+    session.send(f"You {own}")
     for other in session_module.ACTIVE_SESSIONS:
         if (other is not session and other.player and
                 view_room(other) == clone.room_vnum):
-            other.send(f"{clone.name} {other_text}")
+            other.send(f"{session.player.name} {other_text}")
 
 
 def handle_playing_command(session, line):
