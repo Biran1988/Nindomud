@@ -402,6 +402,7 @@ def cmd_mstat(session, args: List[str]) -> None:
         f"&C{'FLAGS AND BEHAVIOR'.center(62)}&x",
         _rule(),
         f"&WFlags:&x {_fmt_list(t['act_flags'])}",
+        f"&WAggression Targets:&x village={t.get('aggro_village') or '(unset)'}, clan={t.get('aggro_clan') or '(unset)'}",
         f"&WAffected By:&x {_fmt_list(t['affected_by'])}",
         f"&WAttacks:&x {_fmt_list(t['attack_verbs'])}",
         f"&WDefenses:&x {_fmt_list(t['defenses'])}",
