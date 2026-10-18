@@ -210,7 +210,7 @@ def _fire_enter_triggers(session) -> None:
     for mob in combat.mobs_in_room(player.room_vnum):
         t = combat.MOB_TEMPLATES.get(mob.template_vnum)
         if t and t.get("mob_programs"):
-            programs.fire_programs(session, t["mob_programs"], "greet", speaker_name=mob.name.capitalize())
+            programs.fire_programs(session, t["mob_programs"], "greet", speaker_name=mob.name.capitalize(), mob=mob)
 
     import territory
     trap_message = territory.check_trap_trigger(player)
@@ -1208,7 +1208,7 @@ def cmd_say(session, args: List[str]) -> None:
     for mob in combat.mobs_in_room(player.room_vnum):
         t = combat.MOB_TEMPLATES.get(mob.template_vnum)
         if t and t.get("mob_programs"):
-            if programs.fire_speech_programs(session, t["mob_programs"], message, speaker_name=mob.name.capitalize(), mob_template=t):
+            if programs.fire_speech_programs(session, t["mob_programs"], message, speaker_name=mob.name.capitalize(), mob_template=t, mob=mob):
                 break  # only one mob responds per utterance, even if several are listening
 
 
@@ -8256,6 +8256,13 @@ COMMANDS = {
     "aset": olc.cmd_aset,
     "astat": olc.cmd_astat,
     "mset": olc.cmd_mset,
+    "mpedit": olc.cmd_mpedit,
+    "mpstat": olc.cmd_mpstat,
+    "mpset": olc.cmd_mpset,
+    "rpedit": olc.cmd_rpedit,
+    "rpstat": olc.cmd_rpstat,
+    "opedit": olc.cmd_opedit,
+    "opstat": olc.cmd_opstat,
     "mcreate": olc.cmd_mcreate,
     "mcopy": olc.cmd_mcopy,
     "minvoke": olc.cmd_minvoke,
