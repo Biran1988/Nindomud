@@ -521,6 +521,7 @@ def process_wander() -> None:
             (direction, dest) for direction, dest in room.exits.items()
             if world.WORLD.get(dest) and world.WORLD.get(dest).enabled
             and not world.WORLD.get(dest).apartment
+            and "no_wander" not in world.WORLD.get(dest).flags
         ]
         if not candidates:
             _schedule_next_wander(mob, now)
