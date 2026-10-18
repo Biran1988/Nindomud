@@ -786,6 +786,9 @@ VALID_ITEM_EXTRA_FLAGS = {
     "no_take", # commands.py -- protects this item from 'get' -- for cosmetic room decoration (furniture, signs, plants) that's meant to stay put, placed via 'oset load'/spawn points and never picked up
 }
 VALID_MOB_ACT_FLAGS = {
+    "aggressive_village",  # attacks members of configured aggro_village
+    "aggressive_clan",     # attacks members of configured aggro_clan
+    "aggressive_everyone", # attacks all non-staff player characters
     "SummonElder",  # sage_mode.py -- teaches its configured summon_family in the same room
     "Invis",  # commands.py -- hidden from room look and directional scan
     "Banker",       # commands.py -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob
@@ -1699,7 +1702,7 @@ def _do_bunlink(session, room, rest: List[str]) -> None:
 
 MOB_STRING_FIELDS = {"short_desc", "long_desc", "description", "sex",
                       "position", "default_position", "hit_dice", "damage_dice", "special_function",
-                      "teacher", "primary_class", "summon_family"}
+                      "teacher", "primary_class", "summon_family", "aggro_village", "aggro_clan"}
 MOB_INT_FIELDS = {"level", "alignment", "mana", "move", "armor_class", "hit_roll",
                    "damage_roll", "attacks", "gold", "ryo_reward"}
 MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defenses",
@@ -2557,6 +2560,20 @@ def cmd_mset(session, args: List[str]) -> None:
         if field in ("hit_dice", "damage_dice") and not dice.is_valid(value_text):
             session.send(f"'{value_text}' isn't valid dice notation (expected e.g. '2d6+4').")
             return
+        if field == "aggro_village":
+            allowed = set(config.VILLAGES)
+            val = value_text.strip().lower()
+            if val not in allowed and val not in ("none", "off"):
+                session.send("Choose a target village: " + ", ".join(sorted(allowed)) + ", or off.")
+                return
+            value_text = "" if val in ("none", "off") else val
+        if field == "aggro_clan":
+            import data_clans
+            val = value_text.strip().lower()
+            if val not in data_clans.CLANS and val not in ("none", "off"):
+                session.send("Unknown clan. Use a configured Naruto clan identifier, or off.")
+                return
+            value_text = "" if val in ("none", "off") else val
         if field == "teacher":
             teacher_value = value_text.strip().lower()
             if teacher_value in ("off", "none", ""):
