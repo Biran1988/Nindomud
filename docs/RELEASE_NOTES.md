@@ -194,3 +194,14 @@ leveling, mob XP, and the older gameplay smoke checks.
   pending-continuation limits prevent blocking the event loop.
   See docs/SMAUG_MOB_PROGRAMS.md for supported syntax. Historical
   SMAUG commands and triggers not specifically listed remain unsupported.
+
+- Version 15.317 adds immortal `force <player> <allowed command>` and
+  SMAUG-style `mpforce $n <allowed command>`. Actions run under the
+  online ordinary player's real game session, respecting combat and
+  movement restrictions. Staff, account, bank/economy, quit/reboot,
+  world-editor and destructive inventory commands are not forceable.
+  Administrator/Implementor `force all` is restricted to basic social
+  actions with a 50-character cap. Each forced target is notified, and
+  immortal force commands are audit-logged. Legacy mpforce shorthand
+  remains supported. Added targeted regression tests in
+  `test_force_commands.py`.
