@@ -178,6 +178,75 @@ endif"""
         self.assertEqual(self.session.player.ryo, 500)
         self.assertEqual(self.session.player.health, 70)
 
+    def test_nonblocking_wait_resumes_at_due_pulse_only(self):
+        import session as session_module
+        self.addCleanup(smaug_progs._PENDING.clear)
+        smaug_progs._PENDING.clear()
+        script = "mpechoat Start\nwait 3\nmpechoat Finish"
+        self.assertEqual(smaug_progs.validate_script(script), [])
+        with patch.object(smaug_progs.time, "time", return_value=1000.0), \
+             patch.object(session_module, "ACTIVE_SESSIONS", [self.session]):
+            self.assertTrue(smaug_progs.execute(script, self.session, self.mob.name, self.mob))
+            self.assertEqual(self.session.send.call_args_list[-1].args[0], "Start")
+            self.assertEqual(len(smaug_progs._PENDING), 1)
+            smaug_progs.process_delayed(now=1002.0)
+            self.assertEqual(self.session.send.call_args_list[-1].args[0], "Start")
+            smaug_progs.process_delayed(now=1003.0)
+            self.assertEqual(self.session.send.call_args_list[-1].args[0], "Finish")
+            self.assertFalse(smaug_progs._PENDING)
+
+    def test_nested_wait_and_disconnected_player_cleanup(self):
+        import session as session_module
+        self.addCleanup(smaug_progs._PENDING.clear)
+        smaug_progs._PENDING.clear()
+        text = ("if level($n) < 10\nmpechoat Before\nwait 5\n"
+                "mpechoat After\nendif\nmpechoat End")
+        with patch.object(smaug_progs.time, "time", return_value=1000.0), \
+             patch.object(session_module, "ACTIVE_SESSIONS", [self.session]):
+            self.assertTrue(smaug_progs.execute(text, self.session, self.mob.name, self.mob))
+            self.assertEqual(self.session.send.call_args_list[-1].args[0], "Before")
+        with patch.object(session_module, "ACTIVE_SESSIONS", []):
+            smaug_progs.process_delayed(now=1005.0)
+        self.assertFalse(smaug_progs._PENDING)
+        self.assertEqual(self.session.send.call_args_list[-1].args[0], "Before")
+
+    def test_hp_threshold_and_no_wander_roomflag_ifchecks(self):
+        world.WORLD.rooms[9001].flags.append("no_wander")
+        self.mob.health = max(1, self.mob.max_health // 4)
+        script = ("if hitprcnt($i) <= 30\n"
+                  "if roomflag($r, no_wander)\n"
+                  "mpechoat Your boss is weakened in a protected room.\n"
+                  "endif\nendif")
+        self.assertEqual(smaug_progs.validate_script(script), [])
+        self.assertTrue(smaug_progs.execute(script, self.session, self.mob.name, self.mob))
+        self.assertIn("weakened", self.session.send.call_args.args[0])
+        world.WORLD.rooms[9001].flags.remove("no_wander")
+        self.session.send.reset_mock()
+        self.assertTrue(smaug_progs.execute(script, self.session, self.mob.name, self.mob))
+        self.session.send.assert_not_called()
+
+    def test_wait_limits_and_sandbox_ban_invalid_commands(self):
+        for script in ("wait 0", "wait 121", "mpforce reboot",
+                       "mpdamage 99999", "mphealmana 0", "mpjunk 1000000"):
+            self.assertTrue(smaug_progs.validate_script(script), script)
+
+    def test_mob_entry_trigger_fires_after_real_wandering_move(self):
+        import session as session_module
+        self.session.player.room_vnum = 9002
+        world.WORLD.rooms[9001].exits["east"] = 9002
+        combat.MOB_TEMPLATES[9501]["act_flags"] = ["Npc", "Wander"]
+        combat.MOB_TEMPLATES[9501]["mob_programs"] = [
+            {"trigger": "entry", "script": "mpechoat $i has arrived.", "chance": 100}
+        ]
+        self.mob.next_wander_at = 1.0
+        with patch.object(session_module, "ACTIVE_SESSIONS", [self.session]), \
+             patch.object(combat, "_mob_is_being_fought", return_value=False), \
+             patch.object(combat.time, "time", return_value=10000.0), \
+             patch.object(combat, "_broadcast_to_room"):
+            combat.process_wander()
+        self.assertEqual(self.mob.room_vnum, 9002)
+        self.assertIn("has arrived", self.session.send.call_args.args[0])
+
     def test_script_loading_and_transfer_do_not_write_prototypes(self):
         olc.OBJECT_TEMPLATES[9601] = olc.default_object(9601, "Exam Scroll")
         combat.MOB_TEMPLATES[9501]["mob_programs"] = [
