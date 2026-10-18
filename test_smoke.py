@@ -111,7 +111,9 @@ def main():
     feed(session, "SuperSecret123")
     feed(session, "leaf")
     feed(session, "ninjutsu")
-    feed(session, "none")
+    # Every character must choose an actual clan; 'none' is no longer
+    # a valid option and must not be used by the smoke test.
+    feed(session, "uchiha")
     feed(session, "balanced")
     feed(session, "male")
     feed(session, "tan")
