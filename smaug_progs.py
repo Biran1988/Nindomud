@@ -28,6 +28,7 @@ COMMANDS = {
     "say", "emote", "mpecho", "mpechoat", "mpechoaround",
     "mptransfer", "mpmload", "mpoload", "mpforce", "mpgive",
     "mpheal", "mpgoto", "mphealmana", "mphealmove", "mpdamage",
+    "mphealchakra", "mphealstamina",
     "mpasound", "mpjunk", "mpremember", "mpforget", "wait",
 }
 COMPARISONS = {"==", "!=", "<", "<=", ">", ">="}
@@ -123,7 +124,8 @@ def compile_script(script):
             if not args.strip():
                 raise ValueError(f"Line {number}: {word} requires arguments.")
             if word in {"mptransfer", "mpmload", "mpoload", "mpgive", "mpheal", "mpgoto",
-                        "mphealmana", "mphealmove", "mpdamage", "wait", "mpjunk"}:
+                        "mphealmana", "mphealmove", "mphealchakra", "mphealstamina",
+                        "mpdamage", "wait", "mpjunk"}:
                 if word == "mpjunk" and args.strip().lower() == "all":
                     pass
                 elif not re.fullmatch(r"\d{1,7}", args.strip()):
@@ -131,7 +133,7 @@ def compile_script(script):
                 if word != "mpjunk" or args.strip().lower() != "all":
                     value = int(args.strip())
                     cap = (MAX_WAIT_SECONDS if word == "wait" else
-                           10000 if word in {"mpheal", "mphealmana", "mphealmove"} else
+                           10000 if word in {"mpheal", "mphealmana", "mphealmove", "mphealchakra", "mphealstamina"} else
                            500 if word == "mpdamage" else 999999)
                     if value <= 0 or value > cap:
                         raise ValueError(f"Line {number}: {word} value is out of range.")
@@ -257,10 +259,10 @@ def _command(session, command, args, speaker_name, mob, budget):
         amount = int(args)
         player.health = min(player.maximum_health, player.health + amount)
         session.send(f"{speaker_name} restores {amount} health.")
-    elif command == "mphealmana":
+    elif command in {"mphealmana", "mphealchakra"}:
         amount = int(args)
         player.chakra = min(player.maximum_chakra, player.chakra + amount)
-    elif command == "mphealmove":
+    elif command in {"mphealmove", "mphealstamina"}:
         amount = int(args)
         player.stamina = min(player.maximum_stamina, player.stamina + amount)
     elif command == "mpdamage":
@@ -276,7 +278,7 @@ def _command(session, command, args, speaker_name, mob, budget):
                 if other.player and other.player.room_vnum in dests:
                     other.send(args)
     elif command == "mpjunk" and room:
-        if args == "all":
+        if args.lower() == "all":
             del room.ground_items[:20]
         else:
             template = olc.OBJECT_TEMPLATES.get(int(args))
