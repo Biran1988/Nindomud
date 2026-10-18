@@ -536,6 +536,8 @@ def process_wander() -> None:
         _broadcast_to_room(destination, f"{mob.name.capitalize()} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
         moved_from_rooms.add(origin)
         _schedule_next_wander(mob, now)
+        import programs
+        programs.fire_mob_entry(mob)
 
 
 def process_scavengers() -> None:
