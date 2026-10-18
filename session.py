@@ -1056,12 +1056,12 @@ class Session:
         if not line:
             self.send_prompt()
             return
-        import element_choice
-        if element_choice.handle_command(self, line):
-            self.send_prompt()
-            return
         import clone_control
         if clone_control.handle_playing_command(self, line):
+            self.send_prompt()
+            return
+        import element_choice
+        if element_choice.handle_command(self, line):
             self.send_prompt()
             return
         previous_room = self.player.room_vnum
