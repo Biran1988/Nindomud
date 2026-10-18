@@ -1408,8 +1408,10 @@ def spawn_shadow_clones(player, count: int, element: str = "none") -> List["Mob"
         clone.max_health = clone.health
         clone.shadow_clone_owner = player.name
         clone.clone_element = element
-        if element != "none":
-            clone.name = f"{player.name}'s {element} clone"
+        # All shadow and elemental clones copy their caster's visible name.
+        # The actual nature is retained internally in clone_element for
+        # combat, upkeep and mastery rather than advertised in room text.
+        clone.name = player.name
         clone.respawns = False  # a popped clone never comes back on its own -- only a fresh cast makes more
         clones.append(clone)
     return clones
