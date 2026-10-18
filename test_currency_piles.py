@@ -53,15 +53,15 @@ class PhysicalRyoTests(unittest.TestCase):
         commands.cmd_drop(self.session, ["700", "ryo"])
         self.assertEqual(self.room.ground_ryo, [500, 700])
         commands.cmd_get(self.session, ["2.ryo"])
-        self.assertEqual(self.session.player.ryo, 800)
+        self.assertEqual(self.session.player.ryo, 1500)
         self.assertEqual(self.room.ground_ryo, [500])
         commands.cmd_get(self.session, ["500", "ryo"])
-        self.assertEqual(self.session.player.ryo, 1300)
+        self.assertEqual(self.session.player.ryo, 2000)
         self.assertEqual(self.room.ground_ryo, [])
         commands.cmd_drop(self.session, ["300", "ryo"])
         commands.cmd_drop(self.session, ["200", "ryo"])
         commands.cmd_get(self.session, ["all", "ryo"])
-        self.assertEqual(self.session.player.ryo, 1300)
+        self.assertEqual(self.session.player.ryo, 2000)
         self.assertEqual(self.room.ground_ryo, [])
 
     def test_give_ryo_directly_between_players_in_the_same_room(self):
