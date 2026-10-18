@@ -604,7 +604,7 @@ function editPrototype(kind,vnum){
   container.append(nodeEl('h3','Programs'));
   const list=nodeEl('div'),controls=nodeEl('div');container.append(list,controls);
   programBuilder(settings,kind==='mobs'?'mob_programs':'item_programs',
-    kind==='mobs'?['greet','death','random','speech','move']:['wear','get'],list,controls);
+    kind==='mobs'?['greet','death','fight','random','speech','move','give','bribe']:['wear','get'],list,controls);
   panel.scrollIntoView({block:'nearest'});
 }
 function resetEditorProject(next,id){
