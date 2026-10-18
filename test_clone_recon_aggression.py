@@ -112,9 +112,9 @@ class CloneAndAggressionTests(unittest.TestCase):
 
     def test_pilot_receives_one_move_message_while_observers_see_travel(self):
         observer_a = NS(player=Player("Watcher", "Watcher", room_vnum=5001),
-                        send=Mock())
+                        combat_target=None, pvp_target=None, send=Mock())
         observer_b = NS(player=Player("Guard", "Guard", room_vnum=5002),
-                        send=Mock())
+                        combat_target=None, pvp_target=None, send=Mock())
         session_module.ACTIVE_SESSIONS.extend([observer_a, observer_b])
         clone_control.cmd_clone(self.session, ["control"])
         self.session.send.reset_mock()
