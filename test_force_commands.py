@@ -125,6 +125,17 @@ class ForceCommandsTests(unittest.TestCase):
         self.assertTrue(smaug_progs.execute("mpforce north", self.player, "Examiner"))
         self.dispatch.assert_called_once_with(self.player, "north")
 
+    def test_legacy_mpforce_custom_emote_still_narrates_without_dispatch(self):
+        self.assertEqual(smaug_progs.validate_script(
+            "mpforce emote raises a hand in greeting."), [])
+        with patch.object(smaug_progs, "_broadcast") as broadcast:
+            self.assertTrue(smaug_progs.execute(
+                "mpforce emote raises a hand in greeting.",
+                self.player, "Examiner"))
+            broadcast.assert_called_once_with(
+                self.player, "Sakura raises a hand in greeting.")
+        self.dispatch.assert_not_called()
+
     def test_mpforce_does_not_force_staff_triggering_player(self):
         self.assertTrue(smaug_progs.execute(
             "mpforce $n say Test", self.imm, "Examiner"))
