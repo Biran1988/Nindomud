@@ -143,6 +143,41 @@ endif"""
             self.session, self.mob.name, self.mob))
         self.assertEqual(self.session.player.health, 70)
 
+    def test_room_and_item_multiline_editors(self):
+        olc.cmd_rpedit(self.session, ["enter"])
+        on_save = self.session.enter_editor.call_args.args[0]
+        on_save("mpechoat The mission begins.")
+        self.assertEqual(world.WORLD.rooms[9001].programs[0]["trigger"], "enter")
+        olc.cmd_rpstat(self.session, [])
+        self.assertIn("mission begins", self.session.send_paginated.call_args.args[0])
+
+        olc.OBJECT_TEMPLATES[9601] = olc.default_object(9601, "Exam Scroll")
+        olc.cmd_opedit(self.session, ["9601", "get"])
+        on_save = self.session.enter_editor.call_args.args[0]
+        on_save("say Take good care of that scroll.")
+        self.assertEqual(olc.OBJECT_TEMPLATES[9601]["item_programs"][0]["trigger"], "get")
+        olc.cmd_opstat(self.session, ["9601"])
+        self.assertIn("Take good care", self.session.send_paginated.call_args.args[0])
+
+    def test_give_item_and_bribe_trigger_scripts(self):
+        import commands
+        olc.OBJECT_TEMPLATES[9601] = olc.default_object(9601, "Exam Scroll")
+        olc.OBJECT_TEMPLATES[9602] = olc.default_object(9602, "Graduation Token")
+        self.session.player.inventory.append("Exam Scroll")
+        combat.MOB_TEMPLATES[9501]["mob_programs"] = [
+            {"trigger": "give", "script":
+             "if object($o) == 9601\nmpgive 9602\nendif", "chance": 100},
+            {"trigger": "bribe", "script":
+             "if bribe($b) >= 500\nmpheal 20\nendif", "chance": 100},
+        ]
+        commands.cmd_give(self.session, ["Exam", "Scroll", "examiner"])
+        self.assertNotIn("Exam Scroll", self.session.player.inventory)
+        self.assertIn("Graduation Token", self.session.player.inventory)
+        self.assertEqual(self.session.player.health, 50)
+        commands.cmd_bribe(self.session, ["500", "examiner"])
+        self.assertEqual(self.session.player.ryo, 500)
+        self.assertEqual(self.session.player.health, 70)
+
     def test_script_loading_and_transfer_do_not_write_prototypes(self):
         olc.OBJECT_TEMPLATES[9601] = olc.default_object(9601, "Exam Scroll")
         combat.MOB_TEMPLATES[9501]["mob_programs"] = [
