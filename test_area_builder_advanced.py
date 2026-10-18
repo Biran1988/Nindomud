@@ -113,6 +113,14 @@ class AdvancedAreaEditorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "mpforce"):
             area_import.validate(data)
 
+    def test_rset_no_wander_flag_toggles_on_and_off(self):
+        area_import.import_package(area_import.validate(package()), "Biran")
+        self.owner.player.room_vnum = 20000
+        olc.cmd_rset(self.owner, ["flags", "no_wander"])
+        self.assertIn("no_wander", world.WORLD.rooms[20000].flags)
+        olc.cmd_rset(self.owner, ["flags", "no_wander"])
+        self.assertNotIn("no_wander", world.WORLD.rooms[20000].flags)
+
     def test_no_wander_flag_round_trips_with_area_and_world_save(self):
         import world_persistence
         data = package()
