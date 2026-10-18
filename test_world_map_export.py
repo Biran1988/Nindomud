@@ -18,6 +18,10 @@ class WorldMapExportTests(unittest.TestCase):
     def setUp(self):
         AreaImportTests.setUp(self)
 
+    def write(self, payload):
+        # Reuse the area import fixture's upload helper for this suite.
+        return AreaImportTests.write(self, payload)
+
     def test_exportworld_includes_all_areas_and_cross_area_routes(self):
         area_import.import_package(area_import.validate(package()), "Biran")
         other = dataclasses.asdict(areas.Area("South Road", 21000, 21999, "Biran"))
