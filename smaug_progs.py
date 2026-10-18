@@ -28,7 +28,7 @@ COMMANDS = {
     "say", "emote", "mpecho", "mpechoat", "mpechoaround",
     "mptransfer", "mpmload", "mpoload", "mpforce", "mpgive",
     "mpheal", "mpgoto", "mphealmana", "mphealmove", "mpdamage",
-    "mpasound", "mpjunk", "mpremember", "wait",
+    "mpasound", "mpjunk", "mpremember", "mpforget", "wait",
 }
 COMPARISONS = {"==", "!=", "<", "<=", ">", ">="}
 _CONDITION = re.compile(r"^([a-z_]+)\s*\(([^()]*)\)\s*(==|!=|<=|>=|<|>)?\s*(.*?)\s*$", re.I)
@@ -51,9 +51,10 @@ def _condition_parts(expression):
     func, arguments, operator, expected = match.groups()
     func = func.lower()
     if func not in {"level", "room", "ryo", "rank", "clan", "name", "direction", "object", "bribe", "hasitem", "random", "ispc",
-                    "hitprcnt", "moblevel", "health", "chakra", "stamina", "roomflag"}:
+                    "hitprcnt", "moblevel", "health", "chakra", "stamina", "roomflag",
+                    "remembered"}:
         raise ValueError(f"Unsupported condition '{func}()'.")
-    if func in {"random", "hasitem", "ispc", "roomflag"}:
+    if func in {"random", "hasitem", "ispc", "roomflag", "remembered"}:
         if operator or expected:
             raise ValueError(f"{func}() is a boolean test (no comparison).")
         if func == "random" and (not arguments.isdigit() or not 1 <= int(arguments) <= 100):
@@ -64,6 +65,8 @@ def _condition_parts(expression):
             raise ValueError("Use ispc($n).")
         if func == "roomflag" and not re.fullmatch(r"\$r\s*,\s*[A-Za-z_]{1,40}", arguments, re.I):
             raise ValueError("Use roomflag($r, no_wander).")
+        if func == "remembered" and not re.fullmatch(r"\$n\s*,\s*[A-Za-z0-9_-]{1,60}", arguments, re.I):
+            raise ValueError("Use remembered($n, quest_marker).")
     else:
         if arguments.lower() != {"direction": "$d", "object": "$o", "bribe": "$b",
                                   "hitprcnt": "$i", "moblevel": "$i"}.get(func, "$n") or operator not in COMPARISONS or not expected:
@@ -132,6 +135,8 @@ def compile_script(script):
                            500 if word == "mpdamage" else 999999)
                     if value <= 0 or value > cap:
                         raise ValueError(f"Line {number}: {word} value is out of range.")
+            if word in {"mpremember", "mpforget"} and not re.fullmatch(r"[A-Za-z0-9_-]{1,60}", args.strip()):
+                raise ValueError(f"Line {number}: {word} requires a short quest marker identifier.")
             if word == "mpforce":
                 forced = args.strip().split(None, 1)
                 if not forced or forced[0].lower() not in {"look", "say", "emote"}:
@@ -168,6 +173,11 @@ def _evaluate(expression, session, mob=None):
         return random.randint(1, 100) <= int(arguments)
     if func == "ispc":
         return bool(player)
+    if func == "remembered":
+        import combat
+        template = combat.MOB_TEMPLATES.get(mob.template_vnum) if mob else None
+        key = arguments.split(",", 1)[1].strip().casefold()
+        return bool(template and player.name in template.get("script_memory", {}).get(key, []))
     if func == "roomflag":
         import world
         vnum = player.room_vnum
@@ -278,9 +288,17 @@ def _command(session, command, args, speaker_name, mob, budget):
         if template is not None:
             memory = template.setdefault("script_memory", {})
             key = args.casefold()[:60]
-            names = memory.setdefault(key, [])
-            if player.name not in names and len(names) < 300:
-                names.append(player.name)
+            if key in memory or len(memory) < 100:
+                names = memory.setdefault(key, [])
+                if player.name not in names and len(names) < 300:
+                    names.append(player.name)
+    elif command == "mpforget" and mob:
+        template = combat.MOB_TEMPLATES.get(mob.template_vnum)
+        if template is not None:
+            memory = template.get("script_memory", {})
+            key = args.casefold()[:60]
+            if player.name in memory.get(key, []):
+                memory[key].remove(player.name)
     elif command == "mpgive":
         import inventory
         item = olc.OBJECT_TEMPLATES.get(int(args))
