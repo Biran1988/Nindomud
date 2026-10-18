@@ -62,7 +62,7 @@ keywords only triggers the one found first, not both.
 
 import random
 
-MOB_TRIGGERS = {"greet", "death", "random", "speech", "move", "fight"}
+MOB_TRIGGERS = {"greet", "death", "random", "speech", "move", "fight", "give", "bribe"}
 ITEM_TRIGGERS = {"wear", "get"}
 ROOM_TRIGGERS = {"enter", "random"}
 
