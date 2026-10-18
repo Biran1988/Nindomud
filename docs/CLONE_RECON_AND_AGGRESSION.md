@@ -36,7 +36,15 @@ downed, or while another timed action is pending. This is a genuine
 ability list:
 
 - The real body stays physically in its original room, never teleports,
-  and remains vulnerable to any attack there.
+  and remains vulnerable to any attack there. Scout `look` uses a
+  separate viewpoint copy so the original character object is never
+  repositioned, not even temporarily during room inspection. When the
+  clone is in the same room as its original body, `look` lists the
+  caster standing motionless; `look <your-name>` examines that body.
+- The controlling player receives one `You guide your clone <direction>`
+  message plus the destination room description upon moving. Other
+  players still see the clone's departure/arrival, but the pilot does
+  not receive duplicate third-person movement messages.
 - The clone Mob instance physically walks through real enabled exits,
   observes rooms, can look, scan, examine and speak using its own identity.
   It cannot enter disabled areas, private apartments, player shops,
