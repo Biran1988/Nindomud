@@ -36,6 +36,16 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.315 adds a real, multiline SmaugFUSS-inspired program editor:
+mob mpedit/mpstat/mpset, room rpedit/rpstat, object opedit/opstat,
+nested if/or/else/endif, $n/$i and other context variables, bounded
+NPC actions, and NPC hand-in/bribe interactions. Existing addprogram
+entries still execute unchanged, and save world persists all new scripts.
+The visual HTML editor also supports multiline scripts. See
+docs/SMAUG_MOB_PROGRAMS.md for syntax, supported events and limits.
+This is a sandboxed SmaugFUSS-inspired subset, not complete SMAUG
+language parity.
+
 Version 15.314 fixes the synchronized-Wander problem: each live mob receives
 its own independently seeded first movement timer at spawn. Groups that spawn
 at the same instant stagger their departures, and a mob is only processed once
