@@ -52,9 +52,15 @@ def _template_builder(template, keys):
 def _validate_programs(rows, triggers, label):
     if not isinstance(rows, list) or len(rows) > 100:
         raise ValueError(f"{label}: use at most 100 programs.")
+    import smaug_progs
     for entry in rows:
+        if isinstance(entry, dict) and "script" in entry:
+            errors = smaug_progs.validate_entry(entry, triggers)
+            if errors:
+                raise ValueError(f"{label}: {errors[0]}")
+            continue
         if not isinstance(entry, dict) or set(entry) - {"trigger", "action", "args", "keyword"}:
-            raise ValueError(f"{label}: program must contain only trigger/action/args/keyword.")
+            raise ValueError(f"{label}: program must contain valid legacy fields or a validated script.")
         trigger, action, args = entry.get("trigger"), entry.get("action"), entry.get("args")
         keyword = entry.get("keyword")
         if (not isinstance(trigger, str) or not isinstance(action, str)
