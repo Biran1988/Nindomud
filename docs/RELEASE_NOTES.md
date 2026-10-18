@@ -163,3 +163,12 @@ leveling, mob XP, and the older gameplay smoke checks.
   `data/world_exports/` without replacing individual area exports. The operation
   never changes rooms, mob data, or the live world; world bundles cannot be fed
   into the game's `area import` command. `test_world_map_export.py` covers this.
+
+- Version 15.314: fixed still-apparent cohort mob wandering by giving every
+  Wander mob a separately seeded RNG and its own spawn-time deadline,
+  staggering nearby departures instead of shifting a whole room on a shared
+  timer. Each live mob appears only once in the pulse snapshot; monsters with
+  aligned due times in the same room are deferred independently. Staff can
+  inspect that instance's timer with `mstat <mob name>` (or `2.name`).
+  `test_independent_mob_wandering.py` covers independent clocks, same-time
+  spawn waves, Sentinel override, combat pauses and single moves per pulse.
