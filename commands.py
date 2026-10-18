@@ -8290,6 +8290,7 @@ COMMANDS = {
     "aff": cmd_aff,
     "afk": cmd_afk,
     "recall": cmd_recall,
+    "clone": __import__("clone_control").cmd_clone,
     "anki": cmd_anki,
     "charge": cmd_charge,
     "goto": cmd_goto,
