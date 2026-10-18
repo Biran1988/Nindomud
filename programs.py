@@ -62,7 +62,7 @@ keywords only triggers the one found first, not both.
 
 import random
 
-MOB_TRIGGERS = {"greet", "death", "random", "speech", "move", "fight", "give", "bribe"}
+MOB_TRIGGERS = {"greet", "death", "random", "speech", "move", "fight", "give", "bribe", "entry"}
 ITEM_TRIGGERS = {"wear", "get"}
 ROOM_TRIGGERS = {"enter", "random"}
 
@@ -427,6 +427,24 @@ def fire_speech_programs(session, programs: list, spoken_text: str, speaker_name
             elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name, mob_template=mob_template, keyword=matched_keyword):
                 break
     return True
+
+
+def fire_mob_entry(mob) -> None:
+    """Trigger entry programs when an NPC walks into a player's room.
+
+    The mob's own movement timer and destination flags were checked by
+    the caller; entry only runs approved scripts for nearby players.
+    """
+    import combat
+    import session as session_module
+    template = combat.MOB_TEMPLATES.get(mob.template_vnum)
+    if not template or not any(p.get("trigger") == "entry"
+                               for p in template.get("mob_programs", ())):
+        return
+    for s in list(session_module.ACTIVE_SESSIONS):
+        if s.player and s.player.room_vnum == mob.room_vnum:
+            fire_programs(s, template["mob_programs"], "entry",
+                          speaker_name=mob.name.capitalize(), mob=mob)
 
 
 def process_random_triggers() -> None:
