@@ -224,18 +224,13 @@ class Mob:
     # downed at all (either full health, or already resolved one way
     # or the other).
     tailed_beast_downed_until: float = 0.0
-    # A genuine per-mob independent movement timer (Section 96, per
-    # direct request: "mobs need to have their own movement timer
-    # because they tend to shift all at once" -> confirmed to
-    # "replace it with a real per-mob timer/cooldown"). Real Unix
-    # timestamp -- 0.0 means "not yet scheduled", which
-    # process_wander treats as "roll a fresh random interval right
-    # now" the first time this mob is ever checked, so mobs spawned
-    # at the exact same moment still desynchronize immediately rather
-    # than sharing a starting value. Rescheduled with a fresh random
-    # interval every time the mob actually wanders (see
-    # WANDER_MIN_SECONDS/WANDER_MAX_SECONDS below).
+    # One real movement clock and independently seeded RNG for THIS
+    # living instance, never a prototype/room/area/shared-pulse clock.
+    # The initial deadline is scheduled immediately by spawn_mob().
+    # Zero is retained for older/directly constructed test mobs.
     next_wander_at: float = 0.0
+    wander_rng: random.Random = field(default_factory=random.Random,
+                                      repr=False, compare=False)
 
 
 MOB_TEMPLATES: Dict[int, dict] = {}          # template_vnum -> full prototype dict
@@ -341,6 +336,12 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         strength=derived_strength, dexterity=derived_dexterity,
     )
     MOBS_BY_ROOM.setdefault(room_vnum, []).append(mob)
+    if is_wandering(mob) and not mob.tailed_beast_key:
+        # Startup/area resets may spawn dozens of instances during one
+        # server pulse. Give each its own clock NOW, with room-local
+        # staggering, rather than starting a shared 2-minute waiting
+        # window on the first global movement sweep.
+        _schedule_next_wander(mob, time.time(), initial=True)
     return mob
 
 
@@ -438,71 +439,102 @@ def _broadcast_to_room(room_vnum: int, text: str) -> None:
             s.send(text)
 
 
-WANDER_MIN_SECONDS = 120.0  # 2 minutes -- matches the previously confirmed target average (2-4 min)
-WANDER_MAX_SECONDS = 240.0  # 4 minutes
+WANDER_MIN_SECONDS = 120.0  # Each mob's normal interval: 2–4 real minutes
+WANDER_MAX_SECONDS = 240.0
+WANDER_FIRST_MIN_SECONDS = 10.0  # First move can occur soon after spawn
+WANDER_SPACING_SECONDS = 9.0   # Separate nearby mobs' actual departures
+
+
+def _schedule_next_wander(mob: Mob, now: float, *, initial: bool = False,
+                          retry: bool = False) -> None:
+    """Set this instance's own deadline without a shared mob/room timer.
+
+    On a mass spawn, independently seeded mob RNGs spread first moves
+    across the whole interval, instead of all mobs waiting 2–4 minutes
+    before moving in a visible wave. Stagger due times within one room
+    to keep those mobs from leaving as one group. Timers stay attached
+    to the mob, even when it walks to another room.
+    """
+    rng = mob.wander_rng
+    if retry:
+        deadline = now + rng.uniform(WANDER_SPACING_SECONDS, 2 * WANDER_SPACING_SECONDS)
+    elif initial:
+        deadline = now + rng.uniform(WANDER_FIRST_MIN_SECONDS, WANDER_MAX_SECONDS)
+    else:
+        deadline = now + rng.uniform(WANDER_MIN_SECONDS, WANDER_MAX_SECONDS)
+
+    # A sorted pass guarantees a minimum gap from already-scheduled
+    # neighbors even if hundreds of mobs share the same starting room.
+    neighbors = sorted(other.next_wander_at
+                       for other in MOBS_BY_ROOM.get(mob.room_vnum, ())
+                       if other is not mob and is_wandering(other)
+                       and other.health > 0 and other.next_wander_at > now)
+    for other_due in neighbors:
+        if abs(deadline - other_due) < WANDER_SPACING_SECONDS:
+            deadline = other_due + WANDER_SPACING_SECONDS + rng.uniform(0.01, 1.0)
+    mob.next_wander_at = deadline
 
 
 def process_wander() -> None:
-    """Called once per pulse (server.py's pulse loop). Per direct
-    request/confirmation ("mobs need to have their own movement timer
-    because they tend to shift all at once" -> "replace it with a
-    real per-mob timer/cooldown"), this is now a genuine per-mob
-    independent countdown (Mob.next_wander_at) rather than every
-    wandering mob rolling against the same shared per-pulse chance --
-    each mob schedules its OWN next possible move at a fresh random
-    point 2-4 minutes out, entirely independent of every other mob's
-    own timer, removing any possible source of correlated movement.
+    """Process each living Wander mob's *own* deadline once per server pulse.
 
-    Any mob flagged Wander (see olc.VALID_MOB_ACT_FLAGS) whose own
-    timer has come due moves through a random exit from its current
-    room, in whatever direction is available -- skipped if it's
-    mid-combat, has no exits, or every exit leads to a disabled room
-    (in which case its timer is still rescheduled, so it doesn't spam
-    a check every single pulse forever). Sentinel is a hard override
-    that always suppresses wandering, even alongside Wander (see
-    is_wandering above).
-
-    Broadcasts a departure message to the room being left and an
-    arrival message (with the opposite direction, i.e. where it
-    arrived FROM) to the room being entered, per direct request --
-    matching the same messages commands.cmd_move already sends for a
-    player's own movement."""
+    Never move a group merely because a room/area reset or global tick
+    occurred. The server pulse only checks individual deadlines. A
+    frozen snapshot stops mobs walking into a later-scanned room and
+    being visited a second time in the same pulse. Only one successful
+    departure per origin room per pulse is allowed, so synchronized old
+    deadlines cannot create an entire troop marching in lockstep.
+    """
     now = time.time()
-    for room_vnum in list(MOBS_BY_ROOM.keys()):
-        for mob in list(MOBS_BY_ROOM.get(room_vnum, [])):
-            if not is_wandering(mob):
-                continue
-            if mob.next_wander_at == 0.0:
-                # Never scheduled yet -- roll a fresh, genuinely random
-                # interval right now, so mobs spawned at the same instant
-                # still desynchronize immediately rather than sharing a
-                # starting value.
-                mob.next_wander_at = now + random.uniform(WANDER_MIN_SECONDS, WANDER_MAX_SECONDS)
-                continue
-            if now < mob.next_wander_at:
-                continue
-            # This mob's own timer has come due -- reschedule its NEXT
-            # check regardless of whether it actually manages to move
-            # this time (mid-combat, no exits, etc. all still consume
-            # this attempt rather than checking again next pulse).
-            mob.next_wander_at = now + random.uniform(WANDER_MIN_SECONDS, WANDER_MAX_SECONDS)
-            if _mob_is_being_fought(mob):
-                continue
-            room = world.WORLD.get(mob.room_vnum)
-            if not room or not room.exits:
-                continue
-            candidates = [
-                (direction, dest) for direction, dest in room.exits.items()
-                if world.WORLD.get(dest) and world.WORLD.get(dest).enabled and not world.WORLD.get(dest).apartment
-            ]
-            if not candidates:
-                continue
-            direction, destination = random.choice(candidates)
-            _broadcast_to_room(mob.room_vnum, f"{mob.name.capitalize()} leaves {direction}.")
-            MOBS_BY_ROOM[mob.room_vnum].remove(mob)
-            mob.room_vnum = destination
-            MOBS_BY_ROOM.setdefault(destination, []).append(mob)
-            _broadcast_to_room(destination, f"{mob.name.capitalize()} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
+    seen = set()
+    mobs = []
+    for room_mobs in list(MOBS_BY_ROOM.values()):
+        for mob in list(room_mobs):
+            if mob.instance_id not in seen:
+                seen.add(mob.instance_id)
+                mobs.append(mob)
+
+    moved_from_rooms = set()
+    for mob in mobs:
+        if mob.health <= 0 or mob.tailed_beast_key or not is_wandering(mob):
+            continue
+        if mob.next_wander_at <= 0.0:
+            _schedule_next_wander(mob, now, initial=True)
+            continue
+        if now < mob.next_wander_at:
+            continue
+
+        # Older code/save or builder commands may leave two due dates
+        # identical. Defer ONLY this individual mob, not the whole room.
+        if mob.room_vnum in moved_from_rooms:
+            _schedule_next_wander(mob, now, retry=True)
+            continue
+
+        if _mob_is_being_fought(mob):
+            _schedule_next_wander(mob, now)
+            continue
+        room = world.WORLD.get(mob.room_vnum)
+        if not room or not room.exits:
+            _schedule_next_wander(mob, now)
+            continue
+        candidates = [
+            (direction, dest) for direction, dest in room.exits.items()
+            if world.WORLD.get(dest) and world.WORLD.get(dest).enabled
+            and not world.WORLD.get(dest).apartment
+        ]
+        if not candidates:
+            _schedule_next_wander(mob, now)
+            continue
+
+        direction, destination = mob.wander_rng.choice(candidates)
+        origin = mob.room_vnum
+        _broadcast_to_room(origin, f"{mob.name.capitalize()} leaves {direction}.")
+        MOBS_BY_ROOM[origin].remove(mob)
+        mob.room_vnum = destination
+        MOBS_BY_ROOM.setdefault(destination, []).append(mob)
+        _broadcast_to_room(destination, f"{mob.name.capitalize()} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
+        moved_from_rooms.add(origin)
+        _schedule_next_wander(mob, now)
 
 
 def process_scavengers() -> None:
