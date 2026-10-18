@@ -101,6 +101,9 @@ class Room:
     # strings, same shape as player.inventory, so the same stacking
     # rules (inventory.py) apply when picking something back up.
     ground_items: list = field(default_factory=list)
+    # Physical player-dropped Ryo piles (integers, not forgeable item names).
+    # Kept in a separate auto-saved currency ledger, not in area templates.
+    ground_ryo: List[int] = field(default_factory=list)
     # Per-exit flags (Section 64) -- direction -> list of flag names, so
     # a single exit can combine multiple at once (e.g. a locked door
     # that also needs a specific key item). Valid flags: "door",
