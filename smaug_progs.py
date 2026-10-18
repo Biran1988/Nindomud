@@ -14,7 +14,7 @@ MAX_ACTIONS = 60
 MAX_CALL_DEPTH = 4
 MAX_PROGRAMS = 60
 TRIGGERS = {
-    "mob": {"greet", "speech", "death", "fight", "random", "move"},
+    "mob": {"greet", "speech", "death", "fight", "random", "move", "give", "bribe"},
     "room": {"enter", "random"},
     "item": {"get", "wear"},
 }
@@ -25,7 +25,7 @@ COMMANDS = {
 }
 COMPARISONS = {"==", "!=", "<", "<=", ">", ">="}
 _CONDITION = re.compile(r"^([a-z_]+)\s*\(([^()]*)\)\s*(==|!=|<=|>=|<|>)?\s*(.*?)\s*$", re.I)
-_VARIABLE = re.compile(r"\$\$|\$[nirvd]", re.I)
+_VARIABLE = re.compile(r"\$\$|\$[nirvdob]", re.I)
 
 
 def validate_script(script):
@@ -43,7 +43,7 @@ def _condition_parts(expression):
         raise ValueError("Condition syntax: if level($n) < 10, if hasitem($n, 100), or if random(30).")
     func, arguments, operator, expected = match.groups()
     func = func.lower()
-    if func not in {"level", "room", "ryo", "rank", "clan", "name", "direction", "hasitem", "random", "ispc"}:
+    if func not in {"level", "room", "ryo", "rank", "clan", "name", "direction", "object", "bribe", "hasitem", "random", "ispc"}:
         raise ValueError(f"Unsupported condition '{func}()'.")
     if func in {"random", "hasitem", "ispc"}:
         if operator or expected:
@@ -55,9 +55,9 @@ def _condition_parts(expression):
         if func == "ispc" and arguments.lower() != "$n":
             raise ValueError("Use ispc($n).")
     else:
-        if arguments.lower() != ("$d" if func == "direction" else "$n") or operator not in COMPARISONS or not expected:
+        if arguments.lower() != {"direction": "$d", "object": "$o", "bribe": "$b"}.get(func, "$n") or operator not in COMPARISONS or not expected:
             raise ValueError(f"Use {func}($n) == value (or <, <=, >, >=, !=).")
-        if func in {"level", "room", "ryo"} and not re.fullmatch(r"-?\d{1,9}", expected):
+        if func in {"level", "room", "ryo", "object", "bribe"} and not re.fullmatch(r"-?\d{1,9}", expected):
             raise ValueError(f"{func}() needs an integer comparison value.")
         if func in {"rank", "clan", "name", "direction"} and (operator not in {"==", "!="} or len(expected) > 60):
             raise ValueError(f"{func}() accepts only == or != and bounded text.")
@@ -160,8 +160,10 @@ def _evaluate(expression, session):
         "ryo": player.ryo, "rank": player.village_rank,
         "clan": player.clan, "name": player.name,
         "direction": getattr(session, "_mudprog_direction", ""),
+        "object": getattr(session, "_mudprog_object_vnum", 0),
+        "bribe": getattr(session, "_mudprog_bribe", 0),
     }[func]
-    if func in {"level", "room", "ryo"}:
+    if func in {"level", "room", "ryo", "object", "bribe"}:
         expected = int(expected)
     else:
         actual = str(actual).casefold()
@@ -178,7 +180,9 @@ def _substitute(text, session, speaker_name, mob=None):
     values = {"$n": session.player.name,
               "$i": mob.name if mob else speaker_name,
               "$r": str(room), "$v": str(mob.template_vnum) if mob else "0",
-              "$d": getattr(session, "_mudprog_direction", "")}
+              "$d": getattr(session, "_mudprog_direction", ""),
+              "$o": getattr(session, "_mudprog_object_name", ""),
+              "$b": str(getattr(session, "_mudprog_bribe", 0))}
     return _VARIABLE.sub(lambda match: "$" if match.group(0) == "$$"
                          else values.get(match.group(0).lower(), ""), text)[:2000]
 
