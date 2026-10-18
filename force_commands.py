@@ -38,6 +38,13 @@ def validate_forced_command(command):
     if len(command) > MAX_FORCED_COMMAND_LENGTH or _INVALID_TEXT.search(command):
         return "Forced commands must be one line and at most 320 characters."
     word = command.split(None, 1)[0].lower()
+    import emotes
+    if word.startswith("@") or word == "emote":
+        args = command.split()
+        name = word[1:] if word.startswith("@") else (args[1].lower() if len(args) == 2 else "")
+        if len(args) != (1 if word.startswith("@") else 2) or name not in emotes.EMOTES:
+            return "Use a real social, such as @yawn or emote smile."
+        return None
     import world
     if word not in SAFE_FORCE_VERBS and not world.normalize_direction(word):
         return f"'{word}' cannot be forced. Only approved movement, social and combat commands are allowed."
@@ -92,7 +99,12 @@ def run_forced_player_command(target_session, command, actor):
     target_session._force_command_depth = getattr(target_session, "_force_command_depth", 0) + 1
     try:
         import commands
-        commands.dispatch_line(target_session, command)
+        if command.split(None, 1)[0].lower() == "emote":
+            # Nindo_mud socials are native '@name' commands rather than
+            # an 'emote' command in the regular dispatcher.
+            commands.dispatch_line(target_session, "@" + command.split()[1])
+        else:
+            commands.dispatch_line(target_session, command)
         return True, ""
     finally:
         target_session._force_command_depth -= 1
