@@ -190,6 +190,7 @@ def process_tailed_beasts(combat_module, world_module, session_module) -> None:
                 (direction, dest) for direction, dest in room.exits.items()
                 if world_module.WORLD.get(dest) and world_module.WORLD.get(dest).enabled
                 and not world_module.WORLD.get(dest).apartment
+                and "no_wander" not in world_module.WORLD.get(dest).flags
             ]
             if not candidates:
                 continue
