@@ -60,6 +60,8 @@ used, though -- a sentence that happens to contain two configured
 keywords only triggers the one found first, not both.
 """
 
+import random
+
 MOB_TRIGGERS = {"greet", "death", "random", "speech", "move", "fight"}
 ITEM_TRIGGERS = {"wear", "get"}
 ROOM_TRIGGERS = {"enter", "random"}
