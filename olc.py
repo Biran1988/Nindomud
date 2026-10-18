@@ -259,6 +259,10 @@ def _fmt_programs(program_list) -> str:
         return "None"
     lines = []
     for i, prog in enumerate(program_list):
+        if "script" in prog:
+            phrase = f" speech '{prog.get('keyword', '')}'" if prog.get("trigger") == "speech" else " " + str(prog.get("trigger"))
+            lines.append(f"    [{i}] SCRIPT on{phrase} ({len(prog.get('script', '').splitlines())} lines, chance {prog.get('chance', 100)}%)")
+            continue
         if prog.get("trigger") == "speech":
             lines.append(f"    [{i}] on speech of '{prog.get('keyword', '')}': {prog.get('action')} \"{prog.get('args', '')}\"")
         else:
@@ -2101,6 +2105,189 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
     if field in MOB_STRING_FIELDS:
         return f"'{display}' is free text. Current: '{t.get(field, '')}'.\nUsage: mset <vnum> {display} <text>"
     return None
+
+
+
+# Full multiline program editor.  Uses Session's established /l /c /a /s
+# line editor, not untrusted interpreter code.  Existing addprogram entries
+# remain fully compatible and can be edited as scripts only by writing a
+# new script entry; replacing a legacy entry does not silently discard it.
+def _program_target(session, kind, vnum):
+    import smaug_progs
+    if not _require_builder(session):
+        return None
+    if not _require_assigned_vnum(session, vnum):
+        return None
+    if kind == "mob":
+        template = combat.MOB_TEMPLATES.get(vnum)
+        if template is None:
+            session.send(f"No mob prototype {vnum}.")
+            return None
+        return template.setdefault("mob_programs", [])
+    if kind == "item":
+        template = OBJECT_TEMPLATES.get(vnum)
+        if template is None:
+            session.send(f"No object prototype {vnum}.")
+            return None
+        return template.setdefault("item_programs", [])
+    room = world.WORLD.get(vnum)
+    if not room:
+        session.send(f"No room {vnum}.")
+        return None
+    return room.programs
+
+
+def _program_editor(session, kind, args):
+    import smaug_progs
+    if kind == "room":
+        if not args:
+            session.send("Usage: rpedit <trigger> [keyword] | rpedit #<index>  (current room)")
+            return
+        vnum = session.player.room_vnum
+        options = args
+    else:
+        if len(args) < 2 or not args[0].isdigit():
+            session.send(f"Usage: {'mpedit' if kind == 'mob' else 'opedit'} <vnum> <trigger> [speech keyword] | #<index>")
+            return
+        vnum = int(args[0])
+        options = args[1:]
+    progs = _program_target(session, kind, vnum)
+    if progs is None:
+        return
+    current = options[0].lower()
+    index = None
+    if current.startswith("#"):
+        if not current[1:].isdigit() or len(options) != 1:
+            session.send("Edit an existing script with #<index>, e.g. mpedit 5010 #0.")
+            return
+        index = int(current[1:])
+        if not 0 <= index < len(progs):
+            session.send("No program at that index. Use mpstat/rpstat/opstat to list.")
+            return
+        original = progs[index]
+        if "script" not in original:
+            session.send("That entry uses legacy addprogram format. Create a new script instead; legacy actions remain active.")
+            return
+        trigger = original["trigger"]
+        keyword = original.get("keyword", "")
+        chance = original.get("chance", 100)
+        initial_text = original["script"]
+    else:
+        trigger = current
+        keyword = " ".join(options[1:]).strip()
+        chance = 100
+        initial_text = ""
+        if trigger not in smaug_progs.TRIGGERS[kind]:
+            session.send(f"Available {kind} triggers: {', '.join(sorted(smaug_progs.TRIGGERS[kind]))}.")
+            return
+        if trigger == "speech" and not keyword:
+            session.send("Speech programs need a keyword: mpedit <vnum> speech <keyword>.")
+            return
+        if trigger != "speech" and keyword:
+            session.send("Only speech scripts use a keyword. To set chance, use mpset <vnum> <index> <1-100>.")
+            return
+        if len(progs) >= smaug_progs.MAX_PROGRAMS:
+            session.send(f"Maximum {smaug_progs.MAX_PROGRAMS} programs per prototype.")
+            return
+    kindname = {"mob": "mobile", "room": "room", "item": "object"}[kind]
+    def save_script(body):
+        entry = {"trigger": trigger, "script": body, "chance": chance}
+        if keyword:
+            entry["keyword"] = keyword
+        errors = smaug_progs.validate_entry(entry, smaug_progs.TRIGGERS[kind])
+        if errors:
+            session.send("Script not saved: " + "\n".join(errors) +
+                         "\nReopen mpedit/rpedit/opedit to fix the script.")
+            return
+        target = _program_target(session, kind, vnum)
+        if target is None:
+            return
+        # Catch concurrent deletions/edits during a multiline session.
+        if index is not None:
+            if index >= len(target) or target[index] != original:
+                session.send("Script not saved: the original entry changed. Reopen the editor.")
+                return
+            target[index] = entry
+        else:
+            if len(target) >= smaug_progs.MAX_PROGRAMS:
+                session.send("Maximum script count reached.")
+                return
+            target.append(entry)
+        _log(session.player.name, kindname, vnum, f"multiline {trigger} script saved ({len(body.splitlines())} lines)")
+        session.send(f"Saved {trigger} multiline script on {kindname} {vnum} at index {index if index is not None else len(target)-1}. Use save world to persist it.")
+    session.enter_editor(save_script, initial_text=initial_text,
+                         header=f"Editing Smaug-style {kindname} {vnum} / {trigger} ({keyword or 'all'}). "
+                                "Commands: say, emote, mpecho, mptransfer, mpmload, mpoload, mpforce, "
+                                "if / or / else / endif. /s saves; /a aborts.")
+
+
+def cmd_mpedit(session, args):
+    _program_editor(session, "mob", args)
+
+
+def cmd_rpedit(session, args):
+    _program_editor(session, "room", args)
+
+
+def cmd_opedit(session, args):
+    _program_editor(session, "item", args)
+
+
+def _program_stat(session, kind, args):
+    if kind == "room":
+        if args:
+            if len(args) != 1 or not args[0].isdigit():
+                session.send("Usage: rpstat [room vnum]")
+                return
+            vnum = int(args[0])
+        else:
+            vnum = session.player.room_vnum
+    else:
+        if len(args) != 1 or not args[0].isdigit():
+            session.send(f"Usage: {'mpstat' if kind == 'mob' else 'opstat'} <vnum>")
+            return
+        vnum = int(args[0])
+    progs = _program_target(session, kind, vnum)
+    if progs is None:
+        return
+    lines = [f"{kind.title()} {vnum} program listing ({len(progs)}):"]
+    for index, prog in enumerate(progs):
+        lines.append(f"[{index}] {prog.get('trigger')}  "
+                     f"{'speech: '+prog.get('keyword', '') if prog.get('trigger') == 'speech' else ''}")
+        if "script" in prog:
+            lines.append(f"Chance: {prog.get('chance', 100)}%")
+            lines.extend(f"  {j:>3}: {line}" for j, line in enumerate(prog['script'].splitlines(), 1))
+        else:
+            lines.append(f"  LEGACY: {prog.get('action')} {prog.get('args', '')}")
+    session.send_paginated("\n".join(lines))
+
+
+def cmd_mpstat(session, args):
+    _program_stat(session, "mob", args)
+
+
+def cmd_rpstat(session, args):
+    _program_stat(session, "room", args)
+
+
+def cmd_opstat(session, args):
+    _program_stat(session, "item", args)
+
+
+def cmd_mpset(session, args):
+    if len(args) != 3 or not all(x.isdigit() for x in args):
+        session.send("Usage: mpset <mob vnum> <program index> <chance 1-100>")
+        return
+    vnum, index, chance = map(int, args)
+    progs = _program_target(session, "mob", vnum)
+    if progs is None:
+        return
+    if not 0 <= index < len(progs) or "script" not in progs[index] or not 1 <= chance <= 100:
+        session.send("Invalid script index or percentage.")
+        return
+    progs[index]["chance"] = chance
+    _log(session.player.name, "mobile", vnum, f"program {index} chance {chance}")
+    session.send(f"Program {index} now has a {chance}% trigger chance.")
 
 
 def cmd_mset(session, args: List[str]) -> None:
