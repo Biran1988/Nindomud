@@ -181,3 +181,16 @@ leveling, mob XP, and the older gameplay smoke checks.
   Saved templates and imported area packages retain bounded script data.
   Regression coverage is in test_smaug_progs.py. See
   docs/SMAUG_MOB_PROGRAMS.md for syntax and limitations.
+
+- Version 15.316 adds the toggled `no_wander` room flag to rset and the
+  HTML visual editor. It excludes protected rooms from ordinary Wander
+  destination selection and tailed-beast roaming, but does not stop
+  players, manual mob spawning, scripted movement, or leaving the room.
+  The flag persists through save world and offline area imports.
+- The Smaug-style script subset gains real non-blocking `wait` delays
+  on server pulses, `entry` triggers for NPC movement, boss HP and
+  room-flag condition checks, quest memory markers, area sound,
+  additional resource effects, and bounded damage. Runtime and
+  pending-continuation limits prevent blocking the event loop.
+  See docs/SMAUG_MOB_PROGRAMS.md for supported syntax. Historical
+  SMAUG commands and triggers not specifically listed remain unsupported.
