@@ -33,6 +33,21 @@ Transfer the generated file from `data/world_exports/nindo-world.json` to your c
 
 **Important safety boundary:** Uploading or changing the world *map* does **not** alter the server. World bundles are **not** accepted by `area import`. To deploy edits, open one linked area, **Export area JSON**, and run `area import <file.json> check` then `area import <file.json>` in-game. This protects saved world data and enforces the current per-area stale-export checks. The world route lines are visual planning links; they do not create game exits. Browser storage capacity varies, so download portable backups regularly.
 
+## Hostile NPC flags and reconnaissance
+
+Mob prototypes can now have **aggressive_everyone**, **aggressive_village**
+and/or **aggressive_clan** in the flag selector. For village/clan targeting,
+set the Full Prototype Properties fields `aggro_village` or `aggro_clan`
+to the exact identity to attack, e.g. `leaf` or `uchiha`. The flags
+automatically start normal PvE fights when eligible players arrive.
+The controlled elemental clone is also vulnerable to hostile mobs.
+
+Characters who master a specific elemental Bunshin to 100% may use
+`clone control` outside combat to pilot the actual living clone for
+reconnaissance. The original body remains in its room. The link ends
+only upon `clone disperse` or actual clone dispersal/defeat.
+See [clone control and NPC aggression](../docs/CLONE_RECON_AND_AGGRESSION.md).
+
 ## Multiline SmaugFUSS-style scripts
 
 Each mob, room and item program panel has a **Multiline SMAUG script**
