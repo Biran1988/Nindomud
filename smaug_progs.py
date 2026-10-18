@@ -143,7 +143,7 @@ def compile_script(script):
                 import force_commands
                 _, problem = force_commands.parse_mpforce_args(args)
                 if problem:
-                    raise ValueError(f"Line {number}: {problem}")
+                    raise ValueError(f"Line {number}: mpforce: {problem}")
             current.append({"kind": "cmd", "command": word, "args": args})
     if stack:
         raise ValueError("Missing endif for one or more if blocks.")
