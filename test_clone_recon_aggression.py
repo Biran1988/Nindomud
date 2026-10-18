@@ -115,7 +115,7 @@ class CloneAndAggressionTests(unittest.TestCase):
             self.assertEqual(self.player.room_vnum, 5001)
 
     def test_clone_scan_shows_real_body_without_a_remote_control_label(self):
-        self.player.learned_skills.add("Scan")
+        self.player.learned_skills.append("Scan")
         clone_control.cmd_clone(self.session, ["control"])
         clone_control.handle_playing_command(self.session, "north")
         self.session.send.reset_mock()
