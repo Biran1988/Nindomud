@@ -36,6 +36,14 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.320 makes elemental clone scouting visually indistinguishable from
+ordinary player movement and speech. Both the stationary real body and the
+traveling clone display the player's normal name and description (no remote
+control label); look/examine, say and emotes don't disclose a clone connection.
+The pilot receives the destination room normally, while others see one
+standard departure/arrival pair. The body remains physically vulnerable, and
+only dispersal or defeat returns control.
+
 Version 15.319 keeps the original caster's body visible and physically
 stationary throughout elemental clone reconnaissance—even while rendering
 the clone's first-person `look`. Returning to the body's room shows the
