@@ -36,6 +36,14 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.321 adds real ground Ryo piles and direct player-to-player
+money transfers: `drop 500 ryo`, `look ryo`, `get ryo`,
+`get 500 ryo`, `get all ryo`, and `give 500 ryo <player>`.
+The piles stay visible to other players, survive restarts through a
+separate auto-saved `data/ground_ryo.json` ledger, and never overwrite
+builder-created room, area or world saves. Pickups credit your Ryo
+balance without using inventory slots.
+
 Version 15.320 makes elemental clone scouting visually indistinguishable from
 ordinary player movement and speech. Both the stationary real body and the
 traveling clone display the player's normal name and description (no remote
