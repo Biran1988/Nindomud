@@ -4467,7 +4467,7 @@ DEFAULT_HELP_ENTRIES.append({
         "object($o), bribe($b), hitprcnt($i), health($n), chakra($n), stamina($n), "\n        "roomflag($r, no_wander), remembered($n, academy_pass).\n"
         "Commands: say, emote, mpecho, mpechoat, mpechoaround, "
         "mpgive, mpheal, mptransfer, mpgoto, mpmload, mpoload, "
-        "mpforce look/say/emote (restricted), wait 1-120 (non-blocking), "\n        "mphealmana, mphealmove, mpdamage, mpasound, mpjunk, mpremember, mpforget.\n"
+        "mpforce look/say/emote (restricted), wait 1-120 (non-blocking), "\n        "mphealmana/mphealchakra, mphealmove/mphealstamina, mpdamage, mpasound, mpjunk, mpremember, mpforget.\n"
         "Variables: $n player, $i NPC, $r room, $v mob vnum, $d direction, "
         "$o given object, $b bribe amount. Double-dollar $$ emits a literal dollar.\n\n"
         "Legacy addprogram remains supported. To remove programs use mset/oset/rset "
