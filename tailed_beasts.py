@@ -199,6 +199,8 @@ def process_tailed_beasts(combat_module, world_module, session_module) -> None:
             combat_module.MOBS_BY_ROOM[mob.room_vnum].remove(mob)
             mob.room_vnum = destination
             combat_module.MOBS_BY_ROOM.setdefault(destination, []).append(mob)
+            import programs
+            programs.fire_mob_entry(mob)
 MASTERY_GAIN_CHANCE_PER_ROUND = 0.02  # confirmed directly: "a small, slow gain per real combat round," genuinely taking a long time to reach 100 at this rate
 RAMPAGE_IMMUNITY_MASTERY_PCT = 65  # confirmed directly: at/above this mastery, rampage becomes genuinely impossible
 RAMPAGE_CHANCE_PER_ROUND = 1.0 / 1000.0  # confirmed directly: "1 in 1000 per combat round," only while below the immunity threshold
