@@ -167,6 +167,7 @@ def give(session, args):
     storage.save_player(target.player)
     session.send(f"You give {amount:,} Ryo to {target.player.name}.")
     target.send(f"{player.name} gives you {amount:,} Ryo.")
-    session.broadcast_room(
-        f"{player.name} gives {target.player.name} some Ryo.", exclude_self=True,
-    )
+    for observer in session.active_sessions():
+        if (observer is not session and observer is not target and observer.player
+                and observer.player.room_vnum == player.room_vnum):
+            observer.send(f"{player.name} gives {target.player.name} some Ryo.")
