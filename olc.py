@@ -2164,7 +2164,7 @@ def _program_editor(session, kind, args):
         if not 0 <= index < len(progs):
             session.send("No program at that index. Use mpstat/rpstat/opstat to list.")
             return
-        original = progs[index]
+        original = copy.deepcopy(progs[index])
         if "script" not in original:
             session.send("That entry uses legacy addprogram format. Create a new script instead; legacy actions remain active.")
             return
