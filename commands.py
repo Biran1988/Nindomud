@@ -996,15 +996,15 @@ def cmd_look(session, args: List[str]) -> None:
             session.send("A decorated Christmas tree glows beside the Kage. Santa has presents for visitors.")
             return
         original_body = getattr(session, "_clone_original_player", None)
-        if original_body is not None and query not in ("self", "me") and query in original_body.name.lower():
-            if original_body.room_vnum == player.room_vnum:
-                session.send(f"&C{original_body.name}&x\n"
-                             f"{original_body.description or 'Your original body is motionless, while your senses inhabit the clone.'}\n"
-                             "&DThis is your real body, left behind during elemental clone reconnaissance.&x")
-            else:
-                session.send("Your original body is not here.")
+        if (original_body is not None and query not in ("self", "me")
+                and query in original_body.name.lower()
+                and original_body.room_vnum == player.room_vnum):
+            # To the pilot, examining their body looks the same as
+            # examining any other player. Never expose a control status.
+            session.send(f"&C{original_body.name}&x\n"
+                         f"{original_body.description if original_body.description else original_body.name + ' hasn\'t set a description.'}")
             return
-        if query in ("self", "me") or (original_body is None and query in player.name.lower()):
+        if query in ("self", "me") or query in player.name.lower():
             lines = [f"&C{player.name}&x"]
             lines.append(player.description if player.description else "You haven't set a description.")
             session.send("\n".join(lines))
@@ -1080,14 +1080,12 @@ def cmd_look(session, args: List[str]) -> None:
         if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
-    # During first-person scouting, the original character is still
-    # physically present in the room where clone control began. A normal
-    # player-session room list skips "self", so show that body separately
-    # whenever the real body and the viewing clone occupy this room.
+    # A pilot viewing the original room must still see their physical
+    # body, but as an ordinary character. Spectators already see it via
+    # the normal active-session loop; never show control metadata.
     original_body = getattr(session, "_clone_original_player", None)
     if original_body is not None and original_body.room_vnum == room.vnum:
-        lines.append(f"  &G{original_body.name}&x is here, motionless while "
-                     "their consciousness inhabits an elemental clone.")
+        lines.append(f"  &G{original_body.name}&x is here.")
     mobs = combat.mobs_in_room(player.room_vnum)
     for mob in mobs:
         if mob is getattr(session, "controlled_clone", None):
@@ -1095,7 +1093,7 @@ def cmd_look(session, args: List[str]) -> None:
         if _is_invisible_mob(mob):
             continue
         if combat.is_shadow_clone(mob):
-            lines.append(f"  {mob.name} is here.")
+            lines.append(f"  &G{mob.name}&x is here.")
             continue
         lines.append(f"  {mob.name} is here.{_staff_vnum_suffix(session, mob=mob)}")
     for corpse in corpses.corpses_in_room(player.room_vnum):
