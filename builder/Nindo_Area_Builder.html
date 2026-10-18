@@ -422,30 +422,81 @@ function builderFieldGroup(target,kinds,container){
 }
 function programBuilder(holder,key,triggers,list,controls){
   const values=holder[key]||[],allowed=Array.from(triggers);
-  list.replaceChildren();
-  values.forEach((p,i)=>{
-    const row=nodeEl('div',undefined,'program-row');
-    const descr=nodeEl('span',String(i+1)+'. '+p.trigger+(p.keyword?' ('+p.keyword+')':'')+' → '+p.action+' '+p.args);
-    const remove=nodeEl('button','Remove','danger small-button');
-    remove.onclick=()=>{holder[key].splice(i,1);save();programBuilder(holder,key,triggers,list,controls)};
-    row.append(descr,remove);list.append(row);
-  });
-  controls.replaceChildren();
-  const trigger=document.createElement('select'),action=document.createElement('select');
+  list.replaceChildren();controls.replaceChildren();
+  const trigger=document.createElement('select'),mode=document.createElement('select');
   for(const name of allowed){const opt=nodeEl('option',name);opt.value=name;trigger.append(opt)}
+  for(const name of ['One-action (legacy)','Multiline SMAUG script']){
+    const opt=nodeEl('option',name);opt.value=name.startsWith('One')?'legacy':'script';mode.append(opt)
+  }
+  const action=document.createElement('select');
   for(const name of PROGRAM_ACTIONS){const opt=nodeEl('option',name);opt.value=name;action.append(opt)}
   const args=document.createElement('textarea');args.rows=2;args.placeholder='Action arguments (text, amount or VNUM)';
-  const keyword=document.createElement('input');keyword.placeholder='Speech keyword, when applicable';
-  const add=nodeEl('button','Add program');add.onclick=()=>{
-    const prog={trigger:trigger.value,action:action.value,args:args.value};
-    if(prog.trigger==='speech'&&!keyword.value.trim()){report('Speech programs need a keyword.',true);return}
-    if(prog.trigger==='speech')prog.keyword=keyword.value.trim();
-    if(!prog.args.trim()&&!['iruka_graduation_check'].includes(prog.action)){report('Enter action arguments.',true);return}
-    holder[key]=holder[key]||[];
-    holder[key].push(prog);save();programBuilder(holder,key,triggers,list,controls);
+  const script=document.createElement('textarea');script.rows=12;script.placeholder=
+    'if level($n) < 10\n  say You must train first, $n.\nelse\n  say Welcome to the exams!\n  mptransfer 2500\nendif';
+  script.style.fontFamily='monospace';script.style.whiteSpace='pre';
+  const keyword=document.createElement('input');keyword.placeholder='Speech keyword (only for speech triggers)';
+  const chance=document.createElement('input');chance.type='number';chance.min=1;chance.max=100;chance.value=100;
+  const legacyFields=nodeEl('div'),scriptFields=nodeEl('div');
+  const help=nodeEl('div','Commands: say, emote, mpecho, mpechoat, mpechoaround, mpheal, mpgive, mptransfer, mpmload, mpoload, mpgoto, mpforce (look/say/emote only). Branches: if, or, else, endif. Variables: $n player, $i mob, $r room, $v mob VNUM.','helper');
+  legacyFields.append(elementLabel('Action',action),elementLabel('Arguments',args));
+  scriptFields.append(elementLabel('Trigger chance %',chance),elementLabel('Multiline script',script),help);
+  const updateMode=()=>{legacyFields.classList.toggle('hidden',mode.value!=='legacy');scriptFields.classList.toggle('hidden',mode.value!=='script')};
+  mode.onchange=updateMode;updateMode();
+  let editing=null;
+  const add=nodeEl('button','Add program');
+  const cancel=nodeEl('button','Cancel edit','small-button');
+  cancel.onclick=()=>{editing=null;mode.value='legacy';script.value='';chance.value=100;add.textContent='Add program';updateMode()};
+  function validScriptText(text){
+    const lines=text.split(/\r?\n/);
+    if(!text.trim()||text.length>12000||lines.length>160)throw Error('Scripts must be 1–160 lines and at most 12,000 characters.');
+    let nesting=0,actions=0;
+    for(const [i,line] of lines.entries()){
+      const clean=line.trim(),verb=clean.split(/\s+/)[0].toLowerCase();
+      if(!clean||clean.startsWith('*')||clean.startsWith('//'))continue;
+      if(verb==='if'){if(!clean.includes('('))throw Error('Line '+(i+1)+': invalid condition.');nesting++;if(nesting>8)throw Error('Maximum eight nested if blocks.')}
+      else if(verb==='endif'){nesting--;if(nesting<0)throw Error('Unmatched endif on line '+(i+1))}
+      else if(verb==='else'||verb==='or'){if(nesting<1)throw Error('Unmatched '+verb+' on line '+(i+1))}
+      else if(!['say','emote','mpecho','mpechoat','mpechoaround','mpheal','mpgive','mptransfer','mpmload','mpoload','mpgoto','mpforce'].includes(verb))throw Error('Unsupported script command on line '+(i+1)+': '+verb);
+      else actions++;
+    }
+    if(nesting)throw Error('Script is missing endif.');
+    if(!actions)throw Error('A script needs at least one executable command.');
+  }
+  add.onclick=()=>{
+    try{
+      if(trigger.value==='speech'&&!keyword.value.trim())throw Error('Speech programs need a keyword.');
+      const prog={trigger:trigger.value};
+      if(prog.trigger==='speech')prog.keyword=keyword.value.trim().slice(0,120);
+      if(mode.value==='script'){
+        validScriptText(script.value);
+        if(!Number.isInteger(Number(chance.value))||Number(chance.value)<1||Number(chance.value)>100)throw Error('Chance must be 1–100.');
+        prog.script=script.value;prog.chance=Number(chance.value);
+      }else{
+        prog.action=action.value;prog.args=args.value;
+        if(!prog.args.trim()&&!['iruka_graduation_check'].includes(prog.action))throw Error('Enter action arguments.');
+      }
+      holder[key]=holder[key]||[];
+      if(editing===null)holder[key].push(prog);else holder[key][editing]=prog;
+      save();programBuilder(holder,key,triggers,list,controls);
+      report('Program saved to this area draft. Export area JSON to deploy it.');
+    }catch(e){report(e.message,true)}
   };
-  controls.append(elementLabel('Trigger',trigger),elementLabel('Action',action),
-    elementLabel('Arguments',args),elementLabel('Speech keyword',keyword),add);
+  controls.append(elementLabel('Trigger',trigger),elementLabel('Format',mode),
+    elementLabel('Speech keyword',keyword),legacyFields,scriptFields,add,cancel);
+  values.forEach((p,i)=>{
+    const row=nodeEl('div',undefined,'program-row');
+    const snippet=p.script?'SCRIPT ('+p.script.split(/\r?\n/).length+' lines): '+p.script.split(/\r?\n/).find(x=>x.trim()):'LEGACY: '+p.action+' '+p.args;
+    const descr=nodeEl('span',String(i+1)+'. '+p.trigger+(p.keyword?' ('+p.keyword+')':'')+' → '+snippet);
+    const remove=nodeEl('button','Remove','danger small-button');
+    remove.onclick=()=>{holder[key].splice(i,1);save();programBuilder(holder,key,triggers,list,controls)};
+    row.append(descr);
+    if(p.script){
+      const edit=nodeEl('button','Edit script','small-button');
+      edit.onclick=()=>{editing=i;trigger.value=p.trigger;keyword.value=p.keyword||'';mode.value='script';script.value=p.script;chance.value=p.chance||100;add.textContent='Save script';updateMode();script.focus()};
+      row.append(edit);
+    }
+    row.append(remove);list.append(row);
+  });
 }
 function renderRoomAdvanced(){
   const r=room();if(!r)return;
