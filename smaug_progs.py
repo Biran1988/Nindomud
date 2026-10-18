@@ -341,6 +341,14 @@ def _command(session, command, args, speaker_name, mob, budget):
         # Never dispatch arbitrary admin/account verbs, and never
         # force immortal characters, including via a scripted trigger.
         import force_commands
+        if source_args.lower().startswith("emote "):
+            # Historical "mpforce emote <narration>" produced a custom
+            # player emote; preserve it for already-built NPC programs.
+            import emotes
+            text = _substitute(source_args[6:].strip(), session, speaker_name, mob)
+            if text.lower() not in emotes.EMOTES:
+                _broadcast(session, f"{player.name} {text}")
+                return
         forced_command, error = force_commands.parse_mpforce_args(source_args)
         if error:
             return
