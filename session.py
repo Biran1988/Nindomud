@@ -142,6 +142,7 @@ class Session:
         # many of those have already been shown). None when idle.
         self.pending_action: Optional[dict] = None
         self.chakra_charge: Optional[dict] = None  # timed Chakra Charge channel; never persisted
+        self.controlled_clone = None  # live elemental clone Mob; transient, body stays in its room
 
         # Scratch chargen state
         self._pending_name: Optional[str] = None
@@ -188,6 +189,9 @@ class Session:
         if enemy is None and self.pvp_target is not None and self.pvp_target.player:
             enemy = _PvpEnemyAdapter(self.pvp_target.player)
         p = render_prompt(self.player, mob=enemy, is_staff=is_staff)
+        clone = getattr(self, "controlled_clone", None)
+        if clone is not None:
+            p = (f"&C[Clone Scout: {clone.health}/{clone.max_health} HP]&x " + p)
         if p:
             self.send_raw("\r\n" + colors.render(_terminal_safe_text(p), self.color_enabled) + "\r\n")
 
@@ -1051,6 +1055,10 @@ class Session:
             return
         import element_choice
         if element_choice.handle_command(self, line):
+            self.send_prompt()
+            return
+        import clone_control
+        if clone_control.handle_playing_command(self, line):
             self.send_prompt()
             return
         previous_room = self.player.room_vnum
