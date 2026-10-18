@@ -36,6 +36,12 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.319 keeps the original caster's body visible and physically
+stationary throughout elemental clone reconnaissance—even while rendering
+the clone's first-person `look`. Returning to the body's room shows the
+motionless original character, while moving the clone gives a single
+clear movement confirmation instead of duplicate room broadcasts.
+
 Version 15.318 introduces first-person reconnaissance through fully mastered
 elemental clones: `clone control`, `clone status` and `clone disperse`.
 Control cannot start during combat, the real body remains stationary and
