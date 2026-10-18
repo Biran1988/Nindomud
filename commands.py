@@ -991,6 +991,17 @@ def cmd_look(session, args: List[str]) -> None:
 
     if args:
         query = " ".join(args).lower()
+        # Physical currency piles can be examined like dropped objects.
+        if query == "ryo" or (query.endswith(" ryo")
+                              and query.split()[0].isdigit()):
+            piles = getattr(room, "ground_ryo", ())
+            requested = int(query.split()[0]) if query != "ryo" else None
+            amount = next((p for p in piles if requested is None or p == requested), None)
+            if amount is not None:
+                session.send(f"&Y{amount:,} Ryo&x\nA pile of coins lying on the ground.")
+            else:
+                session.send("You don't see that pile of Ryo here.")
+            return
         import seasonal_events
         if "tree" in query and seasonal_events.tree_visible(player.room_vnum):
             session.send("A decorated Christmas tree glows beside the Kage. Santa has presents for visitors.")
@@ -1117,6 +1128,8 @@ def cmd_look(session, args: List[str]) -> None:
             else:
                 shown = f"{rarity_colored_name(name)} (x{count})" if count > 1 else rarity_colored_name(name)
                 lines.append(f"  {shown} is lying here.{_staff_vnum_suffix(session, item_name=name)}")
+    for amount in getattr(room, "ground_ryo", ()):
+        lines.append(f"  &Y{amount:,} Ryo&x is lying here.")
     for decoy in genjutsu.decoys_in_room(room.vnum):
         lines.append(f"  &M{decoy['name']}&x seems to be lying here.")
     session.send("\n".join(lines))
@@ -1193,6 +1206,8 @@ def cmd_scan(session, args: List[str]) -> None:
         if not _is_invisible_item(name):
             suffix = f" (x{count})" if count > 1 else ""
             lines.append(f"  {rarity_colored_name(name)}{suffix} is lying here.")
+    for amount in getattr(target, "ground_ryo", ()):
+        lines.append(f"  &Y{amount:,} Ryo&x is lying here.")
     for decoy in genjutsu.decoys_in_room(target.vnum):
         lines.append(f"  &M{decoy['name']}&x seems to be lying here.")
     if len(lines) == 1:
@@ -6226,9 +6241,13 @@ def cmd_give(session, args: List[str]) -> None:
     other use case: trading crafting materials (fishing.CRAFTING_RECIPES)
     that have no gathering job to produce them yet -- a player who has
     one can hand it to someone crafting a rod."""
+    import currency_piles
+    if currency_piles.is_give_command(args):
+        currency_piles.give(session, args)
+        return
     player = session.player
     if len(args) < 2:
-        session.send("Usage: give <item> <player name>")
+        session.send("Usage: give <item> <player name> | give <amount> ryo <player>")
         return
 
     target_query = args[-1].lower()
@@ -6444,6 +6463,10 @@ def cmd_drop(session, args: List[str]) -> None:
     Dropped items land in Room.ground_items and can be picked back up
     with 'get', not just discarded -- a drop mechanic with no way to
     retrieve what you dropped would be a dead end, not a feature."""
+    import currency_piles
+    if currency_piles.is_drop_command(args):
+        currency_piles.drop(session, args)
+        return
     player = session.player
     room = WORLD.get(player.room_vnum)
     if any(item.endswith(" [glued]") for item in player.inventory) and (not args or args[0].lower() == "all"):
@@ -6495,6 +6518,11 @@ def cmd_get(session, args: List[str]) -> None:
     if " from " in full_query:
         item_query, _, backpack_query = full_query.partition(" from ")
         _get_from_backpack(session, item_query.strip(), backpack_query.strip())
+        return
+
+    import currency_piles
+    if currency_piles.is_get_command(full_query):
+        currency_piles.pickup(session, full_query)
         return
 
     room = WORLD.get(player.room_vnum)
