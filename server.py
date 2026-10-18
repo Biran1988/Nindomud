@@ -107,6 +107,7 @@ async def pulse_loop() -> None:
     import combat
     import corpses
     import programs
+    import smaug_progs
     import regen
     import storage
     import weather
@@ -160,6 +161,7 @@ async def pulse_loop() -> None:
         auction.process_expired_auctions()
         combat.process_wander()
         combat.process_scavengers()
+        smaug_progs.process_delayed()
         import tailed_beasts
         import world as world_module
         import session as session_module
