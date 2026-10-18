@@ -6182,6 +6182,40 @@ def cmd_give(session, args: List[str]) -> None:
                 f"Use 'price {match.split()[-1]} <amount>' to set what it sells for."
             )
             return
+        # NPC give_prog: hand an item to a real mob with a matching
+        # give trigger. Player-shop stock transfers above stay unchanged.
+        scripted_mob = next(
+            (m for m in combat.mobs_in_room(player.room_vnum)
+             if target_query in m.name.lower()
+             and any(p.get("trigger") == "give"
+                     for p in combat.MOB_TEMPLATES.get(m.template_vnum, {}).get("mob_programs", ()))),
+            None,
+        )
+        if scripted_mob:
+            match = find_indexed_item(item_query, player.inventory)
+            if not match:
+                session.send("You aren't carrying that.")
+                return
+            if match.endswith(" [glued]"):
+                session.send("That item is glued to you and cannot be given away.")
+                return
+            prototype = _find_object_prototype_by_name(match)
+            obj_vnum = next((v for v, template in olc.OBJECT_TEMPLATES.items()
+                             if template is prototype), 0)
+            player.inventory.remove(match)
+            session.send(f"You give {rarity_colored_name(match)} to {scripted_mob.name}.")
+            old_vnum = getattr(session, "_mudprog_object_vnum", 0)
+            old_name = getattr(session, "_mudprog_object_name", "")
+            session._mudprog_object_vnum = obj_vnum
+            session._mudprog_object_name = match
+            try:
+                template = combat.MOB_TEMPLATES.get(scripted_mob.template_vnum, {})
+                programs.fire_programs(session, template.get("mob_programs", ()),
+                                       "give", speaker_name=scripted_mob.name.capitalize(), mob=scripted_mob)
+            finally:
+                session._mudprog_object_vnum = old_vnum
+                session._mudprog_object_name = old_name
+            return
         session.send("There's no one here by that name.")
         return
 
@@ -6279,6 +6313,43 @@ def cmd_shop(session, args: List[str]) -> None:
 
     session.send("Usage: shop name <text> | shop desc <text> | shop (with no arguments to see stock)")
 
+
+
+
+def cmd_bribe(session, args: List[str]) -> None:
+    """Offer real ryo to a mob with a bribe-trigger program."""
+    if len(args) < 2 or not args[0].isdigit():
+        session.send("Usage: bribe <ryo amount> <mob name>")
+        return
+    amount = int(args[0])
+    if not 1 <= amount <= 1000000:
+        session.send("Offer between 1 and 1,000,000 ryo.")
+        return
+    query = " ".join(args[1:]).lower().strip()
+    player = session.player
+    mob = next(
+        (m for m in combat.mobs_in_room(player.room_vnum)
+         if query in m.name.lower()
+         and any(p.get("trigger") == "bribe"
+                 for p in combat.MOB_TEMPLATES.get(m.template_vnum, {}).get("mob_programs", ()))),
+        None,
+    )
+    if not mob:
+        session.send("No NPC here accepts a bribe by that name.")
+        return
+    if player.ryo < amount:
+        session.send("You don't have enough ryo.")
+        return
+    player.ryo -= amount
+    old = getattr(session, "_mudprog_bribe", 0)
+    session._mudprog_bribe = amount
+    try:
+        session.send(f"You offer {amount:,} ryo to {mob.name}.")
+        template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
+        programs.fire_programs(session, template.get("mob_programs", ()),
+                               "bribe", speaker_name=mob.name.capitalize(), mob=mob)
+    finally:
+        session._mudprog_bribe = old
 
 def cmd_drop(session, args: List[str]) -> None:
     """Drops one item, or everything, onto the ground in the current
@@ -8219,6 +8290,7 @@ COMMANDS = {
     "gemcut": cmd_gemcut,
     "craft": cmd_craft,
     "give": cmd_give,
+    "bribe": cmd_bribe,
     "drop": cmd_drop,
     "open": cmd_open,
     "close": cmd_close,
