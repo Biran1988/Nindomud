@@ -4606,3 +4606,20 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "bribe",
+    "keywords": ["bribe", "bribe npc", "give ryo npc"],
+    "title": "Bribe an NPC",
+    "body": (
+        "Syntax: bribe <ryo amount> <npc name>\\n\\n"
+        "Offer ryo to a non-player character with a bribe-triggered "
+        "mob program. The ryo is deducted and the NPC may respond with "
+        "dialogue, a quest action, or a conditional reward. Builders can "
+        "use mpedit <vnum> bribe and if bribe($b) >= 500 to configure "
+        "the response. NPCs without a matching bribe trigger refuse. "
+        "See help mpedit for multiline scripting."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
