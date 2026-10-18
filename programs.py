@@ -67,7 +67,7 @@ ITEM_TRIGGERS = {"wear", "get"}
 ROOM_TRIGGERS = {"enter", "random"}
 
 ACTIONS = {
-    "say", "emote", "give", "heal", "teleport", "drop_chance", "give_mission_points", "give_ryo", "set_rank",
+    "say", "emote", "echo", "give", "heal", "teleport", "drop_chance", "give_mission_points", "give_ryo", "set_rank",
     "take", "give_xp", "learn_skill", "require_item", "remember_keyword", "min_level", "max_level",
     "wear_message", "iruka_graduation_check",
 }
@@ -92,7 +92,7 @@ def validate_program(trigger: str, action: str, args: str, valid_triggers: set, 
         errors.append("'teleport' needs a room vnum (a number) as its argument.")
     if action == "heal" and not args.strip().lstrip("-").isdigit():
         errors.append("'heal' needs a number as its argument.")
-    if action in ("say", "emote") and not args.strip():
+    if action in ("say", "emote", "echo") and not args.strip():
         errors.append(f"'{action}' needs some text as its argument.")
     if action == "drop_chance":
         parts = args.split(None, 1)
@@ -142,6 +142,9 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
         session.send(f'{speaker_name} says, "{args}"')
     elif action == "emote":
         session.send(f"{speaker_name} {args}")
+    elif action == "echo":
+        # Backwards compatibility for saved single-action echo programs.
+        session.send(args)
     elif action == "give":
         obj = olc.OBJECT_TEMPLATES.get(int(args))
         if obj:
