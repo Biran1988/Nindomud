@@ -36,6 +36,17 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.318 introduces first-person reconnaissance through fully mastered
+elemental clones: `clone control`, `clone status` and `clone disperse`.
+Control cannot start during combat, the real body remains stationary and
+vulnerable, and only dispersal or the clone's defeat returns the viewpoint.
+The clone is a real attackable Mob with its own HP and real-room movement.
+Adds autonomous `aggressive_village`, `aggressive_clan` and
+`aggressive_everyone` mobile flags, configurable target village/clan
+fields, and hostile mobs capable of attacking controlled elemental clones.
+Original world and area save files remain untouched. See
+docs/CLONE_RECON_AND_AGGRESSION.md for builder commands and mechanics.
+
 Version 15.317 introduces the immortal `force <player> <command>`
 command and full targeted SMAUG `mpforce $n <command>` support.
 Approved movement, social, informational and combat commands execute
