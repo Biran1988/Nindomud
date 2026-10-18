@@ -109,9 +109,14 @@ Approved commands:
     mpgoto ROOM_VNUM          Move the triggering mob to an enabled room
     mpmload MOB_VNUM          Spawn an ordinary NPC (per-room cap)
     mpoload ITEM_VNUM         Spawn ground item (per-room cap)
-    mpforce look              Safely cause a look
-    mpforce say TEXT          Narrate player's speech
-    mpforce emote TEXT        Narrate player's action
+    mpforce $n look           Make triggering player look
+    mpforce $n north          Make triggering player attempt north
+    mpforce $n say TEXT       Make triggering player speak using real say
+    mpforce $n attack NAME    Make triggering player attempt combat
+    mpforce $n @yawn          Make triggering player perform a real social
+    mpforce look              Old Nindo_mud shorthand for mpforce $n look
+    mpforce say TEXT          Old Nindo_mud shorthand for mpforce $n say TEXT
+    mpforce emote TEXT        Legacy custom room-emote narration remains supported
     wait SECONDS              Non-blocking script delay (1–120 s)
     mphealmana AMOUNT         Recover triggering player's chakra (also mphealchakra)
     mphealmove AMOUNT         Recover triggering player's stamina (also mphealstamina)
@@ -152,12 +157,59 @@ continuations per player.
 A 15% per-pulse random check is retained before mob/room random scripts
 are considered; a script's own configured chance is applied additionally.
 
+## Force and MPforce: character command execution
+
+An immortal can force an **online ordinary player** to perform a permitted
+player action:
+
+    force Sakura north
+    force Sakura say I am ready for the Chuunin Exams!
+    force Sakura @yawn
+    force Sakura attack bandit
+
+Immortals with Helper rank or higher can use the command. Matching is
+case-insensitive and requires a unique online name. Target must be in the
+playing state (not in a menu/editor). NPCs and offline players are not
+valid targets. **Forcing staff characters is never allowed.**
+
+Administrator and Implementor ranks can additionally use a limited
+bulk form, e.g.:
+
+    force all say The Chuunin Exams begin!
+
+Bulk force is limited to 50 non-staff players and safe
+look/say/emote/stand/wake/rest commands. It cannot mass-attack or
+mass-transfer the server. Every successful immortal force is audit
+logged and each affected character is told who forced which command.
+
+In an NPC script, use the SmaugFUSS selector `$n`:
+
+    mpforce $n north
+    mpforce $n say I accept the challenge!
+    mpforce $n kill bandit
+
+`mpforce` can only target the triggering player, never `all` or staff,
+and never arbitrary other accounts. A legacy no-selector
+`mpforce say TEXT` or `mpforce look` still targets the triggering player.
+Legacy freeform `mpforce emote TEXT` still narrates the custom emote
+without executing a privileged command.
+
+Forced actions run through the ordinary game dispatcher, so movement
+restrictions, combat checks, and resource requirements still apply.
+The approved action list supports movement/directions, look, say,
+ask, native `@social` emotes, basic status/information commands,
+rest/sleep/stand, recall, combat attack/kill/flee, and `perform` for
+ordinary player jutsu. Account, staff, world-builder, economy, item
+transfer/drop, purchasing, quitting and reboot commands **cannot**
+be forced. A reentrancy guard prevents a command from recursively
+forcing another command. Future game commands are not implicitly
+forceable; they must be explicitly reviewed and allowlisted.
+
 ## Safety and persistence
 
 Scripts never execute Python or unrestricted commands, cannot access
-the filesystem or network, and do not get staff permissions. mpforce is
-limited to look, say and emote; its implementation does not route through
-the privileged command dispatcher. 12,000 script characters, 160 lines,
+the filesystem or network, and do not get staff permissions. mpforce uses only the reviewed player-action allowlist,
+including combat and movement, and never allows staff/account actions. 12,000 script characters, 160 lines,
 eight nested conditions, 60 executed actions and four recursive invocations
 are the upper bounds. At most two scripted loads can happen per program
 execution, with additional live NPC/item population limits.
