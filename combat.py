@@ -2270,24 +2270,30 @@ def resolve_pulse(session) -> None:
     for message in tick_automatic_bloodline_awakening(player):
         session.send(message)
 
-    if _is_action_blocked(player):
-        session.send("You are stunned and can't act this round!" if "stunned" in player.active_status_effects else "You cannot act this round!")
+    # A body projecting its senses through a remote clone is helpless:
+    # it cannot autoattack, cast, flee or secretly fight while scouting.
+    # Its enemy still gets a normal round against the exposed body.
+    if getattr(session, "controlled_clone", None) is not None:
+        session.send("&DYour real body remains motionless while you pilot your elemental clone.&x")
     else:
-        _player_attack_mob_once(session, player, mob)
-        if mob.health > 0:
-            for _ in range(_roll_extra_attacks(player) + sage_mode.extra_attacks(player)):
+        if _is_action_blocked(player):
+            session.send("You are stunned and can't act this round!" if "stunned" in player.active_status_effects else "You cannot act this round!")
+        else:
+            _player_attack_mob_once(session, player, mob)
+            if mob.health > 0:
+                for _ in range(_roll_extra_attacks(player) + sage_mode.extra_attacks(player)):
+                    if mob.health <= 0:
+                        break
+                    _player_attack_mob_once(session, player, mob)
+            if mob.health > 0:
+                _offhand_attack(session, mob)
+            for clone in active_shadow_clones(player):
                 if mob.health <= 0:
                     break
-                _player_attack_mob_once(session, player, mob)
-        if mob.health > 0:
-            _offhand_attack(session, mob)
-        for clone in active_shadow_clones(player):
-            if mob.health <= 0:
-                break
-            if clone.room_vnum == player.room_vnum:
-                _clone_attack_mob_once(session, player, mob, clone)
-        _resolve_summon_round(session, player, mob)
-
+                if clone.room_vnum == player.room_vnum:
+                    _clone_attack_mob_once(session, player, mob, clone)
+            _resolve_summon_round(session, player, mob)
+    
     if mob.health <= 0:
         handle_mob_defeat(session, mob)
         return
