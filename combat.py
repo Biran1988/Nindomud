@@ -441,7 +441,7 @@ def _broadcast_to_room(room_vnum: int, text: str) -> None:
 
 WANDER_MIN_SECONDS = 120.0  # Each mob's normal interval: 2–4 real minutes
 WANDER_MAX_SECONDS = 240.0
-WANDER_FIRST_MIN_SECONDS = 10.0  # First move can occur soon after spawn
+WANDER_FIRST_MIN_SECONDS = WANDER_MIN_SECONDS  # Preserve 2–4 minute first-move balance
 WANDER_SPACING_SECONDS = 9.0   # Separate nearby mobs' actual departures
 
 
@@ -450,8 +450,8 @@ def _schedule_next_wander(mob: Mob, now: float, *, initial: bool = False,
     """Set this instance's own deadline without a shared mob/room timer.
 
     On a mass spawn, independently seeded mob RNGs spread first moves
-    across the whole interval, instead of all mobs waiting 2–4 minutes
-    before moving in a visible wave. Stagger due times within one room
+    across the same 2–4 minute interval rather than creating a wave.
+    Stagger due times within one room
     to keep those mobs from leaving as one group. Timers stay attached
     to the mob, even when it walks to another room.
     """
