@@ -72,7 +72,8 @@ def snapshot_world() -> dict:
 
     return {
         "rooms": {
-            str(vnum): dataclasses.asdict(room)
+            str(vnum): {key: value for key, value in dataclasses.asdict(room).items()
+                        if key != "ground_ryo"}
             for vnum, room in world.WORLD.rooms.items()
         },
         "mobs": {
@@ -147,7 +148,8 @@ def apply_saved_world() -> int:
     restored = 0
     for vnum_str, room_data in state.get("rooms", {}).items():
         vnum = int(vnum_str)
-        filtered = {k: v for k, v in room_data.items() if k in valid_room_fields}
+        filtered = {k: v for k, v in room_data.items()
+                    if k in valid_room_fields and k != "ground_ryo"}
         world.WORLD.rooms[vnum] = world.Room(**filtered)
         restored += 1
 
