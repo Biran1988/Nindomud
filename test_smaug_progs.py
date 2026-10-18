@@ -92,7 +92,7 @@ endif"""
                        "mptransfer -1", "mpoload 0", "mpforce admin save"]:
             self.assertTrue(smaug_progs.validate_script(source), source)
         self.assertTrue(smaug_progs.validate_script("say hello\n" * 161))
-        self.assertTrue(smaug_progs.validate_script("mpecho hi" * 1000))
+        self.assertTrue(smaug_progs.validate_script("mpecho " + "x" * 13000))
 
     def test_legacy_programs_and_new_scripts_run_together(self):
         t = combat.MOB_TEMPLATES[9501]
