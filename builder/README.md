@@ -33,6 +33,18 @@ Transfer the generated file from `data/world_exports/nindo-world.json` to your c
 
 **Important safety boundary:** Uploading or changing the world *map* does **not** alter the server. World bundles are **not** accepted by `area import`. To deploy edits, open one linked area, **Export area JSON**, and run `area import <file.json> check` then `area import <file.json>` in-game. This protects saved world data and enforces the current per-area stale-export checks. The world route lines are visual planning links; they do not create game exits. Browser storage capacity varies, so download portable backups regularly.
 
+## Multiline SmaugFUSS-style scripts
+
+Each mob, room and item program panel has a **Multiline SMAUG script**
+option, alongside the original one-action addprogram format. Scripts can
+contain several commands and nested conditional branches. The new script
+format is validated when imported into the server. Supported mob triggers
+include greet, speech, death, fight, random, move, give and bribe. Speech
+scripts require a keyword. Existing simple programs continue working.
+
+See [SMAUG scripting documentation](../docs/SMAUG_MOB_PROGRAMS.md)
+for full editor commands, variables, grammar, examples and safety limits.
+
 ## Build areas
 
 1. For an existing area, run `area export <area name>` as Implementor. Transfer the file from `data/area_exports/` and open it with **Open / import area JSON**. For a new area, enter its name and a non-overlapping room VNUM range (maximum 1,000 room numbers).
