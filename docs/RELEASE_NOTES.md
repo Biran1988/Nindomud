@@ -242,3 +242,15 @@ leveling, mob XP, and the older gameplay smoke checks.
   independent of save world and without replacing any builder room or area.
   Currency is intentionally excluded from world_state.json room snapshots
   to avoid double-spawning after reboot. Tests: test_currency_piles.py.
+
+- Version 15.322: Iruka mob VNUM 11 alone conducts the Genin written
+  examination. Five universal Academy techniques (Shadow Shuriken
+  Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique,
+  Throw Shuriken and Strong Fist Style) require 100% proficiency, in
+  addition to level 10. A random ten of twenty canonical Naruto anime
+  questions appear per attempt with independently shuffled A-D options.
+  Exactly ten correct answers are required; mistakes cancel that attempt.
+  Legacy iruka_graduation_check programs now route to the exam, and normal
+  set_rank genin mob actions cannot bypass it. Rewards keep the existing
+  headband, 50 mission points and global announcement. No area or world
+  files are changed. Regression tests: test_genin_exam.py.
