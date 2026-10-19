@@ -1,7 +1,7 @@
-"""Regression coverage: shipping release ZIP must contain the runnable server.
+"""Source-only deployment ZIP regression tests for the normal Nindo_mud server.
 
-This prevents the regression where a ZIP had only source .py files, while
-the user's service was launched from the stale standalone Nindo_mud executable.
+The download must be a direct ZIP of the regular multi-file Python code,
+not a zip-in-zip and not the optional generated single-file launcher.
 """
 import subprocess
 import sys
@@ -14,41 +14,37 @@ from scripts import build_release
 
 
 class ReleaseArchiveTests(unittest.TestCase):
-    def test_zip_includes_current_runnable_server_and_source_without_saves(self):
+    def test_normal_zip_contains_current_source_but_not_saved_data_or_standalone(self):
         with tempfile.TemporaryDirectory() as folder:
-            destination = Path(folder)
-            build_release.build(destination)
-            archive_path = destination / "Nindo_mud.zip"
-            standalone_path = destination / "Nindo_mud"
+            output = Path(folder)
+            build_release.build(output)
+            archive_path = output / "Nindo_mud.zip"
             self.assertTrue(archive_path.is_file())
-            self.assertTrue(standalone_path.is_file())
             with ZipFile(archive_path) as archive:
                 names = archive.namelist()
-                self.assertIn("Nindo_mud", names)
-                self.assertIn("main.py", names)
-                self.assertIn("commands.py", names)
-                self.assertIn("legendary_items.py", names)
-                self.assertIn("ui_palette.py", names)
-                self.assertIn("UPDATE_INSTRUCTIONS.txt", names)
-                self.assertIn("test_kage_item_colors.py", names)
-                self.assertTrue(archive.read("Nindo_mud").startswith(b"#!/usr/bin/env python3"))
-                self.assertEqual(archive.read("Nindo_mud"), standalone_path.read_bytes())
+                self.assertNotIn("Nindo_mud", names)
+                self.assertNotIn("Nindo_mud.zip", names)
+                self.assertNotIn("UPDATE_INSTRUCTIONS.txt", names)
+                for name in (
+                    "main.py", "commands.py", "legendary_items.py",
+                    "ui_palette.py", "test_kage_item_colors.py",
+                    "changelog.py", "scripts/build_release.py",
+                ):
+                    self.assertIn(name, names)
                 self.assertIn(b"def cmd_colorscheme", archive.read("commands.py"))
                 self.assertIn(b"LEGENDARY_COLOR_SCHEMES", archive.read("legendary_items.py"))
-                self.assertIn(b"15.327", archive.read("changelog.py"))
+                self.assertIn(b"15.328", archive.read("changelog.py"))
                 self.assertFalse(any(
-                    name == "data" or name.startswith("data/") or
-                    name == "world_state.json" or name == "templates.json"
+                    name == "data" or name.startswith("data/")
+                    or name in {"world_state.json", "templates.json"}
                     for name in names
                 ))
-            # Run the exact standalone file that ships within the ZIP.
-            unpacked = destination / "install"
-            unpacked.mkdir()
-            with ZipFile(archive_path) as archive:
-                (unpacked / "Nindo_mud").write_bytes(archive.read("Nindo_mud"))
+                # Test the actual multi-file source *inside the download*.
+                install = output / "install"
+                archive.extractall(install)
             preflight = subprocess.run(
-                [sys.executable, str(unpacked / "Nindo_mud"), "--preflight"],
-                cwd=unpacked, capture_output=True, text=True, timeout=45,
+                [sys.executable, str(install / "main.py"), "--preflight"],
+                cwd=install, capture_output=True, text=True, timeout=45,
             )
             self.assertEqual(preflight.returncode, 0, preflight.stderr[-3500:])
 
