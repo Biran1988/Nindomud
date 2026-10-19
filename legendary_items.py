@@ -459,6 +459,58 @@ LEGENDARY_ITEMS = {
 }
 
 
+
+# Character-inspired, item-specific xterm-256 presentation.
+# These colors are Nindo_mud's ORIGINAL art direction. The other NarutoMUD
+# does not publish verified ANSI item palettes, so don't misattribute these.
+# Never embed these control codes into stored short_desc, inventory names, or
+# builder-defined item prototypes. IDs are stable even if old item keys move.
+LEGENDARY_COLOR_SCHEMES = {
+    9751: (214, 75),   # Naruto - orange jacket / deep sky blue trim
+    9752: (111, 203),  # Sasuke - Uchiha blue / Sharingan crimson
+    9753: (252, 117),  # Kakashi - steel gray / lightning blue
+    9754: (179, 203),  # Gaara - desert sand / red hair
+    9755: (141, 189),  # Kankuro - puppet-purple / lilac face paint
+    9756: (203, 253),  # Jiraiya - crimson / silvery white
+    9757: (48, 159),   # Tsunade - emerald crystal / pale jade
+    9758: (107, 151),  # Shikamaru - flak olive / sage green
+    96000: (220, 255), # Deidara - explosive gold / pale clay
+    9760: (83, 226),   # Might Guy - vivid green / sunset yellow
+    9761: (40, 208),   # Rock Lee - training green / orange weights
+    9762: (203, 245),  # Itachi - Akatsuki red / black-steel
+    9763: (135, 250),  # Pain - Rinnegan violet / piercing steel
+    9764: (111, 225),  # Konan - pale blue / paper-blossom pink
+    9765: (135, 153),  # Orochimaru - serpent purple / ice blue
+    9766: (255, 117),  # Neji - white bandages / Byakugan sky
+    9767: (208, 223),  # Tobi - spiral orange / parchment sand
+    9768: (189, 250),  # Kabuto - pale lens blue / silver
+    9769: (226, 117),  # Killer B - golden sunshine / electric blue
+    9770: (255, 159),  # Sakumo - White Fang / icy chakra
+}
+
+
+def styled_name(item_name: str):
+    """Return a brightly colored display label for an exact Kage item.
+
+    Non-Kage names return None, leaving the existing rarity/examine and
+    ordinary item behavior untouched. Display only: this function never
+    changes item identity or applies codes to stored world/player records.
+    """
+    lookup = item_name.casefold()
+    for data in LEGENDARY_ITEMS.values():
+        if lookup != data["short_desc"].casefold():
+            continue
+        colors = LEGENDARY_COLOR_SCHEMES.get(data["vnum"])
+        if colors is None:
+            return None
+        # Alternate readable bright colors by WORD, not every individual
+        # letter; e.g. Naruto's / Orange / Jacket gets orange-blue-orange.
+        return " ".join(
+            f"&[{colors[index % len(colors)]}]{word}"
+            for index, word in enumerate(item_name.split())
+        ) + "&x"
+    return None
+
 def register_all(olc_module, combat_module) -> None:
     """Registers every legendary item as a real oset-style prototype
     in olc_module.OBJECT_TEMPLATES, called once from content.populate()
