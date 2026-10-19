@@ -263,3 +263,11 @@ leveling, mob XP, and the older gameplay smoke checks.
   spoken `say Start Genin exam` command near mob VNUM 11. The older
   ask command and saved graduation mob program no longer start it.
   No player-built areas or world state files are modified.
+
+- Version 15.324: Replaced the global room name/description theme with
+  Ember & Sand: room titles are xterm-256 foreground 208 (#ff8700),
+  room descriptions are xterm-256 foreground 223 (#ffd7af). Both go
+  through the existing shared ui_palette helpers, so ordinary look,
+  illusion rooms and scan use the new pair together. Other entity and
+  navigation colors stay as-is; saved room/area/world content is not
+  altered. Regression coverage: test_room_palette.py.
