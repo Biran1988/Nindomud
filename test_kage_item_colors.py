@@ -107,5 +107,47 @@ class KageLegendaryPaletteTests(unittest.TestCase):
         self.assertTrue(all("&[" not in name for name in self.player.inventory))
 
 
+    def test_all_legendary_equipment_stat_bonuses_now_apply_from_armor_and_weapons(self):
+        sasuke = legendary_items.LEGENDARY_ITEMS["sasuke's uchiha shirt"]["short_desc"]
+        gaara = legendary_items.LEGENDARY_ITEMS["gaara's sand gourd"]["short_desc"]
+        deidara = legendary_items.LEGENDARY_ITEMS["deidara's clay pouches"]["short_desc"]
+        jiraiya = legendary_items.LEGENDARY_ITEMS["jiraiya's forehead protector"]["short_desc"]
+        sakumo = legendary_items.LEGENDARY_ITEMS["sakumo's white fang blade"]["short_desc"]
+        self.player.equipment = {
+            "body": sasuke, "back": gaara, "waist": deidara,
+            "head": jiraiya, "wielded": sakumo,
+        }
+        self.assertEqual(commands.equipped_weapon_hitroll_bonus(self.player), 6 + 5 + 10)
+        self.assertEqual(commands.equipped_weapon_damroll_bonus(self.player), 6 + 8 + 9 + 5 + 12)
+        self.assertEqual(commands.equipped_armor_class_bonus(self.player), 20 + 6)
+        # These are derived at evaluation, including for previously equipped
+        # inventory, so loading a saved character requires no migration.
+        self.player.equipment.pop("back")
+        self.assertEqual(commands.equipped_weapon_damroll_bonus(self.player), 6 + 9 + 5 + 12)
+        self.assertEqual(commands.equipped_armor_class_bonus(self.player), 6)
+
+    def test_positive_armor_headband_and_negative_legacy_kage_ac_both_protect(self):
+        bonus = olc.default_object(99888, "A Genin Test Headband")
+        bonus["stat_bonuses"]["armor_class"] = 8
+        self.prototypes[99888] = bonus
+        self.player.equipment = {
+            "head": "A Genin Test Headband",
+            "back": legendary_items.LEGENDARY_ITEMS["gaara's sand gourd"]["short_desc"],
+        }
+        self.assertEqual(commands.equipped_armor_class_bonus(self.player), 28)
+
+    def test_boosted_thin_kage_items_retain_base_stats_and_use_derived_bonuses(self):
+        expected = {
+            "deidara's clay pouches": {"damroll": 9, "dexterity": 5, "hitroll": 5, "armor_class": -6},
+            "pain's piercings": {"max_chakra": 150, "intelligence": 5, "damroll": 4, "armor_class": -8},
+            "konan's paper flower": {"dexterity": 6, "luck": 5, "wisdom": 3, "damroll": 4},
+            "tobi's spiral mask": {"dexterity": 7, "armor_class": -15, "hitroll": 5},
+            "kabuto's glasses": {"intelligence": 7, "wisdom": 4, "hitroll": 4},
+            "jiraiya's forehead protector": {"max_chakra": 100, "intelligence": 5, "luck": 4, "damroll": 5},
+        }
+        for key, buffs in expected.items():
+            self.assertEqual(legendary_items.LEGENDARY_ITEMS[key]["stat_bonuses"], buffs)
+
+
 if __name__ == "__main__":
     unittest.main()
