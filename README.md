@@ -36,6 +36,18 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.325 adds a LIVE, global admin room-color scheme. Administrator and
+Implementor accounts can change room names, descriptions and exits in real
+time, using any xterm-256 foreground (0-255). Enter `colorscheme` to see
+current settings and preview your own room, or try:
+`colorscheme name 208`, `colorscheme desc 223`,
+`colorscheme exits 110`, `colorscheme set 208 223 110`, or
+`colorscheme reset`. Every successful edit automatically writes
+`data/color_scheme.json` using an atomic, synced replace before it
+becomes live; startup restores the saved settings, even after crashes.
+`save world` is not needed, and *no builder area/room files are changed.*
+Other colors throughout the MUD are unaffected.
+
 Version 15.324 changes **only** the two global room-display colors to the
 Ember & Sand scheme: room name xterm-256 **208** (`&[208]`, vibrant ember
 orange) and room description xterm-256 **223** (`&[223]`, warm sand).
