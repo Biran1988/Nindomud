@@ -310,3 +310,13 @@ leveling, mob XP, and the older gameplay smoke checks.
   `data/` files; it extracts and runs the bundled server's preflight.
   Extract into the live server folder and restart the actual running
   service. This changes NO player/area/world saves.
+
+- Version 15.328: Restored the original user-requested distribution.
+  The `Nindo_mud.zip` archive again contains only the normal Python
+  source, tests, builder resources and reference helpfiles; there is no
+  included standalone launcher, wrapper ZIP or extra installer.
+  Deploy as before with `python3 main.py`. The release regression
+  test extracts the complete archive and validates the usual
+  `main.py --preflight` startup. All v15.325 color customization,
+  v15.326 Kage item colors and combat bonus fixes remain included.
+  No saved `data/` or user-built area/world files are overwritten.
