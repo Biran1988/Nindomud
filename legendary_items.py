@@ -481,48 +481,53 @@ LEGENDARY_ITEMS = {
 # does not publish verified ANSI item palettes, so don't misattribute these.
 # Never embed these control codes into stored short_desc, inventory names, or
 # builder-defined item prototypes. IDs are stable even if old item keys move.
+# Quiet, readable character-themed colors for the Kage's mission-point shop.
+# One-color entries use a single xterm-256 shade for the ENTIRE name.
+# The six selected existing two-color designs intentionally keep their
+# original word-by-word pattern. This affects rendered text ONLY, never
+# stored names, world files, object templates, prices or stat bonuses.
 LEGENDARY_COLOR_SCHEMES = {
-    9751: (214, 75),   # Naruto - orange jacket / deep sky blue trim
-    9752: (111, 203),  # Sasuke - Uchiha blue / Sharingan crimson
-    9753: (252, 117),  # Kakashi - steel gray / lightning blue
-    9754: (179, 203),  # Gaara - desert sand / red hair
-    9755: (141, 189),  # Kankuro - puppet-purple / lilac face paint
-    9756: (203, 253),  # Jiraiya - crimson / silvery white
-    9757: (48, 159),   # Tsunade - emerald crystal / pale jade
-    9758: (107, 151),  # Shikamaru - flak olive / sage green
-    96000: (220, 255), # Deidara - explosive gold / pale clay
-    9760: (83, 226),   # Might Guy - vivid green / sunset yellow
-    9761: (40, 208),   # Rock Lee - training green / orange weights
-    9762: (203, 245),  # Itachi - Akatsuki red / black-steel
-    9763: (135, 250),  # Pain - Rinnegan violet / piercing steel
-    9764: (111, 225),  # Konan - pale blue / paper-blossom pink
-    9765: (135, 153),  # Orochimaru - serpent purple / ice blue
-    9766: (255, 117),  # Neji - white bandages / Byakugan sky
-    9767: (208, 223),  # Tobi - spiral orange / parchment sand
-    9768: (189, 250),  # Kabuto - pale lens blue / silver
-    9769: (226, 117),  # Killer B - golden sunshine / electric blue
-    9770: (255, 159),  # Sakumo - White Fang / icy chakra
+    9751: (208,),       # Naruto - warm orange
+    9752: (110,),       # Sasuke - muted Uchiha blue
+    9753: (252, 117),   # Kakashi - KEEP original mask steel/lightning
+    9754: (180,),       # Gaara - soft desert sand
+    9755: (140,),       # Kankuro - dusky puppeteer purple
+    9756: (167,),       # Jiraiya - muted crimson
+    9757: (114,),       # Tsunade - jade-green crystal
+    9758: (107,),       # Shikamaru - flak-jacket olive
+    96000: (220, 255), # Deidara - KEEP original clay/gold
+    9760: (77,),        # Might Guy - leaf green
+    9761: (113,),       # Rock Lee - soft training green
+    9762: (203, 245),  # Itachi - KEEP original red/steel ring
+    9763: (141,),       # Pain - Rinnegan lavender
+    9764: (153,),       # Konan - gentle paper blue
+    9765: (139,),       # Orochimaru - muted serpent purple
+    9766: (255, 117),  # Neji - KEEP original white/blue bandages
+    9767: (208, 223),  # Tobi - KEEP original orange/sand mask
+    9768: (189,),       # Kabuto - silvery glass
+    9769: (179,),       # Killer B - warm muted gold
+    9770: (255, 159),  # Sakumo - KEEP original White Fang/chakra blade
 }
 
 
 def styled_name(item_name: str):
-    """Return a brightly colored display label for an exact Kage item.
+    """Color a Kage legendary name without altering the persisted item ID.
 
-    Non-Kage names return None, leaving the existing rarity/examine and
-    ordinary item behavior untouched. Display only: this function never
-    changes item identity or applies codes to stored world/player records.
+    Most rewards use one coherent 256-color shade so Kage's shop stays
+    readable. Six specifically preserved classics retain word-by-word
+    dual-tone highlights. Unrelated items keep their existing visuals.
     """
     lookup = item_name.casefold()
     for data in LEGENDARY_ITEMS.values():
         if lookup != data["short_desc"].casefold():
             continue
-        colors = LEGENDARY_COLOR_SCHEMES.get(data["vnum"])
-        if colors is None:
+        palette = LEGENDARY_COLOR_SCHEMES.get(data["vnum"])
+        if palette is None:
             return None
-        # Alternate readable bright colors by WORD, not every individual
-        # letter; e.g. Naruto's / Orange / Jacket gets orange-blue-orange.
+        if len(palette) == 1:
+            return f"&[{palette[0]}]{item_name}&x"
         return " ".join(
-            f"&[{colors[index % len(colors)]}]{word}"
+            f"&[{palette[index % len(palette)]}]{word}"
             for index, word in enumerate(item_name.split())
         ) + "&x"
     return None
