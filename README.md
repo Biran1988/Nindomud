@@ -42,6 +42,17 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.329 cleans up the Kage's mission-point item list: instead
+of alternating bright colors on every word, 14 legendary items use ONE
+readable, character-appropriate 256-color shade for their entire name.
+Six specifically favored designs retain their original two-tone palette:
+Kakashi's Mask, Deidara's Clay Pouches, Itachi's Ring, Neji's Forehead
+Bandages, Tobi's Spiral Mask and Sakumo's White Fang Chakra Blade.
+Colors affect only item name rendering in the shop, purchase confirmation,
+inventory, equipment and examine; no prices, equipment bonuses, saved
+player/room files or builder content are altered. The normal source-only
+ZIP remains the standard distribution.
+
 Version 15.328 restores the original `Nindo_mud.zip` format:
 normal Python source files, tests, builder tools and helpfiles only.
 No bundled single-file server, extra ZIP wrapper, or runtime save data.
