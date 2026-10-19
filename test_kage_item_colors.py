@@ -90,9 +90,9 @@ class KageLegendaryPaletteTests(unittest.TestCase):
         self.player.equipment = {"back": item["short_desc"]}
         old_inventory = list(self.player.inventory)
         commands.cmd_inventory(self.session, [])
-        self.assertIn("&[179]Gaara's", self.session.send.call_args.args[0])
+        self.assertIn("&[180]Gaara's", self.session.send.call_args.args[0])
         commands.cmd_equipment(self.session, [])
-        self.assertIn("&[179]Gaara's", self.session.send.call_args.args[0])
+        self.assertIn("&[180]Gaara's", self.session.send.call_args.args[0])
         self.assertEqual(self.player.inventory, old_inventory)
         self.assertEqual(self.player.equipment["back"], item["short_desc"])
 
@@ -110,7 +110,7 @@ class KageLegendaryPaletteTests(unittest.TestCase):
         self.assertIn(item["short_desc"], self.player.inventory)
         self.assertEqual(self.player.mission_points, 4500)
         result = self.session.send.call_args.args[0]
-        self.assertIn("&[214]Naruto's", result)
+        self.assertIn("&[208]Naruto's", result)
         self.assertTrue(all("&[" not in name for name in self.player.inventory))
 
 
