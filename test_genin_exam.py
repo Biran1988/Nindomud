@@ -34,9 +34,10 @@ class IrukaGraduationTests(unittest.TestCase):
         self.player.village_rank = "academy student"
         self.player.learned_skills = list(genin_exam.STARTER_SKILLS)
         self.player.skill_proficiencies = {name: 100 for name in genin_exam.STARTER_SKILLS}
-        self.session = NS(player=self.player, send=Mock(), combat_target=None,
-                          pvp_target=None, pending_cast=None, controlled_clone=None,
-                          iruka_exam=None)
+        self.session = NS(player=self.player, send=Mock(), broadcast_room=Mock(),
+                          combat_target=None, pvp_target=None, pending_cast=None,
+                          controlled_clone=None, iruka_exam=None)
+        self.session.active_sessions = lambda: [self.session]
         for module, func in ((kage, "announce_rank_up"),
                              (storage, "save_player")):
             p = patch.object(module, func)
@@ -83,14 +84,27 @@ class IrukaGraduationTests(unittest.TestCase):
         combat.remove_mob(self.iruka)
         self.assertFalse(genin_exam.start_exam(self.session))
 
-    def test_ask_iruka_starts_exam_and_non_exam_commands_cannot_escape_it(self):
+    def test_only_exact_spoken_start_genin_exam_starts_and_blocks_movement(self):
         commands.cmd_ask(self.session, ["iruka", "about", "graduation"])
+        self.assertIsNone(self.session.iruka_exam)
+        with patch("chat_moderation.record_and_check_spam", return_value=False):
+            commands.cmd_say(self.session, ["Start", "Genin", "exam"])
         self.assertIsNotNone(self.session.iruka_exam)
         position = self.session.iruka_exam["index"]
         self.assertTrue(genin_exam.handle_answer(self.session, "north"))
         self.assertEqual(position, self.session.iruka_exam["index"])
         self.assertTrue(genin_exam.handle_answer(self.session, "cancel"))
         self.assertIsNone(self.session.iruka_exam)
+
+    def test_spoken_exam_phrase_requires_iruka_and_is_case_insensitive(self):
+        combat.remove_mob(self.iruka)
+        with patch("chat_moderation.record_and_check_spam", return_value=False):
+            commands.cmd_say(self.session, ["sTaRt", "GeNiN", "ExAm"])
+        self.assertIsNone(self.session.iruka_exam)
+        self.iruka = combat.spawn_mob(11, 30)
+        with patch("chat_moderation.record_and_check_spam", return_value=False):
+            commands.cmd_say(self.session, ["START", "GENIN", "EXAM"])
+        self.assertIsNotNone(self.session.iruka_exam)
 
     def test_per_attempt_random_ten_questions_and_shuffled_option_positions(self):
         first = self._start()
@@ -133,7 +147,7 @@ class IrukaGraduationTests(unittest.TestCase):
             self.assertFalse(genin_exam.start_exam(self.session))
             self.assertEqual(self.player.mission_points, 50)
 
-    def test_iruka_legacy_graduation_program_only_starts_exam(self):
+    def test_iruka_legacy_graduation_program_no_longer_starts_exam(self):
         action = {"trigger": "speech", "keyword": "graduate",
                   "action": "iruka_graduation_check", "args": ""}
         template = combat.MOB_TEMPLATES[11]
@@ -141,9 +155,8 @@ class IrukaGraduationTests(unittest.TestCase):
         self.assertTrue(programs.fire_speech_programs(
             self.session, template["mob_programs"], "graduate",
             speaker_name=self.iruka.name, mob_template=template, mob=self.iruka))
-        self.assertIsNotNone(self.session.iruka_exam)
+        self.assertIsNone(self.session.iruka_exam)
         self.assertEqual(self.player.village_rank, "academy student")
-        self.session.iruka_exam = None
         self.assertFalse(programs.run_action(
             self.session, "iruka_graduation_check", "", mob=self.fake_teacher))
         self.assertIsNone(self.session.iruka_exam)
