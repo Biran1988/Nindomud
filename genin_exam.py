@@ -22,6 +22,8 @@ QUESTIONS_PER_EXAM = 10
 
 # question, correct option, and three plausible wrong options.
 # Facts from the original Naruto anime and Naruto Shippuden.
+START_PHRASE = "start genin exam"
+
 QUESTION_BANK = (
     ("Who is the jonin leader of Naruto, Sasuke, and Sakura's original Team 7?",
      "Kakashi Hatake", "Might Guy", "Asuma Sarutobi", "Kurenai Yuhi"),
@@ -90,7 +92,7 @@ def missing_masteries(player):
 
 
 def start_exam(session):
-    """Begin from 'ask iruka about graduation' or Iruka's mob program."""
+    """Begin only when the player speaks 'say Start Genin exam' near Iruka."""
     player = getattr(session, "player", None)
     if player is None or iruka_here(session) is None:
         session.send("Iruka (mob VNUM 11) must be here to conduct the Genin Exam.")
