@@ -281,14 +281,12 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
             if other is not session and other.player and other.player.room_vnum == player.room_vnum:
                 other.send(args)
     elif action == "iruka_graduation_check":
-        # Preserve this legacy mob-program action for the actual Iruka,
-        # but it only starts the hardcoded quiz; it cannot promote.
-        import genin_exam
-        if (mob is None or mob.template_vnum != genin_exam.IRUKA_VNUM
-                or mob.room_vnum != player.room_vnum):
-            return False
-        genin_exam.start_exam(session)
-        return False  # Do not execute any further graduation rewards.
+        # Legacy saved mob programs remain parseable, but the ONLY
+        # initiation trigger is the literal "say Start Genin exam".
+        # This no-op also blocks scripts from granting Genin for free.
+        if mob is not None and mob.template_vnum == 11:
+            session.send('Iruka says, "Say Start Genin exam when you are ready."')
+        return False
     return True
 
 
