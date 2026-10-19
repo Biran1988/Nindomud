@@ -894,7 +894,7 @@ def cmd_stand(session, args: List[str]) -> None:
     _wake_and_stand(session)
 
 
-EXIT_COLOR = "&G"  # the direction word (e.g. "North")
+# Exit text now follows the live, persistent ui_palette.EXIT_COLOR.
 CARDINAL_ORDER = ["north", "east", "south", "west"]
 DIAGONAL_ORDER = ["northeast", "southeast", "southwest", "northwest"]
 VERTICAL_ORDER = ["up", "down"]
@@ -919,7 +919,7 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
     to staff with a "(hidden)" marker so they can still see and manage
     it. A closed door shows "(closed)" so players know to `open` it."""
     if not room.exits:
-        return [f"{EXIT_COLOR}Exits: none&x"]
+        return [f"{ui_palette.EXIT_COLOR}Exits: none&x"]
 
     directions = []
     for direction in CARDINAL_ORDER + DIAGONAL_ORDER + VERTICAL_ORDER:
@@ -935,7 +935,7 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
             label += " (hidden)"
         directions.append(label)
     if not directions:
-        return [f"{EXIT_COLOR}Exits: none&x"]
+        return [f"{ui_palette.EXIT_COLOR}Exits: none&x"]
 
     columns = [
         directions[i:i + EXIT_MAX_ROWS_PER_COLUMN]
@@ -944,14 +944,14 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
     col_widths = [max(len(entry) for entry in col) for col in columns]
     max_rows = min(EXIT_MAX_ROWS_PER_COLUMN, len(directions))
 
-    lines = [f"{EXIT_COLOR}Exits:&x"]
+    lines = [f"{ui_palette.EXIT_COLOR}Exits:&x"]
     for row in range(max_rows):
         parts = []
         for col, width in zip(columns, col_widths):
             if row < len(col):
                 direction_title = col[row]
                 pad = " " * (width - len(direction_title))
-                parts.append(f"{EXIT_COLOR}{direction_title}&x{pad}")
+                parts.append(f"{ui_palette.EXIT_COLOR}{direction_title}&x{pad}")
         lines.append("  " + (" " * EXIT_COLUMN_GAP).join(parts))
     return lines
 
@@ -7360,6 +7360,88 @@ def force_all_player_configs_on() -> int:
     return changed
 
 
+def cmd_colorscheme(session, args: List[str]) -> None:
+    """Administrator-only live GLOBAL room colors; auto-saved immediately."""
+    if not session.account or session.account.staff_level not in ("administrator", "implementor"):
+        session.send("Only administrators and Implementors can change the global room colors.")
+        return
+
+    usage = (
+        "Usage: colorscheme [show|preview|reset]\\n"
+        "       colorscheme name <0-255>\\n"
+        "       colorscheme desc <0-255>\\n"
+        "       colorscheme exits <0-255>\\n"
+        "       colorscheme set <name> <desc> <exits>\\n"
+        "Changes take effect instantly and auto-save through crashes and reboots."
+    )
+    synonyms = {
+        "name": "name", "title": "name", "roomname": "name",
+        "desc": "desc", "description": "desc", "roomdesc": "desc",
+        "exits": "exits", "exit": "exits",
+    }
+    action = args[0].lower() if args else "show"
+    if action in ("show", "preview") and len(args) == 1 or not args:
+        pass
+    elif action == "reset" and len(args) == 1:
+        try:
+            ui_palette.reset()
+        except OSError as exc:
+            session.send(f"&RColor scheme save failed; previous colors remain active: {exc}&x")
+            return
+        session.send("&GRoom colors reset to Ember & Sand with classic green exits; saved immediately.&x")
+    elif action in synonyms and len(args) == 2:
+        part = synonyms[action]
+        number = _scheme_number(args[1])
+        if number is None:
+            session.send(usage)
+            return
+        try:
+            ui_palette.set_color(part, number)
+        except OSError as exc:
+            session.send(f"&RColor scheme save failed; previous colors remain active: {exc}&x")
+            return
+        session.send(f"&GGlobal {part} color changed to &[{number}]sample&x "
+                     f"(&[{number}]) and saved immediately.")
+    elif action == "set" and len(args) == 4:
+        numbers = [_scheme_number(word) for word in args[1:]]
+        if any(value is None for value in numbers):
+            session.send(usage)
+            return
+        try:
+            ui_palette.save(dict(zip(("name", "desc", "exits"), numbers)))
+        except OSError as exc:
+            session.send(f"&RColor scheme save failed; previous colors remain active: {exc}&x")
+            return
+        session.send("&GAll three global colors changed and saved immediately.&x")
+    else:
+        session.send(usage)
+        return
+
+    palette = ui_palette.current()
+    exit_color = ui_palette.EXIT_COLOR
+    session.send(
+        "&WCurrent GLOBAL room colors (auto-saved):&x\\n"
+        f"  Name:        {ui_palette.ROOM_TITLE}Sample Name&x  [{palette['name']}]\\n"
+        f"  Description: {ui_palette.ROOM_DESCRIPTION}Sample room text.&x  [{palette['desc']}]\\n"
+        f"  Exits:       {exit_color}North East&x  "
+        f"[{palette['exits'] if palette['exits'] is not None else 'default &G'}]"
+    )
+    # Show the actual room using the new colors right away; no movement
+    # or world/area rebuild is required.
+    cmd_look(session, [])
+
+
+def _scheme_number(token: str):
+    """Accept decimal 0..255, or the familiar &[208] MUD color syntax."""
+    token = token.strip()
+    if token.startswith("&[") and token.endswith("]"):
+        token = token[2:-1]
+    if not token.isascii() or not token.isdigit():
+        return None
+    number = int(token) if len(token) <= 3 else -1
+    return number if 0 <= number <= 255 else None
+
+
 def cmd_staffconfig(session, args: List[str]) -> None:
     """Staff's own, separate config set (STAFF_CONFIG_OPTIONS) --
     distinct from the regular player config command above, per direct
@@ -8459,6 +8541,7 @@ COMMANDS = {
     "reload": cmd_reload,
     "spawnpoint": cmd_spawnpoint,
     "staffconfig": cmd_staffconfig,
+    "colorscheme": cmd_colorscheme, "roomscheme": cmd_colorscheme,
     "report": cmd_report,
     "idea": cmd_idea,
     "rset": olc.cmd_rset,
