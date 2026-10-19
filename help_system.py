@@ -861,7 +861,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Ranks run Academy Student -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as an Academy Student, with full access to combat and missions from the very first moment -- Academy Student carries no gate of its own.\n"
             "\n"
-            "Academy Student -> Genin isn't automatic and doesn't come from the Kage at all -- it's earned by finding a real teacher NPC (see 'help teacher') built with a mob program (see 'help programs') that promotes you when its own condition is met, the same way a village's own academy is set up. There's no fixed level or mission requirement for this specific step; it's entirely up to however that NPC is configured.\n"
+            "Academy Student -> Genin requires level 10, 100% mastery of Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style; then find Iruka (mob VNUM 11) and use 'ask iruka about graduation' to take the written Genin Exam. He selects 10 different Naruto anime questions from a 20-question pool, shuffling the four choices on each attempt. All 10 answers must be correct; one mistake ends that attempt. Passing awards a Genin headband and 50 mission points. See 'help genin exam'.\n"
             "\n"
             "Genin -> Chunin is earned by passing the Chunin Exam ('help exam'), not by asking the Kage.\n"
             "\n"
@@ -4564,6 +4564,30 @@ DEFAULT_HELP_ENTRIES.append({
         "All amounts must be positive whole numbers and cannot exceed "
         "the Ryo you possess. Physical piles persist across server restarts; "
         "picking up Ryo does not require an inventory item slot."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "genin exam",
+    "keywords": ["genin exam", "academy exam", "iruka", "graduation exam"],
+    "title": "Iruka's Genin Graduation Exam",
+    "body": (
+        "Syntax: ask iruka about graduation\n"
+        "Answer: A, B, C or D, or answer A / answer B / answer C / answer D.\n"
+        "Type cancel to abandon an active exam.\n\n"
+        "To qualify: be an Academy Student at level 10 or higher and "
+        "master all five fundamentals to 100%: Shadow Shuriken Technique, "
+        "Dynamic Entry, Demonic Illusion: Hell Viewing Technique, "
+        "Throw Shuriken, and Strong Fist Style. Strong Fist Style grows "
+        "through combat, not normal practice.\n\n"
+        "Iruka (mob VNUM 11) must be present. Each try chooses a fresh "
+        "set of 10 questions from 20 canonical Naruto anime questions; "
+        "the four answer positions are shuffled independently. "
+        "All 10 must be answered correctly. One wrong answer fails "
+        "the attempt, without rewards. You may retry while qualified. "
+        "Passing earns Genin rank, the Genin headband, 50 mission points "
+        "and the global rank-up announcement."
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
