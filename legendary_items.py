@@ -191,6 +191,7 @@ LEGENDARY_ITEMS = {
             "max_chakra": 100,
             "intelligence": 5,
             "luck": 4,
+            "damroll": 5,
         },
     },
     "tsunade's hokage necklace": {
@@ -247,6 +248,8 @@ LEGENDARY_ITEMS = {
         "stat_bonuses": {
             "damroll": 9,
             "dexterity": 5,
+            "hitroll": 5,
+            "armor_class": -6,
         },
     },
     "might guy's jumpsuit": {
@@ -322,6 +325,8 @@ LEGENDARY_ITEMS = {
         "stat_bonuses": {
             "max_chakra": 150,
             "intelligence": 5,
+            "damroll": 4,
+            "armor_class": -8,
         },
     },
     "konan's paper flower": {
@@ -341,6 +346,7 @@ LEGENDARY_ITEMS = {
             "dexterity": 6,
             "luck": 5,
             "wisdom": 3,
+            "damroll": 4,
         },
     },
     "orochimaru's rope belt": {
@@ -397,6 +403,7 @@ LEGENDARY_ITEMS = {
         "stat_bonuses": {
             "dexterity": 7,
             "armor_class": -15,
+            "hitroll": 5,
         },
     },
     "kabuto's glasses": {
@@ -415,6 +422,7 @@ LEGENDARY_ITEMS = {
         "stat_bonuses": {
             "intelligence": 7,
             "wisdom": 4,
+            "hitroll": 4,
         },
     },
     "killer b's sunglasses": {
@@ -460,6 +468,14 @@ LEGENDARY_ITEMS = {
 
 
 
+# Gameplay stat enrichment keeps existing Nindo_mud bonuses unchanged,
+# and adds modest combat-derived bonuses to a few thinner 500-MP items.
+# We cannot verify source-game item numbers: these are original Nindo_mud
+# balancing additions, not imported NarutoMUD stats. Added bonuses use
+# hitroll/damroll/armor_class, which our engine derives from equipment
+# on each evaluation, so they apply even to items ALREADY equipped without
+# re-wearing or unsafe direct changes to saved player attributes.
+#
 # Character-inspired, item-specific xterm-256 presentation.
 # These colors are Nindo_mud's ORIGINAL art direction. The other NarutoMUD
 # does not publish verified ANSI item palettes, so don't misattribute these.
