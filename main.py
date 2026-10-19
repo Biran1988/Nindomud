@@ -13,6 +13,9 @@ from config import ADMIN_NAME
 
 def main():
     storage.ensure_dirs()
+    # Restore globally saved room colors before anyone can enter the MUD.
+    import ui_palette
+    ui_palette.load()
     content.populate()
     import seasonal_events
     seasonal_events.sync_visitors()
