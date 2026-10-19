@@ -271,3 +271,14 @@ leveling, mob XP, and the older gameplay smoke checks.
   illusion rooms and scan use the new pair together. Other entity and
   navigation colors stay as-is; saved room/area/world content is not
   altered. Regression coverage: test_room_palette.py.
+
+- Version 15.325: Introduced the administrator/Implementor-only
+  `colorscheme` (alias `roomscheme`) live MUD-global palette command.
+  Change title, description or exits independently with 0-255 xterm
+  foreground IDs, change all three together, reset or preview the active
+  room. Each valid edit atomically writes a separate synced
+  `data/color_scheme.json` BEFORE changing the in-memory palette.
+  The JSON file is restored at startup and is not part of `save world`.
+  Builder-authored room and area files are never touched. No reboot is
+  needed for changes; a player sees the colors next time they look.
+  Regression coverage: test_live_color_scheme.py.
