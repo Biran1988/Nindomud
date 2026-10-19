@@ -1395,6 +1395,12 @@ def cmd_ask(session, args: List[str]) -> None:
         import seasonal_events
         if seasonal_events.claim_present(session):
             return
+    # Iruka's official Genin Exam can only be offered by live mob 11.
+    if args[0].lower() == "iruka" and topic.replace("about ", "", 1).strip() in (
+            "genin", "exam", "genin exam", "graduate", "graduation"):
+        import genin_exam
+        genin_exam.start_exam(session)
+        return
     player = session.player
     village_rooms = content._VILLAGE_ROOMS.get(player.village)
     if village_rooms and player.room_vnum == village_rooms["kage"] and "promotion" in topic:
