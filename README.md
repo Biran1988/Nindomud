@@ -36,12 +36,21 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.323 refines the global look-room palette: every ordinary,
+illusory and scouting room display uses jade green (xterm-256 color 114)
+for room names and readable soft silver (color 253) for descriptions.
+Exits, players, mobs, items, combat, and saved builder/area data keep
+their existing appearance. Iruka's only exam launch phrase is now
+`say Start Genin exam` spoken in the room with mob VNUM 11; the old
+`ask iruka about graduation` and legacy scripted shortcut no longer
+launch the exam.
+
 Version 15.322 replaces Iruka (mob VNUM 11)'s instant Academy graduation
 with a challenging Genin written exam. Before starting, an Academy Student
 must reach level 10 and master all five starting disciplines to 100%:
 Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing
 Technique, Throw Shuriken, and Strong Fist Style. Use
-`ask iruka about graduation` when standing beside Iruka. Each attempt
+`say Start Genin exam` when standing beside Iruka. Each attempt
 draws 10 of 20 Naruto-anime trivia questions in a different combination,
 randomly shuffles all four answer positions, and requires a 10/10 score.
 The old `iruka_graduation_check` mob program starts the quiz rather than
