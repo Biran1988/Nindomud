@@ -36,6 +36,13 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.324 changes **only** the two global room-display colors to the
+Ember & Sand scheme: room name xterm-256 **208** (`&[208]`, vibrant ember
+orange) and room description xterm-256 **223** (`&[223]`, warm sand).
+The centralized display palette applies to ordinary, illusory, and
+reconnaissance room views without editing any saved room or area data,
+or altering exits, NPCs, items, or combat color schemes.
+
 Version 15.323 refines the global look-room palette: every ordinary,
 illusory and scouting room display uses jade green (xterm-256 color 114)
 for room names and readable soft silver (color 253) for descriptions.
