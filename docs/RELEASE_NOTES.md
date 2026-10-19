@@ -299,3 +299,14 @@ leveling, mob XP, and the older gameplay smoke checks.
   equipment stats are NOT known or claimed to have been reproduced;
   these additions use Nindo_mud's own combat balance. No changes to
   saved builder world/area data. Tests: test_kage_item_colors.py.
+
+- Version 15.327: Fixed user-deployable release ZIP. Previously, the
+  workflow built a standalone `Nindo_mud` server but uploaded only
+  Python source, so installations launching an older standalone
+  `./Nindo_mud` continued to run outdated code. Now the ZIP includes
+  the freshly rebuilt runnable `Nindo_mud` file, source code, reference
+  help and `UPDATE_INSTRUCTIONS.txt`. New test_release_archive.py
+  asserts the ZIP contains both forms, latest features and no runtime
+  `data/` files; it extracts and runs the bundled server's preflight.
+  Extract into the live server folder and restart the actual running
+  service. This changes NO player/area/world saves.
