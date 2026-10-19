@@ -16,15 +16,11 @@ python3 -m unittest discover -p "test_*.py"
 
 ## Deployment safety
 
-**Important for live installations:** The release ZIP now contains BOTH the source
-files and a freshly generated `Nindo_mud` standalone Python launcher.
-If your running server uses `python3 main.py`, restart it after replacing
-source. If it uses `./Nindo_mud`, replace that file too and restart
-(`chmod +x Nindo_mud` on Linux). Keeping an old standalone file running
-will hide every new code change even if the Python source is updated.
-Unzip the release directly into the current installation folder, NOT into
-a new folder that your existing service doesn't use. Back up `data/` but
-do not replace it. `UPDATE_INSTRUCTIONS.txt` is included in the archive.
+The normal release is a **direct source-code ZIP**, not a bundled or
+standalone server. Extract the updated Python files into the folder
+where you already run `python3 main.py`, then restart that server.
+It contains no standalone `Nindo_mud` executable and no nested ZIP.
+Back up `data/` but never replace it.
 
 Deploy source code over the existing server installation. Never replace the
 server's `data/` directory: it contains authoritative player, area, world,
@@ -45,6 +41,13 @@ Use a freshly built archive instead of any older archive checked into the
 repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
+
+Version 15.328 restores the original `Nindo_mud.zip` format:
+normal Python source files, tests, builder tools and helpfiles only.
+No bundled single-file server, extra ZIP wrapper, or runtime save data.
+The archive test extracts the downloaded source and runs
+`python3 main.py --preflight` to verify that the standard installation
+starts correctly. All gameplay features from previous releases remain.
 
 Version 15.327 fixes update packaging: `Nindo_mud.zip` now includes
 the actual rebuilt `Nindo_mud` standalone executable alongside the source
