@@ -282,3 +282,20 @@ leveling, mob XP, and the older gameplay smoke checks.
   Builder-authored room and area files are never touched. No reboot is
   needed for changes; a player sees the colors next time they look.
   Regression coverage: test_live_color_scheme.py.
+
+- Version 15.326: Improved all 20 preexisting mission-point Kage
+  legendary items with character-specific, two-color xterm-256 names
+  in shop lists, purchases, inventory, equipment and examine.
+  This is presentation-only: item identifiers, stored short_desc,
+  object VNUMs, prices and equipment slots have not changed.
+  Nindo_mud retains prior bonuses and gains moderate combat-derived
+  improvements on Deidara's pouches, Pain's piercings, Konan's flower,
+  Tobi's mask, Kabuto's glasses and Jiraiya's forehead protector.
+  Previously dormant hitroll/damroll prototype bonuses from nonweapon
+  equipment now apply in combat. Armor Class respects existing
+  negative Kage and positive headband protection conventions.
+  Current bonuses on already-equipped items are recalculated live,
+  so player saves do not need migration. Exact NarutoMUD external
+  equipment stats are NOT known or claimed to have been reproduced;
+  these additions use Nindo_mud's own combat balance. No changes to
+  saved builder world/area data. Tests: test_kage_item_colors.py.
