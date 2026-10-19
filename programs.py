@@ -112,7 +112,7 @@ def validate_program(trigger: str, action: str, args: str, valid_triggers: set, 
     return errors
 
 
-def run_action(session, action: str, args: str, speaker_name: str = "Something", mob_template: dict = None, keyword: str = None) -> bool:
+def run_action(session, action: str, args: str, speaker_name: str = "Something", mob_template: dict = None, keyword: str = None, mob=None) -> bool:
     """Executes exactly one program action against the triggering
     player's session. speaker_name flavors say/emote/give/teleport
     messages (e.g. the mob's name, an item's name, or a room's name).
@@ -185,6 +185,9 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
         import data_headbands
         import kage
         new_rank = args.lower()
+        if new_rank == "genin" and player.village_rank == "academy student":
+            session.send("The Genin rank must be earned through Iruka's exam.")
+            return False
         player.village_rank = new_rank
         data_headbands.apply_rank_headband(player, new_rank)
         session.send(f"&Y{speaker_name} promotes you to {new_rank.title()}!&x")
@@ -278,30 +281,14 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
             if other is not session and other.player and other.player.room_vnum == player.room_vnum:
                 other.send(args)
     elif action == "iruka_graduation_check":
-        # A genuinely one-off, hardcoded action for a specific named
-        # NPC (Iruka Sensei, vnum 11, room 30) -- per direct request/
-        # confirmation: "just hardcode it to this mob he will not be
-        # changed or moved." NOT a generic, reusable action. Gates
-        # genin promotion at level 10, checking the player's CURRENT
-        # rank first so someone already genin or above is never
-        # re-promoted or demoted.
-        import kage
-        import data_headbands
-        try:
-            current_rank_index = kage.RANK_ORDER.index(player.village_rank)
-        except ValueError:
-            current_rank_index = 0
-        genin_index = kage.RANK_ORDER.index("genin")
-        if current_rank_index >= genin_index:
-            session.send(f'{speaker_name} says, "You\'ve already graduated the academy."')
-        elif player.level < 10:
-            session.send(f'{speaker_name} says, "You need level 10 to graduate the academy."')
-        else:
-            player.village_rank = "genin"
-            data_headbands.apply_rank_headband(player, "genin")
-            session.send(f'{speaker_name} says, "Congratulations, you have graduated the academy!"')
-            kage.announce_rank_up(player.name, "genin")
-            kage.award_genin_mission_points_if_applicable(session, player, "genin")
+        # Preserve this legacy mob-program action for the actual Iruka,
+        # but it only starts the hardcoded quiz; it cannot promote.
+        import genin_exam
+        if (mob is None or mob.template_vnum != genin_exam.IRUKA_VNUM
+                or mob.room_vnum != player.room_vnum):
+            return False
+        genin_exam.start_exam(session)
+        return False  # Do not execute any further graduation rewards.
     return True
 
 
@@ -319,7 +306,7 @@ def fire_programs(session, programs: list, trigger: str, speaker_name: str = "So
         if "script" in prog:
             if random.randint(1, 100) <= prog.get("chance", 100):
                 smaug_progs.execute(prog["script"], session, speaker_name, mob)
-        elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name):
+        elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name, mob=mob):
             break
 
 
@@ -427,7 +414,7 @@ def fire_speech_programs(session, programs: list, spoken_text: str, speaker_name
             if "script" in prog:
                 if random.randint(1, 100) <= prog.get("chance", 100):
                     smaug_progs.execute(prog["script"], session, speaker_name, mob)
-            elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name, mob_template=mob_template, keyword=matched_keyword):
+            elif not run_action(session, prog.get("action", ""), prog.get("args", ""), speaker_name, mob_template=mob_template, keyword=matched_keyword, mob=mob):
                 break
     return True
 
