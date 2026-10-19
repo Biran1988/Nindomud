@@ -36,6 +36,19 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.322 replaces Iruka (mob VNUM 11)'s instant Academy graduation
+with a challenging Genin written exam. Before starting, an Academy Student
+must reach level 10 and master all five starting disciplines to 100%:
+Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing
+Technique, Throw Shuriken, and Strong Fist Style. Use
+`ask iruka about graduation` when standing beside Iruka. Each attempt
+draws 10 of 20 Naruto-anime trivia questions in a different combination,
+randomly shuffles all four answer positions, and requires a 10/10 score.
+The old `iruka_graduation_check` mob program starts the quiz rather than
+promoting outright. A pass retains the existing Genin headband, 50 mission
+points, and global promotion announcement. Player-built rooms, templates
+and saved area data are untouched.
+
 Version 15.321 adds real ground Ryo piles and direct player-to-player
 money transfers: `drop 500 ryo`, `look ryo`, `get ryo`,
 `get 500 ryo`, `get all ryo`, and `give 500 ryo <player>`.
