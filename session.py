@@ -1064,6 +1064,10 @@ class Session:
         if not line:
             self.send_prompt()
             return
+        import genin_exam
+        if genin_exam.handle_answer(self, line):
+            self.send_prompt()
+            return
         import clone_control
         if clone_control.handle_playing_command(self, line):
             self.send_prompt()
