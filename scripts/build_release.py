@@ -14,22 +14,6 @@ def build(output: Path) -> None:
     source_files = sorted(ROOT.glob("*.py"))
     sys.path.insert(0, str(ROOT))
     import help_system
-    archive = output / "Nindo_mud.zip"
-    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for path in sorted(ROOT.rglob("*")):
-            relative = path.relative_to(ROOT)
-            if not path.is_file() or any(part in {".git", "data", "__pycache__", ".pytest_cache"} or part.startswith("data_test") for part in relative.parts):
-                continue
-            if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"}:
-                continue
-            zf.write(path, relative)
-        # Ship readable, individual helpfiles as release content. Keep these
-        # outside data/help so extracting the archive cannot overwrite saved
-        # staff-written pages; the server seeds/refreshes its own data/help.
-        for entry in help_system.DEFAULT_HELP_ENTRIES:
-            name = help_system._slug(entry["primary_keyword"]) + ".json"
-            zf.writestr("helpfiles/" + name, json.dumps(entry, indent=2) + "\n")
-
     standalone = output / "Nindo_mud"
     with standalone.open("w", encoding="utf-8") as file:
         file.write('#!/usr/bin/env python3\n"""Nindo_mud single-file server; saves remain beside this file in data/."""\n')
@@ -54,6 +38,40 @@ def build(output: Path) -> None:
         file.write("        import main, session, combat, commands, help_system, jutsu_colors, mangekyo_discovery\n")
         file.write("    else:\n        start()\n")
     standalone.chmod(0o755)
+
+
+    archive = output / "Nindo_mud.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(ROOT.rglob("*")):
+            relative = path.relative_to(ROOT)
+            if not path.is_file() or any(part in {".git", "data", "__pycache__", ".pytest_cache"} or part.startswith("data_test") for part in relative.parts):
+                continue
+            if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"}:
+                continue
+            zf.write(path, relative)
+        # Include the actual runnable single-file server, not just the
+        # Python source. Many deployments launch ./Nindo_mud directly.
+        zf.write(standalone, "Nindo_mud")
+        zf.writestr("UPDATE_INSTRUCTIONS.txt",
+            "Nindo_mud v15.327 - verified deployment contents\n"
+            "1. Stop your running MUD server.\n"
+            "2. Back up its existing data/ directory; NEVER replace data/.\n"
+            "3. Extract this ZIP into the EXISTING installation directory.\n"
+            "4. If your service launches python3 main.py, restart that service.\n"
+            "5. If your service launches ./Nindo_mud, run chmod +x Nindo_mud "
+            "and restart that service.\n"
+            "6. Type changes in-game to confirm version 15.327.\n"
+            "7. As admin, use colorscheme to check the persistent room colors.\n"
+            "8. At the Kage, type list to see the 20 colorful mission-point items.\n"
+            "Saved player/area/world files are deliberately NOT in this ZIP.\n"
+        )
+        # Ship readable, individual helpfiles as release content. Keep these
+        # outside data/help so extracting the archive cannot overwrite saved
+        # staff-written pages; the server seeds/refreshes its own data/help.
+        for entry in help_system.DEFAULT_HELP_ENTRIES:
+            name = help_system._slug(entry["primary_keyword"]) + ".json"
+            zf.writestr("helpfiles/" + name, json.dumps(entry, indent=2) + "\n")
+
 
 
 if __name__ == "__main__":
