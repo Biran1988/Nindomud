@@ -254,3 +254,12 @@ leveling, mob XP, and the older gameplay smoke checks.
   set_rank genin mob actions cannot bypass it. Rewards keep the existing
   headband, 50 mission points and global announcement. No area or world
   files are changed. Regression tests: test_genin_exam.py.
+
+- Version 15.323: Global room `look` output, including illusion-room
+  previews and reconnaissance-room views, colors only the room name
+  with xterm 114 (jade green) and description with xterm 253 (soft
+  silver). Existing colors for exits, NPCs, mobs, items and combat
+  stay unchanged. The official Iruka exam begins ONLY on the precise
+  spoken `say Start Genin exam` command near mob VNUM 11. The older
+  ask command and saved graduation mob program no longer start it.
+  No player-built areas or world state files are modified.
