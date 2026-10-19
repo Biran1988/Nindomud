@@ -6929,7 +6929,8 @@ def rarity_colored_name(item_name: str) -> str:
     only in cmd_examine's own dedicated view -- see
     _examine_rarity_colored_name below."""
     import lightsabers
-    return lightsabers.display_name(item_name)
+    themed = legendary_items.styled_name(item_name)
+    return themed if themed is not None else lightsabers.display_name(item_name)
 
 
 def _examine_rarity_colored_name(item_name: str) -> str:
@@ -6944,6 +6945,9 @@ def _examine_rarity_colored_name(item_name: str) -> str:
     no matching oset prototype."""
     proto = _find_object_prototype_by_name(item_name)
     rarity = proto.get("rarity", "common") if proto else "common"
+    themed = legendary_items.styled_name(item_name)
+    if themed is not None:
+        return f"{data_rarity.colored_tag(rarity)} {themed}"
     return f"{data_rarity.colored_tag(rarity)} {data_rarity.color(rarity)}{item_name}&x"
 
 
