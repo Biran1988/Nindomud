@@ -14,6 +14,7 @@ import time
 from typing import List, Optional
 
 import colors
+import ui_palette
 import combat
 import chunin_exam
 import config
@@ -240,8 +241,8 @@ def cmd_move(session, direction: str) -> None:
             session.send(f"&YThe world snaps back into focus -- you're still exactly where you started!&x")
             real_room = WORLD.get(player.illusion_walk_real_room_vnum)
             if real_room:
-                session.send(f"&C{real_room.name}&x")
-                session.send(real_room.description)
+                session.send(ui_palette.color_room_name(real_room.name))
+                session.send(ui_palette.color_room_description(real_room.description))
             return
         import areas
         area = areas.find_area_for_vnum(player.illusion_walk_real_room_vnum)
@@ -257,8 +258,8 @@ def cmd_move(session, direction: str) -> None:
             fake_room = WORLD.get(random.choice(candidates))
         session.send(f"&YYou walk {direction}.&x")
         if fake_room:
-            session.send(f"&C{fake_room.name}&x")
-            session.send(fake_room.description)
+            session.send(ui_palette.color_room_name(fake_room.name))
+            session.send(ui_palette.color_room_description(fake_room.description))
         return
 
     room = WORLD.get(player.room_vnum)
@@ -970,8 +971,8 @@ def cmd_look(session, args: List[str]) -> None:
             ]
         fake_room = WORLD.get(random.choice(candidates)) if candidates else WORLD.get(player.illusion_walk_real_room_vnum)
         if fake_room:
-            session.send(f"&C{fake_room.name}&x")
-            session.send(fake_room.description)
+            session.send(ui_palette.color_room_name(fake_room.name))
+            session.send(ui_palette.color_room_description(fake_room.description))
         return
     room = WORLD.get(player.room_vnum)
     if room is None:
@@ -1060,7 +1061,7 @@ def cmd_look(session, args: List[str]) -> None:
         session.send("You don't see that here.")
         return
 
-    room_header = f"&C{room.name}&x"
+    room_header = ui_palette.color_room_name(room.name)
     if is_staff and player.staff_show_vnums:
         flag_suffix = f" | {', '.join(room.flags)}" if room.flags else ""
         if not room.enabled:
@@ -1069,7 +1070,7 @@ def cmd_look(session, args: List[str]) -> None:
 
     lines = [room_header, ""]
     if room.description:
-        lines.append(f"&Y{room.description}&x")
+        lines.append(ui_palette.color_room_description(room.description))
         lines.append("")
     import seasonal_events
     if seasonal_events.tree_visible(room.vnum):
@@ -1185,7 +1186,7 @@ def cmd_scan(session, args: List[str]) -> None:
         (target.apartment and target.owner and target.owner != player.name))):
         session.send("You can't scan that way.")
         return
-    lines = [f"&CScanning {direction}: {target.name}&x"]
+    lines = [f"&CScanning {direction}:&x {ui_palette.color_room_name(target.name)}"]
     for other in session.active_sessions():
         if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.")
@@ -1250,6 +1251,13 @@ def cmd_say(session, args: List[str]) -> None:
     player = session.player
     session.send(f"&gYou say, '{message}'&x")
     session.broadcast_room(f"&g{player.name} says, '{message}'&x", exclude_self=True)
+    # The academy exam begins only with this exact spoken phrase.
+    # The live Iruka mob's VNUM 11 must be present; do not let any
+    # older graduation speech script grant or start it another way.
+    if " ".join(message.lower().split()) == "start genin exam":
+        import genin_exam
+        genin_exam.start_exam(session)
+        return
     if message.strip().lower() in ("present", "gift", "merry christmas"):
         import seasonal_events
         if seasonal_events.claim_present(session):
@@ -1395,12 +1403,6 @@ def cmd_ask(session, args: List[str]) -> None:
         import seasonal_events
         if seasonal_events.claim_present(session):
             return
-    # Iruka's official Genin Exam can only be offered by live mob 11.
-    if args[0].lower() == "iruka" and topic.replace("about ", "", 1).strip() in (
-            "genin", "exam", "genin exam", "graduate", "graduation"):
-        import genin_exam
-        genin_exam.start_exam(session)
-        return
     player = session.player
     village_rooms = content._VILLAGE_ROOMS.get(player.village)
     if village_rooms and player.room_vnum == village_rooms["kage"] and "promotion" in topic:
