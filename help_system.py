@@ -861,7 +861,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Ranks run Academy Student -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as an Academy Student, with full access to combat and missions from the very first moment -- Academy Student carries no gate of its own.\n"
             "\n"
-            "Academy Student -> Genin requires level 10, 100% mastery of Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style; then find Iruka (mob VNUM 11) and use 'ask iruka about graduation' to take the written Genin Exam. He selects 10 different Naruto anime questions from a 20-question pool, shuffling the four choices on each attempt. All 10 answers must be correct; one mistake ends that attempt. Passing awards a Genin headband and 50 mission points. See 'help genin exam'.\n"
+            "Academy Student -> Genin requires level 10, 100% mastery of Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style; then find Iruka (mob VNUM 11) and use 'say Start Genin exam' to take the written Genin Exam. He selects 10 different Naruto anime questions from a 20-question pool, shuffling the four choices on each attempt. All 10 answers must be correct; one mistake ends that attempt. Passing awards a Genin headband and 50 mission points. See 'help genin exam'.\n"
             "\n"
             "Genin -> Chunin is earned by passing the Chunin Exam ('help exam'), not by asking the Kage.\n"
             "\n"
@@ -4573,7 +4573,7 @@ DEFAULT_HELP_ENTRIES.append({
     "keywords": ["genin exam", "academy exam", "iruka", "graduation exam"],
     "title": "Iruka's Genin Graduation Exam",
     "body": (
-        "Syntax: ask iruka about graduation\n"
+        "Syntax: say Start Genin exam\n"
         "Answer: A, B, C or D, or answer A / answer B / answer C / answer D.\n"
         "Type cancel to abandon an active exam.\n\n"
         "To qualify: be an Academy Student at level 10 or higher and "
