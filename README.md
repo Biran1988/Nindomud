@@ -36,6 +36,26 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.326 upgrades the 20 legendary Kage mission-point items to unique
+two-tone xterm-256 color palettes, matched to their Naruto designs: Naruto
+orange/blue, Sasuke Uchiha blue/crimson, Gaara desert sand/red, Konan
+paper-blue/blossom pink, and 16 more. Their saved item names, VNUMs,
+wear slots and 500 mission-point prices remain unchanged. The Kage `list`
+shop, purchase messages, inventory/equipment and examine now show those
+character-specific color treatments, while rarity tags still only appear
+on examine.
+
+Six comparatively light legendary sets (Deidara, Pain, Konan, Tobi,
+Kabuto, and Jiraiya) also receive moderate Nindo_mud-balanced, dynamically
+calculated combat bonuses. The original NarutoMUD's exact item-level
+bonus table could not be verified from public sources, so NO bonuses are
+claimed as imported. The combat engine now honors the `hitroll` and
+`damroll` on ALL equipped armor/jewelry too (previously only wielded
+weapon prototypes counted) and correctly normalizes old negative
+`armor_class` protection values alongside positive headband bonuses.
+Existing-equipped items gain these derived bonuses immediately, without
+migrating player saves or overwriting builder areas or prototypes.
+
 Version 15.325 adds a LIVE, global admin room-color scheme. Administrator and
 Implementor accounts can change room names, descriptions and exits in real
 time, using any xterm-256 foreground (0-255). Enter `colorscheme` to see
