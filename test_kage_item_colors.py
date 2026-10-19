@@ -32,24 +32,31 @@ class KageLegendaryPaletteTests(unittest.TestCase):
                           send=Mock())
         self.session.active_sessions = lambda: [self.session]
 
-    def test_twenty_distinct_items_each_has_an_independent_two_color_scheme(self):
+    def test_six_preserved_two_tones_and_fourteen_refined_single_color_items(self):
         roster = legendary_items.LEGENDARY_ITEMS
         self.assertEqual(len(roster), 20)
         self.assertEqual(len(legendary_items.LEGENDARY_COLOR_SCHEMES), 20)
         self.assertEqual(set(legendary_items.LEGENDARY_COLOR_SCHEMES),
                          {data["vnum"] for data in roster.values()})
         self.assertEqual(len(set(legendary_items.LEGENDARY_COLOR_SCHEMES.values())), 20)
+        preserved = {9753, 96000, 9762, 9766, 9767, 9770}
+        self.assertEqual(
+            {vnum for vnum, colors in legendary_items.LEGENDARY_COLOR_SCHEMES.items()
+             if len(colors) == 2}, preserved
+        )
         for item in roster.values():
             self.assertEqual(item["cost_mission_points"], 500)
             color_ids = legendary_items.LEGENDARY_COLOR_SCHEMES[item["vnum"]]
-            self.assertEqual(len(color_ids), 2)
-            self.assertNotEqual(*color_ids)
+            self.assertEqual(len(color_ids), 2 if item['vnum'] in preserved else 1)
+            if len(color_ids) == 2:
+                self.assertNotEqual(*color_ids)
             self.assertTrue(all(type(n) is int and 0 <= n <= 255 for n in color_ids))
             displayed = legendary_items.styled_name(item["short_desc"])
             self.assertIsNotNone(displayed)
             self.assertTrue(displayed.endswith("&x"))
             self.assertEqual(colors.render(displayed, False), item["short_desc"])
-            self.assertEqual(displayed.count("&["), len(item["short_desc"].split()))
+            self.assertEqual(displayed.count("&["),
+                             len(item["short_desc"].split()) if len(color_ids) == 2 else 1)
             rendered = colors.render(displayed, True)
             for color_id in color_ids:
                 self.assertIn(f"\\x1b[38;5;{color_id}m", rendered.encode("unicode_escape").decode())
@@ -59,7 +66,7 @@ class KageLegendaryPaletteTests(unittest.TestCase):
         proto = self.prototypes[item["vnum"]]
         old = (dict(proto), dict(item))
         displayed = commands.rarity_colored_name(item["short_desc"])
-        self.assertIn("&[214]", displayed)
+        self.assertIn("&[208]Naruto\'s Orange Jacket&x", displayed)
         self.assertEqual((proto, item), old)
         self.assertNotIn("&[", item["short_desc"])
 
