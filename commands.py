@@ -6810,56 +6810,54 @@ def parse_crafted_bonus(item_name: str, stat_key: str) -> int:
 
 
 def equipped_weapon_hitroll_bonus(player) -> int:  # player: Player or combat.Mob
-    """The wielded weapon's Hit Roll bonus, combining two sources: the
-    item prototype's own stat_bonuses (set once by a builder via 'oset
-    <vnum> statbonus hitroll <n>', shared by every instance of that
-    item) plus any legacy '+N Hitroll' text still baked into the
-    item's own display name (parse_crafted_bonus) -- kept only for
-    backward compatibility with an item a player already owns from
-    before crafting stopped generating that suffix, or with rank
-    headbands, which still use it for their own progression bonus.
-    Added directly to the player's Hit Roll in combat, on top of
-    Dexterity's own contribution."""
-    wielded = player.equipment.get("wielded", "")
-    if not wielded:
-        return 0
-    proto = _find_object_prototype_by_name(wielded)
-    prototype_bonus = proto.get("stat_bonuses", {}).get("hitroll", 0) if proto else 0
-    return prototype_bonus + parse_crafted_bonus(wielded, "hitroll")
+    """Total hitroll granted by worn gear, not only the wielded weapon.
+
+    Kage legendary masks, cloaks and rings have always declared bonuses
+    on stat_bonuses, but the legacy code only honored weapon prototypes.
+    Weapon craft suffixes remain supported. Resolve dynamically so even
+    existing equipped items benefit immediately without editing saves.
+    """
+    total = 0
+    for slot, name in player.equipment.items():
+        if not name:
+            continue
+        proto = _find_object_prototype_by_name(name)
+        if proto:
+            total += proto.get("stat_bonuses", {}).get("hitroll", 0)
+        if slot == "wielded":
+            total += parse_crafted_bonus(name, "hitroll")
+    return total
 
 
 def equipped_weapon_damroll_bonus(player) -> int:  # player: Player or combat.Mob
-    """The wielded weapon's Damage Roll bonus from its item prototype's
-    stat_bonuses (set via 'oset <vnum> statbonus damroll <n>') --
-    damroll never had an equipment bonus hook of any kind before this,
-    unlike hitroll/armor_class. No legacy name-suffix fallback needed
-    here since damroll was never one of the stats the old crafting
-    suffix supported in the first place."""
-    wielded = player.equipment.get("wielded", "")
-    if not wielded:
-        return 0
-    proto = _find_object_prototype_by_name(wielded)
-    return proto.get("stat_bonuses", {}).get("damroll", 0) if proto else 0
+    """Total damage-roll bonuses across all worn equipment.
+
+    Armor/jewelry Kage rewards declare these stat bonuses; they must
+    count in combat as well as weapon prototype bonuses.
+    """
+    return sum(
+        (proto.get("stat_bonuses", {}).get("damroll", 0) if proto else 0)
+        for name in player.equipment.values() if name
+        for proto in [_find_object_prototype_by_name(name)]
+    )
 
 
 def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
-    """The sum of every worn armor piece's Armor Class bonus, combining
-    two sources per item: the item prototype's own stat_bonuses (set
-    via 'oset <vnum> statbonus armor_class <n>') plus any legacy '+N
-    Armor Class' text still baked into that item's own display name
-    (parse_crafted_bonus) -- kept only for backward compatibility with
-    an item a player already owns from before crafting stopped
-    generating that suffix, or with rank headbands, which still use it
-    for their own progression bonus. Subtracted from the player's
-    Armor Class in combat (lower/more negative is better, ROM
-    convention), on top of Dexterity's own contribution."""
+    """Armor protection in points, subtracted from actual lower-is-better AC.
+
+    Old Kage items express protection as -armor_class (a lower AC).
+    Most other items/headbands express protection as a +N bonus which
+    the caller subtracts from AC. Normalize *both* conventions to a
+    positive protection value, so -10 and +10 both grant 10 AC points.
+    Crafted '(+N Armor Class)' name-suffix bonuses remain supported.
+    """
     total = 0
     for slot, item_name in player.equipment.items():
         if slot == "wielded" or not item_name:
             continue
         proto = _find_object_prototype_by_name(item_name)
         prototype_bonus = proto.get("stat_bonuses", {}).get("armor_class", 0) if proto else 0
-        total += prototype_bonus + parse_crafted_bonus(item_name, "armor_class")
+        total += abs(prototype_bonus) + parse_crafted_bonus(item_name, "armor_class")
     return total
 
 
