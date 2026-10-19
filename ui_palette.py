@@ -4,8 +4,8 @@ This is display-time formatting; builder area/room data is never changed.
 Other UI, item, NPC and combat colors retain their existing behavior.
 Existing embedded room-description color tags are still honored.
 """
-ROOM_TITLE = "&[114]"          # jade green / #87d787
-ROOM_DESCRIPTION = "&[253]"    # readable soft silver / #dadada
+ROOM_TITLE = "&[208]"          # ember orange / #ff8700
+ROOM_DESCRIPTION = "&[223]"    # warm sand / #ffd7af
 
 
 def color_room_name(name):
