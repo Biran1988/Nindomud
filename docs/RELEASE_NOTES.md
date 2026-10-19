@@ -320,3 +320,14 @@ leveling, mob XP, and the older gameplay smoke checks.
   `main.py --preflight` startup. All v15.325 color customization,
   v15.326 Kage item colors and combat bonus fixes remain included.
   No saved `data/` or user-built area/world files are overwritten.
+
+- Version 15.329: Refined Kage legendary presentation to avoid visually
+  noisy alternating bright names. Fourteen item names now use a single
+  muted/controlled xterm-256 hue each. The original dual-tone names remain
+  for Itachi's Ring, Tobi's Spiral Mask, Neji's Forehead Bandages,
+  Deidara's Clay Pouches, Sakumo's White Fang Chakra Blade and Kakashi's
+  Face Mask. The six selected palettes are unchanged from 15.326.
+  This is a pure display update for the Kage `list`, inventory,
+  equipped gear, purchase messages and examine. No stat or shop price
+  changes, item prototype edits, or saved world/player/area rewrites.
+  Source-only `Nindo_mud.zip` format is retained.
