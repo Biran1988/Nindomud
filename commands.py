@@ -100,6 +100,20 @@ def has_silent_genjutsu(player) -> bool:
 
 
 
+# Sleeping is a deliberate resting position. Only non-physical essentials and
+# commands that wake the character may execute until they stand up.
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "quit", "save", "ooc"})
+
+
+def _blocked_while_sleeping(session, verb: str) -> bool:
+    if (session.player is not None
+            and session.player.position == "sleeping"
+            and verb.lower() not in SLEEPING_ALLOWED_COMMANDS):
+        session.send("You are sleeping. Wake up before doing that.")
+        return True
+    return False
+
+
 def dispatch_line(session, line: str) -> None:
     """Top-level entry point: try a Taijutsu/Bukijutsu jutsu command first
     (these can be used by bare name -- e.g. 'dynamic entry <target>' or
@@ -112,6 +126,8 @@ def dispatch_line(session, line: str) -> None:
     if not words:
         return
     lower_words = [w.lower() for w in words]
+    if _blocked_while_sleeping(session, lower_words[0]):
+        return
     # Tsukuyomi's target cannot initiate a new attack or jutsu while
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
@@ -144,6 +160,9 @@ def dispatch_line(session, line: str) -> None:
 
 def dispatch(session, verb: str, args: List[str]) -> None:
     verb = verb.lower()
+
+    if _blocked_while_sleeping(session, verb):
+        return
 
     if session.player and verb not in ("look", "l", "say", "ooc"):
         player = session.player
