@@ -437,6 +437,18 @@ def player_exists(name: str) -> bool:
     return os.path.isfile(player_path(name))
 
 
+def delete_character(player_name: str, account_name: str) -> None:
+    """Remove character and matching login; do not save either afterward."""
+    if _safe_key(player_name) != _safe_key(account_name):
+        raise ValueError("Character and account names do not match")
+    for path in (player_path(player_name), account_path(account_name)):
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+
+
+
 def save_player(player: Player) -> None:
     import data_kekkei_genkai
     data_kekkei_genkai.sync_elemental_release(player)
