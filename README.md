@@ -42,6 +42,19 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.331 includes **two new gameplay changes**: each real 1%
+increase in a skill's proficiency awards **10 character EXP**, through
+practice, successful combat improvement, passive training and Shadow
+Clone mastery. Combat-use and Shadow Clone increases now visibly announce
+the XP award in addition to adding it to character experience; no XP
+is granted without an actual percentage gain. Ordinary players can
+permanently delete their own character with
+`delete <password> <password>`, which checks both entries against their
+account password, then removes that character and matching login and
+disconnects. Mismatches and wrong passwords do nothing; staff deletion
+is prohibited. Both features have regression tests and ZIP-content
+verification. All preceding hospital and room fixes remain included.
+
 Version 15.330 includes the latest healing and room-display changes:
 natural HP/Chakra/Stamina regeneration remains active outside combat;
 sleeping restores resources at **3x** ordinary standing recovery, even
