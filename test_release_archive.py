@@ -1,7 +1,7 @@
-"""Source-only deployment ZIP regression tests for the normal Nindo_mud server.
+"""Executable deployment ZIP regression tests for the normal Nindo_mud server.
 
 The download must be a direct ZIP of the regular multi-file Python code,
-not a zip-in-zip and not the optional generated single-file launcher.
+not a zip-in-zip; it includes the generated runnable single-file launcher.
 """
 import subprocess
 import sys
@@ -14,7 +14,7 @@ from scripts import build_release
 
 
 class ReleaseArchiveTests(unittest.TestCase):
-    def test_normal_zip_contains_current_source_but_not_saved_data_or_standalone(self):
+    def test_normal_zip_contains_current_source_executable_and_no_saved_data(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder)
             build_release.build(output)
@@ -22,7 +22,7 @@ class ReleaseArchiveTests(unittest.TestCase):
             self.assertTrue(archive_path.is_file())
             with ZipFile(archive_path) as archive:
                 names = archive.namelist()
-                self.assertNotIn("Nindo_mud", names)
+                self.assertIn("Nindo_mud", names)
                 self.assertNotIn("Nindo_mud.zip", names)
                 self.assertNotIn("UPDATE_INSTRUCTIONS.txt", names)
                 for name in (
@@ -32,6 +32,10 @@ class ReleaseArchiveTests(unittest.TestCase):
                 ):
                     self.assertIn(name, names)
                 self.assertIn(b"def cmd_colorscheme", archive.read("commands.py"))
+                self.assertIn(b"SLEEPING_ALLOWED_COMMANDS", archive.read("commands.py"))
+                self.assertIn(b"HOSPITAL_MULTIPLIER = 10.0", archive.read("regen.py"))
+                self.assertIn(b"if canonical == \"safe\"", archive.read("olc.py"))
+                self.assertIn(b"HOSPITAL_MULTIPLIER = 10.0", archive.read("Nindo_mud"))
                 self.assertIn(b"LEGENDARY_COLOR_SCHEMES", archive.read("legendary_items.py"))
                 self.assertIn(b"15.328", archive.read("changelog.py"))
                 self.assertFalse(any(
