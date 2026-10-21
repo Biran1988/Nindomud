@@ -398,7 +398,12 @@ def main():
         p.maximum_health, p.maximum_chakra, p.maximum_stamina)
 
     assert p.position == "sleeping"
-    feed(session, "north")  # any move auto-wakes/stands the player
+    old_room = p.room_vnum
+    feed(session, "north")  # movement no longer wakes a sleeping player
+    assert p.position == "sleeping" and p.room_vnum == old_room
+    feed(session, "wake")  # must explicitly wake before moving
+    assert p.position == "standing"
+    feed(session, "north")
     feed(session, "south")
     assert p.position == "standing"
 
