@@ -483,7 +483,7 @@ def test_corpses_loot_config_chat_autosave():
             s.handle_line(line)
             out.clear()
 
-        feed_local(name); feed_local("y"); feed_local(pw); feed_local(village); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(name); feed_local("y"); feed_local(pw); feed_local(village); feed_local(cls); feed_local("uchiha"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         feed_local("south")  # Kage Chamber -> village square, per the academy removal (Section 103)
         return s, feed_local, out
 
