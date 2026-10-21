@@ -331,3 +331,15 @@ leveling, mob XP, and the older gameplay smoke checks.
   equipped gear, purchase messages and examine. No stat or shop price
   changes, item prototype edits, or saved world/player/area rewrites.
   Source-only `Nindo_mud.zip` format is retained.
+
+- Version 15.330: Finalized the latest requested hospital and sleeping
+  healing changes: out-of-combat recovery continues everywhere;
+  normal standing recovery is capped to prevent stamina-action exploits;
+  sleeping is 3x the standing recovery (including at flat cap);
+  accelerated_healing hospital rooms bypass the ordinary resource
+  tick caps and recover at least 10x normal, with 30x when sleeping
+  in the hospital, until resource maximums are reached. Includes
+  compact exits, NPCs before ground items, sleep gating for look,
+  and flag-based safe rooms. Corrected malformed unit test line
+  continuations and ZIP build source, with no modification to
+  saved builder-created rooms or areas.
