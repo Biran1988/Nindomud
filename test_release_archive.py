@@ -40,6 +40,13 @@ class ReleaseArchiveTests(unittest.TestCase):
                 self.assertIn(b"15.330", archive.read("changelog.py"))
                 self.assertIn(b"if canonical == \"safe\"", archive.read("olc.py"))
                 self.assertIn(b"HOSPITAL_MULTIPLIER = 10.0", archive.read("Nindo_mud"))
+                self.assertIn(b"def cmd_delete(", archive.read("commands.py"))
+                self.assertIn(b'10)', archive.read("commands.py"))
+                self.assertIn(b"def delete_character(", archive.read("storage.py"))
+                self.assertIn(b"def grow_skill_from_usage(", archive.read("combat.py"))
+                self.assertIn(b"def cmd_delete(", archive.read("Nindo_mud"))
+                self.assertIn(b"15.331", archive.read("changelog.py"))
+                self.assertIn("test_skill_xp_and_character_delete.py", names)
                 self.assertIn(b"LEGENDARY_COLOR_SCHEMES", archive.read("legendary_items.py"))
                 self.assertIn(b"15.328", archive.read("changelog.py"))
                 self.assertFalse(any(
