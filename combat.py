@@ -730,7 +730,7 @@ def begin_pending_cast(session, jutsu_key: str, target, is_pvp: bool, start_comb
             and "Chokkan" in player.learned_skills
             and random.randint(1, 100) <= player.skill_proficiencies.get("Chokkan", 0)):
         delay *= 0.5
-        grow_skill_from_usage(player, "Chokkan")
+        grow_skill_from_usage(player, "Chokkan", session=session)
     signs = data_handsigns.sequence_for(jutsu_key)
 
     session.pending_cast = PendingCast(jutsu_key, target, is_pvp, delay, start_combat_on_resolve)
@@ -873,7 +873,7 @@ def resolve_illusion_walk_cast(session, target_session, grow_handsigns: bool = T
         session.send(f"&Y{target_session.player.name}'s eyes see through your illusion completely!&x")
         target_session.send(f"&Y{player.name} tries to trap you in a genjutsu, but your Sharingan sees through it!&x")
         if grow_handsigns:
-            grow_skill_from_usage(player, "Handsigns")
+            grow_skill_from_usage(player, "Handsigns", session=session)
         return
     proficiency = player.skill_proficiencies.get("Illusion Walk", 0)
     if proficiency >= 90:
@@ -889,7 +889,7 @@ def resolve_illusion_walk_cast(session, target_session, grow_handsigns: bool = T
     session.send(f"&YYou trap {target_session.player.name} in an illusion of endless walking!&x")
     target_session.send(f"&R{player.name}'s eyes lock with yours -- something feels wrong.&x")
     if grow_handsigns:
-        grow_skill_from_usage(player, "Handsigns")
+        grow_skill_from_usage(player, "Handsigns", session=session)
 
 
 def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True) -> None:
@@ -922,7 +922,7 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     jutsu_colors.send(session, f"&RBlack flames erupt around {target_session.player.name} -- Amaterasu burns until they fall.&x")
     jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you in black flame!&x")
     if grow_handsigns:
-        grow_skill_from_usage(player, "Handsigns")
+        grow_skill_from_usage(player, "Handsigns", session=session)
 
 
 def resolve_kamui_limb_removal_cast(session, target_session) -> None:
@@ -990,7 +990,7 @@ def resolve_izanami_cast(session, target_session, grow_handsigns: bool = True) -
         f"Guess the number ({data_mangekyo.IZANAMI_NUMBER_MIN}-{data_mangekyo.IZANAMI_NUMBER_MAX}) to break free: 'guess <number>'&x"
     )
     if grow_handsigns:
-        grow_skill_from_usage(player, "Handsigns")
+        grow_skill_from_usage(player, "Handsigns", session=session)
 
 
 def resolve_kekkei_no_me_cast(session, grow_handsigns: bool = True) -> None:
@@ -1021,7 +1021,7 @@ def resolve_kekkei_no_me_cast(session, grow_handsigns: bool = True) -> None:
         if s is not session and s.player and s.player.room_vnum == player.room_vnum:
             s.send(f"&R{player.name}'s domain consumes the room -- {player.chakra_nature} chakra saturates the air, draining you!&x")
     if grow_handsigns:
-        grow_skill_from_usage(player, "Handsigns")
+        grow_skill_from_usage(player, "Handsigns", session=session)
 
 
 def resolve_tsukuyomi_cast(session, target_session, grow_handsigns: bool = True) -> None:
@@ -1048,7 +1048,7 @@ def resolve_tsukuyomi_cast(session, target_session, grow_handsigns: bool = True)
     jutsu_colors.send(session, f"&RYour world dissolves into crimson -- you and {target_session.player.name} are pulled into Tsukuyomi.&x")
     jutsu_colors.send(target_session, f"&R{player.name}'s eyes consume your reality -- you're trapped in Tsukuyomi, frozen and defenseless.&x")
     if grow_handsigns:
-        grow_skill_from_usage(player, "Handsigns")
+        grow_skill_from_usage(player, "Handsigns", session=session)
 
 
 def tick_pending_casts() -> None:
@@ -1096,7 +1096,7 @@ def tick_pending_casts() -> None:
         if cast.jutsu_key == "hidden mist jutsu":
             import hidden_mist
             if hidden_mist.cast(session):
-                grow_skill_from_usage(player, "Handsigns")
+                grow_skill_from_usage(player, "Handsigns", session=session)
             continue
         if (cast.jutsu_key in ("amaterasu", "tsukuyomi", "izanami", "kamui limb removal")
                 and not cast.is_pvp):
@@ -1106,7 +1106,7 @@ def tick_pending_casts() -> None:
         if data_jutsu.JUTSU.get(cast.jutsu_key, {}).get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
             import genjutsu
             genjutsu.resolve_cast(session, cast.jutsu_key, cast.target)
-            grow_skill_from_usage(player, "Handsigns")
+            grow_skill_from_usage(player, "Handsigns", session=session)
             continue
         if cast.jutsu_key == "illusion walk":
             resolve_illusion_walk_cast(session, cast.target, grow_handsigns=True)
@@ -1156,7 +1156,7 @@ def tick_pending_casts() -> None:
                     continue
                 start_attack(session, mob)
             use_jutsu(session, cast.jutsu_key, mob)
-        grow_skill_from_usage(player, "Handsigns")
+        grow_skill_from_usage(player, "Handsigns", session=session)
 
 
 def tick_effects_pulse(session) -> None:
@@ -1262,7 +1262,7 @@ PASSIVE_GROWTH_AMOUNT = 1
 USAGE_GROWTH_PER_HIT = 2  # matches SHADOW_CLONE_MASTERY_GAIN_PER_CAST's own established rate, for consistency
 
 
-def grow_skill_from_usage(player: Player, skill_name: str) -> None:
+def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None:
     """Gives skill_name a CHANCE to raise its proficiency by
     USAGE_GROWTH_PER_HIT, but ONLY if it's already at or past its own
     practice cap (see data_jutsu.PRACTICE_CAP_PERCENT/
@@ -1302,7 +1302,12 @@ def grow_skill_from_usage(player: Player, skill_name: str) -> None:
     new_pct = min(100, current + USAGE_GROWTH_PER_HIT)
     player.skill_proficiencies[skill_name] = new_pct
     if new_pct > current:
-        leveling.grant_experience(player, (new_pct - current) * 10)
+        xp = (new_pct - current) * 10
+        level_up_messages = leveling.grant_experience(player, xp)
+        if session is not None:
+            session.send(f"&G{skill_name} improves to {new_pct}%! +{xp} experience.&x")
+            for message in level_up_messages:
+                session.send(message)
 
 
 def tick_passive_skill_growth(player: Player) -> list:
@@ -2071,7 +2076,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
     if weapon_skill:
-        grow_skill_from_usage(player, weapon_skill)
+        grow_skill_from_usage(player, weapon_skill, session=session)
     if random.randint(1, 100) > to_hit:
         session.send(f"You {attack_verb} at {mob.name} but miss!")
         return
@@ -2498,7 +2503,11 @@ def use_shadow_clone_jutsu(session) -> None:
     new_mastery = min(100, mastery + SHADOW_CLONE_MASTERY_GAIN_PER_CAST)
     player.skill_proficiencies["Shadow Clone Jutsu"] = new_mastery
     if new_mastery > mastery:
-        leveling.grant_experience(player, (new_mastery - mastery) * 10)
+        xp = (new_mastery - mastery) * 10
+        level_up_messages = leveling.grant_experience(player, xp)
+        session.send(f"&GShadow Clone Jutsu improves to {new_mastery}%! +{xp} experience.&x")
+        for message in level_up_messages:
+            session.send(message)
 
     dismiss_shadow_clones(player)
     clone_count = shadow_clone_count_for_mastery(new_mastery)
@@ -2546,7 +2555,7 @@ def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
         player.cooldowns.pop(jutsu_key, None)
         session.send("There is no space to summon a clone here.")
         return
-    grow_skill_from_usage(player, jutsu["display_name"])
+    grow_skill_from_usage(player, jutsu["display_name"], session=session)
     session.send(f"&CYou form hand signs and create {spawned[0].name}!&x (Upkeep: {SHADOW_CLONE_UPKEEP_PER_CLONE} chakra/round.)")
 
 
@@ -2575,7 +2584,7 @@ def use_barrier(session) -> None:
     duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS["barrier"]["duration"])
     status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier",
                                 duration_override=duration)
-    grow_skill_from_usage(player, "Barrier")
+    grow_skill_from_usage(player, "Barrier", session=session)
     session.send(f"&CA chakra barrier rises around you, negating 25% of incoming damage for {duration} seconds. It breaks if you leave the room.&x")
 
 
@@ -2656,7 +2665,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
 
     if jutsu.get("jutsu_type") == "trap":
         ninja_arts.attach_trap(mob, jutsu_key, player.name)
-        grow_skill_from_usage(player, jutsu["display_name"])
+        grow_skill_from_usage(player, jutsu["display_name"], session=session)
         jutsu_colors.send(session, f"You attach {jutsu['display_name']} to {mob.name}. It will detonate in two rounds unless disabled.")
         return
 
@@ -2694,7 +2703,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     dmg = signature_moves.amount(player, jutsu, dmg)
     mob.health -= dmg
     _genjutsu_impact(jutsu, mob)
-    grow_skill_from_usage(player, jutsu["display_name"])
+    grow_skill_from_usage(player, jutsu["display_name"], session=session)
     perk_note = f" &Y(x{dmg_mult:g} village perk)&x" if dmg_mult != 1.0 else ""
     if biome_mult > 1.0:
         biome_note = f" &C({room.biome} boosts {jutsu.get('element')})&x"
@@ -2864,7 +2873,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
 
     if jutsu.get("jutsu_type") == "trap":
         ninja_arts.attach_trap(target, jutsu_key, player.name)
-        grow_skill_from_usage(player, jutsu["display_name"])
+        grow_skill_from_usage(player, jutsu["display_name"], session=session)
         jutsu_colors.send(session, f"You attach {jutsu['display_name']} to {target.name}. It will detonate in two rounds unless disabled.")
         jutsu_colors.send(target_session, f"&R{player.name} attaches {jutsu['display_name']} to you! Use Trap Disabling before it detonates.&x")
         return
@@ -2915,7 +2924,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
     _genjutsu_impact(jutsu, target)
-    grow_skill_from_usage(player, jutsu["display_name"])
+    grow_skill_from_usage(player, jutsu["display_name"], session=session)
     perk_note = f" &Y(x{dmg_mult:g} village perk)&x" if dmg_mult != 1.0 else ""
     if biome_mult > 1.0:
         biome_note = f" &C({room.biome} boosts {jutsu.get('element')})&x"
@@ -3311,7 +3320,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
     weapon_skill = data_weapons.skill_for_item(attacker_wielded)
     if weapon_skill:
-        grow_skill_from_usage(player, weapon_skill)
+        grow_skill_from_usage(player, weapon_skill, session=session)
     if random.randint(1, 100) > to_hit:
         session.send(f"You {attack_verb} at {target.name} but miss!")
         target_session.send(f"&C{player.name} attacks you but misses!&x")
