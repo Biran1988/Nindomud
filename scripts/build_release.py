@@ -49,7 +49,7 @@ def build(output: Path) -> None:
             if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"}:
                 continue
             zf.write(path, relative)
-        # Ship readable, individual helpfiles as release content. Keep these
+        # Keep the original executable launcher in the standard download.\n        # It embeds the up-to-date Python source generated above.\n        zf.write(standalone, "Nindo_mud")\n        # Ship readable, individual helpfiles as release content. Keep these
         # outside data/help so extracting the archive cannot overwrite saved
         # staff-written pages; the server seeds/refreshes its own data/help.
         for entry in help_system.DEFAULT_HELP_ENTRIES:
