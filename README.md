@@ -42,6 +42,18 @@ repository. Never overwrite the live server's `data/` directory.
 
 ## Current release
 
+Version 15.330 includes the latest healing and room-display changes:
+natural HP/Chakra/Stamina regeneration remains active outside combat;
+sleeping restores resources at **3x** ordinary standing recovery, even
+once normal recovery reaches its protective flat cap; a room with
+`accelerated_healing` heals at **a minimum of 10x** standing recovery
+without a flat hospital cap, or **30x** when sleeping, until each resource
+reaches its own maximum. Compact exits, mobs-before-items, blocking
+`look` while sleeping, and the `safe` room flag are also included.
+The download contains the freshly rebuilt `Nindo_mud` launcher plus
+normal Python source. The ZIP excludes the live `data/` and saved
+builder area/world/player files. `python3 main.py` remains supported.
+
 Version 15.329 cleans up the Kage's mission-point item list: instead
 of alternating bright colors on every word, 14 legendary items use ONE
 readable, character-appropriate 256-color shade for their entire name.
