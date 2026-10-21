@@ -12,8 +12,8 @@ village hospital by content.py, and toggleable elsewhere by staff via
 `rset flags accelerated_healing`.
 
 This is deliberately NOT a combat stance system (Section 16 rules that
-out) -- resting/sleeping only ever affect out-of-combat regen rate and
-are auto-cancelled the moment a player moves or enters combat.
+out) -- resting/sleeping only ever affect out-of-combat regen rate. Hospital rooms provide a
+stronger treatment bonus while retaining the normal regen tick schedule.
 """
 
 from typing import Optional
@@ -66,7 +66,10 @@ POSITION_MULTIPLIER = {
     "sleeping": 2.5,
 }
 
-HOSPITAL_MULTIPLIER = 2.0
+HOSPITAL_MULTIPLIER = 5.0
+# Hospital treatment bypasses the ordinary per-tick regeneration caps.
+# The normal caps remain unchanged to preserve stamina/job balancing.
+HOSPITAL_REGEN_FLAT_CAP = {"health": 150, "chakra": 50, "stamina": 25}
 
 
 CHAKRA_CONTROL_REGEN_BONUS_PER_POINT = 0.5  # confirmed directly: same real rate as the other new resource formulas (Section 130)
@@ -86,11 +89,12 @@ def chakra_control_regen_bonus(chakra_control: int) -> int:
     return round((chakra_control - 10) * CHAKRA_CONTROL_REGEN_BONUS_PER_POINT)
 
 
-def _regen_amount(maximum: int, resource: str, multiplier: float) -> int:
+def _regen_amount(maximum: int, resource: str, multiplier: float, *, hospital: bool = False) -> int:
     if maximum <= 0:
         return 0
     raw = int(maximum * BASE_REGEN_PERCENT[resource] * multiplier)
-    return max(1, min(raw, REGEN_FLAT_CAP[resource]))
+    cap = HOSPITAL_REGEN_FLAT_CAP[resource] if hospital else REGEN_FLAT_CAP[resource]
+    return max(1, min(raw, cap))
 
 
 def tick_sharingan_idle(player) -> list:
@@ -119,14 +123,15 @@ def tick_player(player) -> list:
 
     multiplier = POSITION_MULTIPLIER.get(player.position, 1.0)
     room = world.WORLD.get(player.room_vnum)
-    if room and ACCELERATED_HEALING_FLAG in room.flags:
+    hospital = bool(room and ACCELERATED_HEALING_FLAG in room.flags)
+    if hospital:
         multiplier *= HOSPITAL_MULTIPLIER
 
     player.health = min(player.maximum_health,
-                        player.health + _regen_amount(player.maximum_health, "health", multiplier))
+                        player.health + _regen_amount(player.maximum_health, "health", multiplier, hospital=hospital))
     player.chakra = min(player.maximum_chakra,
-                         player.chakra + _regen_amount(player.maximum_chakra, "chakra", multiplier) + chakra_control_regen_bonus(player.chakra_control))
+                         player.chakra + _regen_amount(player.maximum_chakra, "chakra", multiplier, hospital=hospital) + chakra_control_regen_bonus(player.chakra_control))
     player.stamina = min(player.maximum_stamina,
-                          player.stamina + _regen_amount(player.maximum_stamina, "stamina", multiplier))
+                          player.stamina + _regen_amount(player.maximum_stamina, "stamina", multiplier, hospital=hospital))
 
     return []
