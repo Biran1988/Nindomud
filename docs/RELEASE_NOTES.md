@@ -343,3 +343,16 @@ leveling, mob XP, and the older gameplay smoke checks.
   and flag-based safe rooms. Corrected malformed unit test line
   continuations and ZIP build source, with no modification to
   saved builder-created rooms or areas.
+
+- Version 15.331: The new account self-delete and skill-level EXP
+  changes are documented and verified in the actual release archive.
+  Non-staff players can issue `delete <password> <password>` to
+  permanently remove their own character and login after password
+  verification. Every actual 1% increase in practiced or used skill
+  mastery, passive skill, or Shadow Clone mastery grants 10 character
+  EXP; no gain at cap means no EXP. Combat-use and Shadow Clone
+  growth visibly announce the EXP reward. Tests validate deletion
+  and both experience paths against real isolated accounts, and
+  ensure the executable/source archive contains both features,
+  new help text and this version. No data/ folder or saved world,
+  player or builder area content is packaged.
