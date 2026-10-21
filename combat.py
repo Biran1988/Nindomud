@@ -1298,7 +1298,10 @@ def grow_skill_from_usage(player: Player, skill_name: str) -> None:
         return
     if random.randint(1, 100) > (100 - current):
         return
-    player.skill_proficiencies[skill_name] = min(100, current + USAGE_GROWTH_PER_HIT)
+    new_pct = min(100, current + USAGE_GROWTH_PER_HIT)
+    player.skill_proficiencies[skill_name] = new_pct
+    if new_pct > current:
+        leveling.grant_experience(player, (new_pct - current) * 10)
 
 
 def tick_passive_skill_growth(player: Player) -> list:
@@ -1315,6 +1318,8 @@ def tick_passive_skill_growth(player: Player) -> list:
         if random.randint(1, 100) <= PASSIVE_GROWTH_CHANCE_PCT:
             new_pct = min(100, current + PASSIVE_GROWTH_AMOUNT)
             player.skill_proficiencies[skill] = new_pct
+            messages.extend(leveling.grant_experience(player, (new_pct - current) * 10))
+            messages.append(f"&G+{(new_pct - current) * 10} experience from {skill} improvement.&x")
             messages.append(f"&D(Your {skill} improves through combat experience: {new_pct}%.)&x")
     return messages
 
@@ -2491,6 +2496,8 @@ def use_shadow_clone_jutsu(session) -> None:
     mastery = player.skill_proficiencies.get("Shadow Clone Jutsu", 0)
     new_mastery = min(100, mastery + SHADOW_CLONE_MASTERY_GAIN_PER_CAST)
     player.skill_proficiencies["Shadow Clone Jutsu"] = new_mastery
+    if new_mastery > mastery:
+        leveling.grant_experience(player, (new_mastery - mastery) * 10)
 
     dismiss_shadow_clones(player)
     clone_count = shadow_clone_count_for_mastery(new_mastery)
