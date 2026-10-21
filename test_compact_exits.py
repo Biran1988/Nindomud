@@ -45,11 +45,11 @@ class CompactRoomLookTests(unittest.TestCase):
         mob = NS(name="A training student", template_vnum=999, invisible=False,
                  active_status_effects={})
         self.room.ground_items = ["A practice kunai"]
-        with patch.object(world.WORLD, "get", return_value=self.room), \\
-             patch.object(combat, "mobs_in_room", return_value=[mob]), \\
-             patch.object(commands, "_is_invisible_mob", return_value=False), \\
-             patch.object(commands, "_is_invisible_item", return_value=False), \\
-             patch.object(commands, "_find_object_prototype_by_name", return_value=None), \\
+        with patch.object(world.WORLD, "get", return_value=self.room), \
+             patch.object(combat, "mobs_in_room", return_value=[mob]), \
+             patch.object(commands, "_is_invisible_mob", return_value=False), \
+             patch.object(commands, "_is_invisible_item", return_value=False), \
+             patch.object(commands, "_find_object_prototype_by_name", return_value=None), \
              patch.object(commands.corpses, "corpses_in_room", return_value=[]):
             commands.cmd_look(session, [])
         output = session.send.call_args.args[0]
