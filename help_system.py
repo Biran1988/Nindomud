@@ -4700,3 +4700,19 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "delete",
+    "keywords": ["delete character", "character deletion", "delete account"],
+    "title": "Delete Your Character",
+    "body": (
+        "Syntax: delete <password> <password>\\n\\n"
+        "Permanently deletes your own character and account. Both copies of "
+        "your account password must match, and the password must be valid. "
+        "Only ordinary player accounts can use this command; staff cannot. "
+        "This action is permanent and cannot be undone. Your connection "
+        "closes after successful deletion. Do not use this command unless "
+        "you intend to lose this character and its saved progress."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
