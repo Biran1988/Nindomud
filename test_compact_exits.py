@@ -43,7 +43,7 @@ class CompactRoomLookTests(unittest.TestCase):
         session = NS(player=player, account=NS(staff_level="player"), send=Mock())
         session.active_sessions = lambda: [session]
         mob = NS(name="A training student", template_vnum=999, invisible=False,
-                 active_status_effects={})
+                 active_status_effects={}, shadow_clone_owner="")
         self.room.ground_items = ["A practice kunai"]
         with patch.object(world.WORLD, "get", return_value=self.room), \
              patch.object(combat, "mobs_in_room", return_value=[mob]), \
