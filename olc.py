@@ -1277,7 +1277,7 @@ def cmd_rset(session, args: List[str]) -> None:
             "(see 'buy apartment' and 'recall').\n"
             f"'rset biome <type>' tags this room for elemental jutsu affinity. Valid: {', '.join(biomes.BIOME_TYPES)}.\n"
             "'rset resetmsg <text|off>' sets this room's own atmospheric flavor line, shown periodically -- overrides its area's own reset message (see 'area set <name> resetmsg') if that area has one too.\n"
-            "'rset safe on|off' marks this room as a PvP-safe zone (blocks attacking other players here).\n"
+            "'rset flags safe' toggles PvP safety in this room (blocks attacking other players here).\n"
             f"'rset exitflag <direction> <flag> [value]' -- flags: {', '.join(EXIT_FLAG_NAMES)}. "
             "door/locked/hidden take on|off; keyitem/passcode take the required item name/code "
             "(or 'off' to clear). A single exit can carry multiple flags at once."
