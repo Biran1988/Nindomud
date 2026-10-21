@@ -38,6 +38,30 @@ class HospitalRegenerationTests(unittest.TestCase):
         self.assertTrue(all(h > n for h, n in zip(hospital, normal)))
         self.assertGreaterEqual(hospital[0], normal[0] * 4)
 
+    def test_hospital_bypasses_all_resource_caps(self):
+        self.player.maximum_health = 100000
+        self.player.maximum_chakra = 100000
+        self.player.maximum_stamina = 100000
+        self.player.room_vnum = 9811
+        with patch.object(world.WORLD, "get", return_value=self.hospital):
+            regen.tick_player(self.player)
+        self.assertGreater(self.player.health - 100, 150)
+        self.assertGreater(self.player.chakra - 100, 50)
+        self.assertGreater(self.player.stamina - 100, 25)
+
+    def test_sleeping_triples_uncapped_base_rate(self):
+        standing = regen.BASE_REGEN_PERCENT["health"] * 10000
+        standing_gain = regen._regen_amount(10000, "health", 1.0)
+        sleeping_gain = regen._regen_amount(10000, "health", regen.POSITION_MULTIPLIER["sleeping"])
+        self.assertEqual(regen.POSITION_MULTIPLIER["sleeping"], 3.0)
+        self.assertGreater(sleeping_gain, standing_gain)
+
+    def test_hospital_at_least_ten_times_normal_for_small_stats(self):
+        for resource in ("health", "chakra", "stamina"):
+            normal = regen._regen_amount(100, resource, 1.0)
+            hospital = regen._regen_amount(100, resource, 10.0, hospital=True)
+            self.assertGreaterEqual(hospital, normal * 10)
+
     def test_sleeping_stacks_with_hospital_healing(self):
         self.player.position = "sleeping"
         with patch.object(world.WORLD, "get", return_value=self.hospital):
