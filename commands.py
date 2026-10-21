@@ -905,19 +905,9 @@ EXIT_MAX_ROWS_PER_COLUMN = 2  # wrap into a new column after this many rows, how
 
 
 def _format_exits(room, is_staff: bool = False) -> List[str]:
-    """Exits packed into as many side-by-side columns as needed to keep
-    the display compact, rather than one column per direction-group
-    (which wasted vertical space -- e.g. all 4 cardinals present used
-    to take a full 4-row-tall single column even with room to spare
-    horizontally). Order is still cardinals (N/E/S/W) first, then
-    diagonals (NE/SE/SW/NW), then up/down last, as one continuous
-    sequence -- only directions that actually exist are included, wrapping
-    into a new column every EXIT_MAX_ROWS_PER_COLUMN entries. Shows only
-    the direction word (e.g. "North"), not the destination room's name --
-    removed on explicit request. A "hidden"-flagged exit (see olc.py's
-    `rset exitflag`) is skipped entirely for regular players, but shown
-    to staff with a "(hidden)" marker so they can still see and manage
-    it. A closed door shows "(closed)" so players know to `open` it."""
+    """Render visible exits on a single compact line in cardinal, diagonal,
+    vertical order. Preserve closed-door labels and staff-only hidden exit
+    markers; players do not see hidden exits. Colors remain configurable."""
     if not room.exits:
         return [f"{ui_palette.EXIT_COLOR}Exits: none&x"]
 
