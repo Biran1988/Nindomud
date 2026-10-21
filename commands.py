@@ -937,23 +937,9 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
     if not directions:
         return [f"{ui_palette.EXIT_COLOR}Exits: none&x"]
 
-    columns = [
-        directions[i:i + EXIT_MAX_ROWS_PER_COLUMN]
-        for i in range(0, len(directions), EXIT_MAX_ROWS_PER_COLUMN)
-    ]
-    col_widths = [max(len(entry) for entry in col) for col in columns]
-    max_rows = min(EXIT_MAX_ROWS_PER_COLUMN, len(directions))
-
-    lines = [f"{ui_palette.EXIT_COLOR}Exits:&x"]
-    for row in range(max_rows):
-        parts = []
-        for col, width in zip(columns, col_widths):
-            if row < len(col):
-                direction_title = col[row]
-                pad = " " * (width - len(direction_title))
-                parts.append(f"{ui_palette.EXIT_COLOR}{direction_title}&x{pad}")
-        lines.append("  " + (" " * EXIT_COLUMN_GAP).join(parts))
-    return lines
+    # Keep all visible directions on one line, retaining closed/hidden labels.
+    colored = " ".join(f"{ui_palette.EXIT_COLOR}{label}&x" for label in directions)
+    return [f"{ui_palette.EXIT_COLOR}Exits:&x {colored}"]
 
 
 def cmd_look(session, args: List[str]) -> None:
