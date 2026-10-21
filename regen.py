@@ -88,15 +88,26 @@ def chakra_control_regen_bonus(chakra_control: int) -> int:
 
 
 def _regen_amount(maximum: int, resource: str, multiplier: float, *, hospital: bool = False) -> int:
+    """Calculate out-of-combat recovery.
+
+    Standing uses the familiar flat normal caps so activity costs still
+    exceed ordinary regen at high stats. Sleeping triples the *actual*
+    standing recovery, even when ordinary regen has hit that cap.
+    Hospitals bypass flat caps completely and restore at least 10x the
+    standing recovery; sleeping in hospital triples the hospital rate.
+    All final resources are still clamped to the character maximum.
+    """
     if maximum <= 0:
         return 0
-    raw = int(maximum * BASE_REGEN_PERCENT[resource] * multiplier)
+    normal = max(1, min(int(maximum * BASE_REGEN_PERCENT[resource]),
+                        REGEN_FLAT_CAP[resource]))
     if hospital:
-        # Guarantee at least ten times the regular standing recovery,
-        # including low-stat characters whose base regeneration rounds to zero.
-        normal = max(1, min(int(maximum * BASE_REGEN_PERCENT[resource]), REGEN_FLAT_CAP[resource]))
-        return max(10 * normal, raw)
-    return max(1, min(raw, REGEN_FLAT_CAP[resource]))
+        # multiplier is 10x while standing or 30x while sleeping.
+        # Scale both the uncapped percentage and the standing recovery
+        # floor, ensuring 10x/30x even for small resource pools.
+        return max(int(maximum * BASE_REGEN_PERCENT[resource] * multiplier),
+                   int(normal * multiplier))
+    return max(1, int(normal * multiplier))
 
 
 def tick_sharingan_idle(player) -> list:
