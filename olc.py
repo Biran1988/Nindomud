@@ -780,6 +780,7 @@ VALID_ROOM_FLAGS = {
     "CapturePoint",        # territory.py -- makes this room a war/territory control point
     "accelerated_healing",  # regen.py -- faster regen in this room
     "no_wander",            # prevent ambient Wander mobs and roaming tailed beasts entering via exits
+    "safe",                 # PvP safety; synchronized with legacy room.safe for compatibility
 }
 VALID_ITEM_EXTRA_FLAGS = {
     "invis",  # commands.py -- hidden from room look and directional scan
@@ -1269,7 +1270,7 @@ def cmd_rset(session, args: List[str]) -> None:
         return
     if not args:
         session.send(
-            "Usage: rset create|goto|name|desc|sector|exit|bexit|bunlink|flags|apartment|biome|resetmsg|safe|exitflag|show ...\n"
+            "Usage: rset create|goto|name|desc|sector|exit|bexit|bunlink|flags|apartment|biome|resetmsg|exitflag|show ...\n"
             "rset always acts on the room you're standing in. 'create'/'goto' teleport you to the target room first, so every other subcommand naturally follows.\n"
             "'rset name' or 'rset desc' with no text opens an interactive editor.\n"
             "'rset apartment on|off' marks this room as a purchasable apartment shell "
@@ -1484,15 +1485,6 @@ def cmd_rset(session, args: List[str]) -> None:
         session.send(f"Removed program {index} from room {room.vnum}.")
         return
 
-    if sub == "safe":
-        if not rest or rest[0].lower() not in ("on", "off"):
-            session.send("Usage: rset safe on|off  (marks this room as a PvP-safe zone)")
-            return
-        room.safe = rest[0].lower() == "on"
-        _log(session.player.name, "room", room.vnum, f"safe set to {room.safe}")
-        session.send(f"Room {room.vnum} is now {'a PvP-safe zone' if room.safe else 'PvP-enabled'}.")
-        return
-
     if sub == "exitflag":
         if len(rest) < 2:
             session.send(
@@ -1597,7 +1589,18 @@ def cmd_rset(session, args: List[str]) -> None:
         if canonical is None:
             session.send(f"'{typed}' isn't a recognized room flag. Valid: {', '.join(sorted(f.replace('_', '') for f in VALID_ROOM_FLAGS))}")
             return
-        if canonical in room.flags:
+        if canonical == "safe":
+            # Existing rooms may already have safe=True without the flag
+            # because older builds stored PvP safety as a standalone bool.
+            room.safe = not room.safe
+            if room.safe:
+                if "safe" not in room.flags:
+                    room.flags.append("safe")
+                action = "added to"
+            else:
+                room.flags = [flag for flag in room.flags if flag != "safe"]
+                action = "removed from"
+        elif canonical in room.flags:
             room.flags.remove(canonical)
             action = "removed from"
         else:
