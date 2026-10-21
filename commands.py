@@ -4409,12 +4409,17 @@ def cmd_practice(session, args: List[str]) -> None:
     gain = _practice_gain(player)
     new_pct = min(practice_cap, current + gain)
     player.skill_proficiencies[match] = new_pct
+    xp_messages = leveling.grant_experience(player, (new_pct - current) * 10)
     player.practice_points -= 1
     player.practice_sessions_used += 1
     session.send(
         f"You practice {match} (+{new_pct - current}% from your Intelligence). "
         f"Proficiency is now {new_pct}% ({proficiency_level_name(new_pct)})."
     )
+    if new_pct > current:
+        session.send(f"&G+{(new_pct - current) * 10} experience from skill improvement.&x")
+        for message in xp_messages:
+            session.send(message)
     if new_pct == signature_moves.SIGNATURE_CAP and match == signature_moves.selected_name(player):
         session.send(f"&Y{match} is now fully trained as your signature move: +25% damage or effect duration!&x")
 
@@ -7707,6 +7712,34 @@ def cmd_password(session, args: List[str]) -> None:
     session.send("Password changed.")
 
 
+def cmd_delete(session, args: List[str]) -> None:
+    """Permanently delete only the authenticated player's character."""
+    if len(args) != 2:
+        session.send("Usage: delete <password> <password>")
+        return
+    first, second = args
+    if first != second:
+        session.send("Passwords do not match. Character deletion cancelled.")
+        return
+    account, player = session.account, session.player
+    if not account or not player or account.name.lower() != player.account_name.lower():
+        session.send("Could not verify the current character. Deletion cancelled.")
+        return
+    if not security.verify_password(first, account.salt_hex, account.hash_hex):
+        session.send("Incorrect password. Character deletion cancelled.")
+        return
+    if account.staff_level != "player":
+        session.send("Staff accounts cannot be deleted with this command.")
+        return
+    # Close active duels, group membership, scouting clones and other
+    # transient world references before erasing persisted account data.
+    name = player.name
+    session.send(f"&R{name} has been permanently deleted. Goodbye.&x")
+    session.request_close()
+    storage.delete_character(name, account.name)
+
+
+
 def cmd_quit(session, args: List[str]) -> None:
     storage.save_player(session.player)
     session.send("Saving and disconnecting. Farewell, ninja.")
@@ -8511,6 +8544,7 @@ COMMANDS = {
     "duel": cmd_duel,
     "prompt": cmd_prompt,
     "password": cmd_password,
+    "delete": cmd_delete,
     "help": help_system.cmd_help,
     "hedit": help_system.cmd_hedit,
     "quit": cmd_quit,
