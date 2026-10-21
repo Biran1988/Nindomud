@@ -898,19 +898,10 @@ def cmd_stand(session, args: List[str]) -> None:
 CARDINAL_ORDER = ["north", "east", "south", "west"]
 DIAGONAL_ORDER = ["northeast", "southeast", "southwest", "northwest"]
 VERTICAL_ORDER = ["up", "down"]
-EXIT_COLUMN_GAP = 4  # spaces between one column and the next
-
-
-EXIT_MAX_ROWS_PER_COLUMN = 2  # wrap into a new column after this many rows, however many columns that takes
-
-
 def _format_exits(room, is_staff: bool = False) -> List[str]:
     """Render visible exits on a single compact line in cardinal, diagonal,
     vertical order. Preserve closed-door labels and staff-only hidden exit
     markers; players do not see hidden exits. Colors remain configurable."""
-    if not room.exits:
-        return [f"{ui_palette.EXIT_COLOR}Exits: none&x"]
-
     directions = []
     for direction in CARDINAL_ORDER + DIAGONAL_ORDER + VERTICAL_ORDER:
         if direction not in room.exits:
@@ -927,7 +918,7 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
     if not directions:
         return [f"{ui_palette.EXIT_COLOR}Exits: none&x"]
 
-    # Keep all visible directions on one line, retaining closed/hidden labels.
+    # A closed door and staff-visible hidden exit retain their status labels.
     colored = " ".join(f"{ui_palette.EXIT_COLOR}{label}&x" for label in directions)
     return [f"{ui_palette.EXIT_COLOR}Exits:&x {colored}"]
 
