@@ -63,13 +63,11 @@ REGEN_FLAT_CAP = {
 POSITION_MULTIPLIER = {
     "standing": 1.0,
     "resting": 1.75,
-    "sleeping": 2.5,
+    "sleeping": 3.0,
 }
 
-HOSPITAL_MULTIPLIER = 5.0
-# Hospital treatment bypasses the ordinary per-tick regeneration caps.
-# The normal caps remain unchanged to preserve stamina/job balancing.
-HOSPITAL_REGEN_FLAT_CAP = {"health": 150, "chakra": 50, "stamina": 25}
+HOSPITAL_MULTIPLIER = 10.0
+# Hospital healing bypasses ordinary per-tick caps. Resource maximums still apply.
 
 
 CHAKRA_CONTROL_REGEN_BONUS_PER_POINT = 0.5  # confirmed directly: same real rate as the other new resource formulas (Section 130)
@@ -93,8 +91,12 @@ def _regen_amount(maximum: int, resource: str, multiplier: float, *, hospital: b
     if maximum <= 0:
         return 0
     raw = int(maximum * BASE_REGEN_PERCENT[resource] * multiplier)
-    cap = HOSPITAL_REGEN_FLAT_CAP[resource] if hospital else REGEN_FLAT_CAP[resource]
-    return max(1, min(raw, cap))
+    if hospital:
+        # Guarantee at least ten times the regular standing recovery,
+        # including low-stat characters whose base regeneration rounds to zero.
+        normal = max(1, min(int(maximum * BASE_REGEN_PERCENT[resource]), REGEN_FLAT_CAP[resource]))
+        return max(10 * normal, raw)
+    return max(1, min(raw, REGEN_FLAT_CAP[resource]))
 
 
 def tick_sharingan_idle(player) -> list:
