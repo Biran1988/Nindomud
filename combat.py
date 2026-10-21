@@ -53,6 +53,7 @@ import derived_stats
 import world
 import dice
 import inventory
+import leveling
 import status_effects
 import signature_moves
 import ninja_arts
