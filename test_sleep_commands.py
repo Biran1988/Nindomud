@@ -32,9 +32,9 @@ class SleepingCommandTests(unittest.TestCase):
 
     def test_normal_look_after_waking(self):
         self.player.position = "standing"
-        with patch.object(commands, "cmd_look") as look:
+        with patch.dict(commands.COMMANDS, {"look": Mock()}) as updated:
             commands.dispatch(self.session, "look", [])
-            look.assert_called_once_with(self.session, [])
+            commands.COMMANDS["look"].assert_called_once_with(self.session, [])
 
     def test_bare_jutsu_is_blocked(self):
         with patch.object(commands.data_jutsu, "match_prefix", side_effect=AssertionError("jutsu parsed")):
