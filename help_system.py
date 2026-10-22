@@ -1720,6 +1720,21 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "level",
+        "keywords": ["level"],
+        "title": "Level",
+        "body": (
+            "Syntax: level\n"
+            "\n"
+            "Description: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. At maximum level, XP Needed is 0.\n"
+            "\n"
+            "Date: 2026-10-21"
+        ),
+        "created_by": "System",
+        "updated_by": "System",
+        "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "skills",
         "keywords": ["skills"],
         "title": "Skills",

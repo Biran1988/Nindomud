@@ -102,7 +102,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -132,7 +132,7 @@ def dispatch_line(session, line: str) -> None:
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
-            and lower_words[0] not in {"look", "l", "help", "who", "score", "inventory",
+            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "inventory",
                                        "inv", "skills", "prac", "imms", "immortal",
                                        "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
@@ -7634,6 +7634,17 @@ def cmd_score(session, args: List[str]) -> None:
     session.send("\n".join(lines))
 
 
+def cmd_level(session, args: List[str]) -> None:
+    """Compact level and experience report using score's exact XP values."""
+    p = session.player
+    next_xp = leveling.xp_for_next_level(p.level)
+    xp_needed = max(0, next_xp - p.experience) if p.level < leveling.MAX_LEVEL else 0
+    session.send("\n".join((
+        _row("Level", p.level, "Experience", p.experience),
+        _row("Next Level", next_xp, "XP Needed", xp_needed),
+    )))
+
+
 def build_jobs_lines(p, width: int = 78) -> List[str]:
     """Every registered job (jobs.JOB_NAMES), shown even at level 1/0
     xp -- a player who has never fished still sees Fishing listed, not
@@ -8537,6 +8548,7 @@ COMMANDS = {
     "purge": cmd_purge,
     "config": cmd_config,
     "score": cmd_score, "sc": cmd_score,
+    "level": cmd_level,
     "jobs": cmd_jobs,
     "group": cmd_group,
     "team": cmd_team,

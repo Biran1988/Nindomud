@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "level",
+  "keywords": [
+    "level"
+  ],
+  "title": "Level",
+  "body": "Syntax: level\n\nDescription: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. At maximum level, XP Needed is 0.\n\nDate: 2026-10-21",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

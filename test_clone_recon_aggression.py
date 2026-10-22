@@ -68,6 +68,17 @@ class CloneAndAggressionTests(unittest.TestCase):
         self.assertEqual(self.player.room_vnum, 5001)
         self.assertEqual(self.clone.name, "Scout")
 
+    def test_level_works_in_clone_view_without_moving_real_body(self):
+        self.player.experience = 123456
+        clone_control.cmd_clone(self.session, ["control"])
+        self.session.send.reset_mock()
+        self.assertTrue(clone_control.handle_playing_command(self.session, "level"))
+        shown = self.session.send.call_args.args[0]
+        self.assertIn("XP Needed", shown)
+        self.assertIn("123456", shown)
+        self.assertIs(self.session.player, self.player)
+        self.assertEqual(self.player.room_vnum, 5001)
+
     def test_clone_moves_independently_of_real_body(self):
         clone_control.cmd_clone(self.session, ["control"])
         self.assertTrue(clone_control.handle_playing_command(self.session, "north"))
