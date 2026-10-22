@@ -15,7 +15,7 @@ class FoodShopTests(unittest.TestCase):
     def setUp(self):
         self.shopkeeper = combat.default_template(9002, "food merchant")
         self.shopkeeper["shopkeeper"] = True
-        self.mob = NS(name="food merchant", template_vnum=9002)
+        self.mob = NS(name="food merchant", template_vnum=9002, player_shop_owner=None)
         raw = olc.default_object(9100, "A Swordfish")
         raw.update(item_type="misc", cost=300)
         crop = olc.default_object(9101, "A Watermelon")
