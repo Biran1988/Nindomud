@@ -2119,7 +2119,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: sell <item>\n"
             "\n"
-            "Description: Sells an item from your inventory to a shopkeeper, if they buy that category of item.\n"
+            "Description: Sells an item from your inventory to a shopkeeper, if they buy that category of item. Food Shops pay full specialty value for cooked fish, raw fish, farm crops, and other food. General shops pay half; see 'help food shop'.\n"
             "\n"
             "'sell apartment' and 'sell room <type>' are special cases -- see 'help apartment' for details.\n"
             "\n"

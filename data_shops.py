@@ -26,6 +26,11 @@ SHOP_TYPES = {
         "allowed_sell_categories": {"armor"},
         "sell_multiplier": 1.0,
     },
+    "food": {
+        "display_name": "Food Shop",
+        "allowed_sell_categories": {"food"},
+        "sell_multiplier": 1.0,
+    },
 }
 
 

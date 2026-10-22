@@ -4,8 +4,8 @@
     "sell"
   ],
   "title": "Sell",
-  "body": "Syntax: sell <item>\n\nDescription: Sells an item from your inventory to a shopkeeper, if they buy that category of item.\n\n'sell apartment' and 'sell room <type>' are special cases -- see 'help apartment' for details.\n\nDate: 2026-08-17",
+  "body": "Syntax: sell <item>\n\nDescription: Sells an item from your inventory to a shopkeeper, if they buy that category of item. Food Shops buy cooked dishes, raw fish, farm produce, and other foods for Ryo at the full specialty rate. General stores pay half. See 'help food shop'.\n\n'sell apartment' and 'sell room <type>' are special cases -- see 'help apartment' for details.\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }

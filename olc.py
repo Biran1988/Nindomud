@@ -435,8 +435,12 @@ def cmd_mstat(session, args: List[str]) -> None:
     ]
     if t.get("shopkeeper", False):
         stock_names = [OBJECT_TEMPLATES[v]["short_desc"] for v in t.get("shop_items", []) if v in OBJECT_TEMPLATES]
-        buys = ", ".join(t.get("shop_buys_categories", [])) or "anything"
-        lines.append(f"&WShopkeeper:&x &Gyes&x   &WBuys:&x {buys}")
+        import data_shops
+        specialty = t.get("shop_type", "general")
+        allowed = t.get("shop_buys_categories", []) or data_shops.SHOP_TYPES.get(
+            specialty, data_shops.SHOP_TYPES["general"])["allowed_sell_categories"]
+        buys = ", ".join(sorted(allowed)) if allowed else "anything"
+        lines.append(f"&WShopkeeper:&x &Gyes&x   &WType:&x {specialty}   &WBuys:&x {buys}")
         lines.append(f"&WStock:&x {_fmt_list(stock_names)}")
     if t.get("gambler", False):
         lines.append("&WGambler:&x &Gyes&x &D(runs chou-han -- see the 'gamble' command)&x")
@@ -1706,7 +1710,8 @@ def _do_bunlink(session, room, rest: List[str]) -> None:
 
 MOB_STRING_FIELDS = {"short_desc", "long_desc", "description", "sex",
                       "position", "default_position", "hit_dice", "damage_dice", "special_function",
-                      "teacher", "primary_class", "summon_family", "aggro_village", "aggro_clan"}
+                      "teacher", "primary_class", "summon_family", "aggro_village", "aggro_clan",
+                      "shop_type"}
 MOB_INT_FIELDS = {"level", "alignment", "mana", "move", "armor_class", "hit_roll",
                    "damage_roll", "attacks", "gold", "ryo_reward"}
 MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defenses",
@@ -1770,6 +1775,7 @@ def _mset_field_reference(player: bool = False) -> str:
         "&DExample: mset 9001 class ninjutsu  |  mset 9001 flags Wander&x",
         "&DUse 'mset <vnum> <field>' for its current value and valid options.&x",
         "&DShop stock: mset additem <mob vnum> <object vnum>. XP comes from mob level.&x",
+        "&DFood buyer: mset <vnum> shopkeeper on | mset <vnum> shoptype food.&x",
         "&DOlder underscore spellings still work; use 'mset fields player' for players.&x",
     ])
 
@@ -2087,6 +2093,11 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
     if field == "summon_family":
         return (f"'{display}' chooses which family this SummonElder teaches. Current: {t.get(field) or 'none'}.\n"
                 f"Usage: mset <vnum> {display} <toad|snake|slug|ninken|monkey|off>")
+    if field == "shop_type":
+        import data_shops
+        return (f"Shop specialty (current: {t.get('shop_type', 'general')}). "
+                f"Options: {', '.join(data_shops.SHOP_TYPES)}.\n"
+                f"Usage: mset <vnum> shoptype <type>. Setting it clears custom buys categories.")
     if field in MOB_BOOL_FIELDS:
         current = t.get(field, False)
         return f"'{display}' is on/off. Current: {'on' if current else 'off'}.\nUsage: mset <vnum> {display} on|off"
@@ -2582,6 +2593,16 @@ def cmd_mset(session, args: List[str]) -> None:
                 session.send("Unknown clan. Use a configured Naruto clan identifier, or off.")
                 return
             value_text = "" if val in ("none", "off") else val
+        if field == "shop_type":
+            import data_shops
+            kind = value_text.strip().lower()
+            if kind not in data_shops.SHOP_TYPES:
+                session.send("Shop types: " + ", ".join(data_shops.SHOP_TYPES))
+                return
+            value_text = kind
+            # The requested specialty is definitive. Older custom buys
+            # settings may otherwise override the newly selected type.
+            t["shop_buys_categories"] = []
         if field == "teacher":
             teacher_value = value_text.strip().lower()
             if teacher_value in ("off", "none", ""):

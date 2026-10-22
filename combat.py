@@ -98,6 +98,7 @@ DEFAULT_MOB_FIELDS = {
     # full value -- a shopkeeper can hold more than one, e.g. both
     # "weapon" and "armor", to act as a combined weapon/blacksmith keeper).
     "shopkeeper": False, "shop_items": [], "shop_buys_categories": [],
+    "shop_type": "general",  # optional named specialty; custom buys list overrides
     # Gambler/dealer flag -- a builder places a chou-han dealer anywhere
     # the same way (mset <vnum> gambler on). Like shopkeepers, gamblers
     # can't be attacked. See commands.cmd_gamble.
@@ -370,7 +371,17 @@ def mob_shop_items(mob: Mob) -> List[int]:
 
 def mob_shop_buys_categories(mob: Mob) -> List[str]:
     t = MOB_TEMPLATES.get(mob.template_vnum)
-    return list(t.get("shop_buys_categories", [])) if t else []
+    if not t:
+        return []
+    # Preserve preexisting manually configured specialty categories.
+    explicit = list(t.get("shop_buys_categories", []))
+    if explicit:
+        return explicit
+    import data_shops
+    shop_type = t.get("shop_type", "general")
+    spec = data_shops.SHOP_TYPES.get(shop_type, data_shops.SHOP_TYPES["general"])
+    allowed = spec["allowed_sell_categories"]
+    return sorted(allowed) if allowed is not None else []
 
 
 # Gambler/dealer is its own independent flag -- unrelated to the

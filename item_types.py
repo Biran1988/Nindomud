@@ -13,7 +13,10 @@ pays less for it.
 from typing import Optional
 
 import consumables
+import cooking
 import data_weapons
+import farming
+import fishing
 
 ARMOR_KEYWORDS = [
     "shirt", "pants", "sandals", "headband", "armor", "robe", "vest",
@@ -40,16 +43,38 @@ BASE_SELL_PRICE = {
 PROTOTYPE_SELL_FRACTION = 0.1
 
 
+# Raw fish and farm produce are legitimate food even though raw fish
+# prototypes were historically tagged "misc" (they must remain uncooked).
+# Check these BEFORE weapon name heuristics: "A Swordfish" is not a sword.
+RAW_FOOD_NAMES = frozenset(
+    name.lower() for name, *_rest in (*fishing.FIND_TABLE, *farming.FIND_TABLE)
+)
+
+
 def classify_item(item_name: str) -> str:
     """Returns one of: weapon, armor, food, drink, medical, misc."""
+    name_lower = item_name.strip().lower()
+    if name_lower in RAW_FOOD_NAMES:
+        return "food"
+    _match_name, data = consumables.find_consumable(item_name)
+    if data and data["category"] == "food":
+        return "food"
+    if cooking.price_for_dish(item_name) is not None:
+        return "food"
+
+    # Honor registered custom builder-made food objects too, even if the
+    # item name contains a weapon word such as "swordfish".
+    import olc
+    if any(proto.get("item_type") == "food" and
+           proto.get("short_desc", "").strip().lower() == name_lower
+           for proto in olc.OBJECT_TEMPLATES.values()):
+        return "food"
     if data_weapons.weapon_type_for_item(item_name):
         return "weapon"
-    name_lower = item_name.lower()
     if any(keyword in name_lower for keyword in ARMOR_KEYWORDS):
         return "armor"
-    _match_name, data = consumables.find_consumable(item_name)
     if data:
-        return data["category"]  # "food" / "drink" / "medical"
+        return data["category"]  # "drink" / "medical"
     return "misc"
 
 
@@ -65,6 +90,9 @@ def _prototype_sell_price(item_name: str) -> Optional[int]:
     price."""
     import olc
     query = item_name.lower()
+    for proto in olc.OBJECT_TEMPLATES.values():
+        if proto["short_desc"].lower() == query:
+            return max(1, int(proto["cost"] * PROTOTYPE_SELL_FRACTION))
     for proto in olc.OBJECT_TEMPLATES.values():
         short_desc = proto["short_desc"].lower()
         if query in short_desc or short_desc in query:

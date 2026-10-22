@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "food shop",
+  "keywords": [
+    "food shop",
+    "food shops",
+    "food vendor",
+    "food merchant"
+  ],
+  "title": "Food Shop",
+  "body": "Syntax: sell <food item>  |  list\n\nFood Shops buy cooked fish dishes, uncooked fish catches, fresh farm produce, and other food items for Ryo at the full specialty price. General stores accept the same items at half their specialty rate. Use 'sell <item>' while standing with a food shopkeeper; the food is removed from your inventory when the Ryo is paid.\n\nBuilder setup: mset <mob vnum> shopkeeper on\n               mset <mob vnum> shoptype food\n               mset spawn <mob vnum> <room vnum>\nOptional: mset additem <mob vnum> <object vnum> to stock food for players to buy. Selecting a shop type clears custom buys overrides. Builder-made object prototypes with itemtype food also qualify.\n\nDate: 2026-10-21",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

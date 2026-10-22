@@ -7,5 +7,5 @@
   "body": "Syntax: mset create <vnum> <name>  |  mset <vnum> <field> <value>  |  mset spawn <vnum> <room>  |  mset list\n        mset fields [mob|player]  |  mset <vnum> <field> (show current value and options)\n\nDescription: Creates and edits mob prototypes field by field -- level, stats, damage dice, flags, shop/gambler/teacher fields, mob programs, and more. 'mset fields' shows grouped mob fields; 'mset fields player' shows player fields. Use 'mset <vnum> flags Wander' for mob flags. Field names can be typed without underscores; the older names still work. See 'mstat <vnum>' to review a prototype.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }

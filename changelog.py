@@ -481,4 +481,5 @@ CHANGELOG = [
     ("15.333", "Added the level command, showing the same ninja level, cumulative XP and next-level XP threshold as score, plus the remaining XP needed. It works while sleeping and scouting with a clone."),
     ("15.334", "Ordinary skills and jutsu now require a successful teacher practice before use. Scroll, passive and special-grant skills remain usable without practice; first-practice unlocks persist even if proficiency drops."),
     ("15.335", "Sharingan now awakens automatically from level 25 (formerly 50), with a 1-in-150 chance per eligible combat round. Uchiha inheritance rises from 25% to 50%; inherited Sharingan Potential and Talent each use the better of two rolls, improving odds of advanced eye progression. Other bloodlines retain their existing chances and level-50 awakening."),
+    ("15.336", "Introduced Food Shop specialty shopkeepers (mset shoptype food): buy cooked dishes, raw fish, farm crops and other food for Ryo at specialty rates. Fixed raw fish/crop classification and preserved general shop discounts; new setting works with live builder shops, without changing saved areas."),
 ]
