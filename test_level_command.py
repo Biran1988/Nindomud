@@ -10,7 +10,8 @@ from models import Player
 
 class LevelCommandTests(unittest.TestCase):
     def setUp(self):
-        self.player = Player("LevelTester", "LevelTester", level=25)
+        self.player = Player("LevelTester", "LevelTester", level=25,
+                             village="leaf", clan="nara", primary_class="taijutsu")
         self.player.experience = 15_500_000
         self.session = NS(player=self.player, account=NS(staff_level="player"),
                           combat_target=None, send=Mock())
