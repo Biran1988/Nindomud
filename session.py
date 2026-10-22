@@ -925,8 +925,8 @@ class Session:
 
         # Kekkei Genkai: a secret, one-time roll -- see
         # data_kekkei_genkai.py's own docstring for the full design.
-        # Nothing about this is ever shown to the player; only a
-        # future Level 50 awakening quest (not built yet) can reveal it.
+        # These hidden values are not revealed until combat awakening
+        # (Sharingan at level 25+, other bloodlines at level 50+).
         bloodline_roll = data_kekkei_genkai.roll_inheritance(clan)
         player.bloodline_id = bloodline_roll["bloodline_id"]
         player.bloodline_potential = bloodline_roll["potential"]

@@ -39,8 +39,8 @@ that actually inherits a bloodline):
 
 SECURITY: whether a player has a bloodline at all, and their
 Potential/Talent/awakened state, must stay server-side only until a
-future Level 50 awakening quest (not built yet -- this framework only
-supports it) explicitly reveals the result to that specific player.
+automatic combat awakening at level 25 for Sharingan, or level 50 for
+other bloodlines, reveals the result to that specific player.
 No NPC hint, no passive effect, no ability, no stat difference, and no
 function in this module ever sends text to a player -- that's a
 deliberate constraint, not an oversight, so no future caller can leak
@@ -54,14 +54,13 @@ import random
 
 # clan_key -> {kekkei_genkai_id: inheritance chance, 0.0-1.0}. A clan
 # not listed here (most of them) has zero bloodline potential.
-# Centralized here, not scattered in logic, so balancing never
-# requires touching code -- per explicit request. Raised to a flat
-# 25% across every eligible clan in a later follow-up request (was
-# 5-8%, varying per clan). Matches the specific clan -> bloodline
-# examples named in the design brief this was built from; every clan
-# key here already exists in data_clans.CLANS_BY_VILLAGE.
+# Centralized probabilities for balancing. Sharingan is now easier to
+# inherit, while Byakugan and Shikotsumyaku keep their existing 25%.
+# Every clan key exists in data_clans.CLANS_BY_VILLAGE.
+SHARINGAN_INHERITANCE_CHANCE = 0.50
+SHARINGAN_TRAIT_ROLL_COUNT = 2  # best of two independent rolls per stat
 CLAN_INHERITANCE = {
-    "uchiha": {"sharingan": 0.25},
+    "uchiha": {"sharingan": SHARINGAN_INHERITANCE_CHANCE},
     "hyuga": {"byakugan": 0.25},
     "kaguya": {"shikotsumyaku": 0.25},
 }
@@ -213,10 +212,21 @@ def roll_inheritance(clan: str) -> dict:
     candidates = eligible_kkg_for_clan(clan)
     for kkg_id, chance in candidates.items():
         if random.random() < chance:
+            if kkg_id == "sharingan":
+                # Roll each attribute twice independently; keep its best
+                # result. At 90+ Potential this nearly doubles prodigy odds,
+                # without changing maximums or anybody else's bloodline.
+                potential = max(random.randint(1, 100)
+                                for _ in range(SHARINGAN_TRAIT_ROLL_COUNT))
+                talent = max(random.randint(1, 100)
+                             for _ in range(SHARINGAN_TRAIT_ROLL_COUNT))
+            else:
+                potential = random.randint(1, 100)
+                talent = random.randint(1, 100)
             return {
                 "bloodline_id": kkg_id,
-                "potential": random.randint(1, 100),
-                "talent": random.randint(1, 100),
+                "potential": potential,
+                "talent": talent,
             }
     return {"bloodline_id": None, "potential": 0, "talent": 0}
 
@@ -259,8 +269,10 @@ def attempt_awaken(player) -> dict:
     }
 
 
-AUTOMATIC_AWAKENING_LEVEL = 50  # matches the design notes' own long-standing "Level 50" framing
-AUTOMATIC_AWAKENING_CHANCE_PER_ROUND = 1 / 300  # small and rare -- a genuine surprise, not something to grind for
+AUTOMATIC_AWAKENING_LEVEL = 50  # unchanged for non-Sharingan bloodlines
+AUTOMATIC_AWAKENING_CHANCE_PER_ROUND = 1 / 300
+SHARINGAN_AWAKENING_LEVEL = 25
+SHARINGAN_AWAKENING_CHANCE_PER_ROUND = 1 / 150  # twice the original chance
 
 def attempt_automatic_awakening(player) -> dict:
     """"The first quest" -- the real, live, automatic version of
@@ -283,10 +295,9 @@ def attempt_automatic_awakening(player) -> dict:
     attempt_awaken, which this calls into once eligibility and the
     roll both succeed.
 
-    A player is eligible only if they genuinely have a real bloodline
-    (bloodline_id set -- the vast majority of players have none at
-    all and this returns immediately, no roll spent), are at least
-    AUTOMATIC_AWAKENING_LEVEL, and aren't already awakened. Silent
+    A player is eligible only if they genuinely have an inherited
+    bloodline, are at least Sharingan level 25 or other-bloodline
+    level 50, and aren't already awakened. Silent
     (no roll, no state change) for anyone not eligible, so calling
     this every combat round for every player in the game is cheap and
     harmless for the common case.
@@ -297,11 +308,15 @@ def attempt_automatic_awakening(player) -> dict:
     that flipped it, as opposed to it already having been awakened
     some other way) -- callers use "awakened_this_call" to decide
     whether to narrate/announce anything at all."""
-    if not player.bloodline_id or player.bloodline_awakened or player.level < AUTOMATIC_AWAKENING_LEVEL:
+    sharingan = player.bloodline_id == "sharingan"
+    minimum_level = SHARINGAN_AWAKENING_LEVEL if sharingan else AUTOMATIC_AWAKENING_LEVEL
+    chance = (SHARINGAN_AWAKENING_CHANCE_PER_ROUND if sharingan
+              else AUTOMATIC_AWAKENING_CHANCE_PER_ROUND)
+    if not player.bloodline_id or player.bloodline_awakened or player.level < minimum_level:
         return {"has_bloodline": bool(player.bloodline_id), "kekkei_genkai": player.bloodline_id,
                 "already_awakened": player.bloodline_awakened, "rolled": False, "awakened_this_call": False}
 
-    if random.random() >= AUTOMATIC_AWAKENING_CHANCE_PER_ROUND:
+    if random.random() >= chance:
         return {"has_bloodline": True, "kekkei_genkai": player.bloodline_id,
                 "already_awakened": False, "rolled": True, "awakened_this_call": False}
 

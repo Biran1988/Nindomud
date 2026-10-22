@@ -3206,7 +3206,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: awaken <player>\n"
             "\n"
-            "Description: Force-awakens a player's Kekkei Genkai (if they have one), immediately, regardless of level -- there's no level gate to bypass here in the first place, since the underlying framework function has never checked level at all; a future \"Level 50\" awakening quest is conceptual only, not built yet, and would presumably call this same function once it exists. Calling it again on an already-awakened bloodline just reports the existing state rather than re-granting anything. Same effect as 'bloodset <player> awaken' -- this is just its own dedicated verb, see 'help bloodset' for the full set of Kekkei Genkai staff tools.\n"
+            "Description: Force-awakens a player's Kekkei Genkai (if they have one), immediately, regardless of level -- there's no level gate to bypass here in the first place, since the underlying framework function has never checked level at all; normal automatic combat awakening requires level 25 for Sharingan or level 50 for other inherited bloodlines; this staff command bypasses those thresholds. Calling it again on an already-awakened bloodline just reports the existing state rather than re-granting anything. Same effect as 'bloodset <player> awaken' -- this is just its own dedicated verb, see 'help bloodset' for the full set of Kekkei Genkai staff tools.\n"
             "\n"
             "&D(Staff only -- requires administrator access or higher.)&x\n"
             "\n"
