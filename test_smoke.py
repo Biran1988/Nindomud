@@ -632,7 +632,7 @@ def test_derived_stats_combat_wiring():
         out.clear()
 
     feed_local("Rock"); feed_local("y"); feed_local("LotusPassword1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -708,7 +708,7 @@ def test_effects_tick_outside_combat():
         out.clear()
 
     feed_local("Hinatax"); feed_local("y"); feed_local("ByakuganPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     p = s.player
     assert s.combat_target is None  # not fighting anything
@@ -753,7 +753,7 @@ def test_universal_starting_kit():
     # Even a Genjutsu character gets Dynamic Entry (Taijutsu) and Shadow
     # Shuriken Technique (Ninjutsu) -- the whole point of "universal".
     feed_local("Leex"); feed_local("y"); feed_local("LeeStylePass1")
-    feed_local("leaf"); feed_local("genjutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("genjutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -829,7 +829,7 @@ def test_weapon_types():
         out.clear()
 
     feed_local("Tentenzz"); feed_local("y"); feed_local("WeaponMasterPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     # Weapon proficiency skills are no longer auto-granted at character
     # creation (the universal starting kit replaced them) -- what's still
@@ -877,7 +877,7 @@ def test_mset_player_editing():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, feed_local
 
     s1, feed1 = make("Chouji", "AkimichiPass123")
@@ -934,7 +934,7 @@ def test_mstat_by_name():
         out.clear()
 
     feed_local("Ebisuxx"); feed_local("y"); feed_local("SpecialJoninPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -984,7 +984,7 @@ def test_prac_display():
         out.clear()
 
     feed_local("Rockleex"); feed_local("y"); feed_local("GreenBeastPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     p = s.player
     s.handle_line("prac")
@@ -1045,7 +1045,7 @@ def test_intelligence_scaled_practice():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local(cls); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, feed_local
 
     import combat as combat_module
@@ -1112,7 +1112,7 @@ def test_training_practice_point_scaling():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local(cls); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s
 
     s1 = make("Irukax", "AcademyTeachPass1")
@@ -1153,7 +1153,7 @@ def test_attribute_cap_at_config_value():
         out.clear()
 
     feed_local("Gaix"); feed_local("y"); feed_local("EightGatesPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     p = s.player
     p.strength = config_module.MAX_ATTRIBUTE_VALUE
@@ -1187,7 +1187,7 @@ def test_perform_required_for_ninjutsu_genjutsu():
         out.clear()
 
     feed_local("Kabutox"); feed_local("y"); feed_local("SoundFourPass123")
-    feed_local("leaf"); feed_local("ninjutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("ninjutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -1234,7 +1234,7 @@ def test_perform_required_for_ninjutsu_genjutsu():
         out.clear()
 
     feed2("Guyx"); feed2("y"); feed2("EightGatesPassword1")
-    feed2("leaf"); feed2("taijutsu"); feed2("none"); feed2("balanced"); feed2("male"); feed2("tan"); feed2("black"); feed2("brown"); feed2("athletic"); feed2("confident"); feed2("y")
+    feed2("leaf"); feed2("taijutsu"); feed2("nara"); feed2("balanced"); feed2("male"); feed2("tan"); feed2("black"); feed2("brown"); feed2("athletic"); feed2("confident"); feed2("y")
     for cmd in ["south"]:
         feed2(cmd)
     feed2("west")
@@ -1265,7 +1265,7 @@ def test_village_perks():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local(village); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(village); feed_local("taijutsu"); feed_local(__import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         for cmd in ["south"]:
             feed_local(cmd)
         return s, feed_local
@@ -1362,7 +1362,7 @@ def test_kage_promotions_enabled():
         out.clear()
 
     feed_local("Yamatox"); feed_local("y"); feed_local("WoodStylePass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -1440,7 +1440,7 @@ def test_bukijutsu_class():
         out.clear()
 
     feed_local("Tentenxx"); feed_local("y"); feed_local("WeaponMasterPass1")
-    feed_local("leaf"); feed_local("bukijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("bukijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -1483,7 +1483,7 @@ def test_builder_made_shopkeeper():
         out.clear()
 
     feed_local("Teuchix"); feed_local("y"); feed_local("RamenShopPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -1539,7 +1539,7 @@ def test_shopkeeper_multiple_categories():
         out.clear()
 
     feed_local("Ashinax"); feed_local("y"); feed_local("CombinedShopPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -1574,7 +1574,7 @@ def test_gambler_chouhan():
         out.clear()
 
     feed_local("Gatox"); feed_local("y"); feed_local("ShippingPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -1671,7 +1671,7 @@ def test_help_and_commands_overhaul():
         out.clear()
 
     feed_local("Ebisux"); feed_local("y"); feed_local("SarutobiPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     s.handle_line("asdkfjaskdjf")
     text = "".join(out)
@@ -1726,7 +1726,7 @@ def test_partial_jutsu_names():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local(cls); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         for cmd in ["south"]:
             feed_local(cmd)
         return s
@@ -1834,7 +1834,7 @@ def test_extended_color_system():
         out.clear()
 
     feed_local("Nejix"); feed_local("y"); feed_local("ByakuganPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     s.handle_line("prompt &[208]HP:%h/%H&x")
     out.clear()
     s.handle_line("look")
@@ -1861,7 +1861,7 @@ def test_who_list_redesign():
     'special jonin'."""
     import commands as commands_module
 
-    def make(name, pw, village, cls, clan="none"):
+    def make(name, pw, village, cls, clan=None):
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
 
@@ -1870,7 +1870,7 @@ def test_who_list_redesign():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local(village); feed_local(cls); feed_local(clan); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(village); feed_local(cls); feed_local(clan or __import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, out
 
     # A "helper" (not admin/implementor) must ALSO appear in the same flat list now.
@@ -1961,7 +1961,7 @@ def test_who_list_ends_with_full_reset():
         out.clear()
 
     feed_local("Nejixx"); feed_local("y"); feed_local("ByakuganPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     captured = []
     orig_send = s.send
@@ -1984,7 +1984,7 @@ def test_who_list_alignment_and_rank_colors():
     per rank tier."""
     import commands as commands_module
 
-    def make(name, pw, village, cls, clan="none"):
+    def make(name, pw, village, cls, clan=None):
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
 
@@ -1993,7 +1993,7 @@ def test_who_list_alignment_and_rank_colors():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local(village); feed_local(cls); feed_local(clan); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(village); feed_local(cls); feed_local(clan or __import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, out
 
     # Konohagakure (12 letters) and Kumogakure (10 letters) differ in
@@ -2043,7 +2043,7 @@ def test_who_list_class_colors():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local(village); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(village); feed_local(cls); feed_local(__import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, out
 
     assert len(set(commands_module.CLASS_WHO_COLOR.values())) == 4, "each class should get its own distinct color"
@@ -2074,7 +2074,7 @@ def test_mset_rank_alias():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s
 
     s1 = make("Yamatorank", "WoodStylePass123")
@@ -2116,7 +2116,7 @@ def test_mstat_player_score():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local(cls); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s
 
     target = make("Narutox", "BelieveItPass123")
@@ -2165,7 +2165,7 @@ def test_mset_current_bumps_max():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s
 
     target = make("Chojimax", "AkimichiPass123")
@@ -2233,7 +2233,7 @@ def test_scroll_learning_system():
             out.clear()
 
         feed_local("Leestyle"); feed_local("y"); feed_local("LeeStylePass1")
-        feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         s.account.staff_level = "implementor"
         p = s.player
 
@@ -2291,7 +2291,7 @@ def test_teacher_flag():
         out.clear()
 
     feed_local("Irukateach"); feed_local("y"); feed_local("AcademyTeachPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
 
@@ -2352,7 +2352,7 @@ def test_roleplay_description_and_biography():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local(village); feed_local(cls); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(village); feed_local(cls); feed_local(__import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, feed_local
 
     naruto, feed_naruto = make("Narutorp", "BelieveItPass123")
@@ -2418,7 +2418,7 @@ def test_login_update_sync():
         out.clear()
 
     feed_local("Narutosync"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     # Simulate an older character missing a skill added after creation.
     s.player.learned_skills.remove("Throw Shuriken")
@@ -2479,7 +2479,7 @@ def test_changelog_command():
         out.clear()
 
     feed_local("Changesx"); feed_local("y"); feed_local("ChangelogPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
 
     s.handle_line("changes")
     full_text = "".join(out)
@@ -2524,7 +2524,7 @@ def test_armor_set_bonus():
         out.clear()
 
     feed_local("Narutoset"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     s.account.staff_level = "implementor"
 
     # A 3-piece set, each declared at 25%, to make sure completing it
@@ -2587,7 +2587,7 @@ def test_program_system():
         out.clear()
 
     feed_local("Sakuraprog"); feed_local("y"); feed_local("CherryBlossomPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
     s.account.staff_level = "implementor"
@@ -2690,7 +2690,7 @@ def test_npc_death_message():
         out.clear()
 
     feed_local("Narutodead"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
     s.account.staff_level = "implementor"
@@ -2731,7 +2731,7 @@ def test_slot_machine_gambling():
         out.clear()
 
     feed_local("Tsunadeslots"); feed_local("y"); feed_local("SlugPrincessPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     s.account.staff_level = "implementor"
     feed_local("mset create 9995 a slot attendant")
     feed_local("mset 9995 gambler on")
@@ -2807,7 +2807,7 @@ def test_leaderboards():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, out
 
     naruto, out1 = make("Narutoldb", "BelieveItPass123")
@@ -2910,7 +2910,7 @@ def test_roulette():
         out.clear()
 
     feed_local("Tsunaderoul"); feed_local("y"); feed_local("SlugPrincessPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     s.account.staff_level = "implementor"
     feed_local("mset create 9996 a roulette dealer")
     feed_local("mset 9996 gambler on")
@@ -2958,7 +2958,7 @@ def test_program_system_extensions():
         out.clear()
 
     feed_local("Narutoprogext"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
     s.account.staff_level = "implementor"
@@ -3043,7 +3043,7 @@ def test_quest_reward_multi_action():
         out.clear()
 
     feed_local("Narutoquest"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
     s.account.staff_level = "implementor"
@@ -3127,7 +3127,7 @@ def test_elemental_jutsu_affinity():
         out.clear()
 
     feed_local("Narutobiome"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("ninjutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("ninjutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
     s.account.staff_level = "implementor"
@@ -3223,7 +3223,7 @@ def test_chargen_routes_to_own_village():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local(village); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+        feed_local(village); feed_local("taijutsu"); feed_local(__import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s
 
     for village, expected_kage_room in expected_kage.items():
@@ -3263,7 +3263,7 @@ def test_bingo_book_bounty_system():
         out.clear()
 
     feed_local("Narutobounty"); feed_local("y"); feed_local("BelieveItPass123")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     for cmd in ["south"]:
         feed_local(cmd)
     s.player.auto_loot_ryo = False  # configs default on now -- this test checks exact ryo deltas from a bounty claim
@@ -3369,7 +3369,7 @@ def test_canon_name_blocklist():
 
     canon_names.BLOCKED_NAMES.discard("hidan")
     feed_local("Hidan"); feed_local("y"); feed_local("PreExistingPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     canon_names.BLOCKED_NAMES.add("hidan")
     ACTIVE_SESSIONS.remove(s2)
 
@@ -3418,7 +3418,7 @@ def test_profanity_filter():
 
     profanity_filter.BLOCKED_SUBSTRINGS.discard("rape")
     feed_local("Draperzq"); feed_local("y"); feed_local("PreExistingPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
     profanity_filter.BLOCKED_SUBSTRINGS.add("rape")
     ACTIVE_SESSIONS.remove(s2)
 
@@ -3572,7 +3572,7 @@ def test_sex_and_skin_tone_choice():
         out.clear()
 
     feed_local("Appearonex"); feed_local("y"); feed_local("AppearanceTestPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none"); feed_local("balanced")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("nara"); feed_local("balanced")
 
     # Invalid sex is rejected and re-prompts.
     s.handle_line("other")
@@ -3633,7 +3633,7 @@ def test_sex_and_skin_tone_choice():
         out2.clear()
 
     feed2("Appeartwox"); feed2("y"); feed2("AppearanceTestPass2")
-    feed2("leaf"); feed2("taijutsu"); feed2("none"); feed2("balanced"); feed2("male")
+    feed2("leaf"); feed2("taijutsu"); feed2("nara"); feed2("balanced"); feed2("male")
     feed2("almost black")
     feed2("silver")
     feed2("violet")

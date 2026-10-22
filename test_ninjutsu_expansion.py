@@ -166,7 +166,8 @@ class NinjutsuExpansionTests(unittest.TestCase):
         defender_session = NS(player=defender, send=Mock())
         with patch.object(combat.random, "randint", side_effect=[1, 100]), \
              patch.object(combat, "_sevenfold_damage", return_value=(50, ["fire"], [])), \
-             patch.object(combat, "_jutsu_damage_bonus", return_value=0):
+             patch.object(combat, "_jutsu_damage_bonus", return_value=0), \
+             patch.object(combat, "grow_skill_from_usage"):
             combat.use_jutsu_on_player(s, "nanairo no rasengan", defender_session)
         self.assertLess(defender.health, 1000)
         self.assertEqual(p.chakra, 260)

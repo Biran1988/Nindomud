@@ -160,7 +160,8 @@ class GenjutsuExpansionTests(unittest.TestCase):
         status_effects.apply_effect(target.active_status_effects, "barrier")
         with patch.object(combat.random, "randint", side_effect=[1, 100]), \
              patch.object(combat, "roll_jutsu_damage", return_value=(20, False)), \
-             patch.object(combat, "_jutsu_damage_bonus", return_value=0):
+             patch.object(combat, "_jutsu_damage_bonus", return_value=0), \
+             patch.object(combat, "grow_skill_from_usage"):
             combat.use_jutsu_on_player(self.session, "distortion flame", target_session)
         self.assertEqual(target.health, 85)
         self.assertEqual(status_effects.reduce_incoming_damage({}, 20), 20)
