@@ -226,6 +226,8 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
         if skill_name not in player.learned_skills:
             player.learned_skills.append(skill_name)
             player.skill_proficiencies[skill_name] = leveling.initial_proficiency(player)
+            import skill_training
+            skill_training.grant_without_practice(player, skill_name)
             session.send(f"&Y{speaker_name} teaches you {skill_name}!&x")
     elif action == "require_item":
         # A genuinely NEW, conditional gate (per direct confirmation)

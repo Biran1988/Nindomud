@@ -1290,6 +1290,9 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
     relevant combat path, not gated by the caller."""
     if skill_name not in player.learned_skills:
         return
+    import skill_training
+    if skill_training.needs_first_practice(player, skill_name):
+        return
     current = player.skill_proficiencies.get(skill_name, 0)
     if current >= 100:
         return
@@ -2408,6 +2411,9 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     # regardless of nature, bloodline, level, gear, location or mastery.
     if _staff_testing_mangekyo(player):
         return True
+    import skill_training
+    if skill_training.needs_first_practice(player, jutsu["display_name"]):
+        return False
     if jutsu.get("jutsu_type") == "elemental_clone" and player.skill_proficiencies.get("Shadow Clone Jutsu", 0) < 100:
         return False
     if jutsu.get("requires_water"):

@@ -72,6 +72,8 @@ def sync_skills(player):
         if name not in player.learned_skills:
             player.learned_skills.append(name)
             player.skill_proficiencies[name] = leveling.initial_proficiency(player)
+            import skill_training
+            skill_training.grant_without_practice(player, name)
             messages.append(f"&[213]Your Six Paths chakra awakens: you have unlocked {name}!&x")
     return messages
 

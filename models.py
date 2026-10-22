@@ -172,6 +172,10 @@ class Player:
 
     learned_skills: List[str] = field(default_factory=list)
     skill_proficiencies: Dict[str, int] = field(default_factory=dict)
+    # Saved first teacher lesson and special-grant history; proficiency may fall.
+    practiced_skills: List[str] = field(default_factory=list)
+    practice_exempt_skills: List[str] = field(default_factory=list)
+    practice_gate_enabled: bool = False  # enabled at creation and on legacy-save load
     signature_move: str = ""  # one selected jutsu; 25% bonus only at 150%
     jutsu_tiers: Dict[str, int] = field(default_factory=dict)
     cooldowns: Dict[str, float] = field(default_factory=dict)

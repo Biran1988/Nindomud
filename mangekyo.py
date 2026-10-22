@@ -331,6 +331,8 @@ def process_kamui_pocket_dimensions(combat_module, world_module, session_module)
         if "Kamui: Pocket Dimension" not in s.player.learned_skills:
             s.player.learned_skills.append("Kamui: Pocket Dimension")
             s.player.skill_proficiencies["Kamui: Pocket Dimension"] = (100 if getattr(s.player, "_immortal_skill_mastery", False) else 0)
+            import skill_training
+            skill_training.grant_without_practice(s.player, "Kamui: Pocket Dimension")
         upkeep_reports.maintain_skill(s.player, "Kamui: Pocket Dimension")
 
 

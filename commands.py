@@ -869,6 +869,10 @@ def cmd_charge(session, args: List[str]) -> None:
     if getattr(session, "chakra_charge", None):
         session.send("You are already charging Chakra. Use 'charge stop' first.")
         return
+    import skill_training
+    if skill_training.needs_first_practice(player, "Chakra Charge"):
+        session.send("Practice Chakra Charge with a teacher at least once before using it.")
+        return
     if session.is_busy() or getattr(session, "pending_cast", None) is not None:
         session.send("You're already busy with something.")
         return
@@ -1149,6 +1153,10 @@ def cmd_scan(session, args: List[str]) -> None:
     player = session.player
     if player.level < SCAN_LEVEL or "Scan" not in player.learned_skills:
         session.send("You learn Scan at level 3.")
+        return
+    import skill_training
+    if skill_training.needs_first_practice(player, "Scan"):
+        session.send("Practice Scan with a teacher at least once before using it.")
         return
     if len(args) != 1:
         session.send("Scan which direction? Usage: scan <direction>.")
@@ -2825,6 +2833,13 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    import skill_training
+    if (jutsu_data and skill_training.needs_first_practice(
+            player, jutsu_data["display_name"])
+            and not combat._staff_testing_mangekyo(player)):
+        jutsu_colors.send(session,
+                          f"&YPractice {jutsu_data['display_name']} with a teacher at least once before using it.&x")
+        return
     if jutsu_data.get("jutsu_type") == "six_paths_recovery":
         import six_paths
         six_paths.vital_surge(session, target_words)
@@ -4409,6 +4424,8 @@ def cmd_practice(session, args: List[str]) -> None:
     gain = _practice_gain(player)
     new_pct = min(practice_cap, current + gain)
     player.skill_proficiencies[match] = new_pct
+    import skill_training
+    skill_training.mark_practiced(player, match)
     xp_messages = leveling.grant_experience(player, (new_pct - current) * 10)
     player.practice_points -= 1
     player.practice_sessions_used += 1
@@ -4563,6 +4580,10 @@ def cmd_examine(session, args: List[str]) -> None:
         )
         return
 
+    import skill_training
+    if skill_training.needs_first_practice(player, "Examine"):
+        session.send("Practice Examine with a teacher at least once before using it.")
+        return
     appraisal_pct = player.skill_proficiencies.get("Examine", 0)
     proto = _find_object_prototype_by_name(match)
     rarity = proto.get("rarity", "common") if proto else "common"
@@ -4763,6 +4784,9 @@ def cmd_prac(session, args: List[str]) -> None:
             lines.append(row)
 
     lines.append(f"You have {player.practice_points} practice session(s) remaining.")
+    import skill_training
+    if any(skill_training.needs_first_practice(player, skill) for skill in player.learned_skills):
+        lines.append("&YUntrained skills must be practiced once with a teacher before use.&x")
     session.send("\n".join(lines))
 
 
@@ -7073,6 +7097,8 @@ def cmd_read(session, args: List[str]) -> None:
 
     player.learned_skills.append(display)
     player.skill_proficiencies[display] = leveling.initial_proficiency(player)
+    import skill_training
+    skill_training.grant_without_practice(player, display)
     player.inventory.remove(match)
     session.send(f"You study {match} carefully... you have learned &Y{display}&x!")
 

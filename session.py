@@ -917,6 +917,7 @@ class Session:
         # bare name vs 'perform', but everyone knows all four jutsu.
         player.learned_skills = list(data_jutsu.UNIVERSAL_STARTING_SKILLS)
         player.skill_proficiencies = {skill: 0 for skill in player.learned_skills}
+        player.practice_gate_enabled = True
 
         import content
         player.room_vnum = content._VILLAGE_ROOMS[village]["kage"]

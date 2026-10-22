@@ -179,6 +179,8 @@ def sync_elemental_techniques(player) -> bool:
         if eligible and name not in player.learned_skills:
             player.learned_skills.append(name)
             player.skill_proficiencies.setdefault(name, 0)
+            import skill_training
+            skill_training.grant_without_practice(player, name)
             changed = True
         elif not eligible and name in player.learned_skills:
             player.learned_skills.remove(name)

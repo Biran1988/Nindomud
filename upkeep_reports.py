@@ -55,6 +55,9 @@ def maintain_skill(player, skill_name: str) -> None:
     """One chance at +1 proficiency per ten seconds of paid maintenance."""
     if skill_name not in player.learned_skills or getattr(player, "_immortal_skill_mastery", False):
         return
+    import skill_training
+    if skill_training.needs_first_practice(player, skill_name):
+        return
     current = player.skill_proficiencies.get(skill_name, 0)
     if current >= 100:
         return
