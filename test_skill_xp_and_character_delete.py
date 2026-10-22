@@ -45,6 +45,36 @@ class SkillImprovementXpTests(unittest.TestCase):
         self.assertIn("+20 experience",
                       " ".join(c.args[0] for c in self.session.send.call_args_list))
 
+    def test_sword_at_seven_percent_improves_from_usage(self):
+        self.player.skill_proficiencies["Sword"] = 7
+        before = self.player.experience
+        with patch.object(combat.random, "randint", return_value=50):
+            combat.grow_skill_from_usage(self.player, "Sword", session=self.session)
+        self.assertEqual(self.player.skill_proficiencies["Sword"], 9)
+        self.assertEqual(self.player.experience - before, 20)
+        self.assertIn("Sword improves to 9%", " ".join(
+            c.args[0] for c in self.session.send.call_args_list))
+
+    def test_usage_roll_can_fail_even_below_teacher_cap(self):
+        self.player.skill_proficiencies["Sword"] = 7
+        with patch.object(combat.random, "randint", return_value=100):
+            combat.grow_skill_from_usage(self.player, "Sword", session=self.session)
+        self.assertEqual(self.player.skill_proficiencies["Sword"], 7)
+        self.assertEqual(self.player.experience, 0)
+
+    def test_low_proficiency_jutsu_also_improves_from_usage(self):
+        self.player.skill_proficiencies["Dynamic Entry"] = 3
+        with patch.object(combat.random, "randint", return_value=50):
+            combat.grow_skill_from_usage(self.player, "Dynamic Entry", session=self.session)
+        self.assertEqual(self.player.skill_proficiencies["Dynamic Entry"], 5)
+        self.assertEqual(self.player.experience, 20)
+
+    def test_unlearned_skill_does_not_improve(self):
+        with patch.object(combat.random, "randint", return_value=1):
+            combat.grow_skill_from_usage(self.player, "Unlearned", session=self.session)
+        self.assertNotIn("Unlearned", self.player.skill_proficiencies)
+        self.assertEqual(self.player.experience, 0)
+
     def test_no_xp_when_skill_does_not_improve_or_is_capped(self):
         self.player.skill_proficiencies["Sword"] = 100
         combat.grow_skill_from_usage(self.player, "Sword", session=self.session)

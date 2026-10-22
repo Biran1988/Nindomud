@@ -1264,13 +1264,12 @@ USAGE_GROWTH_PER_HIT = 2  # matches SHADOW_CLONE_MASTERY_GAIN_PER_CAST's own est
 
 def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None:
     """Gives skill_name a CHANCE to raise its proficiency by
-    USAGE_GROWTH_PER_HIT, but ONLY if it's already at or past its own
-    practice cap (see data_jutsu.PRACTICE_CAP_PERCENT/
-    DEFAULT_PRACTICE_CAP_PERCENT) -- below the cap, practice remains
-    the normal, faster (and still guaranteed) way to raise it, and
-    growing from usage there too would make practice pointless.
+    USAGE_GROWTH_PER_HIT on every qualifying use from 0% to 99%.
+    The teacher practice cap never gates natural usage growth: even
+    a weapon skill at 7% can improve by attacking in combat. Teacher
+    practice remains a guaranteed way to train up to its own cap.
 
-    Past the cap, growth is a genuine roll, not a guarantee, per
+    Usage growth is a genuine roll, not a guarantee, per
     direct request/confirmation ("Let's make practice % much lower to
     succeed when using a skill so mastery actually means something" ->
     clarified and confirmed exactly: "Chance to gain = (100 -
@@ -1293,9 +1292,6 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
         return
     current = player.skill_proficiencies.get(skill_name, 0)
     if current >= 100:
-        return
-    practice_cap = data_jutsu.PRACTICE_CAP_PERCENT.get(skill_name, data_jutsu.DEFAULT_PRACTICE_CAP_PERCENT)
-    if current < practice_cap:
         return
     if random.randint(1, 100) > (100 - current):
         return

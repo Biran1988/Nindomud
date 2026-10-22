@@ -17,16 +17,12 @@ everything") -- these are all level_requirement 1.
 
 # damage is (min, max). effect is an optional status-effect key applied
 # to the target (see status_effects.py).
-# Confirmed design: EVERY jutsu and weapon skill can only be
-# practiced up to DEFAULT_PRACTICE_CAP_PERCENT (50%) -- past that,
-# only actual usage in combat (see combat.tick_usage_growth and
-# commands.cmd_practice) raises it further, all the way to its own
-# real ceiling of 100%. PRACTICE_CAP_PERCENT holds exceptions to that
-# universal default -- currently just Shadow Clone Jutsu, which keeps
-# its own harder, lower 20% cap (a genuine Kage-tier technique,
-# confirmed as a deliberate exception before the universal 50% cap
-# was introduced) rather than being silently raised to the new
-# default.
+# Teacher practice stops at DEFAULT_PRACTICE_CAP_PERCENT (50%), but
+# normal qualifying skill/jutsu usage can improve proficiency at ANY
+# point below 100%, including before reaching the practice cap.
+# Past the teacher cap only actual usage can raise it further.
+# PRACTICE_CAP_PERCENT holds exceptions to the universal cap -- Shadow
+# Clone Jutsu (20%) and Handsigns (1%).
 DEFAULT_PRACTICE_CAP_PERCENT = 50
 
 PRACTICE_CAP_PERCENT = {

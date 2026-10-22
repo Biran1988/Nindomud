@@ -34,3 +34,29 @@ jobs:
           name: Nindo_mud
           path: dist/Nindo_mud.zip
           retention-days: 30
+
+  publish:
+    # Keep the repository's direct Nindo_mud.zip download synchronized
+    # with the latest source, instead of leaving an old executable ZIP.
+    needs: [test, package]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Rebuild standard deployable ZIP
+        run: python scripts/build_release.py dist
+      - name: Update tracked download when contents change
+        run: |
+          cp dist/Nindo_mud.zip Nindo_mud.zip
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Nindo_mud.zip
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh Nindo_mud.zip from current source"
+            git push
+          fi
