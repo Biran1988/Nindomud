@@ -1193,6 +1193,10 @@ def test_perform_required_for_ninjutsu_genjutsu():
 
     feed_local("west")
 
+    # This scenario tests command syntax/casting, not the teacher gate.
+    # Supply its prerequisite lesson without altering the live game.
+    s.player.practiced_skills.append("Shadow Shuriken Technique")
+
     # Restore the shared "bandit" mob's health first -- earlier tests in a
     # full-suite run may have left it at low or zero health, which would
     # otherwise make this cast fizzle (mob.health <= 0) once combat no
@@ -1238,6 +1242,7 @@ def test_perform_required_for_ninjutsu_genjutsu():
     for cmd in ["south"]:
         feed2(cmd)
     feed2("west")
+    s2.player.practiced_skills.append("Dynamic Entry")
     combat.spawn_mob(5001, s2.player.room_vnum)
     s2.handle_line("dynamic entry bandit")
     kick_text = "".join(out)
