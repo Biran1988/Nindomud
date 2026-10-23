@@ -799,11 +799,30 @@ SKILL_RENAMES = {
 # jutsu's existing single-letter-or-more shorthand behavior is
 # completely unaffected -- this is a targeted exception, not a
 # general rule (confirmed directly rather than assumed either way).
+GENERAL_UTILITY_SKILLS = {
+    "camouflage": ("Camouflage", 10, 15, 5),
+    "silent movement": ("Silent Movement", 15, 0, 10),
+    "sensory detect": ("Sensory Detect", 20, 20, 0),
+    "focused mind": ("Focused Mind", 25, 20, 5),
+}
+for _key, (_name, _level, _chakra, _stamina) in GENERAL_UTILITY_SKILLS.items():
+    JUTSU[_key] = {
+        "jutsu_id": "general_" + _key.replace(" ", "_"), "display_name": _name,
+        "class_requirement": "general", "level_requirement": _level,
+        "chakra_cost": _chakra, "stamina_cost": _stamina, "cooldown": 15.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 1, "element": "none", "jutsu_type": "general_utility",
+    }
+
 MIN_MATCH_PREFIX_LENGTH = {
     "explosive tag kunai": 2,
 }
 
 JUTSU_ALIASES = {
+    "camouflag": "camouflage",
+    "camoflage": "camouflage",
+    "camoflauge": "camouflage",
+    "silent": "silent genjutsu",  # preserve the existing Genjutsu shorthand
     "vital surge": "six paths vital surge",
     "six paths: vital surge": "six paths vital surge",
     "demonic": "demonic illusion hell viewing technique",  # preserve the established short command

@@ -12,6 +12,10 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    "camouflage": {"display_name": "Camouflaged", "duration": 120, "message": None},
+    "silent_movement": {"display_name": "Moving Silently", "duration": 120, "message": None},
+    "sensory_detect": {"display_name": "Sensory Detect", "duration": 120, "message": None},
+    "focused_mind": {"display_name": "Focused Mind", "duration": 120, "message": None},
     # Legacy saved effects can finish ticking safely after Samurai Sabre's
     # migration to a persisted upkeep toggle; new casts do not apply this.
     "samurai_sabre": {

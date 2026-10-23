@@ -53,6 +53,12 @@ class ReleaseArchiveTests(unittest.TestCase):
                 self.assertIn("network_bans.py", names)
                 self.assertIn("test_network_bans.py", names)
                 self.assertIn(b"15.340", archive.read("changelog.py"))
+                self.assertIn(b"15.341", archive.read("changelog.py"))
+                self.assertIn("general_skills.py", names)
+                self.assertIn("test_general_skills.py", names)
+                self.assertIn(b"def concealed_from", archive.read("general_skills.py"))
+                for skill in (b"camouflage", b"silent movement", b"sensory detect", b"focused mind"):
+                    self.assertIn(skill, archive.read("data_jutsu.py"))
                 self.assertNotIn("data/network_bans.json", names)
                 self.assertIn(b"LEGENDARY_COLOR_SCHEMES", archive.read("legendary_items.py"))
                 self.assertIn(b"15.328", archive.read("changelog.py"))

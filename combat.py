@@ -37,6 +37,7 @@ way.
 """
 
 import jutsu_colors
+import general_skills
 import itertools
 import random
 import time
@@ -667,6 +668,8 @@ def _mob_attack_damage(mob: Mob) -> int:
 
 
 def start_attack(session, mob: Mob) -> None:
+    import general_skills
+    general_skills.break_camouflage(session)
     session.combat_target = mob
     session.player.recently_defeated_timer = 0.0
 
@@ -1101,7 +1104,7 @@ def tick_pending_casts() -> None:
         player = session.player
         if cast.is_pvp and getattr(cast.target, "player", None):
             import hidden_mist
-            if hidden_mist.obscures(player, cast.target.player):
+            if hidden_mist.obscures(player, cast.target.player) or general_skills.concealed_from(player, cast.target.player):
                 session.send("&CThe hidden mist swallows your target before your jutsu can land.&x")
                 continue
         if cast.jutsu_key == "hidden mist jutsu":
@@ -1186,6 +1189,8 @@ def tick_effects_pulse(session) -> None:
     player = session.player
     import genjutsu
     genjutsu.tick_player(session)
+    import general_skills
+    general_skills.upkeep(session)
     if "burning" in player.active_status_effects:
         dmg = status_effects.burning_damage()
         dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
@@ -1876,6 +1881,9 @@ def _sharingan_dodge_bonus(defender) -> int:
     return commands.SHARINGAN_DODGE_BONUS_PERCENT
 
 
+GENJUTSU_MENTAL_PENALTIES = frozenset({"confused", "narakumi", "soundless", "disoriented", "haze", "ringing"})
+
+
 def _accuracy_penalty_from_effects(attacker) -> int:
     """The total to-hit percentage penalty from every active status
     effect on the attacker that carries an "accuracy_penalty" field
@@ -1889,7 +1897,10 @@ def _accuracy_penalty_from_effects(attacker) -> int:
     total = 0
     for name, effect_state in attacker.active_status_effects.items():
         defn = status_effects.EFFECT_DEFS.get(name, {})
-        total += defn.get("accuracy_penalty", 0)
+        penalty = defn.get("accuracy_penalty", 0)
+        if name in GENJUTSU_MENTAL_PENALTIES and "focused_mind" in attacker.active_status_effects:
+            penalty //= 2
+        total += penalty
     return total
 
 
@@ -2647,6 +2658,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         jutsu_colors.send(session, "That target already has this trap attached.")
         return
 
+    general_skills.break_camouflage(session)
     player.chakra -= chakra_cost
     player.stamina -= stamina_cost
     if is_copied_cast:
@@ -2795,7 +2807,11 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
 
     target = target_session.player
     import hidden_mist
-    if hidden_mist.obscures(player, target):
+    import general_skills
+    if general_skills.concealed_from(player, target):
+        jutsu_colors.send(session, "You cannot locate that camouflaged ninja.")
+        return
+    if hidden_mist.obscures(player, target) or general_skills.concealed_from(player, target):
         jutsu_colors.send(session, "The mist hides your target. You cannot lock onto them.")
         return
     if jutsu.get("jutsu_type") == "ambush" and target.health < target.maximum_health:
@@ -2837,6 +2853,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         jutsu_colors.send(session, "That target already has this trap attached.")
         return
 
+    general_skills.break_camouflage(session)
+    general_skills.break_camouflage(target_session)
     caster_chakra_cost = chakra_cost  # the amount actually paid for this cast
     player.chakra -= chakra_cost
     player.stamina -= stamina_cost
@@ -2965,6 +2983,9 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
                            else status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"])
         if jutsu["class_requirement"] == "genjutsu" and data_kekkei_genkai.sharingan_genjutsu_resistant(target):
             effect_duration = data_kekkei_genkai.reduced_genjutsu_duration(effect_duration)
+        if jutsu["class_requirement"] == "genjutsu":
+            import general_skills
+            effect_duration = general_skills.focused_duration(target, effect_duration)
         effect_duration = signature_moves.duration(player, jutsu, effect_duration)
         status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key, duration_override=effect_duration)
         jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
@@ -3294,6 +3315,11 @@ def handle_player_defeat(session) -> None:
 def start_pvp_attack(session, target_session) -> None:
     """Mutual aggro -- both sessions start attacking each other, mirroring
     how mob combat is a two-sided exchange each pulse."""
+    import general_skills
+    if general_skills.concealed_from(session.player, target_session.player):
+        return
+    general_skills.break_camouflage(session)
+    general_skills.break_camouflage(target_session)
     session.pvp_target = target_session
     target_session.pvp_target = session
 
@@ -3317,7 +3343,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         session.send("You are unable to act!")
         return
     import hidden_mist
-    if hidden_mist.obscures(player, target):
+    if hidden_mist.obscures(player, target) or general_skills.concealed_from(player, target):
         session.send("&CYou cannot find your target in the hidden mist.&x")
         return
     import commands as commands_module
@@ -3385,7 +3411,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
 def _clone_attack_target_once(session, player, target_session, target, clone) -> None:
     """A live clone assists in PvP under the same safety and defense rules."""
     import hidden_mist
-    if hidden_mist.obscures(player, target):
+    if hidden_mist.obscures(player, target) or general_skills.concealed_from(player, target):
         return
     import commands as commands_module
     import weather
@@ -3507,7 +3533,7 @@ def resolve_pvp_pulse(session) -> None:
     for message in tick_automatic_bloodline_awakening(player):
         session.send(message)
     import hidden_mist
-    if hidden_mist.obscures(player, target):
+    if hidden_mist.obscures(player, target) or general_skills.concealed_from(player, target):
         session.send("&CYou search the mist but cannot target your opponent.&x")
         return
     _resolve_ninken_flee_lock(session, player, target_session, target)

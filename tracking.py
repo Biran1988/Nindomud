@@ -31,6 +31,7 @@ confirmed directly before building, not assumed:
   stops automatically the moment the caster's chakra runs out.
 """
 
+import general_skills
 from collections import deque
 from typing import Optional
 
@@ -55,7 +56,7 @@ def find_mob_anywhere_in_world(combat_module, query: str):
     return None
 
 
-def find_online_player_anywhere(session_module, query: str):
+def find_online_player_anywhere(session_module, query: str, viewer=None):
     """A genuinely world-wide search for a real, currently-online,
     playing session whose character name matches (case-insensitive
     substring, same matching convention as find_mob_anywhere_in_
@@ -65,7 +66,8 @@ def find_online_player_anywhere(session_module, query: str):
     query = query.lower()
     for other_session in session_module.ACTIVE_SESSIONS:
         if (other_session.player and other_session.state.name == "PLAYING"
-                and query in other_session.player.name.lower()):
+                and query in other_session.player.name.lower()
+                and (viewer is None or not general_skills.concealed_from(viewer, other_session.player))):
             return other_session
     return None
 
@@ -146,7 +148,8 @@ def _resolve_target_room_vnum(player, combat_module, session_module) -> Optional
         for other_session in session_module.ACTIVE_SESSIONS:
             if (other_session.player and other_session.state.name == "PLAYING"
                     and other_session.player.name == player.tracking_target_player_name):
-                return other_session.player.room_vnum if other_session.player.health > 0 else None
+                return (other_session.player.room_vnum if other_session.player.health > 0
+                        and not general_skills.concealed_from(player, other_session.player) else None)
         return None
     return None
 

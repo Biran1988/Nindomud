@@ -43,7 +43,7 @@ def _target_in_room(session, query):
         if (other is not session and other.player and
                 other.player.room_vnum == player.room_vnum and
                 query in other.player.name.lower() and
-                not commands._is_invisible_player(other.player)):
+                not commands._player_hidden_from(player, other.player)):
             return other.player
     mob = combat.find_mob(player.room_vnum, query)
     if mob and not commands._is_invisible_mob(mob):
@@ -140,7 +140,9 @@ def resolve_cast(session, key, payload):
         return
     if kind == "disguise":
         target = payload["target"]
-        if target is player or target.room_vnum != player.room_vnum or getattr(target, "health", 1) <= 0:
+        import general_skills
+        if (target is player or target.room_vnum != player.room_vnum
+                or getattr(target, "health", 1) <= 0 or general_skills.concealed_from(player, target)):
             jutsu_colors.send(session, "That person is no longer here.")
             return
     if kind in ("item_illusion", "item_decoy") and payload["item"] not in player.inventory:
@@ -203,6 +205,8 @@ def resolve_cast(session, key, payload):
                     duration = status_effects.genjutsu_duration("asleep")
                     if data_kekkei_genkai.sharingan_genjutsu_resistant(other.player):
                         duration = data_kekkei_genkai.reduced_genjutsu_duration(duration)
+                    import general_skills
+                    duration = general_skills.focused_duration(other.player, duration)
                     duration = signature_moves.duration(player, jutsu, duration)
                     status_effects.apply_effect(other.player.active_status_effects, "asleep", source=key, duration_override=duration)
                     other.send("Illusory feathers drift down; you fall asleep and cannot act!")

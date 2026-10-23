@@ -56,6 +56,30 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "camouflage", "keywords": ["camouflage", "camoflage", "camouflag"],
+        "title": "Camouflage (General Skill, level 10)",
+        "body": "Syntax: camouflage [on|off] | perform camouflage [on|off]\nAll classes learn this skill at level 10. Practice with a teacher before first use. Activation costs 15 Chakra and 5 Stamina; cooldown 15 seconds. Duration is 60 seconds plus mastery percent (up to 160 seconds). Hides your character from ordinary look, scan, direct targeting and tracking, and prevents ordinary NPC recognition/aggression. It does not hide you from the who list or immortal connection tools. Sensory Detect reveals you. Hostile actions and entering combat break camouflage; it cannot be activated during combat or a pending cast. Expiry and manual release also end it. Use aff to check the remaining duration.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "silent movement", "keywords": ["silent movement"],
+        "title": "Silent Movement (General Skill, level 15)",
+        "body": "Syntax: silent movement [on|off] | perform silent movement [on|off]\nAll classes learn this skill at level 15; teacher practice is required first. Activation costs 10 Stamina; cooldown 15 seconds. Duration is 60 seconds plus mastery percent. Suppresses normal walking arrival/departure messages to ordinary observers, but does not hide your body from look or scan. Sensory Detect notices your movements. Each successful step costs 2 extra Stamina; blocked exits cost nothing. If you cannot pay the extra cost, Silent Movement ends before travel messages are sent. Combine it with Camouflage for stealth. Other actions, speech and scripted events may still be noticed.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "sensory detect", "keywords": ["sensory detect", "sensory"],
+        "title": "Sensory Detect (General Skill, level 20)",
+        "body": "Syntax: sensory detect [on|off] | perform sensory detect [on|off]\nAll classes learn this skill at level 20; teacher practice is required first. Activation costs 20 Chakra; cooldown 15 seconds. Duration is 60 seconds plus mastery percent. While active, you can see, scan, track and target camouflaged ninja, and notice their silent walking. Costs 1 Chakra per second and ends when upkeep cannot be paid. This is an automatic counter while active: repeating look does not reroll detection. It does not reveal immortal invisibility or negate Hidden Mist. Use aff for its remaining duration.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "focused mind", "keywords": ["focused mind"],
+        "title": "Focused Mind (General Skill, level 25)",
+        "body": "Syntax: focused mind [on|off] | perform focused mind [on|off]\nAll classes learn this skill at level 25; teacher practice is required first. Activation costs 20 Chakra and 5 Stamina; cooldown 15 seconds. Duration is 60 seconds plus mastery percent. Shortens newly received ordinary Genjutsu status effects by 10-30% depending on mastery, including Nehan Shoja sleep. It stacks with existing Sharingan duration resistance and never grants immunity. While active, halves accuracy penalties from Confused, Narakumi, Soundless, Disoriented, Haze and Ringing. Does not shorten effects already applied, cancel action-blocking effects or prevent Mangekyo-specific powers. Each successful walking step costs 1 extra Stamina. Use aff for remaining duration.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "ip", "keywords": ["ip", "connections"],
         "title": "IP connections (immortals)",
         "body": "Syntax: ip [player name or IP filter]\nLists all current connections, including players at login or in an editor, with their actual socket IP, port, country and state. Helper and higher only. Country estimates are offline and may reflect a VPN/proxy. IP geolocation by DB-IP (https://db-ip.com).",

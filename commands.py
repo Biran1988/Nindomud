@@ -148,7 +148,7 @@ def dispatch_line(session, line: str) -> None:
     jutsu_key, consumed = data_jutsu.match_prefix(lower_words)
     if jutsu_key:
         jutsu_class = data_jutsu.JUTSU[jutsu_key]["class_requirement"]
-        if jutsu_class in BARE_NAME_JUTSU_CATEGORIES or (
+        if data_jutsu.JUTSU[jutsu_key].get("jutsu_type") == "general_utility" or jutsu_class in BARE_NAME_JUTSU_CATEGORIES or (
             jutsu_class == "genjutsu" and session.player and has_silent_genjutsu(session.player)
         ):
             cmd_use_jutsu(session, jutsu_key, words[consumed:])
@@ -230,6 +230,9 @@ def _fire_enter_triggers(session) -> None:
     for mob in combat.mobs_in_room(player.room_vnum):
         t = combat.MOB_TEMPLATES.get(mob.template_vnum)
         if t and t.get("mob_programs"):
+            import general_skills
+            if general_skills.concealed_from(mob, player):
+                continue
             programs.fire_programs(session, t["mob_programs"], "greet", speaker_name=mob.name.capitalize(), mob=mob)
 
     import territory
@@ -347,10 +350,12 @@ def cmd_move(session, direction: str) -> None:
         session.send("The door is locked. This is someone's private home.")
         return
 
-    session.broadcast_room(f"{player.name} leaves {direction}.", exclude_self=True)
+    import general_skills
+    general_skills.before_move(session)
+    general_skills.broadcast_movement(session, f"{player.name} leaves {direction}.")
     player.room_vnum = room.exits[direction]
     player.stamina = max(0, player.stamina - random.randint(1, 2))
-    session.broadcast_room(f"{player.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.", exclude_self=True)
+    general_skills.broadcast_movement(session, f"{player.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
 
     if session.trade is not None:
         import trade as trade_module
@@ -1013,8 +1018,7 @@ def cmd_look(session, args: List[str]) -> None:
             return
         for other in session.active_sessions():
             if other.player and other is not session and other.player.room_vnum == player.room_vnum \
-                    and query in genjutsu.apparent_name(other.player).lower() and not _is_invisible_player(other.player) \
-                    and not hidden_mist.conceals_from_view(player, other.player):
+                    and query in genjutsu.apparent_name(other.player).lower() and not _player_hidden_from(player, other.player):
                 if player.illusion_walk_caster is not None:
                     session.send("You don't see anyone here by that name.")
                     return
@@ -1084,7 +1088,7 @@ def cmd_look(session, args: List[str]) -> None:
     lines.extend(_format_exits(room, is_staff))
     lines.append("")
     for other in session.active_sessions():
-        if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
+        if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _player_hidden_from(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
     # A pilot viewing the original room must still see their physical
@@ -1139,6 +1143,13 @@ def _is_invisible_player(player) -> bool:
                 "invisible" in getattr(player, "active_status_effects", {}))
 
 
+def _player_hidden_from(viewer, target) -> bool:
+    import general_skills
+    import hidden_mist
+    return (_is_invisible_player(target) or hidden_mist.conceals_from_view(viewer, target)
+            or general_skills.concealed_from(viewer, target))
+
+
 def _is_invisible_mob(mob) -> bool:
     template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
     return bool(getattr(mob, "invisible", False) or
@@ -1187,7 +1198,7 @@ def cmd_scan(session, args: List[str]) -> None:
         return
     lines = [f"&CScanning {direction}:&x {ui_palette.color_room_name(target.name)}"]
     for other in session.active_sessions():
-        if other.player and other.player.room_vnum == target.vnum and not _is_invisible_player(other.player) and not hidden_mist.conceals_from_view(player, other.player):
+        if other.player and other.player.room_vnum == target.vnum and not _player_hidden_from(player, other.player):
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.")
     # Scanning with the clone must also reveal the original character
     # standing in the neighboring room, without a special status tag.
@@ -2825,6 +2836,10 @@ def cmd_attack(session, args: List[str]) -> None:
         session.send(f"{target_session.player.name} is already down.")
         return
     import hidden_mist
+    import general_skills
+    if general_skills.concealed_from(player, target_session.player):
+        session.send("You cannot see that camouflaged ninja. Use Sensory Detect to locate them.")
+        return
     if hidden_mist.obscures(player, target_session.player):
         session.send("The mist hides your target. You cannot lock onto them.")
         return
@@ -2838,6 +2853,10 @@ def cmd_attack(session, args: List[str]) -> None:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    if jutsu_data.get("jutsu_type") == "general_utility":
+        import general_skills
+        general_skills.activate(session, jutsu_key, target_words)
+        return
     import skill_training
     if (jutsu_data and skill_training.needs_first_practice(
             player, jutsu_data["display_name"])
@@ -2845,6 +2864,12 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         jutsu_colors.send(session,
                           f"&YPractice {jutsu_data['display_name']} with a teacher at least once before using it.&x")
         return
+    if jutsu_data.get("damage") or jutsu_data.get("jutsu_type") in {
+            "instant_kill", "room_sleep", "illusion_walk", "trap",
+            "mangekyo_tsukuyomi", "mangekyo_amaterasu", "mangekyo_kamui_pocket_dimension",
+            "mangekyo_kamui_limb_removal", "mangekyo_izanami"}:
+        import general_skills
+        general_skills.break_camouflage(session)
     if jutsu_data.get("jutsu_type") == "six_paths_recovery":
         import six_paths
         six_paths.vital_surge(session, target_words)
@@ -2894,6 +2919,12 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     import hidden_mist
     if target_words:
         query = " ".join(target_words).lower()
+        import general_skills
+        if any(s is not session and s.player and s.player.room_vnum == player.room_vnum
+               and query in s.player.name.lower() and general_skills.concealed_from(player, s.player)
+               for s in getattr(session, "active_sessions", lambda: [])()):
+            jutsu_colors.send(session, "You cannot see that camouflaged ninja. Use Sensory Detect to locate them.")
+            return
         if any(s is not session and s.player and s.player.room_vnum == player.room_vnum
                and query in s.player.name.lower() and hidden_mist.obscures(player, s.player)
                for s in getattr(session, "active_sessions", lambda: [])()):
@@ -3025,7 +3056,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         target_mob = tracking.find_mob_anywhere_in_world(combat, query)
         target_player_session = None
         if target_mob is None:
-            target_player_session = tracking.find_online_player_anywhere(session_module, query)
+            target_player_session = tracking.find_online_player_anywhere(session_module, query, viewer=player)
         if target_mob is None and target_player_session is None:
             jutsu_colors.send(session, f"You can't find any trace of '{query}' anywhere.")
             return

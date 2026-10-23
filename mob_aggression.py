@@ -79,6 +79,9 @@ def process_aggression(now=None):
             continue
         for mob in list(combat.mobs_in_room(player.room_vnum)):
             template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
+            import general_skills
+            if general_skills.concealed_from(mob, player):
+                continue
             if (_valid_attacker(mob, room) and targets_player(template, player)):
                 combat.start_attack(session, mob)
                 session.send(f"&R{mob.name} recognizes you and attacks without warning!&x")

@@ -1,5 +1,6 @@
 """Techniques selected from the older MUD's class roster."""
 
+import general_skills
 import time
 
 import combat
@@ -115,7 +116,8 @@ def instant_kill(session, words):
             return
         import hidden_mist
         if (target.health <= 0 or target.izanami_trapped or player.illusion_walk_caster is not None
-                or hidden_mist.obscures(player, target)):
+                or hidden_mist.obscures(player, target)
+                or general_skills.concealed_from(player, target)):
             session.send("You cannot reach that target.")
             return
         if target.kamui_intangibility_rounds_left > 0:
