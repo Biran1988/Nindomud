@@ -796,7 +796,7 @@ def cmd_unleash(session, args: List[str]) -> None:
         return
     mob = tailed_beasts.release_beast(beast, world_module, combat)
     session.send(f"&RYou unleash {beast['display_name']} into the world at room {mob.room_vnum}!&x")
-    _broadcast_globally(f"&R{beast['display_name']} has been unleashed upon the world!&x")
+    _broadcast_globally(tailed_beasts.announcement(beast))
 
 
 def cmd_rest(session, args: List[str]) -> None:
@@ -3102,7 +3102,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         player.jinchuriki_beast_key = beast_key
         player.jinchuriki_mastery = 0
         jutsu_colors.send(session, f"&RYou complete the seal -- {beast['display_name']} is bound within you now!&x")
-        _broadcast_globally(f"&R{player.name} has sealed {beast['display_name']} within themselves!&x")
+        import tailed_beasts
+        _broadcast_globally(tailed_beasts.announcement(beast, sealed_by=player.name))
         return
     if jutsu_data.get("jutsu_type") == "beast_release":
         if not target_words:
@@ -3134,7 +3135,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         mob = tailed_beasts_module.release_beast(beast, world_module, combat)
         jutsu_colors.send(session, f"&RYou tear {beast['display_name']} free from {target_session.player.name}!&x")
         jutsu_colors.send(target_session, f"&R{player.name} rips {beast['display_name']} out of you!&x")
-        _broadcast_globally(f"&R{beast['display_name']} has been torn free and released back into the world!&x")
+        _broadcast_globally(tailed_beasts_module.announcement(
+            beast, freed_from=target_session.player.name))
         return
     if jutsu_data.get("jutsu_type") == "beast_bomb":
         if not player.tailed_beast_mode_active:

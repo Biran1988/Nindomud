@@ -50,6 +50,28 @@ BEAST_LIFESPAN_SECONDS = 2 * 60 * 60.0  # confirmed directly: despawns after a g
 BEAST_TEMPLATE_VNUM_BASE = 95000
 
 
+def announcement(beast: dict, *, sealed_by: str = None, freed_from: str = None) -> str:
+    """One prominent, color-safe global banner per successful beast event."""
+    theme = data_tailed_beasts.BEAST_ANNOUNCEMENTS[beast["key"]]
+    primary, accent = theme["colors"]
+    tail_label = "TAIL" if beast["tails"] == 1 else "TAILS"
+    border = f"{primary}{'=' * 20}{accent} << BIJUU >> {primary}{'=' * 20}&x"
+    lines = ["", border,
+             f"{primary}{beast['display_name']} {accent}[{beast['tails']} {tail_label}] - {theme['title']}&x"]
+    flavor = theme["sealed" if sealed_by else "release"]
+    lines.extend((f"{primary}{flavor[0]}&x", f"{accent}{flavor[1]}&x"))
+    if sealed_by:
+        lines.extend((f"{primary}!!! {beast['display_name']} HAS BEEN SEALED !!!&x",
+                      f"&w{sealed_by} {accent}IS THE NEW JINCHURIKI!&x"))
+    else:
+        if freed_from:
+            lines.append(f"{accent}The seal on {freed_from} has been shattered!&x")
+        lines.extend((f"{primary}!!! UNLEASHED UPON THE WORLD !!!&x",
+                      f"{accent}ALL SHINOBI: A TAILED BEAST ROAMS FREE!&x"))
+    lines.extend((border, ""))
+    return "\n".join(lines)
+
+
 def _template_vnum_for(beast: dict) -> int:
     """The real, fixed mob-template vnum for this specific beast --
     one per tail count, ascending from BEAST_TEMPLATE_VNUM_BASE."""
