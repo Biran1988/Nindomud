@@ -1735,6 +1735,29 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "jutsu all",
+        "keywords": ["jutsu all", "jutsu catalog", "jutsu list"],
+        "title": "Jutsu Catalog",
+        "body": (
+            "Syntax: jutsu all\\n"
+            "\\n"
+            "Shows every cataloged technique for your chosen combat class, "
+            "including techniques not yet learned and their minimum levels. "
+            "Shared general jutsu appear in a separate section. "
+            "Immortal accounts see the full Ninjutsu, Taijutsu, Genjutsu "
+            "and Bukijutsu rosters plus shared jutsu. Conditional techniques "
+            "are marked Release, Six Paths, or Scroll; levels alone do not "
+            "guarantee they can be learned. Undiscovered scroll-only jutsu "
+            "are not revealed to normal characters. The list is paginated "
+            "(Enter for more, q to stop). 'skills' lists learned techniques.\\n"
+            "\\n"
+            "Date: 2026-10-22"
+        ),
+        "created_by": "System",
+        "updated_by": "System",
+        "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "skills",
         "keywords": ["skills"],
         "title": "Skills",

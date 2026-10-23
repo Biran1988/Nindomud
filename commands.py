@@ -102,7 +102,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -132,12 +132,12 @@ def dispatch_line(session, line: str) -> None:
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
-            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "inventory",
+            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jutsu", "inventory",
                                        "inv", "skills", "prac", "imms", "immortal",
                                        "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
-    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "quit", "save"):
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jutsu", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
@@ -4531,6 +4531,87 @@ def _skill_unlock_level(skill_name: str) -> Optional[int]:
     return None
 
 
+# Browsable jutsu catalog. All entries come from the active jutsu registry;
+# class/level data is never duplicated in a hand-maintained command list.
+JUTSU_CATALOG_CLASSES = ("ninjutsu", "taijutsu", "genjutsu", "bukijutsu")
+
+
+def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
+    """Full class roster; public viewers see only their primary class and
+    general jutsu. Staff can examine every class. Secret scroll-only
+    techniques remain undisclosed until actually learned by a player.
+    This is informational -- it never grants or practices a skill.
+    """
+    import data_classes
+    classes = (JUTSU_CATALOG_CLASSES if immortal
+               else (player.primary_class.lower(),))
+    classes = tuple(c for c in classes if c in data_classes.CLASSES)
+    if not classes:
+        return ["You do not have a recognized combat class."]
+
+    known = set(player.learned_skills)
+    sections = [(name, data_classes.CLASSES[name]["display_name"])
+                for name in classes]
+    sections.append(("general", "General Jutsu"))
+    lines = ["&WJutsu Catalog&x &D(learned and future techniques; "
+             "level indicates minimum level, not automatic access)&x"]
+    for category, title in sections:
+        # General moves are shared by all classes. The class registry also
+        # includes scroll- and release-specific entries, not just regular
+        # leveling unlocks.
+        entries = sorted(
+            (info for info in data_jutsu.JUTSU.values()
+             if info.get("class_requirement") == category
+             and (immortal or not info.get("scroll_only")
+                  or info.get("display_name") in known)),
+            key=lambda info: (info.get("level_requirement", 1),
+                              info["display_name"].casefold()),
+        )
+        lines.append("")
+        lines.append(_prac_header(title if category != "general" else "General Skills"))
+        if not entries:
+            lines.append("  &D(No listed techniques)&x")
+            continue
+        color = PRAC_CATEGORY_COLOR.get(title if category != "general" else "General Skills", "&W")
+        for info in entries:
+            name = info["display_name"]
+            level = info.get("level_requirement", 1)
+            is_known = name in known
+            status = "&GLearned&x" if is_known else ("&DLocked&x" if player.level < level else "&YNot learned&x")
+            conditions = []
+            if info.get("scroll_only"):
+                conditions.append("Scroll")
+            if info.get("kkg_gate"):
+                conditions.append("Release")
+            if info.get("jutsu_id", "").startswith("six_paths_"):
+                conditions.append("Six Paths")
+            extra = f" &D[{', '.join(conditions)}]&x" if conditions else ""
+            lines.append(f"  &WLv {level:>3}&x  {color}{name}&x  {status}{extra}")
+        lines.append(f"&D{len(entries)} {title.lower()} technique(s)&x")
+    lines.append("")
+    lines.append("&DUse 'skills' to see only your learned skills, "
+                 "or 'help <jutsu name>' for details.&x")
+    return lines
+
+
+def cmd_jutsu(session, args: List[str]) -> None:
+    """Display the jutsu roster for the player's class or all for staff."""
+    if len(args) != 1 or args[0].lower() != "all":
+        session.send("Usage: jutsu all  (shows the complete jutsu catalog for your class)")
+        return
+    immortal = bool(session.account and
+                    session.account.staff_level in WHO_LEADER_STAFF_LEVELS)
+    lines = build_jutsu_catalog_lines(session.player, immortal=immortal)
+    # The full immortal roster can be hundreds of lines long, so use the
+    # existing telnet pager. Simple test sessions without a pager still
+    # receive one complete message.
+    output = "\n".join(lines)
+    if callable(getattr(session, "send_paginated", None)):
+        session.send_paginated(output)
+    else:
+        session.send(output)
+
+
 def cmd_skills(session, args: List[str]) -> None:
     player = session.player
     lines = ["Skills and jutsu:"]
@@ -8542,6 +8623,7 @@ COMMANDS = {
     "sleep": cmd_sleep,
     "stand": cmd_stand, "wake": cmd_stand,
     "skills": cmd_skills,
+    "jutsu": cmd_jutsu,
     "examine": cmd_examine,
     "clan": cmd_clan,
     "list": cmd_list,

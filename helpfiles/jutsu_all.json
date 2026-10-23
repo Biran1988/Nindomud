@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "jutsu all",
+  "keywords": [
+    "jutsu all",
+    "jutsu catalog",
+    "jutsu list"
+  ],
+  "title": "Jutsu Catalog",
+  "body": "Syntax: jutsu all\n\nShows every technique in your character's combat class, including future unlocks and their minimum levels, plus shared general jutsu. Immortals see all four combat classes and general jutsu. Special conditions are marked (Scroll, Release, Six Paths). Minimum level doesn't guarantee unlock. Secret scroll-only jutsu remain undisclosed until learned. Output is paginated: press Enter to continue, q to stop. Use 'skills' for learned techniques.\n\nDate: 2026-10-22",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
