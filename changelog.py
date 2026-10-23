@@ -490,4 +490,5 @@ CHANGELOG = [
     ("15.342", "Focused Mind now directly benefits every class: +5-10 accuracy points with mastery for normal attacks and offensive techniques in PvE and PvP. Existing mental-distraction and ordinary Genjutsu resistance remain secondary benefits; normal hit-chance caps still apply."),
     ("15.343", "Fixed immortal auto-mastered skills being blocked by the first-practice requirement, including general ninja and utility skills. The exemption follows the signed-in staff account; ordinary player practice requirements remain intact."),
     ("15.344", "Every Tailed Beast now has a dramatic global release and sealing banner with its own chakra colors and unique flavor. Sealing announces the new jinchuriki to the entire MUD; forced extraction also announces the beast's return."),
+    ("15.345", "Lingering room jutsu now appear as inspectable room objects: Hidden Mist, Amaterasu's black flames, Kekkei no Me domains and elemental clash aftermath. Look and scan show active effects; their objects vanish as soon as the underlying jutsu ends or is extinguished."),
 ]

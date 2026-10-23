@@ -953,7 +953,6 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
 
 def cmd_look(session, args: List[str]) -> None:
     import genjutsu
-    import hidden_mist
     player = session.player
     if player.illusion_walk_caster is not None and not args:
         import areas
@@ -1049,6 +1048,11 @@ def cmd_look(session, args: List[str]) -> None:
         if ground_match and not _is_invisible_item(ground_match):
             session.send(f"{rarity_colored_name(ground_match)}\nIt's lying here on the ground.")
             return
+        import room_jutsu_objects
+        jutsu_object = room_jutsu_objects.find(room, query)
+        if jutsu_object:
+            session.send(f"{jutsu_object.name}\n{jutsu_object.description}")
+            return
         if any(query in decoy["name"].lower() for decoy in genjutsu.decoys_in_room(room.vnum)):
             session.send("It looks real at a glance, but your hand passes through the illusion.")
             return
@@ -1075,16 +1079,6 @@ def cmd_look(session, args: List[str]) -> None:
     if halloween_decor:
         lines.append(halloween_decor)
         lines.append("")
-    if hidden_mist.room_active(room):
-        lines.append("&CA dense hidden mist obscures the room.&x")
-        lines.append("")
-    if room.temp_description_text:
-        if time.time() >= room.temp_description_until:
-            room.temp_description_text = ""
-            room.temp_description_until = 0.0
-        else:
-            lines.append(room.temp_description_text)
-            lines.append("")
     lines.extend(_format_exits(room, is_staff))
     lines.append("")
     for other in session.active_sessions():
@@ -1115,6 +1109,8 @@ def cmd_look(session, args: List[str]) -> None:
             contents.append(f"{len(corpse.items)} item(s)")
         detail = f" ({', '.join(contents)})" if contents else " (empty)"
         lines.append(f"  &D{corpse.name}&x is here.{detail}")
+    import room_jutsu_objects
+    lines.extend(f"  {obj.room_line}" for obj in room_jutsu_objects.active_objects(room))
     if room.ground_items:
         ground_counts = inventory.slot_counts(room.ground_items)
         for name, count in ground_counts.items():
@@ -1213,6 +1209,8 @@ def cmd_scan(session, args: List[str]) -> None:
                 lines.append(f"  {mob.name} is here.")
     for corpse in corpses.corpses_in_room(target.vnum):
         lines.append(f"  &D{corpse.name}&x is here.")
+    import room_jutsu_objects
+    lines.extend(f"  {obj.room_line}" for obj in room_jutsu_objects.active_objects(target))
     for name, count in inventory.slot_counts(target.ground_items).items():
         if not _is_invisible_item(name):
             suffix = f" (x{count})" if count > 1 else ""
@@ -6673,6 +6671,11 @@ def cmd_get(session, args: List[str]) -> None:
     query = full_query
     match = find_indexed_item(query, room.ground_items)
     if not match:
+        import room_jutsu_objects
+        jutsu_object = room_jutsu_objects.find(room, query)
+        if jutsu_object:
+            session.send(f"{jutsu_object.name} is a lingering jutsu effect; you cannot pick it up.")
+            return
         session.send("You don't see that here.")
         return
     if _has_no_take_flag(match):
