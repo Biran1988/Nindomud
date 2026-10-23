@@ -10,6 +10,8 @@ import socket
 import config
 import consumables
 import storage
+import country_geo
+import network_bans
 from session import ACTIVE_SESSIONS, Session
 
 PULSE_SECONDS = 1.0  # ROM-style short pulse -- drives every periodic system's own elapsed-time counter below.
@@ -54,7 +56,24 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
         except Exception:
             pass
 
-    session = Session(send_raw, close_callback)
+    peer = writer.get_extra_info("peername")
+    try:
+        ip = str(country_geo.address(peer[0]))
+        country = country_geo.lookup(ip)
+        denied = network_bans.blocked(ip, country)
+    except (OSError, ValueError, KeyError, TypeError, IndexError):
+        # Unknown peer or a damaged policy must never bypass access controls.
+        send_raw("Connection access checks unavailable. Please try again later.\r\n")
+        writer.close()
+        await writer.wait_closed()
+        return
+    if denied:
+        send_raw(network_bans.DENIED_MESSAGE)
+        writer.close()
+        await writer.wait_closed()
+        return
+    session = Session(send_raw, close_callback, connection_ip=ip,
+                      connection_port=peer[1], connection_country=country)
     _enable_tcp_keepalive(writer)
 
     try:
@@ -277,6 +296,7 @@ async def pulse_loop() -> None:
 
 async def run_server(host: str = config.HOST, port: int = config.PORT) -> None:
     storage.ensure_dirs()
+    network_bans.initialize()
     server = await asyncio.start_server(handle_connection, host, port)
     import server_uptime
     server_uptime.start()  # a fresh clock per reboot or new server process

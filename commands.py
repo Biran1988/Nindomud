@@ -8555,7 +8555,11 @@ import lightsabers
 import reincarnation
 import six_paths
 
+from network_bans import cmd_ip, cmd_ban
+
 COMMANDS = {
+    "ip": cmd_ip,
+    "ban": cmd_ban,
     "reincarnation": reincarnation.command,
     "sixpaths": six_paths.command,
     "lightsaber": lightsabers.command,

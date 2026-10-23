@@ -1,6 +1,7 @@
 """Package a data-safe source archive and portable single-file Python server."""
 
 import argparse
+import base64
 import json
 from pathlib import Path
 import sys
@@ -22,6 +23,7 @@ def build(output: Path) -> None:
         for path in source_files:
             file.write(f"    {path.stem!r}: {path.read_text(encoding='utf-8')!r},\n")
         file.write("}\n")
+        file.write("import base64\n_COUNTRY_DATABASE = base64.b64decode(" + repr(base64.b64encode((ROOT / "geoip/country.csv.gz").read_bytes()).decode("ascii")) + ")\n")
         file.write("class _BundledModules(importlib.abc.MetaPathFinder, importlib.abc.Loader):\n")
         file.write("    def find_spec(self, fullname, path=None, target=None):\n")
         file.write("        return importlib.util.spec_from_loader(fullname, self) if fullname in _SOURCES else None\n")
@@ -29,6 +31,7 @@ def build(output: Path) -> None:
         file.write("    def exec_module(self, module):\n")
         file.write("        module.__file__ = os.path.join(_ROOT, module.__name__ + '.py')\n")
         file.write("        exec(compile(_SOURCES[module.__name__], module.__file__, 'exec'), module.__dict__)\n")
+        file.write("        if module.__name__ == 'country_geo':\n            module.BUNDLED_DATABASE = _COUNTRY_DATABASE\n")
         file.write("sys.meta_path.insert(0, _BundledModules())\n")
         file.write("def start():\n")
         file.write("    namespace = {'__name__': '__main__', '__file__': os.path.join(_ROOT, 'main.py')}\n")
@@ -46,7 +49,7 @@ def build(output: Path) -> None:
             relative = path.relative_to(ROOT)
             if not path.is_file() or any(part in {".git", "data", "__pycache__", ".pytest_cache"} or part.startswith("data_test") for part in relative.parts):
                 continue
-            if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"}:
+            if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"} and relative.as_posix() != "geoip/country.csv.gz":
                 continue
             zf.write(path, relative)
         # Keep the runnable server in the standard ZIP alongside the sources.

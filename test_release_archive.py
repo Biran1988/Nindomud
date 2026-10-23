@@ -47,6 +47,13 @@ class ReleaseArchiveTests(unittest.TestCase):
                 self.assertIn(b"def cmd_delete(", archive.read("Nindo_mud"))
                 self.assertIn(b"15.331", archive.read("changelog.py"))
                 self.assertIn("test_skill_xp_and_character_delete.py", names)
+                self.assertIn("geoip/country.csv.gz", names)
+                self.assertIn("geoip/README.md", names)
+                self.assertIn("country_geo.py", names)
+                self.assertIn("network_bans.py", names)
+                self.assertIn("test_network_bans.py", names)
+                self.assertIn(b"15.340", archive.read("changelog.py"))
+                self.assertNotIn("data/network_bans.json", names)
                 self.assertIn(b"LEGENDARY_COLOR_SCHEMES", archive.read("legendary_items.py"))
                 self.assertIn(b"15.328", archive.read("changelog.py"))
                 self.assertFalse(any(
@@ -62,6 +69,22 @@ class ReleaseArchiveTests(unittest.TestCase):
                 cwd=install, capture_output=True, text=True, timeout=45,
             )
             self.assertEqual(preflight.returncode, 0, preflight.stderr[-3500:])
+            # The portable launcher must carry its own complete country DB,
+            # even when run without any neighboring source or database files.
+            standalone_install = output / "standalone"
+            standalone_install.mkdir()
+            executable = standalone_install / "Nindo_mud"
+            executable.write_bytes((install / "Nindo_mud").read_bytes())
+            lookup = subprocess.run(
+                [sys.executable, "-c",
+                 "import runpy; runpy.run_path('Nindo_mud', run_name='release_test'); "
+                 "import country_geo; "
+                 "assert country_geo.lookup('1.0.0.1') == 'AU'; "
+                 "assert country_geo.lookup('105.112.0.1') == 'NG'; "
+                 "assert country_geo.lookup('2606:4700:4700::1111')"],
+                cwd=standalone_install, capture_output=True, text=True, timeout=45,
+            )
+            self.assertEqual(lookup.returncode, 0, lookup.stderr[-3500:])
 
 
 if __name__ == "__main__":

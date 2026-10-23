@@ -56,6 +56,18 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "ip", "keywords": ["ip", "connections"],
+        "title": "IP connections (immortals)",
+        "body": "Syntax: ip [player name or IP filter]\nLists all current connections, including players at login or in an editor, with their actual socket IP, port, country and state. Helper and higher only. Country estimates are offline and may reflect a VPN/proxy. IP geolocation by DB-IP (https://db-ip.com).",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "ban", "keywords": ["ban", "countryban", "ipban"],
+        "title": "Connection bans (Administrator and Implementor)",
+        "body": "Syntax: ban | ban ip <address or CIDR> [reason] | ban <IP>\nban country <full country name or two-letter code>\nban remove [ip] <address or CIDR>\nban remove country <name or code>\nExamples: ban country Australia; ban country Nigeria; ban country AU.\nBans save automatically across reboots, disconnect every matching session after saving characters, and block all matching accounts before login or character creation. Only Administrators and Implementors may manage bans. A ban matching your own connection is refused. Removing one ban does not override other matching rules. Country detection uses the bundled offline IPv4/IPv6 database; VPNs/proxies and imperfect location data affect results. Unknown/local IPs are not country-matched; IP bans still apply. IP geolocation by DB-IP (https://db-ip.com). See geoip/README.md for refresh and offline recovery instructions.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "colors",
         "keywords": ["colors", "color", "colour", "color codes", "ansi"],
         "title": "Color Codes",

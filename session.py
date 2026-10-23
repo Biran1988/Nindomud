@@ -91,11 +91,16 @@ class _PvpEnemyAdapter:
 
 
 class Session:
-    def __init__(self, send_raw: Callable[[str], None], close_callback: Callable[[], None]):
+    def __init__(self, send_raw: Callable[[str], None], close_callback: Callable[[], None],
+                 *, connection_ip=None, connection_port=None, connection_country=None):
         self.send_raw = send_raw
         self.close_callback = close_callback
         self.state = State.NAME
         self.color_enabled = True
+        # Actual TCP peer supplied by the server, never by client input.
+        self.connection_ip = connection_ip
+        self.connection_port = connection_port
+        self.connection_country = connection_country
 
         self.account: Optional[Account] = None
         self.player: Optional[Player] = None
