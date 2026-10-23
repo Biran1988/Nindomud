@@ -4568,11 +4568,11 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
                               info["display_name"].casefold()),
         )
         lines.append("")
-        lines.append(_prac_header(title if category != "general" else "General Skills"))
+        lines.append(_prac_header(title))
         if not entries:
             lines.append("  &D(No listed techniques)&x")
             continue
-        color = PRAC_CATEGORY_COLOR.get(title if category != "general" else "General Skills", "&W")
+        color = PRAC_CATEGORY_COLOR.get(title, "&W")
         for info in entries:
             name = info["display_name"]
             level = info.get("level_requirement", 1)
@@ -4817,6 +4817,7 @@ PRAC_CATEGORY_COLOR = {
     "Genjutsu": "&M",
     "Bukijutsu": "&Y",
     "General Skills": "&C",  # confirmed: a distinct color from the 4 class colors, changed from gray per direct request
+    "General Jutsu": "&C",  # same shared-category color in the jutsu catalog
 }
 
 
