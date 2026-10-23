@@ -196,6 +196,7 @@ class Player:
     last_july_fourth_gift_year: int = 0
     last_may_fourth_gift_year: int = 0
     holiday_xp_boost_until: float = 0.0
+    halloween_return_vnum: int = 0  # safe home portal after seasonal area shutdown
 
     room_vnum: int = 0
 

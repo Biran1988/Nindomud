@@ -90,7 +90,8 @@ def mob_loot(mob, today=None) -> list:
     if (easter_active(today) and not combat.is_shadow_clone(mob)
             and not getattr(mob, "tailed_beast_key", None)):
         return list(mob.loot_items) + [EGG]
-    return list(mob.loot_items)
+    import halloween_event
+    return list(mob.loot_items) + halloween_event.candy_loot(mob, today) + halloween_event.boss_loot(mob, today)
 
 
 def kage_rooms() -> set:
@@ -119,6 +120,8 @@ def sync_visitors(today=None) -> None:
     sync_turkeys(today)
     sync_uncle_sam(today)
     sync_jedi(today)
+    import halloween_event
+    halloween_event.sync(today)
 
 
 def sync_jedi(today=None) -> None:

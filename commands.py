@@ -1066,6 +1066,11 @@ def cmd_look(session, args: List[str]) -> None:
     if seasonal_events.tree_visible(room.vnum):
         lines.append("&GAn ornamented Christmas tree sparkles beside the Kage.&x")
         lines.append("")
+    import halloween_event
+    halloween_decor = halloween_event.decorate_village(room.vnum)
+    if halloween_decor:
+        lines.append(halloween_decor)
+        lines.append("")
     if hidden_mist.room_active(room):
         lines.append("&CA dense hidden mist obscures the room.&x")
         lines.append("")
@@ -7202,6 +7207,9 @@ def cmd_use(session, args: List[str]) -> None:
     import lightsabers
     if lightsabers.use(session, " ".join(args)):
         return
+    import halloween_event
+    if halloween_event.consume_candy(session, " ".join(args)):
+        return
     import seasonal_events
     if seasonal_events.use_fireworks(session, " ".join(args)):
         return
@@ -8579,6 +8587,8 @@ COMMANDS = {
     "aff": cmd_aff,
     "afk": cmd_afk,
     "recall": cmd_recall,
+    "teleport": __import__("halloween_event").command_teleport,
+    "trickortreat": __import__("halloween_event").command_trickortreat,
     "clone": __import__("clone_control").cmd_clone,
     "anki": cmd_anki,
     "charge": cmd_charge,

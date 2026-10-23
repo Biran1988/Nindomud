@@ -69,22 +69,26 @@ def snapshot_world() -> dict:
     import combat
     import olc
     import seasonal_events
+    import halloween_event
 
     return {
         "rooms": {
             str(vnum): {key: value for key, value in dataclasses.asdict(room).items()
                         if key != "ground_ryo"}
             for vnum, room in world.WORLD.rooms.items()
+            if not halloween_event.owns_room(vnum, room)
         },
         "mobs": {
             str(vnum): dict(template)
             for vnum, template in combat.MOB_TEMPLATES.items()
             if vnum not in (seasonal_events.SANTA_VNUM, seasonal_events.TURKEY_VNUM,
                             seasonal_events.UNCLE_SAM_VNUM, seasonal_events.JEDI_VNUM)
+            and not template.get(halloween_event.TAG)
         },
         "items": {
             str(vnum): dict(template)
             for vnum, template in olc.OBJECT_TEMPLATES.items()
+            if not template.get(halloween_event.TAG)
         },
     }
 

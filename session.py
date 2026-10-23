@@ -977,6 +977,16 @@ class Session:
             player.tsukuyomi_caster_return_vnum = None
             storage.save_player(player)
 
+        # If the server restarted after Halloween week, temporary
+        # seasonal rooms are gone; prefer the player's saved portal origin.
+        import halloween_event
+        if (player.room_vnum in halloween_event.ROOM_VNUMS
+                and world.WORLD.get(player.room_vnum) is None
+                and player.halloween_return_vnum
+                and world.WORLD.get(player.halloween_return_vnum)):
+            player.room_vnum = player.halloween_return_vnum
+            player.halloween_return_vnum = 0
+
         self.player = player
         self.state = State.PLAYING
         self.color_enabled = player.color_enabled

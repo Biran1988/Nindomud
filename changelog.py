@@ -484,4 +484,5 @@ CHANGELOG = [
     ("15.336", "Introduced Food Shop specialty shopkeepers (mset shoptype food): buy cooked dishes, raw fish, farm crops and other food for Ryo at specialty rates. Fixed raw fish/crop classification and preserved general shop discounts; new setting works with live builder shops, without changing saved areas."),
     ("15.337", "Added 'uptime' to show the running server's time since last restart in days, hours, minutes and seconds. The timer resets on reboot/crash, uses a monotonic clock, and works during sleep or clone scouting."),
     ("15.338", "Added 'jutsu all': players can browse their class's full learned and future jutsu catalog with levels, status and shared general jutsu; immortals see all four classes. Long rosters use the built-in pager."),
+    ("15.339", "Halloween Town opens only during Halloween week with 'teleport halloween': 20 temporary connected rooms, haunted encounters, cursed shinobi, a candy and costume market, daily trick-or-treating, global candy drops, and a powerful rare Pumpkin King mask. 'teleport return' goes home."),
 ]

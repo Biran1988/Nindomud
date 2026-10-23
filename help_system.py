@@ -93,6 +93,45 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "halloween",
+        "keywords": ["halloween", "halloween town", "pumpkin king", "trickortreat", "teleport halloween"],
+        "title": "Halloween Town",
+        "body": (
+            "Syntax: teleport halloween | teleport return | trickortreat\\n"
+            "\\n"
+            "Halloween Town opens during the Monday-through-Sunday week containing "
+            "October 31 (Detroit time). 'teleport halloween' enters the temporary "
+            "20-room haunted town (vnums 100000-100019). 'teleport return' brings "
+            "you back to the room you came from; the event also sends visitors "
+            "home when the holiday ends. You cannot teleport while fighting "
+            "or jailed.\\n"
+            "\\n"
+            "Visit the Costume Cauldron to 'list' and 'buy' wearable costumes "
+            "with lasting stat bonuses. At the Witch's Candy Cauldron, buy "
+            "restorative sweets; 'use <candy>' heals and grants a nonstacking "
+            "+10% mob-kill experience boost for 15 minutes. During Halloween "
+            "week, defeated ordinary mobs everywhere in Nindo_mud can also drop "
+            "Halloween candy (22% chance per kill).\\n"
+            "\\n"
+            "At Mayor Jack Lantern's Trick-or-Treat Porch, use 'trickortreat' "
+            "once per day for a surprise: often candy, sometimes a hostile scarecrow. "
+            "Haunted Town contains reanimated genin, zombie shinobi, phantom "
+            "swordsmen, vampire rogues, undead jonin, and royal guards. "
+            "Deep inside the Pumpkin King's Throne, a level-100 Pumpkin King "
+            "drops his legendary cursed mask with a rare 3.5% chance. The mask "
+            "is wearable on the head and adds +175 maximum Health, Chakra "
+            "and Stamina, +5 Strength/Dexterity/Intelligence, +12 hitroll "
+            "and +12 damroll; it remains usable all year. The King respawns "
+            "30 minutes after defeat; lesser undead respawn after 7 minutes.\\n"
+            "\\n"
+            "The festival doesn't replace or save over builder-authored areas. "
+            "Halloween rooms and NPCs disappear automatically after the week.\\n"
+            "\\n"
+            "Date: 2026-10-23"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "holiday events",
         "keywords": ["holiday events", "easter", "christmas", "santa", "easter egg", "thanksgiving", "turkey", "july 4", "fourth of july", "uncle sam"],
         "title": "Holiday Events",

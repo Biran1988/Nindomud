@@ -3104,6 +3104,8 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     session.combat_target = None
     reset_summon_round_state(player)
     seasonal_events.turkey_defeated(mob)
+    import halloween_event
+    halloween_event.mob_defeated(mob)
     remove_mob(mob)
 
     if session.group and len(session.group.members) > 1:
