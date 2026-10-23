@@ -492,4 +492,5 @@ CHANGELOG = [
     ("15.344", "Every Tailed Beast now has a dramatic global release and sealing banner with its own chakra colors and unique flavor. Sealing announces the new jinchuriki to the entire MUD; forced extraction also announces the beast's return."),
     ("15.345", "Lingering room jutsu now appear as inspectable room objects: Hidden Mist, Amaterasu's black flames, Kekkei no Me domains and elemental clash aftermath. Look and scan show active effects; their objects vanish as soon as the underlying jutsu ends or is extinguished."),
     ("15.346", "Silent Movement is now a true on/off toggle with no duration limit. It stays active until switched off or Stamina runs short during movement; aff and score show ON. Teacher practice, activation cost, cooldown, movement cost and Sensory Detect counter remain in effect."),
+    ("15.347", "Fixed defeated Tailed Beasts disappearing on the next effects pulse before Sealing Jutsu could find them. Downed beasts now remain present for the full one-minute sealing window; repeated defeat handling and lingering Amaterasu cannot remove them early or restart that window."),
 ]

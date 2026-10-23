@@ -382,6 +382,8 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
                 else:
                     combat_module.handle_player_defeat(s)
         for mob in list(combat_module.MOBS_BY_ROOM.get(room.vnum, [])):
+            if mob.tailed_beast_key and mob.tailed_beast_downed_until:
+                continue  # keep the beast sealable for its full capture window
             mob.health -= status_effects.reduce_incoming_damage(
                 mob.active_status_effects, random.randint(*data_mangekyo.AMATERASU_ROOM_BURN_PER_TICK))
             if mob.health <= 0:

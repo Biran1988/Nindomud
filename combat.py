@@ -1236,6 +1236,11 @@ def tick_all_mob_effects(sessions=None) -> None:
     meaningfully act on, not just players."""
     for room_mobs in list(MOBS_BY_ROOM.values()):
         for mob in list(room_mobs):
+            # A defeated beast remains a target for Sealing Jutsu. Its own
+            # lifecycle removes it after the capture window; the generic
+            # dead-mob cleanup must not erase it on the next pulse.
+            if mob.tailed_beast_key and mob.tailed_beast_downed_until:
+                continue
             if mob.mangekyo_amaterasu_caster:
                 import data_mangekyo
                 mob.health = max(0, mob.health - random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK))
@@ -3060,11 +3065,15 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         reset_summon_round_state(player)
         return
 
-    if getattr(mob, "tailed_beast_key", None) and mob.tailed_beast_downed_until == 0.0:
+    if getattr(mob, "tailed_beast_key", None):
         mob.health = 0
-        mob.tailed_beast_downed_until = time.time() + 60.0  # confirmed directly: a real 1-minute window
         session.combat_target = None
         reset_summon_round_state(player)
+        # Multiple attackers or lingering damage can report this defeat
+        # again. Never turn it into an ordinary death or restart its timer.
+        if mob.tailed_beast_downed_until:
+            return
+        mob.tailed_beast_downed_until = time.time() + 60.0  # confirmed directly: a real 1-minute window
         session.send(
             f"&R{mob.name} collapses, defeated -- but still breathes. Someone must seal it now, or it will die!&x"
         )
