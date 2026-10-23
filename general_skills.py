@@ -71,7 +71,7 @@ def activate(session, key, words):
         "camouflage": "You blend into your surroundings. Attacking will reveal you.",
         "silent movement": "You move without ordinary travel messages; each step costs 2 extra Stamina.",
         "sensory detect": "You can detect camouflaged ninja and notice silent movement. Upkeep: 1 Chakra per second.",
-        "focused mind": "You steady your mind against ordinary Genjutsu. Each step costs 1 extra Stamina.",
+        "focused mind": f"You sharpen your aim: +{focused_accuracy(player)} accuracy for normal attacks and offensive techniques of every class, plus resistance to mental distractions. Each step costs 1 extra Stamina.",
     }
     session.send(f"&G{info['display_name']} is active for {duration} seconds.&x {descriptions[key]}")
 
@@ -113,6 +113,14 @@ def broadcast_movement(session, text):
                 and not getattr(observer.player, "_immortal_skill_mastery", False)):
             continue
         observer.send(text)
+
+
+def focused_accuracy(player):
+    """Additive hit-chance points for the ninja's own attacks of any class."""
+    if not active(player, "focused_mind"):
+        return 0
+    mastery = max(0, min(100, getattr(player, "skill_proficiencies", {}).get("Focused Mind", 0)))
+    return 5 + mastery // 20
 
 
 def focused_duration(target, duration):

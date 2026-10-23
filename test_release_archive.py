@@ -54,6 +54,8 @@ class ReleaseArchiveTests(unittest.TestCase):
                 self.assertIn("test_network_bans.py", names)
                 self.assertIn(b"15.340", archive.read("changelog.py"))
                 self.assertIn(b"15.341", archive.read("changelog.py"))
+                self.assertIn(b"15.342", archive.read("changelog.py"))
+                self.assertIn(b"def focused_accuracy", archive.read("general_skills.py"))
                 self.assertIn("general_skills.py", names)
                 self.assertIn("test_general_skills.py", names)
                 self.assertIn(b"def concealed_from", archive.read("general_skills.py"))

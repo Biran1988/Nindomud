@@ -1,5 +1,6 @@
 """General skill unlocks, real world visibility/movement and Genjutsu defense."""
 from types import SimpleNamespace as NS
+from contextlib import ExitStack
 import unittest
 from unittest.mock import patch
 
@@ -15,6 +16,8 @@ import skill_training
 import status_effects
 import tracking
 import world
+import weather
+import sage_mode
 from models import Player
 from session import ACTIVE_SESSIONS, Session, State
 
@@ -231,6 +234,83 @@ class GeneralSkillTests(unittest.TestCase):
         with patch.object(commands.random, "randint", return_value=1):
             commands.cmd_move(self.actor, "north")
         self.assertEqual(before - self.actor.player.stamina, 2)
+
+    def accuracy_conditions(self):
+        """A roll of 55 misses base accuracy 50, but hits with mastered focus."""
+        stack = ExitStack()
+        for module, name, result in (
+            (combat.derived_stats, "to_hit_chance", 50),
+            (combat.derived_stats, "critical_chance", 0),
+            (combat.derived_stats, "dodge_chance", 0),
+            (combat.random, "randint", 55),
+            (weather, "combat_accuracy_modifier", 0),
+            (weather, "night_dodge_bonus", 0),
+            (sage_mode, "accuracy", 0),
+            (combat, "_player_attack_damage", 10),
+            (combat, "roll_jutsu_damage", (20, False)),
+            (combat, "_soto_uke_blocks", False),
+        ):
+            stack.enter_context(patch.object(module, name, return_value=result))
+        return stack
+
+    def test_focused_accuracy_scales_with_mastery_and_ends_with_effect(self):
+        self.assertEqual(skills.focused_accuracy(self.actor.player), 0)
+        status_effects.apply_effect(self.actor.player.active_status_effects, "focused_mind")
+        for mastery, bonus in ((0, 5), (50, 7), (100, 10), (150, 10)):
+            self.actor.player.skill_proficiencies["Focused Mind"] = mastery
+            self.assertEqual(skills.focused_accuracy(self.actor.player), bonus)
+        self.actor.player.active_status_effects.clear()
+        self.assertEqual(skills.focused_accuracy(self.actor.player), 0)
+
+    def test_focus_improves_normal_attacks_for_all_four_classes_pve_and_pvp(self):
+        player = self.actor.player
+        player.skill_proficiencies["Focused Mind"] = 100
+        mob = combat.Mob(992718, 992718, "Accuracy Target", 25, 1000, 1000, 1, 0, 0)
+        mob.room_vnum = self.room.vnum
+        with self.accuracy_conditions():
+            for cls in ("taijutsu", "ninjutsu", "genjutsu", "bukijutsu"):
+                player.primary_class = cls
+                for focused in (False, True):
+                    with self.subTest(cls=cls, focused=focused):
+                        player.active_status_effects.clear()
+                        if focused:
+                            status_effects.apply_effect(player.active_status_effects, "focused_mind")
+                        mob.health = self.viewer.player.health = 1000
+                        combat._player_attack_mob_once(self.actor, player, mob)
+                        combat._player_attack_target_once(self.actor, player, self.viewer, self.viewer.player)
+                        self.assertEqual(mob.health < 1000, focused)
+                        self.assertEqual(self.viewer.player.health < 1000, focused)
+
+    def test_focus_improves_each_classes_offensive_techniques_pve_and_pvp(self):
+        player = self.actor.player
+        player.skill_proficiencies["Focused Mind"] = 100
+        mob = combat.Mob(992718, 992718, "Accuracy Target", 25, 1000, 1000, 1, 0, 0)
+        mob.room_vnum = self.room.vnum
+        roster = {"taijutsu": "choku zuki", "ninjutsu": "shadow shuriken technique",
+                  "genjutsu": "narakumi", "bukijutsu": "throw kunai"}
+        with self.accuracy_conditions():
+            for cls, key in roster.items():
+                player.primary_class = cls
+                name = data_jutsu.JUTSU[key]["display_name"]
+                if name not in player.learned_skills:
+                    player.learned_skills.append(name)
+                skill_training.mark_practiced(player, name)
+                player.skill_proficiencies[name] = 100
+                for focused in (False, True):
+                    with self.subTest(cls=cls, focused=focused):
+                        player.active_status_effects.clear()
+                        self.viewer.player.active_status_effects.clear()
+                        if focused:
+                            status_effects.apply_effect(player.active_status_effects, "focused_mind")
+                        mob.health = self.viewer.player.health = 1000
+                        player.inventory = ["Kunai"]
+                        player.cooldowns.clear()
+                        combat.use_jutsu(self.actor, key, mob)
+                        player.inventory = ["Kunai"]
+                        player.cooldowns.clear()
+                        combat.use_jutsu_on_player(self.actor, key, self.viewer)
+                        self.assertEqual(mob.health < 1000, focused)
+                        self.assertEqual(self.viewer.player.health < 1000, focused)
 
     def test_focused_mind_shortens_real_pvp_genjutsu_status(self):
         self.actor.player.skill_proficiencies["Focused Mind"] = 100
