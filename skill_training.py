@@ -32,6 +32,14 @@ def grant_without_practice(player, skill_name: str) -> None:
 def needs_first_practice(player, skill_name: str) -> bool:
     if not getattr(player, "practice_gate_enabled", False):
         return False
+    # Staff mastery is an authenticated session privilege, not a permanent
+    # teacher lesson or a bypass inferred from proficiency/player save fields.
+    # Keep it here so general utilities and direct commands share the exemption.
+    from session import ACTIVE_SESSIONS
+    if any(getattr(s, "player", None) is player
+           and getattr(getattr(s, "account", None), "staff_level", "player") != "player"
+           for s in ACTIVE_SESSIONS):
+        return False
     if skill_name not in getattr(player, "learned_skills", ()):
         return False
     if exempt_by_design(skill_name) or skill_name in getattr(player, "practice_exempt_skills", ()):

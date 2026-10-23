@@ -12,6 +12,7 @@ import data_jutsu
 import skill_training
 import storage
 from models import Player
+from session import ACTIVE_SESSIONS, Session, State
 
 
 class FirstPracticeGateTests(unittest.TestCase):
@@ -65,6 +66,22 @@ class FirstPracticeGateTests(unittest.TestCase):
         self.p.inventory = ["Training Kunai"]
         commands.cmd_examine(self.s, ["kunai"])
         self.assertIn("Practice Examine", self.s.send.call_args.args[0])
+
+    def test_authenticated_immortal_utility_skills_skip_first_lesson(self):
+        session = Session(lambda text: None, lambda: None)
+        self.addCleanup(ACTIVE_SESSIONS.remove, session)
+        session.player = self.p
+        session.account = NS(staff_level="helper")
+        session.state = State.PLAYING
+        self.p.chakra = 0
+        self.p.stamina = 100
+        commands.cmd_charge(session, ["10"])
+        self.assertIsNotNone(session.chakra_charge)
+        for name in self.p.learned_skills:
+            self.assertFalse(skill_training.needs_first_practice(self.p, name))
+        self.assertEqual(self.p.practiced_skills, [])
+        session.account = None
+        self.assertTrue(skill_training.needs_first_practice(self.p, "Chakra Charge"))
 
     def test_legacy_save_positive_proficiency_grandfathered(self):
         with tempfile.TemporaryDirectory() as folder:

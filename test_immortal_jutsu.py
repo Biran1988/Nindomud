@@ -14,6 +14,7 @@ from session import ACTIVE_SESSIONS, Session, State
 class ImmortalJutsuTests(unittest.TestCase):
     def test_all_jutsu_granted_and_staff_gates_bypassed(self):
         player = Player("Tester", "Tester", level=1, primary_class="taijutsu")
+        player.practice_gate_enabled = True
         player._immortal_skill_mastery = True
         self.assertTrue(leveling.grant_immortal_jutsu(player))
         self.assertTrue(all(j["display_name"] in player.learned_skills

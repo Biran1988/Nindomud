@@ -105,6 +105,30 @@ class GeneralSkillTests(unittest.TestCase):
             self.cast(self.actor, key)
             self.assertFalse(skills.active(self.actor.player, effect))
 
+    def test_immortal_auto_mastery_works_without_teacher_lessons(self):
+        player = self.actor.player
+        self.actor.account.staff_level = "helper"
+        player._immortal_skill_mastery = True
+        player.practiced_skills.clear()
+        leveling.grant_immortal_jutsu(player)
+        for key, effect in skills.EFFECT_KEYS.items():
+            with self.subTest(skill=key):
+                self.assertEqual(player.skill_proficiencies[data_jutsu.JUTSU[key]["display_name"]], 100)
+                self.cast(self.actor, key)
+                self.assertTrue(skills.active(player, effect), self.output)
+                self.assertEqual(player.active_status_effects[effect]["duration"], 160)
+                self.cast(self.actor, key + " off")
+        self.assertEqual(player.practiced_skills, [])
+        self.assertEqual(player.practice_exempt_skills, [])
+
+        # A stale mastery flag/100% proficiency after demotion cannot bypass
+        # the first lesson; the exemption follows the live account only.
+        self.actor.account.staff_level = "player"
+        for key, effect in skills.EFFECT_KEYS.items():
+            player.cooldowns.clear()
+            self.cast(self.actor, key)
+            self.assertFalse(skills.active(player, effect))
+
     def test_no_resources_no_action_pending_cast_or_combat_camouflage(self):
         self.actor.player.chakra = 0
         self.cast(self.actor, "camouflage")
