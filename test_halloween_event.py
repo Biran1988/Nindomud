@@ -131,7 +131,7 @@ class HalloweenEventTests(unittest.TestCase):
         with (patch.object(event.random, "random", return_value=0),
               patch.object(event.random, "choice", return_value=event.CANDY_NAMES[0])):
             mob = NS(loot_items=[], template_vnum=444, experience_reward=90,
-                     room_vnum=999, tailed_beast_key=None)
+                     room_vnum=999, tailed_beast_key=None, shadow_clone_owner=None)
             loot = seasonal_events.mob_loot(mob, self.halloween_date)
             self.assertEqual(loot, [event.CANDY_NAMES[0]])
             boss = combat.mobs_in_room(100019)[0]
@@ -159,7 +159,7 @@ class HalloweenEventTests(unittest.TestCase):
             event.command_trickortreat(self.session, [])
             self.assertIn(event.CANDY_NAMES[1], self.player.inventory)
             event.command_trickortreat(self.session, [])
-            self.assertIn("once", self.session.send.call_args.args[0].lower())
+            self.assertIn("one trick or treat", self.session.send.call_args.args[0].lower())
         boss = combat.mobs_in_room(100019)[0]
         combat.remove_mob(boss)
         event.mob_defeated(boss, now=1000)

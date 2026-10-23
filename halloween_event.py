@@ -262,7 +262,7 @@ def _register_mob(vnum, name, level, hp, damage, xp, ryo, *, shop=None, stock=No
 def _register_enemies():
     for room_idx, vnum, level, name, hp, damage, xp, ryo in MOB_SPAWNS:
         _register_mob(vnum, name, level, hp, damage, xp, ryo,
-                      hostile=(room_idx not in {0}))
+                      hostile=True)
     _register_mob(COSTUME_MERCHANT, "Morgana the Costume Witch", 1, 9999,
                   "1d1+1", 0, 0, shop="general",
                   stock=[vnum for vnum, *_ in COSTUMES])
@@ -362,7 +362,7 @@ def sync(today=None):
         for idx, description in enumerate(ROOMS):
             vnum = ROOM_START + idx
             room = Room(vnum, description["name"], description["description"],
-                        sector=description["sector"], safe=idx in {0, 1, 2, 3, 4, 14},
+                        sector=description["sector"], safe=idx in {0, 1, 2, 3, 4},
                         flags=[TAG, "no_wander"])
             world.WORLD.add_room(room)
             _owned_rooms[vnum] = room
