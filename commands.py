@@ -102,7 +102,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -132,12 +132,12 @@ def dispatch_line(session, line: str) -> None:
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
-            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "inventory",
+            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "inventory",
                                        "inv", "skills", "prac", "imms", "immortal",
                                        "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
-    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "quit", "save"):
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
@@ -7671,6 +7671,12 @@ def cmd_level(session, args: List[str]) -> None:
     )))
 
 
+def cmd_uptime(session, args: List[str]) -> None:
+    """Show how long the active Nindo_mud server has run since boot."""
+    import server_uptime
+    session.send(f"&CNindo_mud uptime:&x {server_uptime.format_uptime()}")
+
+
 def build_jobs_lines(p, width: int = 78) -> List[str]:
     """Every registered job (jobs.JOB_NAMES), shown even at level 1/0
     xp -- a player who has never fished still sees Fishing listed, not
@@ -8575,6 +8581,7 @@ COMMANDS = {
     "config": cmd_config,
     "score": cmd_score, "sc": cmd_score,
     "level": cmd_level,
+    "uptime": cmd_uptime,
     "jobs": cmd_jobs,
     "group": cmd_group,
     "team": cmd_team,

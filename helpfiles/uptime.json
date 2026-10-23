@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "uptime",
+  "keywords": [
+    "uptime"
+  ],
+  "title": "Uptime",
+  "body": "Syntax: uptime\n\nDescription: Shows the time since the current Nindo_mud server last started, in days, hours, minutes and seconds. The clock resets on every server restart, including a crash or reboot. Every player can use it.\n\nDate: 2026-10-22",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

@@ -278,6 +278,8 @@ async def pulse_loop() -> None:
 async def run_server(host: str = config.HOST, port: int = config.PORT) -> None:
     storage.ensure_dirs()
     server = await asyncio.start_server(handle_connection, host, port)
+    import server_uptime
+    server_uptime.start()  # a fresh clock per reboot or new server process
     asyncio.create_task(pulse_loop())
     addr = server.sockets[0].getsockname()
     print(f"{config.MUD_NAME} MUD listening on {addr[0]}:{addr[1]}")

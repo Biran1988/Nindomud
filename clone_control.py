@@ -14,7 +14,7 @@ ELEMENT_SKILLS = {
     "earth": "Deido Bunshin",
     "sand": "Suna Bunshin",
 }
-SENSE_VERBS = {"look", "l", "scan", "examine", "help", "who", "score", "sc", "level"}
+SENSE_VERBS = {"look", "l", "scan", "examine", "help", "who", "score", "sc", "level", "uptime"}
 ALLOWED_DOORS = {"open", "close"}
 
 
@@ -178,6 +178,8 @@ def _sense(session, verb, args):
             commands.cmd_score(session, args)
         elif verb == "level":
             commands.cmd_level(session, args)
+        elif verb == "uptime":
+            commands.cmd_uptime(session, args)
         elif verb == "help":
             commands.help_system.cmd_help(session, args)
         elif verb == "who":
