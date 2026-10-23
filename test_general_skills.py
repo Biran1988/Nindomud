@@ -80,7 +80,8 @@ class GeneralSkillTests(unittest.TestCase):
             before = self.actor.player.chakra, self.actor.player.stamina
             self.cast(self.actor, key)
             self.assertTrue(skills.active(self.actor.player, effect), key)
-            self.assertEqual(self.actor.player.active_status_effects[effect]["duration"], 110)
+            self.assertEqual(self.actor.player.active_status_effects[effect]["duration"],
+                             1 if key == "silent movement" else 110)
             self.assertEqual(before[0] - self.actor.player.chakra, info["chakra_cost"])
             self.assertEqual(before[1] - self.actor.player.stamina, info["stamina_cost"])
             growth_calls = self.grow.call_count
@@ -116,7 +117,8 @@ class GeneralSkillTests(unittest.TestCase):
                 self.assertEqual(player.skill_proficiencies[data_jutsu.JUTSU[key]["display_name"]], 100)
                 self.cast(self.actor, key)
                 self.assertTrue(skills.active(player, effect), self.output)
-                self.assertEqual(player.active_status_effects[effect]["duration"], 160)
+                self.assertEqual(player.active_status_effects[effect]["duration"],
+                                 1 if key == "silent movement" else 160)
                 self.cast(self.actor, key + " off")
         self.assertEqual(player.practiced_skills, [])
         self.assertEqual(player.practice_exempt_skills, [])
@@ -204,6 +206,30 @@ class GeneralSkillTests(unittest.TestCase):
         self.viewer.player.room_vnum = self.next_room.vnum
         commands.cmd_look(self.viewer, [])
         self.assertIn("StealthNinja", "".join(self.view_output))  # silent is not invisibility
+
+    def test_silent_movement_is_a_manual_toggle_without_time_limit(self):
+        player = self.actor.player
+        self.assertFalse(skills.active(player, "silent_movement"))
+        self.cast(self.actor, "silent movement on")
+        self.assertNotIn("seconds", self.output[-1])
+        for _ in range(500):
+            status_effects.tick_effects(player.active_status_effects)
+        self.assertTrue(skills.active(player, "silent_movement"))
+        self.assertIn("ON", commands._format_active_effects(player.active_status_effects))
+        # Existing timed saves become persistent toggles too.
+        player.active_status_effects["silent_movement"]["duration"] = 7
+        restored = Player.from_dict(player.to_dict())
+        for _ in range(10):
+            status_effects.tick_effects(restored.active_status_effects)
+        self.assertTrue(skills.active(restored, "silent_movement"))
+        self.cast(self.actor, "silent movement")
+        self.assertFalse(skills.active(player, "silent_movement"))
+        self.assertNotIn("Moving Silently", commands._format_active_effects(player.active_status_effects))
+        player.cooldowns.clear()
+        self.cast(self.actor, "perform silent movement on")
+        self.assertTrue(skills.active(player, "silent_movement"))
+        self.cast(self.actor, "perform silent movement off")
+        self.assertFalse(skills.active(player, "silent_movement"))
 
     def test_camouflage_movement_no_name_leak_to_either_room(self):
         destination, destination_output = self.make_session("AtDestination")

@@ -13,7 +13,8 @@ from typing import Dict
 
 EFFECT_DEFS = {
     "camouflage": {"display_name": "Camouflaged", "duration": 120, "message": None},
-    "silent_movement": {"display_name": "Moving Silently", "duration": 120, "message": None},
+    "silent_movement": {"display_name": "Moving Silently", "duration": 1,
+                        "toggled": True, "message": None},
     "sensory_detect": {"display_name": "Sensory Detect", "duration": 120, "message": None},
     "focused_mind": {"display_name": "Focused Mind", "duration": 120, "message": None},
     # Legacy saved effects can finish ticking safely after Samurai Sabre's
@@ -174,9 +175,12 @@ def reduce_outgoing_damage(effects: Dict[str, dict], amount: int) -> int:
 
 
 def tick_effects(effects: Dict[str, dict]) -> list:
-    """Decrement durations by one pulse; return list of effect names that expired."""
+    """Tick timed effects; toggles stay on until explicitly removed."""
     expired = []
     for name in list(effects.keys()):
+        if (EFFECT_DEFS.get(name, {}).get("toggled")
+                and effects[name].get("duration", 0) > 0):
+            continue
         effects[name]["duration"] -= 1
         if effects[name]["duration"] <= 0:
             del effects[name]

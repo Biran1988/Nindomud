@@ -63,7 +63,8 @@ def activate(session, key, words):
     player.stamina -= info["stamina_cost"]
     player.cooldowns[key] = now + info["cooldown"]
     mastery = max(0, min(100, player.skill_proficiencies.get(info["display_name"], 0)))
-    duration = 60 + mastery
+    toggled = status_effects.EFFECT_DEFS[effect].get("toggled", False)
+    duration = None if toggled else 60 + mastery
     status_effects.apply_effect(player.active_status_effects, effect, source=key,
                                 duration_override=duration)
     combat.grow_skill_from_usage(player, info["display_name"], session=session)
@@ -73,7 +74,8 @@ def activate(session, key, words):
         "sensory detect": "You can detect camouflaged ninja and notice silent movement. Upkeep: 1 Chakra per second.",
         "focused mind": f"You sharpen your aim: +{focused_accuracy(player)} accuracy for normal attacks and offensive techniques of every class, plus resistance to mental distractions. Each step costs 1 extra Stamina.",
     }
-    session.send(f"&G{info['display_name']} is active for {duration} seconds.&x {descriptions[key]}")
+    state = "is ON until you toggle it off or run out of Stamina" if toggled else f"is active for {duration} seconds"
+    session.send(f"&G{info['display_name']} {state}.&x {descriptions[key]}")
 
 
 def upkeep(session):

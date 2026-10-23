@@ -7658,7 +7658,10 @@ def _format_active_effects(effects: dict) -> str:
     effect_strs = []
     for name, data in effects.items():
         display = status_effects.EFFECT_DEFS.get(name, {}).get("display_name", name.title())
-        effect_strs.append(f"&R{display}&x (&C{data['duration']}&x pulse(s) left)")
+        if status_effects.EFFECT_DEFS.get(name, {}).get("toggled"):
+            effect_strs.append(f"&R{display}&x (&GON&x)")
+        else:
+            effect_strs.append(f"&R{display}&x (&C{data['duration']}&x pulse(s) left)")
     return ", ".join(effect_strs)
 
 
