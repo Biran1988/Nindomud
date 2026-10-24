@@ -57,6 +57,46 @@ def test_medical_builder_flags_ticks_and_save():
         olc.OBJECT_TEMPLATES.pop(991101, None)
 
 
+
+def test_medical_healing_summarizes_instead_of_reporting_each_tick():
+    player = models.Player(name="MedicalReport", account_name="MedicalReport")
+    player.medical_healing = [dict(resources=["health"], amount=100, duration=30,
+                                   started_at=1000, applied=0)]
+    player.health = 10
+    player.maximum_health = 200
+    early = consumables.tick_medical_healing(player, now=1010)
+    assert early == {"health": 33}
+    assert consumables.medical_healing_report(player, early, now=0) == []
+    middle = consumables.tick_medical_healing(player, now=1020)
+    assert middle == {"health": 33}
+    assert consumables.medical_healing_report(player, middle, now=10) == []
+    last = consumables.tick_medical_healing(player, now=1030)
+    assert last == {"health": 34}
+    assert consumables.medical_healing_report(player, last, now=20) == [
+        "&GMedicine restored 100 Health in total.&x"
+    ]
+    assert consumables.medical_healing_report(player, {}, now=21) == []
+
+
+def test_long_medical_healing_uses_upkeep_summary_interval():
+    import upkeep_reports
+    player = models.Player(name="LongMedicine", account_name="LongMedicine")
+    player.medical_healing = [{"duration": 500, "started_at": 1000,
+                               "amount": 1, "applied": 0, "resources": ["health"]}]
+    assert consumables.medical_healing_report(player, {"health": 12}, now=0) == []
+    assert consumables.medical_healing_report(player, {"health": 3},
+                                              now=upkeep_reports.SUMMARY_INTERVAL_SECONDS - 1) == []
+    assert consumables.medical_healing_report(player, {"health": 5},
+                                              now=upkeep_reports.SUMMARY_INTERVAL_SECONDS) == [
+        "&GMedicine restored 20 Health in total.&x"
+    ]
+    assert consumables.medical_healing_report(player, {"chakra": 7}, now=361) == []
+    player.medical_healing = []
+    assert consumables.medical_healing_report(player, {}, now=362) == [
+        "&GMedicine restored 7 Chakra in total.&x"
+    ]
+
+
 def test_legacy_medical_and_missing_configuration():
     player = models.Player(name="Medic", account_name="Medic", health=25, chakra=25)
     session = _session(player)
