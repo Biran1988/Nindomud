@@ -82,6 +82,12 @@ class BackgroundWorldSaveTests(unittest.IsolatedAsyncioTestCase):
         with open(os.path.join(self.temp.name, "world_state.json"), "w", encoding="utf-8") as f:
             f.write("{truncated")
         self.assertEqual(storage.load_world_state()["rooms"]["900"]["name"], "First")
+        storage.save_world_state({"rooms": {"900": {"name": "Third"}}})
+        self.assertEqual(storage.load_world_state()["rooms"]["900"]["name"], "Third")
+        with open(os.path.join(self.temp.name, "world_state.json.bak"),
+                  encoding="utf-8") as f:
+            import json
+            self.assertEqual(json.load(f)["rooms"]["900"]["name"], "First")
 
     async def test_deleted_custom_prototypes_do_not_reappear(self):
         storage.save_custom_templates({
