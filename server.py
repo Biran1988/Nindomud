@@ -254,8 +254,8 @@ async def pulse_loop() -> None:
             if session.state == State.PLAYING:
                 session.player.total_play_seconds += PULSE_SECONDS
                 restored = consumables.tick_medical_healing(session.player)
-                if restored:
-                    session.send("Medicine restores " + ", ".join(f"{amount} {resource}" for resource, amount in restored.items()) + ".")
+                for message in consumables.medical_healing_report(session.player, restored):
+                    session.send(message)
                     session.send_prompt()
 
         if elapsed_since_regen >= config.REGEN_INTERVAL_SECONDS:
