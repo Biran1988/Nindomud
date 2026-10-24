@@ -80,7 +80,7 @@ CHANGELOG = [
     ("6.40", "Constitution now increases how much max Health you gain each level."),
     ("6.50", "Added color throughout character creation menus."),
     ("6.60", "Fixed a bug where a disconnected or linkdead player stayed on the who list and doubled up on reconnect."),
-    ("6.70", "Items now stack (64 per stack, 20 slots max) instead of taking one inventory line each."),
+    ("6.70", "Items now stack (2,000 per stack, 20 slots max) instead of taking one inventory line each."),
     ("6.80", "Added 'drop', 'drop.all', and 'get' -- items can be dropped on the ground and picked back up."),
     ("6.90", "Added a 'jobs' command showing every job's level and progress, plus a matching helpfile."),
     ("7.00", "Long output like 'changes' now pages 20 lines at a time instead of dumping everything at once."),
