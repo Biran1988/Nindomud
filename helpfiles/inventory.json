@@ -5,7 +5,7 @@
     "i"
   ],
   "title": "Inventory",
-  "body": "Syntax: inventory  (alias: i)\n\nDescription: Lists everything you're carrying. Items with the same name stack into one line (up to 64 per stack, 20 distinct stacks total) rather than listing each copy separately.\n\nDate: 2026-08-17",
+  "body": "Syntax: inventory  (alias: i)\n\nDescription: Lists everything you're carrying. Items with the same name stack into one line (up to 2,000 per stack, 20 distinct stacks total) rather than listing each copy separately.\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0.0
