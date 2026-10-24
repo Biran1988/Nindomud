@@ -36,9 +36,10 @@ class BackgroundWorldSaveTests(unittest.IsolatedAsyncioTestCase):
             self.addCleanup(p.stop)
         world.WORLD.add_room(world.Room(900, "Original", "Original description."))
         world.WORLD.add_room(world.Room(901, "New room", "Second room."))
+        import config
         self.session = NS(
-            account=NS(name="Builder", staff_level="implementor"),
-            player=Player("Builder", "Builder", room_vnum=900),
+            account=NS(name=config.ADMIN_NAME, staff_level="implementor"),
+            player=Player(config.ADMIN_NAME, config.ADMIN_NAME, room_vnum=900),
             send=Mock(),
         )
 
