@@ -4,7 +4,7 @@
     "sell"
   ],
   "title": "Sell",
-  "body": "Syntax: sell <item>\n\nDescription: Sells an item from your inventory to a shopkeeper, if they buy that category of item. Food Shops buy cooked dishes, raw fish, farm produce, and other foods for Ryo at the full specialty rate. General stores pay half. See 'help food shop'.\n\n'sell apartment' and 'sell room <type>' are special cases -- see 'help apartment' for details.\n\nDate: 2026-08-17",
+  "body": "Syntax: sell <item> | sell all <item> | sell <number> <item>\n\nDescription: 'sell all sardine' sells every matching sardine in your inventory to the current shop. 'sell 3 sardine' sells up to three matching sardines. 'sell all' by itself is NOT allowed; a specific item name is required so that unrelated inventory items are never sold accidentally.\n\nEach eligible item uses the shop's normal buying rules and price. Food Shops buy raw fish, cooked food, crops and other food at the full specialty rate; general stores pay half. Glued items, filled containers, and categories the shop refuses are skipped, and equipped gear cannot be sold from your inventory. Items that do not sell remain with you.\n\n'sell apartment' and 'sell room <type>' are special commands; see 'help apartment'.\n\nDate: 2026-10-23",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
