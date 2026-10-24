@@ -170,6 +170,11 @@ def default_object(vnum: int, name: str = "an unfinished object") -> dict:
 
 
 def _log(staff_name: str, entity_type: str, entity_id, description: str) -> None:
+    # Successful room/mob/item edits (including programs and links) all
+    # audit here, after mutation. Queue a silent background snapshot.
+    if entity_type in {"room", "mobile", "object", "mob", "item"}:
+        import world_autosave
+        world_autosave.mark_dirty()
     storage.ensure_dirs()
     line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {staff_name} | {entity_type} {entity_id} | {description}\n"
     with open(AUDIT_LOG_PATH, "a", encoding="utf-8") as f:
@@ -868,6 +873,8 @@ def cmd_astat(session, args: List[str]) -> None:
 
 def _delete_area_contents(area, session) -> dict:
     """Remove an area and persist tombstones for content.py built-ins."""
+    import world_autosave
+    world_autosave.wait_for_pending()
     import world_persistence
     import corpses
     from data_villages import VILLAGES
@@ -2233,7 +2240,7 @@ def _program_editor(session, kind, args):
                 return
             target.append(entry)
         _log(session.player.name, kindname, vnum, f"multiline {trigger} script saved ({len(body.splitlines())} lines)")
-        session.send(f"Saved {trigger} multiline script on {kindname} {vnum} at index {index if index is not None else len(target)-1}. Use save world to persist it.")
+        session.send(f"Saved {trigger} multiline script on {kindname} {vnum} at index {index if index is not None else len(target)-1}.")
     session.enter_editor(save_script, initial_text=initial_text,
                          header=f"Editing Smaug-style {kindname} {vnum} / {trigger} ({keyword or 'all'}). "
                                 "Commands: say, emote, mpecho, mptransfer, mpmload, mpoload, mpforce, "
