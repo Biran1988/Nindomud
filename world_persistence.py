@@ -213,7 +213,10 @@ def save_world() -> dict:
     saved (e.g. "Saved 214 rooms, 58 mobs, 130 items.")."""
     import spawn_points
     import storage
+    import world_autosave
 
+    # A queued, older background save must finish before this final snapshot.
+    world_autosave.wait_for_pending()
     payload = snapshot_world()
     payload["deleted_areas"] = storage.load_world_state().get("deleted_areas", [])
     storage.save_world_state(payload)
