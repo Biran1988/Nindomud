@@ -98,7 +98,7 @@ class ImmortalVillagePerkTests(unittest.TestCase):
             self.assertEqual(village_perks.ryo_multiplier(village), 2.0)
         self.assertEqual(self.session.broadcast_village.call_count, len(VILLAGES))
         commands.cmd_vperk(self.session, ["status", "leaf"])
-        self.assertIn("24h", self.session.send.call_args.args[0])
+        self.assertIn("[Immortal]", self.session.send.call_args.args[0])
         self.assertIn("Double Ryo", self.session.send.call_args.args[0])
         commands.cmd_vperk(self.session, ["all", "double", "ryo", "off"])
         for village in VILLAGES:
