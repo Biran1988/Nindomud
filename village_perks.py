@@ -6,9 +6,9 @@ one affects every player belonging to that village, not just the buyer
 (bought with `buy <perk>` while standing in your own village's Kage
 chamber). Priced in MISSION POINTS, not ryo -- fitting since they're a
 reward for completing missions for your village, not just having ryo on
-hand. State is per-village, not per-player, and lives here as plain
-module-level dicts -- there's no reason to persist it to disk since a
-temporary buff expiring across a server restart is fine.
+hand. State is per-village, not per-player. Kage-bought perks remain temporary;
+immortal-activated 24-hour overrides are separately persisted to disk so
+reboots cannot prematurely end an event perk.
 
 Three independent categories (a village can have one active perk from
 each category at once; buying a new one in the same category replaces
@@ -20,8 +20,13 @@ the old one rather than stacking):
 Every perk shares the same duration: DEFAULT_DURATION_SECONDS (1 hour).
 """
 
+import json
+import os
 import time
 from typing import List, Optional
+
+import storage
+from data_villages import VILLAGES
 
 DEFAULT_DURATION_SECONDS = 3600  # 1 hour -- applies to every perk
 
@@ -44,8 +49,125 @@ def duration_seconds(perk_key: str) -> int:
 # village -> {"exp": {"perk": key, "expires_at": ts}, "damage": {...}}
 _ACTIVE_PERKS: dict = {}
 
+# Immortal event perks are independent of Kage purchases, so the latter
+# cannot shorten or silently displace a 24-hour event. An override replaces
+# only another staff perk in its own category. These records are persisted;
+# Kage-purchased one-hour perks retain their original transient behavior.
+STAFF_DURATION_SECONDS = 24 * 60 * 60
+_STAFF_PERKS: dict = {}
+_STAFF_LOADED_PATH: Optional[str] = None
+
+
+def _staff_file_path() -> str:
+    # Resolve lazily so patched storage.DATA_DIR and deployments work.
+    return os.path.join(storage.DATA_DIR, "village_perks.json")
+
+
+def _load_staff_perks() -> None:
+    global _STAFF_LOADED_PATH
+    path = _staff_file_path()
+    if path == _STAFF_LOADED_PATH:
+        return
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            records = json.load(handle)
+    except (FileNotFoundError, ValueError, OSError):
+        records = {}
+    # Never apply unknown or corrupted categories/keys from save data.
+    valid = {}
+    now = time.time()
+    if isinstance(records, dict):
+        for village, categories in records.items():
+            if village not in VILLAGES or not isinstance(categories, dict):
+                continue
+            for category, entry in categories.items():
+                if category not in CATEGORIES or not isinstance(entry, dict):
+                    continue
+                key = entry.get("perk")
+                expiry = entry.get("expires_at")
+                if (key not in PERK_TYPES or
+                        PERK_TYPES[key]["category"] != category or
+                        not isinstance(expiry, (int, float)) or expiry <= now):
+                    continue
+                valid.setdefault(village, {})[category] = {
+                    "perk": key, "expires_at": expiry,
+                }
+    _STAFF_PERKS.clear()
+    _STAFF_PERKS.update(valid)
+    _STAFF_LOADED_PATH = path
+
+
+def _save_staff_perks() -> None:
+    _load_staff_perks()
+    storage.ensure_dirs()
+    path = _staff_file_path()
+    temp_path = path + ".tmp"
+    try:
+        with open(temp_path, "w", encoding="utf-8") as handle:
+            json.dump(_STAFF_PERKS, handle, indent=2)
+        os.replace(temp_path, path)
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+
+def set_staff_perk(village: str, perk_key: str) -> float:
+    """Activate a free, 24-hour immortal village perk, saved across reboots."""
+    if village not in VILLAGES or perk_key not in PERK_TYPES:
+        raise ValueError("Invalid village or perk.")
+    _load_staff_perks()
+    info = PERK_TYPES[perk_key]
+    category = info["category"]
+    previous = _STAFF_PERKS.get(village, {}).get(category)
+    expiry = time.time() + STAFF_DURATION_SECONDS
+    _STAFF_PERKS.setdefault(village, {})[category] = {
+        "perk": perk_key, "expires_at": expiry,
+    }
+    try:
+        _save_staff_perks()
+    except OSError:
+        if previous is None:
+            del _STAFF_PERKS[village][category]
+            if not _STAFF_PERKS[village]:
+                del _STAFF_PERKS[village]
+        else:
+            _STAFF_PERKS[village][category] = previous
+        raise
+    return expiry
+
+
+def clear_staff_perk(village: str, perk_key: str) -> bool:
+    """Disable exactly this staff perk without affecting Kage purchases."""
+    if village not in VILLAGES or perk_key not in PERK_TYPES:
+        raise ValueError("Invalid village or perk.")
+    _load_staff_perks()
+    category = PERK_TYPES[perk_key]["category"]
+    previous = _STAFF_PERKS.get(village, {}).get(category)
+    if not previous or previous["perk"] != perk_key:
+        return False
+    del _STAFF_PERKS[village][category]
+    if not _STAFF_PERKS[village]:
+        del _STAFF_PERKS[village]
+    try:
+        _save_staff_perks()
+    except OSError:
+        _STAFF_PERKS.setdefault(village, {})[category] = previous
+        raise
+    return True
+
+
+def _staff_entry(village: str, category: str) -> Optional[dict]:
+    _load_staff_perks()
+    entry = _STAFF_PERKS.get(village, {}).get(category)
+    if entry and entry["expires_at"] > time.time():
+        return entry
+    return None
+
 
 def _active_entry(village: str, category: str) -> Optional[dict]:
+    staff_entry = _staff_entry(village, category)
+    if staff_entry:
+        return staff_entry
     entry = _ACTIVE_PERKS.get(village, {}).get(category)
     if not entry:
         return None
