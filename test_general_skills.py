@@ -245,7 +245,10 @@ class GeneralSkillTests(unittest.TestCase):
         commands.cmd_move(self.actor, "west")
         self.assertEqual(self.actor.player.stamina, before)
         self.actor.player.stamina = 1
-        commands.cmd_move(self.actor, "north")
+        # A 1-Stamina walk is legal, and an exhausted stealth toggle
+        # still drops when the movement upkeep cannot be paid.
+        with patch.object(commands.random, "randint", return_value=1):
+            commands.cmd_move(self.actor, "north")
         self.assertFalse(skills.active(self.actor.player, "silent_movement"))
         self.assertIn("StealthNinja leaves north", "".join(self.view_output))
 
