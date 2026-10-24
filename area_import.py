@@ -686,6 +686,9 @@ def validate(package: dict) -> dict:
 
 def import_package(staged: dict, creator: str) -> dict:
     """Persist the validated package and make it live without a reboot."""
+    # A queued older builder snapshot must not overwrite this import.
+    import world_autosave
+    world_autosave.wait_for_pending()
     area_state = storage.load_areas()
     world_state = world_persistence.snapshot_world()
     world_state["deleted_areas"] = storage.load_world_state().get("deleted_areas", [])
