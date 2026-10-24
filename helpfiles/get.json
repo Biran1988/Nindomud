@@ -4,7 +4,7 @@
     "get"
   ],
   "title": "Get",
-  "body": "Syntax: get <item> | get all | get all <item> | get all ryo | get <item> from <container>\n\nDescription: 'get all' picks up every movable ground item that fits your inventory, skipping no_take decorations and items blocked by the 20-slot/64-per-stack limits. It also picks up every ground Ryo pile, even when inventory is full. 'get all sardine' picks up all matching ground items but does not pick up unrelated items or Ryo. Items that cannot be carried stay on the ground. 'get all ryo' picks up only currency.\n\n'get <item> from <container>' retrieves a single item from a real container such as a backpack (set its capacity using 'oset <vnum> concap <n>'); see 'help put' and 'help containers'.\n\nDate: 2026-10-23",
+  "body": "Syntax: get <item> | get all | get all <item> | get all ryo | get <item> from <container>\n\nDescription: 'get all' picks up every movable ground item that fits your inventory, skipping no_take decorations and items blocked by the 20-slot/2,000-per-stack limits. It also picks up every ground Ryo pile, even when inventory is full. 'get all sardine' picks up all matching ground items but does not pick up unrelated items or Ryo. Items that cannot be carried stay on the ground. 'get all ryo' picks up only currency.\n\n'get <item> from <container>' retrieves a single item from a real container such as a backpack (set its capacity using 'oset <vnum> concap <n>'); see 'help put' and 'help containers'.\n\nDate: 2026-10-23",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
