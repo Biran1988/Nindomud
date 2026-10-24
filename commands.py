@@ -2816,7 +2816,7 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
             session.send(f"You stop using {rarity_colored_name(previous)}.")
             _apply_equipment_stat_bonuses(player, previous, sign=-1)
         else:
-            # Only reachable if the player somehow already has 64 of
+            # Only reachable if the player somehow already has 2,000 of
             # this exact item sitting loose in inventory -- no
             # drop-to-room mechanic exists in this game, so be
             # honest that it's lost rather than claiming it's
@@ -5688,7 +5688,7 @@ def _buy_multiple(session, args: List[str]) -> None:
             session.send(level_error)
             return
         # NPC stores have unlimited stock, but inventory stacks hold at
-        # most 64 copies per exact item, even when an item is free.
+        # most 2,000 copies per exact item, even when an item is free.
         count = inventory.MAX_STACK_SIZE if unlimited else min(limit, inventory.MAX_STACK_SIZE)
         for _ in range(count):
             if player.ryo < cost:
