@@ -1,4 +1,4 @@
-"""One player-chosen combat signature; bonus unlocks only at 150% practice."""
+"""One player-chosen combat signature; bonus unlocks at 150% use mastery."""
 
 import math
 
