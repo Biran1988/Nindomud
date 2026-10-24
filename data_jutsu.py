@@ -60,8 +60,8 @@ JUTSU = {
         "damage": None, "damage_type": None, "effect": None,
         "tier": 3, "element": "none", "jutsu_type": "chokkan",
     },
-    "100 years of death": {
-        "jutsu_id": "general_100_years_of_death", "display_name": "100 Years of Death",
+    "1000 years of death": {
+        "jutsu_id": "general_1000_years_of_death", "display_name": "1000 Years of Death",
         "class_requirement": "general", "level_requirement": 1,
         "chakra_cost": 100, "stamina_cost": 20, "cooldown": 60.0,
         "damage": None, "damage_type": None, "effect": None,
@@ -734,6 +734,8 @@ import elemental_release_arts
 JUTSU.update(elemental_release_arts.jutsu_entries())
 import six_paths
 JUTSU.update(six_paths.jutsu_entries())
+import reaper_seal
+JUTSU.update(reaper_seal.jutsu_entries())
 _scale_base_damage_to_level()
 
 # The universal starting kit -- every player gets exactly these,
@@ -859,6 +861,8 @@ def match_prefix(lower_words):
     # The roster and help display "Kamui: ..."; accept that spelling as
     # well as the command spelling. Bare Kamui is the pocket technique,
     # while a specified variant must never be mistaken for its target.
+    if lower_words and lower_words[0] == "100":
+        lower_words = ["1000", *lower_words[1:]]
     if lower_words and lower_words[0] == "kamui:":
         lower_words = ["kamui", *lower_words[1:]]
     if lower_words and lower_words[0] == "kamui":

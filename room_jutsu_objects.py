@@ -20,7 +20,8 @@ def active_objects(room):
         return []
     now = time.time()
     objects = []
-    if (room.hidden_mist_caster and room.hidden_mist_expires_at > now):
+    import hidden_mist
+    if hidden_mist.room_active(room):
         objects.append(JutsuObject(
             "&CA Shroud of Hidden Mist&x", "mist shroud hidden mist jutsu fog",
             "&CA dense hidden mist swirls here, veiling the room in pale chakra.&x",

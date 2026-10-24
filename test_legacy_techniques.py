@@ -34,15 +34,15 @@ class LegacyTechniquesTests(unittest.TestCase):
         self.assertIn("chokkan", data_jutsu.all_unlocked_for_class("genjutsu", 80))
         self.assertIn("soto uke", data_jutsu.all_unlocked_for_class("taijutsu", 20))
         for category in ("bukijutsu", "genjutsu", "taijutsu", "ninjutsu"):
-            self.assertNotIn("100 years of death", data_jutsu.all_unlocked_for_class(category, 100))
-        self.assertNotIn("100 years of death", data_jutsu.all_jutsu_keys())
+            self.assertNotIn("1000 years of death", data_jutsu.all_unlocked_for_class(category, 100))
+        self.assertNotIn("1000 years of death", data_jutsu.all_jutsu_keys())
         with patch.object(leveling.storage, "save_player"):
             leveling.sync_universal_skills(self.player)
-        self.assertNotIn("100 Years of Death", self.player.learned_skills)
+        self.assertNotIn("1000 Years of Death", self.player.learned_skills)
         scroll = olc.OBJECT_TEMPLATES[9810]["short_desc"]
         self.player.inventory.append(scroll)
         commands.cmd_read(self.session, ["scroll", "of", "100", "years", "of", "death"])
-        self.assertIn("100 Years of Death", self.player.learned_skills)
+        self.assertIn("1000 Years of Death", self.player.learned_skills)
         self.assertNotIn(scroll, self.player.inventory)
 
     def test_dual_wield_uses_offhand_weapon_and_can_stow_it(self):
@@ -85,7 +85,7 @@ class LegacyTechniquesTests(unittest.TestCase):
 
     def test_death_scroll_kills_mob_through_defeat_and_respects_protection(self):
         mob = NS(name="Bandit", health=150, room_vnum=1)
-        self.player.learned_skills = ["100 Years of Death"]
+        self.player.learned_skills = ["1000 Years of Death"]
         with patch.object(combat, "find_mob", return_value=mob), \
              patch.object(combat, "is_shopkeeper", return_value=False), \
              patch.object(combat, "is_gambler", return_value=False), \
@@ -102,7 +102,7 @@ class LegacyTechniquesTests(unittest.TestCase):
         other.state = State.PLAYING
         other.player = Player("Rival", "Rival", room_vnum=1, health=200, maximum_health=200)
         self.session.active_sessions = lambda: [self.session, other]
-        self.player.learned_skills = ["100 Years of Death"]
+        self.player.learned_skills = ["1000 Years of Death"]
         with patch.object(combat, "find_mob", return_value=None), \
              patch.object(legacy_techniques.world.WORLD, "get", return_value=NS(safe=True)), \
              patch.object(combat, "handle_pvp_defeat") as defeated:

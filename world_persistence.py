@@ -76,7 +76,7 @@ def snapshot_world() -> dict:
             str(vnum): {key: value for key, value in dataclasses.asdict(room).items()
                         if key != "ground_ryo"}
             for vnum, room in world.WORLD.rooms.items()
-            if not halloween_event.owns_room(vnum, room)
+            if not halloween_event.owns_room(vnum, room) and not room.reaper_prison
         },
         "mobs": {
             str(vnum): dict(template)

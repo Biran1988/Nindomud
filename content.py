@@ -145,8 +145,8 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["glue_pot"], "A Pot of Glue", "misc", 50)
     make(_ITEM_VNUMS["medicinal_herbs"], "Medicinal Herbs", "misc", 150)
     if _ITEM_VNUMS["death_scroll"] not in olc.OBJECT_TEMPLATES:
-        make(_ITEM_VNUMS["death_scroll"], "A Scroll of 100 Years of Death", "scroll", 0)
-        olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "100 years of death"
+        make(_ITEM_VNUMS["death_scroll"], "A Scroll of 1000 Years of Death", "scroll", 0)
+        olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "1000 years of death"
     if had_shared_items:
         return  # old templates are registered; only backfill the new Art stock
     make(_ITEM_VNUMS["war_club"], "A Wooden War Club", "weapon", 35, weapon_type="blunt")
@@ -374,6 +374,8 @@ def populate() -> None:
     areas.ensure_single_village_areas()
     areas.ensure_hidden_village_areas()
     _register_shared_items()
+    import reaper_seal
+    reaper_seal.register_items()
     import lightsabers
     lightsabers.register_items()
 
@@ -715,6 +717,10 @@ def populate() -> None:
     # Arena and jail rooms are built after the saved snapshot is applied.
     # Enforce area deletions again so these hardcoded rooms stay removed.
     world_persistence.apply_deleted_areas()
+
+    reaper_seal.restore_world()
+    import technique_names
+    technique_names.migrate_templates()
 
 
 def register_default_spawn_points_for_testing() -> None:

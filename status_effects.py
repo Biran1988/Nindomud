@@ -102,7 +102,7 @@ EFFECT_DEFS = {
                 "blocks_action": True},
     "asleep": {"display_name": "Asleep", "duration": 2,
                 "message": "{target} falls asleep beneath illusory feathers.", "blocks_action": True},
-    "chisei": {"display_name": "Chisei", "duration": 6,
+    "chisei": {"display_name": "Chisei", "duration": 1, "toggled": True,
                 "message": "{target}'s eyes shine with heightened focus."},
     "burning": {
         "display_name": "Burning",
@@ -137,7 +137,7 @@ GENJUTSU_DURATIONS = {
     "disoriented": 20, "confused": 20, "weakened": 24,
     "haze": 24, "blinded": 20,
     "stunned": 10, "paralyzed": 10, "ringing": 10,
-    "asleep": 12, "genjutsu_locked": 10, "chisei": 60,
+    "asleep": 12, "genjutsu_locked": 10,
 }
 
 

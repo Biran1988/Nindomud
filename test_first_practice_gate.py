@@ -54,8 +54,8 @@ class FirstPracticeGateTests(unittest.TestCase):
         skill_training.grant_without_practice(self.p, "Dynamic Entry")
         self.assertFalse(skill_training.needs_first_practice(self.p, "Dynamic Entry"))
         self.assertTrue(skill_training.needs_first_practice(self.p, "Sword"))
-        self.p.learned_skills.append("100 Years of Death")
-        self.assertFalse(skill_training.needs_first_practice(self.p, "100 Years of Death"))
+        self.p.learned_skills.append("1000 Years of Death")
+        self.assertFalse(skill_training.needs_first_practice(self.p, "1000 Years of Death"))
 
     def test_utility_skills_require_practice(self):
         self.p.level = 30

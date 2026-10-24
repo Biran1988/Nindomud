@@ -72,30 +72,30 @@ def chokkan(session, words):
     session.send("You focus your inner intuition. Chokkan is on; mastered casts form signs twice as fast.")
 
 
-def instant_kill(session, words):
+def instant_kill(session, words, preferred_player=None):
     player = session.player
-    key = "100 years of death"
+    key = "1000 years of death"
     jutsu = data_jutsu.JUTSU[key]
     if not words:
-        session.send("Usage: perform 100 years of death <target>")
+        session.send("Usage: perform 1000 years of death <target>")
         return
     if not combat._can_use_jutsu(player, jutsu, key):
-        session.send("You must read the Scroll of 100 Years of Death to learn this technique.")
+        session.send("You must read the Scroll of 1000 Years of Death to learn this technique.")
         return
     if session.pending_cast is not None or combat._is_action_blocked(player) or status_effects.has_effect(player.active_status_effects, "silenced"):
         session.send("You cannot use that technique right now.")
         return
     now = time.time()
     if now < player.cooldowns.get(key, 0):
-        session.send(f"100 Years of Death is recovering ({player.cooldowns[key] - now:.1f}s).")
+        session.send(f"1000 Years of Death is recovering ({player.cooldowns[key] - now:.1f}s).")
         return
     if player.chakra < jutsu["chakra_cost"] or player.stamina < jutsu["stamina_cost"]:
         session.send("You need 100 Chakra and 20 Stamina.")
         return
 
     query = " ".join(words).lower()
-    mob = combat.find_mob(player.room_vnum, query)
-    target_session = None
+    mob = None if preferred_player else combat.find_mob(player.room_vnum, query)
+    target_session = preferred_player
     if mob is not None:
         if mob.health <= 0:
             session.send("That target is already down.")
@@ -104,8 +104,9 @@ def instant_kill(session, words):
             session.send(f"{mob.name} is protected and cannot be attacked.")
             return
     else:
-        target_session = next((s for s in session.active_sessions() if s is not session and s.player
-                               and s.player.room_vnum == player.room_vnum and query in s.player.name.lower()), None)
+        if target_session is None:
+            target_session = next((s for s in session.active_sessions() if s is not session and s.player
+                                   and s.player.room_vnum == player.room_vnum and query in s.player.name.lower()), None)
         if target_session is None:
             session.send("There is nobody here by that name.")
             return
@@ -129,12 +130,12 @@ def instant_kill(session, words):
     player.cooldowns[key] = now + jutsu["cooldown"]
     combat.grow_skill_from_usage(player, jutsu["display_name"])
     if mob:
-        session.send(f"&R100 Years of Death strikes {mob.name} down instantly!&x")
+        session.send(f"&R1000 Years of Death strikes {mob.name} down instantly!&x")
         mob.health = 0
         combat.handle_mob_defeat(session, mob)
     else:
-        session.send(f"&R100 Years of Death strikes {target.name} down instantly!&x")
-        target_session.send(f"&R{player.name} uses 100 Years of Death on you!&x")
+        session.send(f"&R1000 Years of Death strikes {target.name} down instantly!&x")
+        target_session.send(f"&R{player.name} uses 1000 Years of Death on you!&x")
         target.health = 0
         if combat.try_trigger_izanagi(target_session):
             return

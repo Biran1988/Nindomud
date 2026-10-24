@@ -14,6 +14,45 @@ import derived_stats
 import status_effects
 
 UTILITY_TYPES = {"disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"}
+CHISEI_UPKEEP_CHAKRA = 1
+CHISEI_UPKEEP_SECONDS = 5.0
+
+
+def clear_chisei(player):
+    """Withdraw the tracked bonus exactly once, preserving other capacity bonuses."""
+    player.active_status_effects.pop("chisei", None)
+    bonus = player.chisei_chakra_bonus
+    if bonus:
+        player.maximum_chakra = max(1, player.maximum_chakra - bonus)
+        player.chakra = max(0, min(player.maximum_chakra, player.chakra - bonus))
+    player.chisei_chakra_bonus = 0
+    player.chisei_next_upkeep_at = 0.0
+
+
+def stop_chisei(session):
+    pending = getattr(session, "pending_cast", None)
+    if pending and pending.jutsu_key == "chisei":
+        session.pending_cast = None
+    clear_chisei(session.player)
+    session.send("Chisei is OFF; your temporary Chakra and focus fade.")
+
+
+def tick_chisei(session):
+    player = session.player
+    if "chisei" not in player.active_status_effects:
+        if player.chisei_chakra_bonus:
+            clear_chisei(player)
+        return
+    now = time.time()
+    if not player.chisei_next_upkeep_at:
+        player.chisei_next_upkeep_at = now + CHISEI_UPKEEP_SECONDS
+    if now < player.chisei_next_upkeep_at:
+        return
+    if player.health <= 0 or player.chakra < CHISEI_UPKEEP_CHAKRA:
+        stop_chisei(session)
+        return
+    player.chakra -= CHISEI_UPKEEP_CHAKRA
+    player.chisei_next_upkeep_at = now + CHISEI_UPKEEP_SECONDS
 
 
 def apparent_name(player):
@@ -61,6 +100,18 @@ def begin_cast(session, key, words):
     player = session.player
     jutsu = data_jutsu.JUTSU[key]
     kind = jutsu["jutsu_type"]
+    if kind == "chisei":
+        if words and (len(words) != 1 or words[0].lower() not in {"on", "off"}):
+            session.send("Usage: perform chisei [on|off]")
+            return
+        mode = words[0].lower() if words else "toggle"
+        active = "chisei" in player.active_status_effects
+        if mode == "off" or (mode == "toggle" and active):
+            stop_chisei(session)
+            return
+        if active:
+            session.send("Chisei is already ON.")
+            return
     if kind == "disguise" and not words and player.genjutsu_disguise:
         player.genjutsu_disguise = ""
         player.genjutsu_disguise_pulses = 0
@@ -176,10 +227,9 @@ def resolve_cast(session, key, payload):
         player.chisei_chakra_bonus = bonus
         player.maximum_chakra += bonus
         player.chakra += bonus
-        duration = signature_moves.duration(player, jutsu, status_effects.genjutsu_duration("chisei"))
-        status_effects.apply_effect(player.active_status_effects, "chisei", source=key,
-                                    duration_override=duration)
-        jutsu_colors.send(session, f"Chisei sharpens your Genjutsu and grants {bonus} temporary maximum Chakra for {duration} seconds.")
+        status_effects.apply_effect(player.active_status_effects, "chisei", source=key)
+        player.chisei_next_upkeep_at = time.time() + CHISEI_UPKEEP_SECONDS
+        jutsu_colors.send(session, f"Chisei is ON: sharpened Genjutsu and {bonus} temporary maximum Chakra. Upkeep: 1 Chakra every 5 seconds; toggle off to release it.")
     elif kind == "room_sleep":
         import world
         from session import ACTIVE_SESSIONS
@@ -217,6 +267,7 @@ def resolve_cast(session, key, payload):
 
 def tick_player(session):
     player = session.player
+    tick_chisei(session)
     if player.genjutsu_disguise_pulses > 0:
         player.genjutsu_disguise_pulses -= 1
         if player.genjutsu_disguise_pulses == 0:

@@ -13,7 +13,7 @@ DESCRIPTIONS = {
     "weapon expert": "A passive Bukijutsu weapon skill. Armed ordinary attacks can deal 50% extra damage, with a chance based on mastery.",
     "dual wield": "Equip a second weapon in your off hand. Mastery can grant one extra off-hand attack each combat round for 5 Stamina.",
     "chokkan": "Toggle inner intuition on for 25 Chakra. While active, successful mastery checks halve your hand-sign casting delay.",
-    "100 years of death": "An instant-kill technique learned only by reading its scroll. It uses normal mob and PvP defeat handling; safe areas and protected targets remain protected.",
+    "1000 years of death": "An instant-kill technique learned only by reading its scroll. It uses normal mob and PvP defeat handling; safe areas and protected targets remain protected.",
     "choku zuki": "A direct punch.",
     "mae geri": "A forward kick.",
     "oi zuki": "A stepping punch.",
@@ -54,7 +54,7 @@ SYNTAX = {
     "weapon expert": "help weapon expert (passive)",
     "dual wield": "dual wield <carried weapon>  |  remove offhand",
     "chokkan": "perform chokkan",
-    "100 years of death": "read scroll of 100 years of death  |  perform 100 years of death <target>",
+    "1000 years of death": "read scroll of 1000 years of death  |  perform 1000 years of death <target>",
     "trap disabling": "trap disabling [target]",
     "toxin binding": "toxin binding <weapon>",
     "weapon enchantment": "weapon enchantment <weapon> <flaming|frost|life|sharp|vorpal|shocking>",
@@ -76,6 +76,8 @@ def _page(key):
     if kind == "stance":
         syntax = key
     details = DESCRIPTIONS[key]
+    if "<target>" in syntax and kind not in {"weapon_art", "disguise", "item_illusion", "item_decoy"}:
+        details += " During combat, omitting the target uses your current opponent, including an NPC that attacked you."
     if kind == "stance":
         details += " Only one stance can be active; switch or leave it outside combat. Using the current stance again ends it. The stance persists through reconnects."
     if jutsu.get("required_weapon_types"):
@@ -92,7 +94,7 @@ def _page(key):
         if jutsu["class_requirement"] == "genjutsu":
             details += f" The effect lasts {status_effects.genjutsu_duration(jutsu['effect'])} seconds before resistance."
     if key == "chisei":
-        details += f" The extra Chakra capacity lasts {status_effects.genjutsu_duration('chisei')} seconds."
+        details += " Maintained toggle: 1 Chakra every 5 seconds until switched off or upkeep fails."
     if key == "nehan shouja":
         details += f" Sleeping targets remain asleep for {status_effects.genjutsu_duration('asleep')} seconds before resistance."
     if jutsu.get("kkg_gate", "").startswith("six_paths_"):
@@ -112,7 +114,7 @@ def _page(key):
     details += (f" Costs {jutsu['chakra_cost']} Chakra and {jutsu['stamina_cost']} Stamina; "
                 f"{jutsu['cooldown']:g} second cooldown.")
     return {
-        "primary_keyword": key, "keywords": [key], "title": jutsu["display_name"],
+        "primary_keyword": key, "keywords": [key] + (["100 years of death"] if key == "1000 years of death" else []), "title": jutsu["display_name"],
         "body": f"Syntax: {syntax}\n\nDescription: {details}\n\nDate: 2026-09-27",
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     }

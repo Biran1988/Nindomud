@@ -20,7 +20,7 @@ class ImmortalJutsuTests(unittest.TestCase):
         self.assertTrue(all(j["display_name"] in player.learned_skills
                             and player.skill_proficiencies[j["display_name"]] == 100
                             for j in data_jutsu.JUTSU.values()))
-        self.assertIn("100 Years of Death", player.learned_skills)  # scroll-only
+        self.assertIn("1000 Years of Death", player.learned_skills)  # scroll-only
 
         session = Session(lambda text: None, lambda: None)
         session.account = Account("Tester", "salt", "hash", staff_level="helper")

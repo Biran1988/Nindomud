@@ -59,7 +59,8 @@ class RecentHelpTests(unittest.TestCase):
         entries = help_system.DEFAULT_HELP_ENTRIES
         primary = {entry["primary_keyword"] for entry in entries}
         aliases = {keyword for entry in entries for keyword in entry["keywords"]}
-        self.assertFalse(set(data_jutsu.JUTSU) - (primary | aliases))
+        public_keys = {key for key, data in data_jutsu.JUTSU.items() if not data.get("secret")}
+        self.assertFalse(public_keys - (primary | aliases))
         for key in recent_help.DESCRIPTIONS:
             self.assertIn(key, primary)
             page = next(entry for entry in entries if entry["primary_keyword"] == key)

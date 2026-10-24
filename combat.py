@@ -1187,6 +1187,8 @@ def tick_effects_pulse(session) -> None:
     per-round timer, deliberately different from the existing Bleeding
     effect (which only ticks when the target is hit again in combat)."""
     player = session.player
+    if player.reaper_seal_id:
+        return
     import genjutsu
     genjutsu.tick_player(session)
     import general_skills
@@ -2264,6 +2266,9 @@ def resolve_pulse(session) -> None:
     for this pulse (server.py's pulse_loop does this before calling here;
     tests simulating pulses should do the same)."""
     player = session.player
+    if player.reaper_seal_id:
+        session.combat_target = None
+        return
     import element_choice
     if element_choice.in_choice(player):
         session.combat_target = None
@@ -2438,6 +2443,10 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     # regardless of nature, bloodline, level, gear, location or mastery.
     if _staff_testing_mangekyo(player):
         return True
+    if jutsu.get("jutsu_type") == "reaper_seal":
+        import reaper_seal
+        return (reaper_seal.eligible(player) and jutsu["display_name"] in player.learned_skills
+                and not reaper_seal.imprisoned(player))
     import skill_training
     if skill_training.needs_first_practice(player, jutsu["display_name"]):
         return False
@@ -2619,6 +2628,9 @@ def use_barrier(session) -> None:
 
 def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> None:
     player = session.player
+    if player.reaper_seal_id:
+        session.send("The Reaper's binding prevents that attack.")
+        return
     if _is_action_blocked(player):
         jutsu_colors.send(session, "You are unable to act!")
         return
@@ -2811,6 +2823,9 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         return
 
     target = target_session.player
+    if player.reaper_seal_id or target.reaper_seal_id:
+        session.send("The Reaper's binding prevents that attack.")
+        return
     import hidden_mist
     import general_skills
     if general_skills.concealed_from(player, target):
@@ -3243,6 +3258,14 @@ def clamp_immortal_health(session) -> None:
 
 def handle_player_defeat(session) -> None:
     player = session.player
+    if player.reaper_seal_id:
+        player.health = max(1, player.health)
+        return
+    import genjutsu
+    genjutsu.clear_chisei(player)
+    import hidden_mist
+    if hidden_mist.owned_room(player):
+        hidden_mist.dismiss(session)
     import six_paths
     six_paths.stop(session, "Your Six Paths power fades as you fall.")
 
@@ -3486,6 +3509,9 @@ def resolve_pvp_pulse(session) -> None:
         target_session.pvp_target = None
         return
     target = target_session.player
+    if player.reaper_seal_id or (target and target.reaper_seal_id):
+        session.pvp_target = target_session.pvp_target = None
+        return
     if (
         target is None
         or target.room_vnum != player.room_vnum

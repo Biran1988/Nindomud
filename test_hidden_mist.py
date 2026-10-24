@@ -42,7 +42,7 @@ class HiddenMistTests(unittest.TestCase):
         combat.tick_pending_casts()
         self.assertTrue(hidden_mist.room_active(self.room))
 
-    def test_room_mist_hides_caster_and_expires(self):
+    def test_room_mist_hides_caster_until_toggled_off(self):
         self.cast_mist()
         self.assertEqual(self.room.hidden_mist_caster, "MistNinja")
         self.assertEqual(hidden_mist.advantage(self.caster.player, self.enemy.player), 15)
@@ -60,8 +60,7 @@ class HiddenMistTests(unittest.TestCase):
         self.caster.player.room_vnum += 1
         self.assertFalse(hidden_mist.active(self.caster.player))
         self.caster.player.room_vnum = self.room.vnum
-        self.room.hidden_mist_expires_at = time.time() - 1
-        hidden_mist.process_rooms([self.caster, self.enemy])
+        commands.cmd_perform(self.caster, ["hidden", "mist", "jutsu", "off"])
         self.assertIsNone(self.room.hidden_mist_caster)
         self.assertEqual(hidden_mist.advantage(self.caster.player, self.enemy.player), 0)
 
@@ -92,7 +91,7 @@ class HiddenMistTests(unittest.TestCase):
             combat._player_attack_mob_once(self.caster, self.caster.player, mob)
             self.assertLess(mob.health, 400)
             mob.health = 400
-            self.room.hidden_mist_expires_at = time.time() - 1
+            hidden_mist.dismiss(self.caster)
             combat._player_attack_mob_once(self.caster, self.caster.player, mob)
             self.assertEqual(mob.health, 400)
 

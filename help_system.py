@@ -1140,9 +1140,10 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["unleash beast", "unleash"],
         "title": "Unleash Beast (staff)",
         "body": (
-            "Syntax: unleash beast\n"
+            "Syntax: unleash beast [1-9]\n"
             "\n"
             "Description: (Staff only.) Releases a random Tailed Beast into the world -- picked from whichever of the 9 real beasts (Shukaku through Kurama) isn't currently sealed into some player, online or offline. A released beast spawns somewhere random (never in a safe room), roams on its own every 10-15 minutes, attacks any player it encounters, and despawns after 2 hours if nobody defeats or seals it. Announces globally which beast was released, so every player knows one is loose.\n"
+            "Add a tail count to choose the beast: unleash beast 2 releases Matatabi, the Two-Tails. Valid numbers are 1 through 9. Without a number, selection stays random. A selected beast must still be unsealed, and the one-roaming-beast limit still applies.\n"
             "\n"
             "Only one Tailed Beast can be loose in the world at a time -- refuses if a beast is already out there, and also refuses if every single beast is already held by a player.\n"
             "\n"
@@ -1891,8 +1892,8 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["hidden mist", "mist jutsu", "hidden mist jutsu"],
         "title": "Hidden Mist Jutsu",
         "body": (
-            "Syntax: perform hidden mist jutsu\n\n"
-            "Description: A level 40, water-only Ninjutsu room effect. Costs 40 Chakra before Chakra Control discounts and has a 30-second cooldown. After hand signs, thick mist fills your current room for 12 seconds. Anyone there, including people entering later, cannot target or see the caster. The caster gains 15 points of accuracy and reduces opponents' dodge by 15 points when attacking in that room. Leaving the room ends the caster's advantage until they return while the mist remains. Ushiro Shishou remains an opening-only attack against an unhurt target; the mist improves its accuracy without enabling it mid-fight. The source files mention Silent Killing, which is not yet a Nindo_mud skill.\n\nDate: 2026-09-26"
+            "Syntax: perform hidden mist jutsu [on|off]\n\n"
+            "Description: A level 40, water-only Ninjutsu room toggle. Casting costs 40 Chakra before Chakra Control discounts and has a 30-second cooldown. After hand signs, mist stays in the room where it formed with no duration limit. Upkeep is 1 Chakra every 5 seconds, including while the caster is elsewhere. Toggle it off from anywhere with the bare technique or off; on does not stack or refresh an active mist. One maintained room per caster. It ends when released, when upkeep fails, when the caster is defeated, or on disconnect. Anyone in the mist cannot target or see its caster while the caster is there. The caster gains 15 accuracy and reduces opponents' dodge by 15 in that room. Leaving loses those benefits until returning. Ushiro Shishou remains an opening-only attack against an unhurt target. Use aff to see whether you maintain mist.\n\nDate: 2026-10-24"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
@@ -3971,7 +3972,7 @@ _EXPANSION_DESCRIPTIONS = {
     "ultimate henge": "The longest-lasting disguise as a person in the room; casting without a target removes it.",
     "kokohi arazu": "Change the visible name of a carried item without altering the real item.",
     "niju kokohi arazu": "Project a false copy of a carried item onto the ground; it cannot be taken or sold.",
-    "chisei": "Temporarily increases maximum Chakra and Genjutsu accuracy for 60 seconds.",
+    "chisei": "Toggle heightened Genjutsu focus and temporary maximum Chakra, maintained for 1 Chakra every 5 seconds.",
     "distortion flame": "An illusion that deals mental damage.",
     "phantom soldiers": "An illusory assault that deals mental damage.",
     "soundless sound": "Mental damage with a chance to impair accuracy.",
@@ -4011,6 +4012,8 @@ for _key in _EXPANSION_HELP_KEYS:
     _syntax = f"perform {_key}" if _type in ("buff", "elemental_clone") else f"perform {_key} <target>"
     if _type in ("chisei", "room_sleep"):
         _syntax = f"perform {_key}"
+    if _type == "chisei":
+        _syntax += " [on|off]"
     if _type == "item_illusion":
         _syntax = f"perform {_key} <carried item> as <apparent name>"
     if _type == "item_decoy":
@@ -4024,7 +4027,7 @@ for _key in _EXPANSION_HELP_KEYS:
         "disguise": "Take the appearance of a person in this room. Use without a target to release your disguise; higher Henge tiers last longer.",
         "item_illusion": "Change how a carried item looks to other players who examine you; its real identity and properties stay intact.",
         "item_decoy": "Project a false copy of a carried item on the ground. It cannot be picked up, equipped, or sold.",
-        "chisei": "Gain temporary maximum Chakra and +12 accuracy for Genjutsu attacks for 60 seconds.",
+        "chisei": "Gain temporary maximum Chakra and +12 accuracy for Genjutsu attacks until toggled off or upkeep fails. Off, defeat and disconnect remove the temporary bonuses; on cannot stack them. Upkeep: 1 Chakra every 5 seconds. The bare technique toggles it; on/off are also accepted.",
         "room_sleep": "Put eligible enemies in your room to sleep for 12 seconds, each with an independent resistance check; no friendly fire or PvP in safe rooms.",
         "mirror": "Mental damage scales with the opponent's own offensive strength.",
     }.get(_type, "")
@@ -4282,6 +4285,12 @@ for _release_id, _name in _elemental_kkg.ELEMENTAL_RELEASE_NAMES.items():
 
 
 def seed_default_help() -> None:
+    old_death_page = _path("100 years of death")
+    if os.path.isfile(old_death_page):
+        with open(old_death_page, "r", encoding="utf-8") as file:
+            old = json.load(file)
+        if old.get("updated_by") == "System":
+            os.unlink(old_death_page)
     for entry in DEFAULT_HELP_ENTRIES:
         path = _path(entry["primary_keyword"])
         # Preserve existing system and staff-authored pages from older Linux
@@ -4294,7 +4303,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | {"unleash beast", "hidden mist jutsu"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and

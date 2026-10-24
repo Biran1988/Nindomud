@@ -9,12 +9,43 @@ import world
 
 JUTSU_KEY = "hidden mist jutsu"
 DEFENSE_PENALTY = 15  # points added to the caster's hit chance, removed from target dodge
-MIST_DURATION_SECONDS = 12.0
+UPKEEP_CHAKRA = 1
+UPKEEP_SECONDS = 5.0
 
 
 def room_active(room) -> bool:
     return bool(room and getattr(room, "hidden_mist_caster", None)
-                and getattr(room, "hidden_mist_expires_at", 0) > time.time())
+                and (getattr(room, "hidden_mist_toggled", False)
+                     or getattr(room, "hidden_mist_expires_at", 0) > time.time()))
+
+
+def owned_room(player):
+    return next((room for room in world.WORLD.rooms.values()
+                 if room.hidden_mist_caster == player.name and room_active(room)), None)
+
+
+def _clear(room, sessions):
+    room.hidden_mist_caster = None
+    room.hidden_mist_expires_at = 0.0
+    room.hidden_mist_toggled = False
+    room.hidden_mist_next_upkeep_at = 0.0
+    for observer in sessions:
+        if observer.player and observer.player.room_vnum == room.vnum:
+            observer.send("&CThe hidden mist thins and the room comes back into view.&x")
+
+
+def dismiss(session):
+    import session as sessions
+    ended = False
+    pending = getattr(session, "pending_cast", None)
+    if pending and pending.jutsu_key == JUTSU_KEY:
+        session.pending_cast = None
+        ended = True
+    for room in world.WORLD.rooms.values():
+        if room.hidden_mist_caster == session.player.name:
+            _clear(room, sessions.ACTIVE_SESSIONS)
+            ended = True
+    session.send("Hidden Mist Jutsu is OFF." if ended else "Your Hidden Mist Jutsu is already off.")
 
 
 def active(player) -> bool:
@@ -48,8 +79,8 @@ def cast(session) -> bool:
     if combat._is_action_blocked(player) or "silenced" in player.active_status_effects:
         session.send("You cannot form the mist right now.")
         return False
-    if active(player):
-        session.send("Your mist already fills this room.")
+    if owned_room(player):
+        session.send("You already maintain hidden mist. Use 'perform hidden mist jutsu off' to release it.")
         return False
     now = time.time()
     if now < player.cooldowns.get(JUTSU_KEY, 0):
@@ -63,23 +94,44 @@ def cast(session) -> bool:
     if room is None:
         session.send("There is nowhere for the mist to gather.")
         return False
+    if room_active(room):
+        session.send("Another ninja's mist already fills this room.")
+        return False
     player.chakra -= cost
     player.cooldowns[JUTSU_KEY] = now + jutsu["cooldown"]
     room.hidden_mist_caster = player.name
-    import signature_moves
-    room.hidden_mist_expires_at = now + signature_moves.duration(player, jutsu, MIST_DURATION_SECONDS)
-    session.send("&CA thick mist spreads through the room. Enemies lose sight of you; their defenses open to your attacks.&x")
+    room.hidden_mist_expires_at = 0.0
+    room.hidden_mist_toggled = True
+    room.hidden_mist_next_upkeep_at = now + UPKEEP_SECONDS
+    session.send("&CHidden Mist Jutsu is ON. A thick mist spreads through this room; maintain it for 1 Chakra every 5 seconds. Toggle it off to release it.&x")
     session.broadcast_room(f"&CThick mist rolls across the room around {player.name}.&x", exclude_self=True)
     combat.grow_skill_from_usage(player, jutsu["display_name"])
     return True
 
 
 def process_rooms(sessions) -> None:
-    """Clear expired room mist and tell occupants when visibility returns."""
+    """Bill the connected owner for maintained room mist, including from afar."""
+    now = time.time()
     for room in world.WORLD.rooms.values():
-        if room.hidden_mist_caster and not room_active(room):
-            room.hidden_mist_caster = None
+        if not room.hidden_mist_caster:
+            continue
+        owner = next((s for s in sessions if s.player and s.player.name == room.hidden_mist_caster
+                      and getattr(getattr(s, "state", None), "name", "PLAYING") != "CLOSED"), None)
+        if not owner or owner.player.health <= 0 or owner.player.reaper_seal_id:
+            _clear(room, sessions)
+            continue
+        if not room.hidden_mist_toggled:
+            if not room_active(room):
+                _clear(room, sessions)
+                continue
+            room.hidden_mist_toggled = True
             room.hidden_mist_expires_at = 0.0
-            for session in sessions:
-                if session.player and session.player.room_vnum == room.vnum:
-                    session.send("&CThe hidden mist thins and the room comes back into view.&x")
+            room.hidden_mist_next_upkeep_at = now + UPKEEP_SECONDS
+        if now < room.hidden_mist_next_upkeep_at:
+            continue
+        if owner.player.chakra < UPKEEP_CHAKRA:
+            owner.send("&YYou lack the Chakra to maintain Hidden Mist Jutsu; the mist fades.&x")
+            _clear(room, sessions)
+            continue
+        owner.player.chakra -= UPKEEP_CHAKRA
+        room.hidden_mist_next_upkeep_at = now + UPKEEP_SECONDS

@@ -40,7 +40,7 @@ class RoomJutsuObjectTests(unittest.TestCase):
         self.output.clear()
         return text
 
-    def test_mist_object_tracks_real_cast_expiry_and_hides_caster_name(self):
+    def test_mist_object_tracks_real_cast_and_toggle(self):
         self.assertTrue(hidden_mist.cast(self.session))
         self.output.clear()
         commands.cmd_look(self.session, [])
@@ -53,12 +53,14 @@ class RoomJutsuObjectTests(unittest.TestCase):
         self.assertIn("cannot pick it up", self.output_text())
         self.assertEqual(self.room.ground_items, [])
         self.assertEqual(self.session.player.inventory, [])
-        # The visual expires even before the next server cleanup pulse.
-        with patch.object(room_jutsu_objects.time, "time", return_value=self.room.hidden_mist_expires_at):
+        # A maintained mist has no visual expiry timer.
+        with patch.object(room_jutsu_objects.time, "time", return_value=10**12):
             commands.cmd_look(self.session, [])
-            self.assertNotIn("dense hidden mist", self.output_text())
-            commands.cmd_look(self.session, ["mist"])
-            self.assertIn("don't see that", self.output_text())
+            self.assertIn("dense hidden mist", self.output_text())
+        hidden_mist.dismiss(self.session)
+        self.output.clear()
+        commands.cmd_look(self.session, ["mist"])
+        self.assertIn("don't see that", self.output_text())
 
     def test_mob_amaterasu_stays_in_room_and_vanishes_when_extinguished(self):
         mangekyo_mobs.resolve(self.session, "amaterasu", self.mob)

@@ -241,7 +241,7 @@ class TailedBeastCommandTests(unittest.TestCase):
         self.assertIn("release Beast", caster.send.call_args.args[0])
         self.assertIs(commands.COMMANDS["unleash"], commands.cmd_unleash)
         commands.cmd_unleash(caster, [])
-        caster.send.assert_called_with("Usage: unleash beast")
+        caster.send.assert_called_with("Usage: unleash beast [1-9]")
 
     def test_existing_system_help_redirects_without_overwriting_staff_help(self):
         new_entry = next(e for e in help_system.DEFAULT_HELP_ENTRIES

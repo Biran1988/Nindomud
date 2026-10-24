@@ -496,6 +496,13 @@ def load_player(name: str) -> Optional[Player]:
     player = Player.from_dict(raw)
     # A maintained battle mode must be activated and paid for again on login.
     player.six_paths_active = False
+    import genjutsu
+    chisei_orphaned = player.chisei_chakra_bonus and "chisei" not in player.active_status_effects
+    if chisei_orphaned:
+        genjutsu.clear_chisei(player)
+    elif "chisei" in player.active_status_effects:
+        import time
+        player.chisei_next_upkeep_at = time.time() + genjutsu.CHISEI_UPKEEP_SECONDS
     removed_bloodline_migrated = player.bloodline_id in ("hydrification", "ice_release")
     if removed_bloodline_migrated:
         player.bloodline_id = None
@@ -531,6 +538,8 @@ def load_player(name: str) -> Optional[Player]:
     for skill, value in list(player.skill_proficiencies.items()):
         if isinstance(value, str):
             player.skill_proficiencies[skill] = _LEGACY_PROFICIENCY_TO_PERCENT.get(value, 0)
+    import technique_names
+    renamed_technique = technique_names.migrate_player(player)
     legacy_first_practice = "practice_gate_enabled" not in raw
     if legacy_first_practice:
         # Older saves have no lesson history; grandfather already-grown
@@ -546,9 +555,12 @@ def load_player(name: str) -> Optional[Player]:
         player.experience_curve_version = 1
     import leveling
     experience_migrated = leveling.migrate_experience_curve(player)
-    if (vital_surge_migrated or summon_contracts_migrated or sage_training_migrated
+    if (chisei_orphaned or renamed_technique or vital_surge_migrated or summon_contracts_migrated or sage_training_migrated
             or experience_migrated or removed_bloodline_migrated
             or elemental_release_migrated or legacy_first_practice):
+        save_player(player)
+    import reaper_seal
+    if reaper_seal.reconcile_player(player):
         save_player(player)
     return player
 

@@ -44,6 +44,10 @@ class Player:
     account_name: str
 
     def __setattr__(self, name, value):
+        if (name == "room_vnum" and self.__dict__.get("reaper_seal_id")
+                and self.__dict__.get("reaper_seal_room_vnum") is not None
+                and value != self.reaper_seal_room_vnum):
+            return
         # All room transitions (walking, recalls, staff moves, forced moves)
         # break a room-bound Barrier immediately, even between server pulses.
         if name == "room_vnum" and "room_vnum" in self.__dict__ and self.room_vnum != value:
@@ -69,6 +73,7 @@ class Player:
     chakra: int = 75
     maximum_chakra: int = 75
     chisei_chakra_bonus: int = 0
+    chisei_next_upkeep_at: float = 0.0
     genjutsu_disguise: str = ""
     genjutsu_disguise_pulses: int = 0
     genjutsu_item_illusions: dict = field(default_factory=dict)
@@ -161,6 +166,8 @@ class Player:
     silenced_until: float = 0.0
     jailed_until: float = 0.0
     active_status_effects: Dict = field(default_factory=dict)
+    reaper_seal_id: str = ""
+    reaper_seal_room_vnum: Optional[int] = None
     taijutsu_stance: str = ""  # one active stance; persists across reconnects
     # Each dose tracks elapsed real time and HP already paid out so saving
     # and reconnecting cannot restart or duplicate a course of healing.

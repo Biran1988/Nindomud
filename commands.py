@@ -126,6 +126,9 @@ def dispatch_line(session, line: str) -> None:
     if not words:
         return
     lower_words = [w.lower() for w in words]
+    import reaper_seal
+    if reaper_seal.blocks_command(session, lower_words[0]):
+        return
     if _blocked_while_sleeping(session, lower_words[0]):
         return
     # Tsukuyomi's target cannot initiate a new attack or jutsu while
@@ -160,6 +163,9 @@ def dispatch_line(session, line: str) -> None:
 
 def dispatch(session, verb: str, args: List[str]) -> None:
     verb = verb.lower()
+    import reaper_seal
+    if reaper_seal.blocks_command(session, verb):
+        return
 
     if _blocked_while_sleeping(session, verb):
         return
@@ -775,9 +781,10 @@ def cmd_release(session, args: List[str]) -> None:
 
 
 def cmd_unleash(session, args: List[str]) -> None:
-    """'unleash beast' releases a random unsealed Tailed Beast for staff."""
-    if [arg.lower() for arg in args] != ["beast"]:
-        session.send("Usage: unleash beast")
+    """Release a random available beast, or select its tail count (1-9)."""
+    if (not args or args[0].lower() != "beast" or len(args) > 2
+            or (len(args) == 2 and args[1] not in {str(n) for n in range(1, 10)})):
+        session.send("Usage: unleash beast [1-9]")
         return
     if not olc._require_builder(session):
         return
@@ -790,7 +797,15 @@ def cmd_unleash(session, args: List[str]) -> None:
     online_players = [s.player for s in session.active_sessions() if s.player]
     online_names = {p.name for p in online_players}
     offline_players = [p for p in storage.all_players() if p.name not in online_names]
-    beast = tailed_beasts.pick_random_available_beast(online_players + offline_players)
+    all_players = online_players + offline_players
+    if len(args) == 2:
+        import data_tailed_beasts
+        beast = next(b for b in data_tailed_beasts.TAILED_BEASTS if b["tails"] == int(args[1]))
+        if not tailed_beasts.is_beast_available(beast["key"], all_players):
+            session.send(f"{beast['display_name']} is already sealed into a player and cannot be released.")
+            return
+    else:
+        beast = tailed_beasts.pick_random_available_beast(all_players)
     if beast is None:
         session.send("Every Tailed Beast is already sealed into a player -- there's nothing left to release.")
         return
@@ -1923,6 +1938,9 @@ def cmd_aff(session, args: List[str]) -> None:
         lines.append("&RYour Sharingan is active.&x")
     if player.samurai_sabre_active:
         lines.append("&CYour Samurai Sabre is active.&x")
+    import hidden_mist
+    if hidden_mist.owned_room(player):
+        lines.append("&CHidden Mist Jutsu is ON (1 Chakra every 5 seconds).&x")
     session.send("\n".join(lines))
 
 
@@ -2848,9 +2866,55 @@ def cmd_attack(session, args: List[str]) -> None:
     target_session.send(f"&R{player.name} attacks you!&x")
 
 
+def _current_jutsu_opponent(session) -> List[str]:
+    """Use only a live opponent here, including combat started by NPC aggro."""
+    player = session.player
+    rival = getattr(session, "pvp_target", None)
+    if (rival and getattr(rival, "player", None) and rival.player.health > 0
+            and rival.player.room_vnum == player.room_vnum
+            and getattr(getattr(rival, "state", None), "name", "PLAYING") == "PLAYING"):
+        return [rival.player.name]
+    mob = getattr(session, "combat_target", None)
+    if (mob and mob.health > 0 and mob.room_vnum == player.room_vnum
+            and any(existing is mob for existing in combat.mobs_in_room(player.room_vnum))):
+        # Preserve the actual opponent when several NPCs share a name.
+        matches = [m for m in combat.mobs_in_room(player.room_vnum)
+                   if mob.name.lower() in m.name.lower()]
+        index = next(i for i, match in enumerate(matches, 1) if match is mob)
+        return [f"{index}.{mob.name}"]
+    return []
+
+
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    opponent_types = {"instant_kill", "ambush", "attack", "track", "sealing",
+                      "beast_release", "beast_bomb", "illusion_walk", "thrown", "trap",
+                      "fan_art", "blade_strike", "mangekyo_tsukuyomi", "mangekyo_amaterasu",
+                      "mangekyo_kamui_pocket_dimension", "mangekyo_kamui_limb_removal",
+                      "mangekyo_izanami", "mirror", "sevenfold"}
+    implicit_player = None
+    implicit_mob = None
+    if not target_words and (jutsu_data.get("damage") is not None
+                             or jutsu_data.get("jutsu_type") in opponent_types
+                             or jutsu_key == "reaper death seal"):
+        target_words = _current_jutsu_opponent(session)
+        rival = getattr(session, "pvp_target", None)
+        if rival and getattr(rival, "player", None) and target_words == [rival.player.name]:
+            implicit_player = rival
+        elif target_words:
+            implicit_mob = getattr(session, "combat_target", None)
+        if not target_words:
+            # A departed or defeated opponent must not survive as a fallback
+            # through the older generic casting path below.
+            session.combat_target = session.pvp_target = None
+    import reaper_seal
+    if reaper_seal.imprisoned(player):
+        session.send("The Reaper's seal binds your soul; you cannot perform jutsu.")
+        return
+    if jutsu_data.get("jutsu_type") == "reaper_seal":
+        reaper_seal.cast(session, jutsu_key, target_words)
+        return
     if jutsu_data.get("jutsu_type") == "general_utility":
         import general_skills
         general_skills.activate(session, jutsu_key, target_words)
@@ -2881,6 +2945,9 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") in ("dual_wield", "chokkan", "instant_kill"):
         import legacy_techniques
+        if jutsu_data["jutsu_type"] == "instant_kill" and implicit_player:
+            legacy_techniques.instant_kill(session, target_words, preferred_player=implicit_player)
+            return
         {"dual_wield": legacy_techniques.dual_wield,
          "chokkan": legacy_techniques.chokkan,
          "instant_kill": legacy_techniques.instant_kill}[jutsu_data["jutsu_type"]](session, target_words)
@@ -2915,7 +2982,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
                 target_words = target_words[:idx] + target_words[idx + 1:]
                 break
     import hidden_mist
-    if target_words:
+    if target_words and jutsu_data.get("jutsu_type") not in {"mist", "chisei"}:
         query = " ".join(target_words).lower()
         import general_skills
         if any(s is not session and s.player and s.player.room_vnum == player.room_vnum
@@ -2939,17 +3006,22 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
                 mangekyo_mobs.cast(session, jutsu_key, mob)
                 return
     if jutsu_data.get("jutsu_type") == "mist":
-        if target_words:
-            jutsu_colors.send(session, "Usage: perform hidden mist jutsu")
+        if target_words and (len(target_words) != 1 or target_words[0].lower() not in {"on", "off"}):
+            jutsu_colors.send(session, "Usage: perform hidden mist jutsu [on|off]")
+            return
+        mode = target_words[0].lower() if target_words else "toggle"
+        maintained = hidden_mist.owned_room(player)
+        if mode == "off" or (mode == "toggle" and maintained):
+            hidden_mist.dismiss(session)
+            return
+        if maintained:
+            session.send("Your Hidden Mist Jutsu is already ON.")
             return
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
             jutsu_colors.send(session, "You have not learned Hidden Mist Jutsu or lack the water element.")
             return
         if session.pending_cast is not None:
             jutsu_colors.send(session, "You're already forming hand signs for another jutsu!")
-            return
-        if hidden_mist.active(player):
-            jutsu_colors.send(session, "Your mist already fills this room.")
             return
         combat.begin_pending_cast(session, jutsu_key, session, is_pvp=False)
         return
@@ -3051,9 +3123,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             return
 
         query = " ".join(target_words)
-        target_mob = tracking.find_mob_anywhere_in_world(combat, query)
-        target_player_session = None
-        if target_mob is None:
+        target_mob = (None if implicit_player else implicit_mob or
+                      tracking.find_mob_anywhere_in_world(combat, query))
+        target_player_session = implicit_player
+        if target_mob is None and target_player_session is None:
             target_player_session = tracking.find_online_player_anywhere(session_module, query, viewer=player)
         if target_mob is None and target_player_session is None:
             jutsu_colors.send(session, f"You can't find any trace of '{query}' anywhere.")
@@ -3084,7 +3157,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         query = " ".join(target_words)
-        mob = combat.find_mob(player.room_vnum, query)
+        mob = None if implicit_player else combat.find_mob(player.room_vnum, query)
         if mob is None or not getattr(mob, "tailed_beast_key", None):
             jutsu_colors.send(session, "There's no Tailed Beast here by that name.")
             return
@@ -3153,8 +3226,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             return
 
         query = " ".join(target_words)
-        mob = combat.find_mob(player.room_vnum, query)
-        target_session = None
+        mob = None if implicit_player else combat.find_mob(player.room_vnum, query)
+        target_session = implicit_player
         if mob is None:
             target_session = next(
                 (s for s in session.active_sessions() if s is not session and s.player and query.lower() in s.player.name.lower()),
@@ -3446,7 +3519,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
                     and not (combat.is_shopkeeper(m) or combat.is_gambler(m)
                              or combat.is_teacher(m) or combat.is_immortal_mob(m))), None)
     elif target_words:
-        mob = combat.find_mob(player.room_vnum, " ".join(target_words))
+        mob = None if implicit_player else combat.find_mob(player.room_vnum, " ".join(target_words))
     else:
         mob = session.combat_target
     if mob:
@@ -6831,7 +6904,8 @@ def _find_object_prototype_by_name(item_name: str):
     linked to a vnum, so to find which oset prototype a carried item
     corresponds to (for scroll_jutsu, etc.) we match on short_desc --
     same substring-match convention used everywhere else in this file."""
-    query = item_name.lower()
+    import technique_names
+    query = technique_names.scroll_name(item_name).lower()
     for proto in olc.OBJECT_TEMPLATES.values():
         if query == proto["short_desc"].lower():
             return proto
@@ -7207,6 +7281,9 @@ def cmd_read(session, args: List[str]) -> None:
         return
 
     jutsu_key = proto.get("scroll_jutsu", "")
+    import technique_names
+    if jutsu_key == technique_names.OLD_KEY:
+        jutsu_key = technique_names.NEW_KEY
     if not jutsu_key or jutsu_key not in data_jutsu.JUTSU:
         session.send(f"{match} hasn't been inscribed with a technique yet.")
         return
@@ -7214,6 +7291,11 @@ def cmd_read(session, args: List[str]) -> None:
 
     jutsu = data_jutsu.JUTSU[jutsu_key]
     display = jutsu["display_name"]
+    if jutsu.get("jutsu_type") == "reaper_seal":
+        import reaper_seal
+        if not reaper_seal.eligible(player):
+            session.send("The inscriptions resist your understanding.")
+            return
     if display in player.learned_skills:
         session.send(f"You already know {display}.")
         return
@@ -7223,6 +7305,13 @@ def cmd_read(session, args: List[str]) -> None:
     import skill_training
     skill_training.grant_without_practice(player, display)
     player.inventory.remove(match)
+    if jutsu_key == "reaper death seal":
+        reverse = data_jutsu.JUTSU["reverse reaper seal"]["display_name"]
+        if reverse not in player.learned_skills:
+            player.learned_skills.append(reverse)
+            player.skill_proficiencies[reverse] = leveling.initial_proficiency(player)
+            skill_training.grant_without_practice(player, reverse)
+        storage.save_player(player)
     session.send(f"You study {match} carefully... you have learned &Y{display}&x!")
 
 

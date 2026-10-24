@@ -88,11 +88,11 @@ class GenjutsuExpansionTests(unittest.TestCase):
             genjutsu.begin_cast(self.session, "chisei", [])
         self.assertGreater(self.player.maximum_chakra, 500)
         self.assertEqual(combat._genjutsu_hit_bonus(self.player, data_jutsu.JUTSU["narakumi"]), 12)
-        self.assertEqual(self.player.active_status_effects["chisei"]["duration"], 60)
-        for _ in range(59):
+        self.assertEqual(self.player.active_status_effects["chisei"]["duration"], 1)
+        for _ in range(80):
             combat.tick_effects_pulse(self.session)
         self.assertGreater(self.player.maximum_chakra, 500)
-        combat.tick_effects_pulse(self.session)
+        genjutsu.begin_cast(self.session, "chisei", ["off"])
         self.assertEqual(self.player.maximum_chakra, 500)
         self.assertEqual(self.player.chisei_chakra_bonus, 0)
         self.assertEqual(combat._genjutsu_hit_bonus(self.player, data_jutsu.JUTSU["narakumi"]), 0)

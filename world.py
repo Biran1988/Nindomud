@@ -88,7 +88,7 @@ class Room:
     kekkei_no_me_element: Optional[str] = None
     kekkei_no_me_expires_at: float = 0.0
     # Hidden Mist is an actual room effect. Only its caster can exploit the
-    # concealment, and the expiry survives a save/reload without extending it.
+    # concealment. New casts are maintained toggles; expiry is legacy-only.
     hidden_mist_caster: Optional[str] = None
     hidden_mist_expires_at: float = 0.0
     # PvP safe zone -- False (the default) means PvP is allowed here;
@@ -132,6 +132,9 @@ class Room:
     # temporarily supplemented while the effect lasts.
     temp_description_until: float = 0.0
     temp_description_text: str = ""
+    reaper_prison: bool = False
+    hidden_mist_toggled: bool = False
+    hidden_mist_next_upkeep_at: float = 0.0
 
 
 class World:

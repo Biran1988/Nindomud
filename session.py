@@ -231,6 +231,14 @@ class Session:
                 other.send(text)
 
     def request_close(self) -> None:
+        if self.player:
+            import hidden_mist
+            if hidden_mist.owned_room(self.player):
+                hidden_mist.dismiss(self)
+            import genjutsu
+            if "chisei" in self.player.active_status_effects or self.player.chisei_chakra_bonus:
+                genjutsu.clear_chisei(self.player)
+                storage.save_player(self.player)
         # A link is not persistent across disconnects. Disperse that
         # physical Mob immediately so no orphan remote scout stays in
         # the world indefinitely without an owner paying Chakra upkeep.
@@ -952,6 +960,8 @@ class Session:
     # --- Entering the world / normal play -----------------------------------
 
     def _enter_world(self, player: Player) -> None:
+        import reaper_seal
+        reaper_seal.reconcile_player(player)
         # Kick any stale/ghost session already playing as this same
         # character. Covers a genuinely abrupt "linkdead" disconnect --
         # no clean TCP close means the old session's connection loop
@@ -1078,6 +1088,10 @@ class Session:
     def _handle_playing(self, line: str) -> None:
         line = line.strip()
         if not line:
+            self.send_prompt()
+            return
+        import reaper_seal
+        if reaper_seal.blocks_command(self, line.split()[0]):
             self.send_prompt()
             return
         import genin_exam

@@ -27,7 +27,7 @@ class JutsuCatalogTests(unittest.TestCase):
         self.assertNotIn("Shadow Clone Jutsu", text)
         self.assertNotIn("Narakumi", text)
         self.assertNotIn("Throw Kunai", text)
-        self.assertNotIn("100 Years of Death", text)  # undiscovered scroll
+        self.assertNotIn("1000 Years of Death", text)  # undiscovered scroll
         self.assertIn("&GLearned&x", text)
         self.assertIn("&DLocked&x", text)
 
@@ -37,7 +37,7 @@ class JutsuCatalogTests(unittest.TestCase):
         for name in ("Ninjutsu", "Taijutsu", "Genjutsu", "Bukijutsu"):
             self.assertIn(f"[ {name} ]", text)
         for name in ("Shadow Clone Jutsu", "Dynamic Entry", "Narakumi",
-                     "Throw Kunai", "100 Years of Death"):
+                     "Throw Kunai", "1000 Years of Death"):
             self.assertIn(name, text)
         self.assertIn("[Scroll]", text)
         self.assertIn("[Release]", text)
@@ -61,9 +61,9 @@ class JutsuCatalogTests(unittest.TestCase):
         self.session.send_paginated.assert_not_called()
 
     def test_all_learned_scroll_only_appears_in_personal_catalog(self):
-        self.player.learned_skills.append("100 Years of Death")
+        self.player.learned_skills.append("1000 Years of Death")
         text = "\n".join(commands.build_jutsu_catalog_lines(self.player))
-        self.assertIn("100 Years of Death", text)
+        self.assertIn("1000 Years of Death", text)
 
     def test_command_available_during_sleep_and_clone_recon(self):
         self.player.position = "sleeping"
