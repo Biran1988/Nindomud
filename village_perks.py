@@ -7,7 +7,7 @@ one affects every player belonging to that village, not just the buyer
 chamber). Priced in MISSION POINTS, not ryo -- fitting since they're a
 reward for completing missions for your village, not just having ryo on
 hand. State is per-village, not per-player. Kage-bought perks remain temporary;
-immortal-activated 24-hour overrides are separately persisted to disk so
+immortal-activated MUD-wide 24-hour overrides are separately persisted to disk so
 reboots cannot prematurely end an event perk.
 
 Three independent categories (a village can have one active perk from
@@ -49,10 +49,10 @@ def duration_seconds(perk_key: str) -> int:
 # village -> {"exp": {"perk": key, "expires_at": ts}, "damage": {...}}
 _ACTIVE_PERKS: dict = {}
 
-# Immortal event perks are independent of Kage purchases, so the latter
-# cannot shorten or silently displace a 24-hour event. An override replaces
-# only another staff perk in its own category. These records are persisted;
-# Kage-purchased one-hour perks retain their original transient behavior.
+# Immortal event perks are GLOBAL across the entire MUD: all villages,
+# including any new villages, use the same category records under "all".
+# They override (but never erase) normal Kage-purchased village perks.
+# Independent 24-hour staff timers are persisted across reboots.
 STAFF_DURATION_SECONDS = 24 * 60 * 60
 _STAFF_PERKS: dict = {}
 _STAFF_LOADED_PATH: Optional[str] = None
@@ -78,7 +78,7 @@ def _load_staff_perks() -> None:
     now = time.time()
     if isinstance(records, dict):
         for village, categories in records.items():
-            if village not in VILLAGES or not isinstance(categories, dict):
+            if village != "all" or not isinstance(categories, dict):
                 continue
             for category, entry in categories.items():
                 if category not in CATEGORIES or not isinstance(entry, dict):
@@ -112,8 +112,8 @@ def _save_staff_perks() -> None:
 
 
 def set_staff_perk(village: str, perk_key: str) -> float:
-    """Activate a free, 24-hour immortal village perk, saved across reboots."""
-    if village not in VILLAGES or perk_key not in PERK_TYPES:
+    """Activate a free, 24-hour global perk, saved across reboots."""
+    if village != "all" or perk_key not in PERK_TYPES:
         raise ValueError("Invalid village or perk.")
     _load_staff_perks()
     info = PERK_TYPES[perk_key]
@@ -138,7 +138,7 @@ def set_staff_perk(village: str, perk_key: str) -> float:
 
 def clear_staff_perk(village: str, perk_key: str) -> bool:
     """Disable exactly this staff perk without affecting Kage purchases."""
-    if village not in VILLAGES or perk_key not in PERK_TYPES:
+    if village != "all" or perk_key not in PERK_TYPES:
         raise ValueError("Invalid village or perk.")
     _load_staff_perks()
     category = PERK_TYPES[perk_key]["category"]
@@ -158,7 +158,7 @@ def clear_staff_perk(village: str, perk_key: str) -> bool:
 
 def _staff_entry(village: str, category: str) -> Optional[dict]:
     _load_staff_perks()
-    entry = _STAFF_PERKS.get(village, {}).get(category)
+    entry = _STAFF_PERKS.get("all", {}).get(category)
     if entry and entry["expires_at"] > time.time():
         return entry
     return None
@@ -185,7 +185,7 @@ def purchase(village: str, perk_key: str) -> None:
 
 
 def staff_perks_display(village: str) -> List[str]:
-    """Administrative view of 24-hour overrides and their remaining time."""
+    """Administrative view of global 24-hour overrides and their remaining time."""
     lines = []
     for category in CATEGORIES:
         entry = _staff_entry(village, category)
