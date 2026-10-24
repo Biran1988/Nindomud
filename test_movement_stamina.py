@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import commands
+import general_skills
 import world
 from models import Player
 
@@ -51,7 +52,7 @@ class MovementStaminaTests(unittest.TestCase):
         with patch.object(commands.WORLD, "get", side_effect={703: start, 704: finish}.get), \
              patch.object(commands, "cmd_look") as look, \
              patch.object(commands, "_fire_enter_triggers") as enter, \
-             patch.object(commands.general_skills, "before_move") as before_move, \
+             patch.object(general_skills, "before_move") as before_move, \
              patch.object(commands.random, "randint") as roll:
             commands.cmd_move(session, "north")
             self.assertEqual(player.room_vnum, start.vnum)
@@ -76,7 +77,7 @@ class MovementStaminaTests(unittest.TestCase):
              patch.object(commands.combat, "mobs_in_room", return_value=[]), \
              patch.object(commands, "cmd_look") as look, \
              patch.object(commands, "_fire_enter_triggers") as enter, \
-             patch.object(commands.general_skills, "before_move") as before_move, \
+             patch.object(general_skills, "before_move") as before_move, \
              patch.object(commands.random, "randint", return_value=2):
             commands.cmd_move(session, "east")
             self.assertEqual((player.room_vnum, player.stamina), (705, 1))
