@@ -316,6 +316,9 @@ def cmd_move(session, direction: str) -> None:
     if status_effects.has_effect(player.active_status_effects, "entangled"):
         session.send("You're entangled and can't move!")
         return
+    if player.stamina <= 0:
+        session.send("&RYou're too exhausted to walk! Rest until you recover stamina.&x")
+        return
 
     _wake_and_stand(session)
 
@@ -362,11 +365,22 @@ def cmd_move(session, direction: str) -> None:
         session.send("The door is locked. This is someone's private home.")
         return
 
+    # Walking requires enough Stamina to pay the full 1-2 point cost.
+    # Refuse before movement hooks or messages, and never allow a free step
+    # from zero (or spend Stamina on an unsuccessful attempt).
+    movement_cost = random.randint(1, 2)
+    if player.stamina < movement_cost:
+        session.send(
+            f"&RYou're too exhausted to walk {direction}! "
+            f"You need {movement_cost} stamina. Rest to recover.&x"
+        )
+        return
+
     import general_skills
+    player.stamina -= movement_cost
     general_skills.before_move(session)
     general_skills.broadcast_movement(session, f"{player.name} leaves {direction}.")
     player.room_vnum = room.exits[direction]
-    player.stamina = max(0, player.stamina - random.randint(1, 2))
     general_skills.broadcast_movement(session, f"{player.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
 
     if session.trade is not None:
