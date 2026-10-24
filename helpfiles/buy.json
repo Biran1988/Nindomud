@@ -4,8 +4,8 @@
     "buy"
   ],
   "title": "Buy",
-  "body": "Syntax: buy <item>\n\nDescription: Purchases an item from a shopkeeper in the room. Your level must be at least the item's level; if it is too low, the purchase is refused without charging you. Use 'list' to see prices and item level requirements.\n\n'buy apartment' and 'buy room <type> <direction>' are special cases -- see 'help apartment' for details. At your own village's Kage chamber, 'buy' also purchases village-wide perks and legendary items from the Kage instead -- see 'help legendary items'.\n\nDate: 2026-08-17",
+  "body": "Syntax: buy <item> | buy all <item> | buy <number> <item>\n\nDescription: 'buy all sardine' purchases as many of that item as you can carry and afford, respecting actual stock in player-run shops and the 64-per-stack / 20-inventory-slot limits. 'buy 3 sardine' purchases up to three matching items. 'buy all' on its own is rejected; an item name is required, so you cannot accidentally buy every different item at a shop. When supplies, Ryo or room run out, any successfully purchased items stay in your inventory and the rest are not charged.\n\nNPC shops have a supply of their listed items; player-owned shops can run out of stock. Every purchased item must meet its level requirement, and each copy uses its individual advertised price. Use 'list' for the current selection.\n\n'buy apartment', 'buy room <type> <direction>' and 'buy shop' are separate purchases and cannot be bought in bulk. Village perks and legendary items from your Kage also remain one-at-a-time purchases.\n\nDate: 2026-10-23",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
