@@ -52,14 +52,17 @@ def flush(player, source=None) -> list:
 
 
 def maintain_skill(player, skill_name: str, session=None) -> None:
-    """One chance at +1 proficiency per ten active seconds, capped at 100%."""
+    """One chance per ten active seconds, capped at 150% for a signature."""
     if skill_name not in player.learned_skills or getattr(player, "_immortal_skill_mastery", False):
         return
     import skill_training
     if skill_training.needs_first_practice(player, skill_name):
         return
     current = player.skill_proficiencies.get(skill_name, 0)
-    if current >= 100:
+    import signature_moves
+    cap = (signature_moves.SIGNATURE_CAP
+           if signature_moves.selected_name(player) == skill_name else 100)
+    if current >= cap:
         return
     now = time.monotonic()
     timers = getattr(player, "_maintenance_growth_at", None)
@@ -72,8 +75,8 @@ def maintain_skill(player, skill_name: str, session=None) -> None:
             timers[skill_name] = now
         return
     timers[skill_name] = now
-    if random.randint(1, 100) <= 100 - current:
-        player.skill_proficiencies[skill_name] = current + 1
+    if random.randint(1, 100) <= cap - current:
+        player.skill_proficiencies[skill_name] = min(cap, current + 1)
         import leveling
         messages = leveling.grant_experience(player, 10)
         if session is None:
@@ -83,6 +86,9 @@ def maintain_skill(player, skill_name: str, session=None) -> None:
             session.send(f"&G{skill_name} improves to {current + 1}% through sustained use! +10 experience.&x")
             for message in messages:
                 session.send(message)
+            if current + 1 == signature_moves.SIGNATURE_CAP and cap == signature_moves.SIGNATURE_CAP:
+                session.send(f"&Y{skill_name} has reached 150% signature mastery! "
+                             "Your +25% damage or effect-duration bonus is active.&x")
 
 
 def stop_maintaining(player, skill_name: str) -> None:
