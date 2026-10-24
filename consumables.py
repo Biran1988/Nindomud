@@ -131,6 +131,42 @@ def tick_medical_healing(player, now: Optional[float] = None) -> dict:
     return gained
 
 
+
+def medical_healing_report(player, restored: dict, now: Optional[float] = None) -> list:
+    """Combine tiny medicine ticks into an end-of-treatment healing summary.
+
+    Match upkeep's six-minute reporting window for unusually long effects,
+    but report shorter treatments as soon as the last dose finishes. The
+    counters are display-only and intentionally aren't part of saved healing.
+    """
+    import upkeep_reports
+
+    now = time.monotonic() if now is None else now
+    if restored:
+        totals = getattr(player, "_medical_report_totals", None)
+        if totals is None:
+            totals = {}
+            player._medical_report_totals = totals
+            player._medical_report_since = now
+        for resource, amount in restored.items():
+            if amount > 0:
+                totals[resource] = totals.get(resource, 0) + amount
+
+    totals = getattr(player, "_medical_report_totals", None)
+    if not totals:
+        return []
+    if (player.medical_healing and
+            now - player._medical_report_since < upkeep_reports.SUMMARY_INTERVAL_SECONDS):
+        return []
+
+    player.__dict__.pop("_medical_report_totals", None)
+    player.__dict__.pop("_medical_report_since", None)
+    labels = {"health": "Health", "chakra": "Chakra", "stamina": "Stamina"}
+    details = ", ".join(f"{totals[key]} {labels[key]}" for key in
+                        ("health", "chakra", "stamina") if totals.get(key))
+    return [f"&GMedicine restored {details} in total.&x"] if details else []
+
+
 def consume(session, verb: str, query: str) -> None:
     player = session.player
     if not query:
