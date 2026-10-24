@@ -1935,7 +1935,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: inventory  (alias: i)\n"
             "\n"
-            "Description: Lists everything you're carrying. Items with the same name stack into one line (up to 64 per stack, 20 distinct stacks total) rather than listing each copy separately.\n"
+            "Description: Lists everything you're carrying. Items with the same name stack into one line (up to 2,000 per stack, 20 distinct stacks total) rather than listing each copy separately.\n"
             "\n"
             "Date: 2026-08-17"
         ),
