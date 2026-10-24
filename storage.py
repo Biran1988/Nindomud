@@ -11,6 +11,9 @@ saves before the field list in Section 45 grows further).
 
 import json
 import os
+import shutil
+import tempfile
+import threading
 from typing import List, Optional
 
 from models import Account, Player
@@ -19,6 +22,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 ACCOUNTS_DIR = os.path.join(DATA_DIR, "accounts")
 PLAYERS_DIR = os.path.join(DATA_DIR, "players")
+_WORLD_STATE_WRITE_LOCK = threading.RLock()
 
 
 def ensure_dirs():
@@ -291,25 +295,67 @@ def _world_state_path() -> str:
 
 
 def load_world_state() -> dict:
-    """The full saved world snapshot (rooms/mobs/items), written by
-    'save world' -- see world_persistence.py. Missing file = nothing
-    has ever been saved yet, so the world is exactly whatever
-    content.py builds on its own, unmodified. Loaded and applied on
-    TOP of content.py's own population, last, so anything saved here
-    always wins over what the code would otherwise build -- confirmed
-    design ("Full snapshot...the saved snapshot always wins over what
-    content.py would normally build")."""
+    """Restore the latest complete snapshot, or its backup if corrupted."""
     path = _world_state_path()
-    if not os.path.isfile(path):
+    backup = path + ".bak"
+    if not os.path.isfile(path) and not os.path.isfile(backup):
         return {}
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except (OSError, ValueError):
+        if not os.path.isfile(backup):
+            raise
+        # A damaged/interrupted primary must never mean the saved world
+        # silently resets to built-in content; retain a known backup.
+        with open(backup, "r", encoding="utf-8") as file:
+            return json.load(file)
 
 
 def save_world_state(state: dict) -> None:
+    """Atomic replace + previous-generation backup, safe for worker threads.
+
+    A crash cannot leave a partially written world_state.json. Both normal
+    autosaves and explicit area imports/deletions use this same write lock.
+    """
     ensure_dirs()
-    with open(_world_state_path(), "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+    path = _world_state_path()
+    directory = os.path.dirname(path)
+    encoded = json.dumps(state, indent=2)
+    with _WORLD_STATE_WRITE_LOCK:
+        fd, temp_path = tempfile.mkstemp(prefix=".world_state-", suffix=".tmp", dir=directory)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as file:
+                file.write(encoded)
+                file.flush()
+                os.fsync(file.fileno())
+
+            # Keep the preceding successful snapshot as a fallback. Do not
+            # remove/rename the primary until the replacement is complete.
+            if os.path.isfile(path):
+                backup_fd, backup_temp = tempfile.mkstemp(
+                    prefix=".world_backup-", suffix=".tmp", dir=directory)
+                try:
+                    with os.fdopen(backup_fd, "wb") as destination, open(path, "rb") as source:
+                        shutil.copyfileobj(source, destination)
+                        destination.flush()
+                        os.fsync(destination.fileno())
+                    os.replace(backup_temp, path + ".bak")
+                finally:
+                    if os.path.exists(backup_temp):
+                        os.unlink(backup_temp)
+
+            os.replace(temp_path, path)
+            # Flush directory metadata on POSIX so renames survive a crash.
+            if os.name == "posix":
+                dir_fd = os.open(directory, os.O_RDONLY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
 
 
 
