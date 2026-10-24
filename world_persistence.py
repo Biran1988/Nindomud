@@ -217,14 +217,13 @@ def save_world() -> dict:
 
     # A queued, older background save must finish before this final snapshot.
     world_autosave.wait_for_pending()
+    # Refresh spawn-bound templates before writing the new world generation:
+    # later boot restoration must not bring back an older version of a mob
+    # or object, nor resurrect templates explicitly deleted by a builder.
+    spawn_points.refresh_template_snapshots()
     payload = snapshot_world()
     payload["deleted_areas"] = storage.load_world_state().get("deleted_areas", [])
     storage.save_world_state(payload)
-    # A shopkeeper/item can be edited after its spawn point was created.
-    # Refresh those durable template copies at the same moment as the world
-    # snapshot so stock, prices, programs, and other builder changes cannot
-    # roll back on the next reboot.
-    spawn_points.refresh_template_snapshots()
     return {
         "rooms": len(payload["rooms"]),
         "mobs": len(payload["mobs"]),
