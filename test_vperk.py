@@ -1,4 +1,4 @@
-"""Immortal-controlled, persisted, village-wide 24-hour perk overrides."""
+"""Immortal-controlled, persisted, MUD-wide 24-hour perk overrides."""
 import json
 import os
 import tempfile
@@ -46,11 +46,11 @@ class ImmortalVillagePerkTests(unittest.TestCase):
         for village in VILLAGES:
             self.assertEqual(village_perks.xp_multiplier(village), 2.0)
         self.assertEqual(self.player.mission_points, 5)
-        self.assertEqual(self.session.broadcast_village.call_args.args[0], "leaf")
+        self.assertEqual(self.session.broadcast_village.call_count, len(VILLAGES))
         self.assertIn("24 hours", self.session.send.call_args.args[0])
         path = os.path.join(self.temp.name, "village_perks.json")
         with open(path, encoding="utf-8") as handle:
-            entry = json.load(handle)["leaf"]["exp"]
+            entry = json.load(handle)["all"]["exp"]
         self.assertEqual(entry["perk"], "double exp")
         self.assertGreaterEqual(entry["expires_at"] - before, 86399)
         self.assertLessEqual(entry["expires_at"] - before, 86410)
@@ -75,7 +75,7 @@ class ImmortalVillagePerkTests(unittest.TestCase):
         self.assertEqual(village_perks.ryo_multiplier("leaf"), 3.0)
         self.assertIn("disabled", self.session.send.call_args.args[0])
         commands.cmd_vperk(self.session, ["double", "exp", "off"])
-        self.assertIn("not the active immortal override", self.session.send.call_args.args[0])
+        self.assertIn("not the active immortal perk", self.session.send.call_args.args[0])
 
     def test_in_category_new_perk_replaces_old_and_old_off_cannot_clear_new(self):
         commands.cmd_vperk(self.session, ["double", "exp", "on"])
@@ -100,7 +100,7 @@ class ImmortalVillagePerkTests(unittest.TestCase):
             self.assertEqual(village_perks.ryo_multiplier(village), 2.0)
         self.assertEqual(self.session.broadcast_village.call_count, len(VILLAGES))
         commands.cmd_vperk(self.session, ["status"])
-        self.assertIn("[Immortal]", self.session.send.call_args.args[0])
+        self.assertIn("Immortal perks (entire MUD)", self.session.send.call_args.args[0])
         self.assertIn("Double Ryo", self.session.send.call_args.args[0])
         commands.cmd_vperk(self.session, ["double", "ryo", "off"])
         for village in VILLAGES:
@@ -110,9 +110,14 @@ class ImmortalVillagePerkTests(unittest.TestCase):
         commands.dispatch(self.session, "villageperk", ["on", "double", "damage"])
         self.assertEqual(village_perks.damage_multiplier("leaf"), 2.0)
 
+    def test_local_village_target_is_not_supported_for_immortal_perks(self):
+        commands.cmd_vperk(self.session, ["leaf", "double", "exp", "on"])
+        self.assertEqual(village_perks.xp_multiplier("leaf"), 1.0)
+        self.assertIn("MUD-wide", self.session.send.call_args.args[0])
+
     def test_invalid_village_or_perk_cannot_change_state(self):
         commands.cmd_vperk(self.session, ["moon", "double", "exp", "on"])
-        self.assertIn("Unknown village", self.session.send.call_args.args[0])
+        self.assertIn("Unknown village perk", self.session.send.call_args.args[0])
         commands.cmd_vperk(self.session, ["infinite", "exp", "on"])
         self.assertIn("Unknown village perk", self.session.send.call_args.args[0])
         self.assertEqual(village_perks.xp_multiplier("leaf"), 1.0)
