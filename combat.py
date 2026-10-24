@@ -1290,7 +1290,8 @@ USAGE_GROWTH_PER_HIT = 2  # matches SHADOW_CLONE_MASTERY_GAIN_PER_CAST's own est
 
 def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None:
     """Gives skill_name a CHANCE to raise its proficiency by
-    USAGE_GROWTH_PER_HIT on every qualifying use from 0% to 99%.
+    USAGE_GROWTH_PER_HIT on qualifying use up to 100%, or 150% when
+    the player has selected this jutsu as their signature move.
     The teacher practice cap never gates natural usage growth: even
     a weapon skill at 7% can improve by attacking in combat. Teacher
     practice remains a guaranteed way to train up to its own cap.
@@ -1311,20 +1312,23 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
     damage is confirmed dealt); a weapon skill grows on ANY attack
     made while that weapon type is equipped, hit or miss (called from
     the player-attack helpers). Silently does nothing for a skill
-    that isn't in player.learned_skills at all, or that's already at
-    100% -- this is meant to be called unconditionally from every
-    relevant combat path, not gated by the caller."""
+    that isn't learned or is already at its current cap (100%, or
+    150% for the selected signature) -- this is called unconditionally
+    from the relevant combat paths, not gated by the caller."""
     if skill_name not in player.learned_skills:
         return
     import skill_training
     if skill_training.needs_first_practice(player, skill_name):
         return
     current = player.skill_proficiencies.get(skill_name, 0)
-    if current >= 100:
+    import signature_moves
+    cap = (signature_moves.SIGNATURE_CAP
+           if signature_moves.selected_name(player) == skill_name else 100)
+    if current >= cap:
         return
-    if random.randint(1, 100) > (100 - current):
+    if random.randint(1, 100) > (cap - current):
         return
-    new_pct = min(100, current + USAGE_GROWTH_PER_HIT)
+    new_pct = min(cap, current + USAGE_GROWTH_PER_HIT)
     player.skill_proficiencies[skill_name] = new_pct
     if new_pct > current:
         xp = (new_pct - current) * 10
@@ -1333,6 +1337,9 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
             session.send(f"&G{skill_name} improves to {new_pct}%! +{xp} experience.&x")
             for message in level_up_messages:
                 session.send(message)
+            if new_pct == signature_moves.SIGNATURE_CAP and cap == signature_moves.SIGNATURE_CAP:
+                session.send(f"&Y{skill_name} has reached 150% signature mastery! "
+                             "Your +25% damage or effect-duration bonus is active.&x")
 
 
 def tick_passive_skill_growth(player: Player) -> list:
