@@ -4203,7 +4203,7 @@ DEFAULT_HELP_ENTRIES.append({
         "Syntax: signature  |  signature <move name>  |  signature clear\n\n"
         "Choose one eligible, learned active combat jutsu after it reaches 100% proficiency. "
         "Normal practice still stops at 50%; reach 100% through use first. "
-        "Once selected, practice that move with a matching teacher to raise its cap to 150%. "
+        "Once selected, raise it from 100% to 150% through successful use, not teacher practice. "
         "The bonus begins only at 150%: +25% damage for an attack, and +25% "
         "duration for status/utility effects (Chisei also boosts its temporary Chakra). "
         "Switch or clear the signature whenever you want, but the old move "
