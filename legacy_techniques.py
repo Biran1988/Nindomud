@@ -56,6 +56,8 @@ def chokkan(session, words):
     if not combat._can_use_jutsu(player, jutsu, "chokkan"):
         session.send("You have not learned Chokkan.")
         return
+    import upkeep_reports
+    upkeep_reports.stop_maintaining(player, "Chokkan")
     if player.chokkan_active:
         player.chokkan_active = False
         session.send("Your inner intuition fades. Chokkan is off.")
@@ -69,6 +71,7 @@ def chokkan(session, words):
     player.chakra -= jutsu["chakra_cost"]
     player.chokkan_active = True
     combat.grow_skill_from_usage(player, "Chokkan")
+    upkeep_reports.maintain_skill(player, "Chokkan", session=session)
     session.send("You focus your inner intuition. Chokkan is on; mastered casts form signs twice as fast.")
 
 

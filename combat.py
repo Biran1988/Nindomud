@@ -1228,6 +1228,9 @@ def tick_effects_pulse(session) -> None:
         if not try_trigger_izanagi(session) and not is_immortal_immune_to_defeat(session):
             handle_player_defeat(session)
 
+    import upkeep_reports
+    upkeep_reports.tick_active_toggles(session)
+
 
 def tick_all_mob_effects(sessions=None) -> None:
     """Tick every spawned mob's status effects, once per pulse, regardless

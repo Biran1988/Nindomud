@@ -51,8 +51,8 @@ def flush(player, source=None) -> list:
     return [f"&CUpkeep total: {details} (combined {_costs(chakra, stamina)}).&x"]
 
 
-def maintain_skill(player, skill_name: str) -> None:
-    """One chance at +1 proficiency per ten seconds of paid maintenance."""
+def maintain_skill(player, skill_name: str, session=None) -> None:
+    """One chance at +1 proficiency per ten active seconds, capped at 100%."""
     if skill_name not in player.learned_skills or getattr(player, "_immortal_skill_mastery", False):
         return
     import skill_training
@@ -74,8 +74,44 @@ def maintain_skill(player, skill_name: str) -> None:
     timers[skill_name] = now
     if random.randint(1, 100) <= 100 - current:
         player.skill_proficiencies[skill_name] = current + 1
+        import leveling
+        messages = leveling.grant_experience(player, 10)
+        if session is None:
+            from session import ACTIVE_SESSIONS
+            session = next((s for s in ACTIVE_SESSIONS if s.player is player), None)
+        if session is not None:
+            session.send(f"&G{skill_name} improves to {current + 1}% through sustained use! +10 experience.&x")
+            for message in messages:
+                session.send(message)
 
 
 def stop_maintaining(player, skill_name: str) -> None:
     """Require a fresh paid interval after a maintained jutsu ends."""
     getattr(player, "_maintenance_growth_at", {}).pop(skill_name, None)
+
+
+ACTIVE_EFFECT_SKILLS = {
+    "camouflage": "Camouflage", "silent_movement": "Silent Movement",
+    "sensory_detect": "Sensory Detect", "focused_mind": "Focused Mind",
+    "chisei": "Chisei",
+}
+
+
+def tick_active_toggles(session):
+    """Train connected, living casters after upkeep and expiration handling.
+
+    Paid-maintenance abilities already call maintain_skill at their upkeep
+    sites. These additional toggles share the same per-skill timer, so a
+    second hook in the same interval cannot produce a second growth roll.
+    """
+    player = session.player
+    for effect, skill in ACTIVE_EFFECT_SKILLS.items():
+        state = player.active_status_effects.get(effect, {})
+        if player.health > 0 and not player.reaper_seal_id and state.get("duration", 0) > 0:
+            maintain_skill(player, skill, session=session)
+        else:
+            stop_maintaining(player, skill)
+    if player.health > 0 and not player.reaper_seal_id and player.chokkan_active:
+        maintain_skill(player, "Chokkan", session=session)
+    else:
+        stop_maintaining(player, "Chokkan")

@@ -25,6 +25,10 @@ def owned_room(player):
 
 
 def _clear(room, sessions):
+    import upkeep_reports
+    for owner in sessions:
+        if owner.player and owner.player.name == room.hidden_mist_caster:
+            upkeep_reports.stop_maintaining(owner.player, "Hidden Mist Jutsu")
     room.hidden_mist_caster = None
     room.hidden_mist_expires_at = 0.0
     room.hidden_mist_toggled = False
@@ -105,7 +109,10 @@ def cast(session) -> bool:
     room.hidden_mist_next_upkeep_at = now + UPKEEP_SECONDS
     session.send("&CHidden Mist Jutsu is ON. A thick mist spreads through this room; maintain it for 1 Chakra every 5 seconds. Toggle it off to release it.&x")
     session.broadcast_room(f"&CThick mist rolls across the room around {player.name}.&x", exclude_self=True)
-    combat.grow_skill_from_usage(player, jutsu["display_name"])
+    combat.grow_skill_from_usage(player, jutsu["display_name"], session=session)
+    import upkeep_reports
+    upkeep_reports.stop_maintaining(player, jutsu["display_name"])
+    upkeep_reports.maintain_skill(player, jutsu["display_name"], session=session)
     return True
 
 
@@ -135,3 +142,5 @@ def process_rooms(sessions) -> None:
             continue
         owner.player.chakra -= UPKEEP_CHAKRA
         room.hidden_mist_next_upkeep_at = now + UPKEEP_SECONDS
+        import upkeep_reports
+        upkeep_reports.maintain_skill(owner.player, "Hidden Mist Jutsu", session=owner)

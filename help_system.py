@@ -58,7 +58,7 @@ DEFAULT_HELP_ENTRIES = [
     {
         "primary_keyword": "camouflage", "keywords": ["camouflage", "camoflage", "camouflag"],
         "title": "Camouflage (General Skill, level 10)",
-        "body": "Syntax: camouflage [on|off] | perform camouflage [on|off]\nAll classes learn this skill at level 10. Practice with a teacher before first use. Activation costs 15 Chakra and 5 Stamina; cooldown 15 seconds. Duration is 60 seconds plus mastery percent (up to 160 seconds). Hides your character from ordinary look, scan, direct targeting and tracking, and prevents ordinary NPC recognition/aggression. It does not hide you from the who list or immortal connection tools. Sensory Detect reveals you. Hostile actions and entering combat break camouflage; it cannot be activated during combat or a pending cast. Expiry and manual release also end it. Use aff to check the remaining duration.",
+        "body": "Syntax: camouflage [on|off] | perform camouflage [on|off]\nAll classes learn this skill at level 10. Practice with a teacher before first use. Activation costs 15 Chakra and 5 Stamina; cooldown 15 seconds. This is a persistent on/off toggle with 1 Chakra upkeep every 5 seconds. It remains active until switched off, combat reveals you, or upkeep fails; it has no duration limit. Active maintenance can improve proficiency every 10 seconds, with 10 XP per percentage point gained. Hides your character from ordinary look, scan, direct targeting and tracking, and prevents ordinary NPC recognition/aggression. It does not hide you from the who list or immortal connection tools. Sensory Detect reveals you. Hostile actions and entering combat break camouflage; it cannot be activated during combat or a pending cast. Expiry and manual release also end it. Use aff or score to check whether Camouflage is ON.",
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
@@ -679,9 +679,9 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: scan <direction>  (n, s, e, w, ne, nw, se, sw, u, d also work)\n"
             "\n"
-            "Description: General Skill learned at level 3. See the visible players, mobs, corpses, and ground items in one adjacent room. Invisible targets do not appear. Closed doors and hidden exits block scanning.\n"
+            "Description: General Skill learned at level 3. See the visible players, mobs, corpses, and ground items in one adjacent room. Invisible targets do not appear. Closed doors and hidden exits block scanning. Practice with a teacher before first use. Each completed scan, including an empty room, can improve proficiency using the normal jutsu usage rules: a (100 - current proficiency)% chance to gain up to 2 percentage points, capped at 100%. Each percentage point gained awards 10 character XP. Failed or blocked scans grant no growth. Scanning through a controlled elemental clone trains the real character.\n"
             "\n"
-            "Date: 2026-09-26"
+            "Date: 2026-10-23"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -1843,14 +1843,14 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "jutsu all",
-        "keywords": ["jutsu all", "jutsu catalog", "jutsu list"],
+        "keywords": ["jutsu all", "skills all", "jutsu catalog", "jutsu list"],
         "title": "Jutsu Catalog",
         "body": (
-            "Syntax: jutsu all\n"
+            "Syntax: jutsu all | skills all\n"
             "\n"
-            "Shows every cataloged technique for your chosen combat class, "
+            "Shows obtainable techniques for your chosen combat class, "
             "including techniques not yet learned and their minimum levels. "
-            "Shared general jutsu appear in a separate section. "
+            "Shared general jutsu appear in a separate section. Elemental jutsu appear only after you reveal a matching nature. Release techniques appear when you actually acquire that release. Special eye techniques appear only after awakening, receiving and discovering that eye ability; unrelated Kamui variants stay hidden. Learned techniques granted outside your class appear in their own category.  "
             "Immortal accounts see the full Ninjutsu, Taijutsu, Genjutsu "
             "and Bukijutsu rosters plus shared jutsu. Conditional techniques "
             "are marked Release, Six Paths, or Scroll; levels alone do not "
@@ -1869,9 +1869,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["skills"],
         "title": "Skills",
         "body": (
-            "Syntax: skills\n"
+            "Syntax: skills | skills all\n"
             "\n"
-            "Description: Lists every jutsu and passive skill you know, ordered by the level you unlocked it at (lowest first), each colored by its class (Ninjutsu, Taijutsu, Genjutsu, Bukijutsu, or General Skills). Doesn't show proficiency -- see 'prac' for that.\n"
+            "Description: Lists every jutsu and passive skill you know, ordered by the level you unlocked it at (lowest first), each colored by its class (Ninjutsu, Taijutsu, Genjutsu, Bukijutsu, or General Skills). Only applicable learned jutsu are shown. Use skills all for the same obtainable-technique catalog as jutsu all; newly revealed natures and acquired abilities update the list automatically. Doesn't show proficiency -- see 'prac' for that.\n"
             "\n"
             "Date: 2026-09-02"
         ),
@@ -4334,7 +4334,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | {"unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | {"camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and

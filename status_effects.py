@@ -12,7 +12,7 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
-    "camouflage": {"display_name": "Camouflaged", "duration": 120, "message": None},
+    "camouflage": {"display_name": "Camouflaged", "duration": 1, "toggled": True, "message": None},
     "silent_movement": {"display_name": "Moving Silently", "duration": 1,
                         "toggled": True, "message": None},
     "sensory_detect": {"display_name": "Sensory Detect", "duration": 120, "message": None},

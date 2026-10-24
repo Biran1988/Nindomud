@@ -120,6 +120,8 @@ class JutsuShortcutTests(unittest.TestCase):
         catalog = "\n".join(commands.build_jutsu_catalog_lines(self.player))
         self.assertIn("Short: ssh", catalog)
         self.assertNotIn("rseal", catalog)
+        self.player.clan = "uzumaki"
+        self.player.village = "whirlpool"
         self.player.learned_skills.append("Reaper Death Seal")
         commands.cmd_jutsu(self.session, ["shortcuts"])
         self.assertIn("rseal", self.session.send_paginated.call_args.args[0])

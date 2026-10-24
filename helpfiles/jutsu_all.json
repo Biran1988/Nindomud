@@ -2,11 +2,12 @@
   "primary_keyword": "jutsu all",
   "keywords": [
     "jutsu all",
+    "skills all",
     "jutsu catalog",
     "jutsu list"
   ],
   "title": "Jutsu Catalog",
-  "body": "Syntax: jutsu all\n\nShows every cataloged technique for your chosen combat class, including techniques not yet learned and their minimum levels. Shared general jutsu appear in a separate section. Immortal accounts see the full Ninjutsu, Taijutsu, Genjutsu and Bukijutsu rosters plus shared jutsu. Conditional techniques are marked Release, Six Paths, or Scroll; levels alone do not guarantee they can be learned. Undiscovered scroll-only jutsu are not revealed to normal characters. The list is paginated (Enter for more, q to stop). 'skills' lists learned techniques. Every catalog row shows its one-word shortcut; type that shortcut directly or use jutsu shorts for a compact learned list.\n\nDate: 2026-10-22",
+  "body": "Syntax: jutsu all | skills all\n\nShows obtainable techniques for your chosen combat class, including techniques not yet learned and their minimum levels. Shared general jutsu appear in a separate section. Elemental jutsu appear only after you reveal a matching nature. Release techniques appear when you actually acquire that release. Special eye techniques appear only after awakening, receiving and discovering that eye ability; unrelated Kamui variants stay hidden. Learned techniques granted outside your class appear in their own category.  Immortal accounts see the full Ninjutsu, Taijutsu, Genjutsu and Bukijutsu rosters plus shared jutsu. Conditional techniques are marked Release, Six Paths, or Scroll; levels alone do not guarantee they can be learned. Undiscovered scroll-only jutsu are not revealed to normal characters. The list is paginated (Enter for more, q to stop). 'skills' lists learned techniques. Every catalog row shows its one-word shortcut; type that shortcut directly or use jutsu shorts for a compact learned list.\n\nDate: 2026-10-22",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0.0

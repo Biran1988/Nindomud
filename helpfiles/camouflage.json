@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "camouflage",
+  "keywords": [
+    "camouflage",
+    "camoflage",
+    "camouflag"
+  ],
+  "title": "Camouflage (General Skill, level 10)",
+  "body": "Syntax: camouflage [on|off] | perform camouflage [on|off]\nAll classes learn this skill at level 10. Practice with a teacher before first use. Activation costs 15 Chakra and 5 Stamina; cooldown 15 seconds. This is a persistent on/off toggle with 1 Chakra upkeep every 5 seconds. It remains active until switched off, combat reveals you, or upkeep fails; it has no duration limit. Active maintenance can improve proficiency every 10 seconds, with 10 XP per percentage point gained. Hides your character from ordinary look, scan, direct targeting and tracking, and prevents ordinary NPC recognition/aggression. It does not hide you from the who list or immortal connection tools. Sensory Detect reveals you. Hostile actions and entering combat break camouflage; it cannot be activated during combat or a pending cast. Expiry and manual release also end it. Use aff or score to check whether Camouflage is ON.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

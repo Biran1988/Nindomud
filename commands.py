@@ -102,7 +102,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -1242,6 +1242,8 @@ def cmd_scan(session, args: List[str]) -> None:
         lines.append(f"  &M{decoy['name']}&x seems to be lying here.")
     if len(lines) == 1:
         lines.append("  Nothing visible is there.")
+    # Clone views are temporary copies; award mastery and XP to the real body.
+    combat.grow_skill_from_usage(original_body or player, "Scan", session=session)
     session.send("\n".join(lines))
 
 
@@ -4672,18 +4674,49 @@ def _skill_unlock_level(skill_name: str) -> Optional[int]:
 JUTSU_CATALOG_CLASSES = ("ninjutsu", "taijutsu", "genjutsu", "bukijutsu")
 
 
+def _catalog_jutsu_visible(player, key, info) -> bool:
+    """Permanent character access, independent of temporary combat conditions."""
+    known = info["display_name"].lower() in {name.lower() for name in player.learned_skills}
+    if (info.get("secret") or info.get("scroll_only")) and not known:
+        return False
+    for attribute, required in (("clan", info.get("required_clan")),
+                                ("village", info.get("required_village"))):
+        if required and getattr(player, attribute, "").lower() != required:
+            return False
+    revealed = {nature for nature, shown in (
+        (player.chakra_nature, player.chakra_nature_revealed),
+        (player.chakra_nature_secondary, player.chakra_nature_secondary_revealed),
+        (player.chakra_nature_tertiary, player.chakra_nature_tertiary_revealed),
+    ) if shown and nature}
+    element = info.get("element", "none")
+    if element != "none" and element not in revealed:
+        return False
+    gate = info.get("kkg_gate")
+    if gate:
+        import data_kekkei_genkai
+        if gate in data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES:
+            return data_kekkei_genkai.has_elemental_release(player, gate)
+        if gate == "mangekyo_technique":
+            eye = info.get("mangekyo_roster_key", key)
+            return (player.bloodline_id == "sharingan" and player.bloodline_mangekyo
+                    and eye in (player.mangekyo_eye_1, player.mangekyo_eye_2)
+                    and eye in player.mangekyo_eyes_used)
+        if gate in {"six_paths_indra", "six_paths_ashura"}:
+            import six_paths
+            return six_paths.eligible(player, gate.removeprefix("six_paths_"))
+        return False
+    if info.get("jutsu_type") == "beast_bomb" and not player.jinchuriki_beast_key:
+        return False
+    return (known or player.copied_jutsu_key == key
+            or info.get("class_requirement") in {player.primary_class.lower(), "general"})
+
+
 def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
-    """Full class roster; public viewers see only their primary class and
-    general jutsu. Staff can examine every class. Secret scroll-only
-    techniques remain undisclosed until actually learned by a player.
-    This is informational -- it never grants or practices a skill.
-    """
+    """Show obtainable class jutsu and abilities actually unlocked elsewhere."""
     import data_classes
-    classes = (JUTSU_CATALOG_CLASSES if immortal
-               else (player.primary_class.lower(),))
-    classes = tuple(c for c in classes if c in data_classes.CLASSES)
-    if not classes:
+    if not immortal and player.primary_class.lower() not in data_classes.CLASSES:
         return ["You do not have a recognized combat class."]
+    classes = tuple(c for c in JUTSU_CATALOG_CLASSES if c in data_classes.CLASSES)
 
     known = set(player.learned_skills)
     shortcuts = {info["display_name"]: data_jutsu.JUTSU_SHORTCUTS[key]
@@ -4698,13 +4731,14 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
         # includes scroll- and release-specific entries, not just regular
         # leveling unlocks.
         entries = sorted(
-            (info for info in data_jutsu.JUTSU.values()
+            (info for key, info in data_jutsu.JUTSU.items()
              if info.get("class_requirement") == category
-             and (immortal or not info.get("scroll_only")
-                  or info.get("display_name") in known)),
+             and (immortal or _catalog_jutsu_visible(player, key, info))),
             key=lambda info: (info.get("level_requirement", 1),
                               info["display_name"].casefold()),
         )
+        if not entries and not immortal and category not in {player.primary_class.lower(), "general"}:
+            continue
         lines.append("")
         lines.append(_prac_header(title))
         if not entries:
@@ -4739,9 +4773,9 @@ def cmd_jutsu(session, args: List[str]) -> None:
     if mode not in {"all", "shorts", "shortcuts"}:
         session.send("Usage: jutsu all | jutsu shorts  (catalog or learned one-word shortcuts)")
         return
+    immortal = bool(session.account and
+                    session.account.staff_level in WHO_LEADER_STAFF_LEVELS)
     if mode == "all":
-        immortal = bool(session.account and
-                        session.account.staff_level in WHO_LEADER_STAFF_LEVELS)
         lines = build_jutsu_catalog_lines(session.player, immortal=immortal)
     else:
         known = set(session.player.learned_skills)
@@ -4750,7 +4784,7 @@ def cmd_jutsu(session, args: List[str]) -> None:
                  "Add a target or on/off after it as usual.&x", ""]
         for key, info in sorted(data_jutsu.JUTSU.items(),
                                 key=lambda item: item[1]["display_name"].casefold()):
-            if info["display_name"] in known:
+            if info["display_name"] in known and (immortal or _catalog_jutsu_visible(session.player, key, info)):
                 lines.append(f"  &C{data_jutsu.JUTSU_SHORTCUTS[key]:<9}&x {info['display_name']}")
         if len(lines) == 3:
             lines.append("You have not learned any jutsu yet.")
@@ -4763,12 +4797,24 @@ def cmd_jutsu(session, args: List[str]) -> None:
 
 def cmd_skills(session, args: List[str]) -> None:
     player = session.player
+    if args:
+        if len(args) == 1 and args[0].lower() == "all":
+            cmd_jutsu(session, ["all"])
+        else:
+            session.send("Usage: skills [all]")
+        return
+    immortal = bool(session.account and session.account.staff_level in WHO_LEADER_STAFF_LEVELS)
+    jutsu_by_name = {info["display_name"].lower(): (key, info)
+                     for key, info in data_jutsu.JUTSU.items()}
     lines = ["Skills and jutsu:"]
     ordered_skills = sorted(
         player.learned_skills,
         key=lambda name: (_skill_unlock_level(name) is None, _skill_unlock_level(name) or 0),
     )
     for skill in ordered_skills:
+        spec = jutsu_by_name.get(skill.lower())
+        if spec and not immortal and not _catalog_jutsu_visible(player, *spec):
+            continue
         if skill.lower() == "sharingan genjutsu":
             continue  # old saved characters may still contain the retired skill
         level = _skill_unlock_level(skill)

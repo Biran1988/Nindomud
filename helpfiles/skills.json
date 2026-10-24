@@ -4,7 +4,7 @@
     "skills"
   ],
   "title": "Skills",
-  "body": "Syntax: skills\n\nDescription: Lists every jutsu and passive skill you know, ordered by the level you unlocked it at (lowest first), each colored by its class (Ninjutsu, Taijutsu, Genjutsu, Bukijutsu, or General Skills). Doesn't show proficiency -- see 'prac' for that.\n\nDate: 2026-09-02",
+  "body": "Syntax: skills | skills all\n\nDescription: Lists every jutsu and passive skill you know, ordered by the level you unlocked it at (lowest first), each colored by its class (Ninjutsu, Taijutsu, Genjutsu, Bukijutsu, or General Skills). Only applicable learned jutsu are shown. Use skills all for the same obtainable-technique catalog as jutsu all; newly revealed natures and acquired abilities update the list automatically. Doesn't show proficiency -- see 'prac' for that.\n\nDate: 2026-09-02",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0.0

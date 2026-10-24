@@ -81,7 +81,7 @@ class GeneralSkillTests(unittest.TestCase):
             self.cast(self.actor, key)
             self.assertTrue(skills.active(self.actor.player, effect), key)
             self.assertEqual(self.actor.player.active_status_effects[effect]["duration"],
-                             1 if key == "silent movement" else 110)
+                             1 if status_effects.EFFECT_DEFS[effect].get("toggled") else 110)
             self.assertEqual(before[0] - self.actor.player.chakra, info["chakra_cost"])
             self.assertEqual(before[1] - self.actor.player.stamina, info["stamina_cost"])
             growth_calls = self.grow.call_count
@@ -118,7 +118,7 @@ class GeneralSkillTests(unittest.TestCase):
                 self.cast(self.actor, key)
                 self.assertTrue(skills.active(player, effect), self.output)
                 self.assertEqual(player.active_status_effects[effect]["duration"],
-                                 1 if key == "silent movement" else 160)
+                                 1 if status_effects.EFFECT_DEFS[effect].get("toggled") else 160)
                 self.cast(self.actor, key + " off")
         self.assertEqual(player.practiced_skills, [])
         self.assertEqual(player.practice_exempt_skills, [])
@@ -268,6 +268,8 @@ class GeneralSkillTests(unittest.TestCase):
         self.assertFalse(skills.active(self.actor.player, "sensory_detect"))
         status_effects.apply_effect(self.actor.player.active_status_effects, "camouflage", duration_override=1)
         combat.tick_effects_pulse(self.actor)
+        self.assertTrue(skills.active(self.actor.player, "camouflage"))
+        skills.activate(self.actor, "camouflage", ["off"])
         self.assertFalse(skills.active(self.actor.player, "camouflage"))
 
     def test_focused_mind_duration_accuracy_and_movement_tradeoff(self):

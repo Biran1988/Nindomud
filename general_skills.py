@@ -4,6 +4,9 @@ import time
 import data_jutsu
 import status_effects
 
+CAMOUFLAGE_UPKEEP_SECONDS = 5.0
+CAMOUFLAGE_UPKEEP_CHAKRA = 1
+
 EFFECT_KEYS = {"camouflage": "camouflage", "silent movement": "silent_movement",
                "sensory detect": "sensory_detect", "focused mind": "focused_mind"}
 
@@ -21,6 +24,9 @@ def concealed_from(viewer, target):
 
 def break_camouflage(session):
     if session.player and session.player.active_status_effects.pop("camouflage", None):
+        import upkeep_reports
+        upkeep_reports.stop_maintaining(session.player, "Camouflage")
+        session.player._camouflage_next_upkeep_at = 0.0
         session.send("&YCombat reveals you, breaking your camouflage.&x")
 
 
@@ -36,6 +42,10 @@ def activate(session, key, words):
     mode = words[0].lower() if words else "toggle"
     if mode == "off" or mode == "toggle" and active(player, effect):
         player.active_status_effects.pop(effect, None)
+        import upkeep_reports
+        upkeep_reports.stop_maintaining(player, info["display_name"])
+        if key == "camouflage":
+            player._camouflage_next_upkeep_at = 0.0
         session.send(f"{info['display_name']} is off.")
         return
     if active(player, effect):
@@ -68,18 +78,41 @@ def activate(session, key, words):
     status_effects.apply_effect(player.active_status_effects, effect, source=key,
                                 duration_override=duration)
     combat.grow_skill_from_usage(player, info["display_name"], session=session)
+    import upkeep_reports
+    upkeep_reports.stop_maintaining(player, info["display_name"])
+    upkeep_reports.maintain_skill(player, info["display_name"], session=session)
+    if key == "camouflage":
+        player._camouflage_next_upkeep_at = now + CAMOUFLAGE_UPKEEP_SECONDS
     descriptions = {
-        "camouflage": "You blend into your surroundings. Attacking will reveal you.",
+        "camouflage": "You blend into your surroundings. Upkeep: 1 Chakra every 5 seconds. Combat reveals you.",
         "silent movement": "You move without ordinary travel messages; each step costs 2 extra Stamina.",
         "sensory detect": "You can detect camouflaged ninja and notice silent movement. Upkeep: 1 Chakra per second.",
         "focused mind": f"You sharpen your aim: +{focused_accuracy(player)} accuracy for normal attacks and offensive techniques of every class, plus resistance to mental distractions. Each step costs 1 extra Stamina.",
     }
-    state = "is ON until you toggle it off or run out of Stamina" if toggled else f"is active for {duration} seconds"
+    state = ("is ON until released or upkeep fails" if key == "camouflage" else
+             "is ON until you toggle it off or run out of Stamina") if toggled else f"is active for {duration} seconds"
     session.send(f"&G{info['display_name']} {state}.&x {descriptions[key]}")
 
 
 def upkeep(session):
     player = session.player
+    if active(player, "camouflage"):
+        now = time.time()
+        due = getattr(player, "_camouflage_next_upkeep_at", 0)
+        if not due:
+            player._camouflage_next_upkeep_at = now + CAMOUFLAGE_UPKEEP_SECONDS
+        elif now >= due:
+            if player.chakra < CAMOUFLAGE_UPKEEP_CHAKRA:
+                player.active_status_effects.pop("camouflage", None)
+                import upkeep_reports
+                upkeep_reports.stop_maintaining(player, "Camouflage")
+                player._camouflage_next_upkeep_at = 0.0
+                session.send("Your Chakra runs out; Camouflage ends and you become visible.")
+            else:
+                player.chakra -= CAMOUFLAGE_UPKEEP_CHAKRA
+                player._camouflage_next_upkeep_at = now + CAMOUFLAGE_UPKEEP_SECONDS
+    else:
+        player._camouflage_next_upkeep_at = 0.0
     if active(player, "sensory_detect"):
         if player.chakra < 1:
             player.active_status_effects.pop("sensory_detect", None)

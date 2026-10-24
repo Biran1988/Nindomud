@@ -20,6 +20,8 @@ CHISEI_UPKEEP_SECONDS = 5.0
 
 def clear_chisei(player):
     """Withdraw the tracked bonus exactly once, preserving other capacity bonuses."""
+    import upkeep_reports
+    upkeep_reports.stop_maintaining(player, "Chisei")
     player.active_status_effects.pop("chisei", None)
     bonus = player.chisei_chakra_bonus
     if bonus:
@@ -229,6 +231,9 @@ def resolve_cast(session, key, payload):
         player.chakra += bonus
         status_effects.apply_effect(player.active_status_effects, "chisei", source=key)
         player.chisei_next_upkeep_at = time.time() + CHISEI_UPKEEP_SECONDS
+        import upkeep_reports
+        upkeep_reports.stop_maintaining(player, "Chisei")
+        upkeep_reports.maintain_skill(player, "Chisei", session=session)
         jutsu_colors.send(session, f"Chisei is ON: sharpened Genjutsu and {bonus} temporary maximum Chakra. Upkeep: 1 Chakra every 5 seconds; toggle off to release it.")
     elif kind == "room_sleep":
         import world

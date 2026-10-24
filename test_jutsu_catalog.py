@@ -71,6 +71,74 @@ class JutsuCatalogTests(unittest.TestCase):
         self.session.send_paginated.assert_called_once()
         self.assertIn("jutsu", clone_control.SENSE_VERBS)
 
+    def catalog(self):
+        return "\n".join(commands.build_jutsu_catalog_lines(self.player))
+
+    def test_elements_appear_only_as_each_nature_is_revealed(self):
+        self.player.primary_class = "ninjutsu"
+        self.player.chakra_nature = "fire"
+        self.player.chakra_nature_secondary = "water"
+        self.player.learned_skills += ["Fireball Jutsu", "Hidden Mist Jutsu"]
+        self.assertNotIn("Fireball Jutsu", self.catalog())
+        self.assertNotIn("Hidden Mist Jutsu", self.catalog())
+        self.player.chakra_nature_revealed = True
+        self.assertIn("Fireball Jutsu", self.catalog())
+        self.assertNotIn("Hidden Mist Jutsu", self.catalog())
+        self.player.chakra_nature_secondary_revealed = True
+        self.assertIn("Hidden Mist Jutsu", self.catalog())
+        self.assertNotIn("Lightning Strike Jutsu", self.catalog())
+
+    def test_release_unlock_adds_future_moves_even_outside_primary_class(self):
+        self.player.primary_class = "genjutsu"
+        self.player.level = 25
+        self.player.chakra_nature = "water"
+        self.player.chakra_nature_revealed = True
+        self.player.chakra_nature_secondary = "earth"
+        self.player.elemental_release_id = "wood_release"
+        self.assertNotIn("Wood Splinter Barrage", self.catalog())
+        self.player.chakra_nature_secondary_revealed = True
+        self.assertIn("Wood Splinter Barrage", self.catalog())
+        self.assertIn("Deep Forest Bloom", self.catalog())
+        self.assertNotIn("Laser Current", self.catalog())
+        self.assertNotIn("Chidori", self.catalog())
+
+    def test_unearned_or_undiscovered_eye_jutsu_never_leak_from_old_learned_lists(self):
+        self.player.primary_class = "ninjutsu"
+        self.player.learned_skills += ["Kamui: Pocket Dimension", "Kamui: Intangibility", "Amaterasu"]
+        self.assertNotIn("Kamui", self.catalog())
+        self.assertNotIn("Amaterasu", self.catalog())
+        self.player.bloodline_id = "sharingan"
+        self.player.bloodline_mangekyo = True
+        self.player.mangekyo_eye_1 = "amaterasu"
+        self.player.mangekyo_eye_2 = "tsukuyomi"
+        self.assertNotIn("Amaterasu", self.catalog())
+        self.player.mangekyo_eyes_used = ["amaterasu"]
+        self.assertIn("Amaterasu", self.catalog())
+        self.assertNotIn("Tsukuyomi", self.catalog())
+        self.assertNotIn("Kamui", self.catalog())
+        commands.cmd_jutsu(self.session, ["shorts"])
+        self.assertNotIn("Kamui", self.session.send_paginated.call_args.args[0])
+        commands.cmd_skills(self.session, [])
+        self.assertNotIn("Kamui", self.session.send.call_args.args[0])
+
+    def test_skills_all_is_the_same_personal_catalog_and_can_be_read_while_sleeping(self):
+        self.player.position = "sleeping"
+        commands.dispatch_line(self.session, "skills all")
+        self.assertEqual(self.session.send_paginated.call_args.args[0], self.catalog())
+        self.assertIn("skills", clone_control.SENSE_VERBS)
+
+    def test_special_powers_require_actual_acquisition(self):
+        self.player.primary_class = "ninjutsu"
+        self.player.level = 100
+        self.player.learned_skills += ["Tailed Beast Bomb", "Six Paths Rinnegan"]
+        self.assertNotIn("Tailed Beast Bomb", self.catalog())
+        self.assertNotIn("Six Paths Rinnegan", self.catalog())
+        self.player.jinchuriki_beast_key = "matatabi"
+        self.assertIn("Tailed Beast Bomb", self.catalog())
+        self.player.reincarnation = "indra"
+        self.assertIn("Six Paths Rinnegan", self.catalog())
+        self.assertNotIn("Six Paths Sage Mode", self.catalog())
+
     def test_every_entry_from_class_registry_is_represented_for_immortals(self):
         lines = commands.build_jutsu_catalog_lines(self.player, immortal=True)
         text = "\n".join(lines)

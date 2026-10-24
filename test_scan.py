@@ -8,6 +8,8 @@ import corpses
 import leveling
 import olc
 import world
+import clone_control
+from models import Player
 
 
 class ScanTests(unittest.TestCase):
@@ -16,8 +18,8 @@ class ScanTests(unittest.TestCase):
         self.target = world.Room(97002, "Courtyard", "A courtyard")
         self.origin.exits["north"] = self.target.vnum
         self.target.ground_items = ["Visible Kunai", "Invisible Scroll"]
-        self.player = NS(name="Scout", level=3, room_vnum=self.origin.vnum,
-                         learned_skills=["Scan"], active_status_effects={})
+        self.player = Player("Scout", "Scout", level=3, room_vnum=self.origin.vnum,
+                             learned_skills=["Scan"], skill_proficiencies={"Scan": 100})
         self.other = NS(player=NS(name="Friend", room_vnum=self.target.vnum,
                                   active_status_effects={}))
         self.invisible_player = NS(player=NS(name="Ghost", room_vnum=self.target.vnum,
@@ -63,6 +65,44 @@ class ScanTests(unittest.TestCase):
         self.origin.exit_flags["north"] = ["hidden"]
         commands.cmd_scan(self.session, ["north"])
         self.assertNotIn("Courtyard", self.session.send.call_args.args[0])
+
+    def test_real_scan_gains_match_jutsu_rules_and_award_xp(self):
+        for start, result, xp in ((7, 9, 20), (70, 72, 20), (99, 100, 10), (100, 100, 0)):
+            with self.subTest(start=start):
+                self.player.skill_proficiencies["Scan"] = start
+                before = self.player.experience
+                with patch.object(combat.random, "randint", return_value=1):
+                    commands.cmd_scan(self.session, ["north"])
+                self.assertEqual(self.player.skill_proficiencies["Scan"], result)
+                self.assertEqual(self.player.experience - before, xp)
+        self.player.skill_proficiencies["Scan"] = 70
+        with patch.object(combat.random, "randint", return_value=100):
+            commands.cmd_scan(self.session, ["north"])
+        self.assertEqual(self.player.skill_proficiencies["Scan"], 70)
+
+    def test_invalid_or_unpracticed_scans_do_not_grant_growth(self):
+        self.player.skill_proficiencies["Scan"] = 7
+        with patch.object(combat, "grow_skill_from_usage") as grow:
+            for args in ([], ["bad"], ["south"]):
+                commands.cmd_scan(self.session, args)
+            self.origin.exit_flags["north"] = ["door"]
+            commands.cmd_scan(self.session, ["north"])
+            self.origin.exit_flags.clear()
+            self.player.practice_gate_enabled = True
+            commands.cmd_scan(self.session, ["north"])
+            grow.assert_not_called()
+
+    def test_clone_scan_awards_xp_to_real_body_without_moving_it(self):
+        self.player.skill_proficiencies["Scan"] = 50
+        self.player.room_vnum = 97010
+        self.session.controlled_clone = NS(room_vnum=self.origin.vnum)
+        before = self.player.experience
+        with patch.object(combat.random, "randint", return_value=1):
+            clone_control._sense(self.session, "scan", ["north"])
+        self.assertIs(self.session.player, self.player)
+        self.assertEqual(self.player.room_vnum, 97010)
+        self.assertEqual(self.player.skill_proficiencies["Scan"], 52)
+        self.assertEqual(self.player.experience - before, 20)
 
     def test_scan_is_level_three_general_skill(self):
         self.assertEqual(commands._skill_unlock_level("Scan"), leveling.SCAN_LEVEL)
