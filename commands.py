@@ -8473,10 +8473,8 @@ def cmd_save_world(session, args: List[str]) -> None:
     effect area files ever again so i can start 'building' the mud").
     Writes a full snapshot of every room/mob/item CURRENTLY live in
     memory to disk (world_persistence.save_world -- see that module's
-    own docstring for the 3 confirmed design decisions this rests on:
-    a full snapshot rather than additions-only, saved data always
-    winning on restart, and this being a deliberate manual command
-    rather than an autosave). From this point on, EVERY future server
+    own docstring for the full-snapshot format and saved-data precedence.
+    Normal builder edits now also save silently and automatically). From this point on, EVERY future server
     restart -- whether from a crash, a reboot, or deploying a newly
     packaged version of the code -- loads this exact saved state back
     in, on top of whatever content.py itself would otherwise build,
