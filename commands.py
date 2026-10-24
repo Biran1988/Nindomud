@@ -1333,6 +1333,135 @@ def cmd_restore(session, args: List[str]) -> None:
     session.send(f"Restored HP, chakra, and stamina for {count} online player(s).")
 
 
+
+def cmd_vperk(session, args: List[str]) -> None:
+    """Immortal command to activate/deactivate a village perk for 24 hours.
+
+    Normal Kage purchases still cost mission points and last one hour.
+    Staff overrides cost nothing, cover every ninja in the village and
+    persist across server reboots.
+    """
+    if not session.account or session.account.staff_level not in config.STAFF_LEVELS[1:]:
+        session.send("&ROnly immortals may manage village perks.&x")
+        return
+    usage = (
+        "Usage: vperk list\n"
+        "       vperk status [village|all]\n"
+        "       vperk <village|all> <perk name> on|off\n"
+        "Examples: vperk leaf double exp on  |  vperk leaf double exp off\n"
+        "          vperk all triple ryo on\n"
+        "An activated perk lasts 24 hours, survives reboots and costs no mission points."
+    )
+    if not args or args[0].lower() in ("list", "help"):
+        lines = [usage, "", "Available perks:"]
+        lines.extend(f"  {info['display_name']} ({key})"
+                     for key, info in village_perks.PERK_TYPES.items())
+        lines.append("Villages: " + ", ".join(VILLAGES.keys()) + ", all")
+        session.send("\n".join(lines))
+        return
+
+    def resolve_village(raw):
+        name = raw.lower().strip()
+        if name == "all":
+            return "all"
+        for key, details in VILLAGES.items():
+            if name in {key, details["village_name"].lower(), details["village_short_name"].lower()}:
+                return key
+        return None
+
+    if args[0].lower() == "status":
+        if len(args) > 2:
+            session.send(usage)
+            return
+        target = resolve_village(args[1]) if len(args) == 2 else (
+            session.player.village if session.player and session.player.village in VILLAGES else "all"
+        )
+        if target is None:
+            session.send("Unknown village. " + usage)
+            return
+        villages = VILLAGES.keys() if target == "all" else [target]
+        lines = ["&WVillage perk status:&x"]
+        for village in villages:
+            name = VILLAGES[village]["village_short_name"]
+            staff = village_perks.staff_perks_display(village)
+            effective = village_perks.active_perks_display(village)
+            lines.append(f"&C{name} ({village}):&x")
+            lines.extend("  &Y[Immortal] &x" + item for item in staff)
+            if not staff:
+                lines.append("  No immortal overrides active.")
+            if effective:
+                lines.extend("  Active: " + item for item in effective)
+        session.send("\n".join(lines))
+        return
+
+    if args[0].lower() in ("on", "off"):
+        if len(args) < 3:
+            session.send(usage)
+            return
+        action, raw_village, words = args[0].lower(), args[1], args[2:]
+    else:
+        if len(args) < 3:
+            session.send(usage)
+            return
+        action, raw_village, words = args[-1].lower(), args[0], args[1:-1]
+    if action not in ("on", "off"):
+        session.send(usage)
+        return
+    target = resolve_village(raw_village)
+    if target is None:
+        session.send("Unknown village. Use 'vperk list' to see available villages.")
+        return
+
+    query = " ".join(words).lower().strip()
+    perk_key = next(
+        (key for key, info in village_perks.PERK_TYPES.items()
+         if query in (key, info["display_name"].lower())),
+        None,
+    )
+    if perk_key is None:
+        session.send("Unknown village perk. Use 'vperk list' to see the available perks.")
+        return
+
+    villages = list(VILLAGES) if target == "all" else [target]
+    changed = []
+    untouched = []
+    for village in villages:
+        try:
+            if action == "on":
+                village_perks.set_staff_perk(village, perk_key)
+                changed.append(village)
+            elif village_perks.clear_staff_perk(village, perk_key):
+                changed.append(village)
+            else:
+                untouched.append(village)
+        except OSError as exc:
+            session.send(f"&RFailed to save village perk for {village}: {exc}&x")
+            continue
+
+    display_name = village_perks.PERK_TYPES[perk_key]["display_name"]
+    if changed:
+        verb = "activated for 24 hours" if action == "on" else "disabled"
+        session.send(
+            f"&G{display_name} {verb} in: {', '.join(changed)}.&x"
+        )
+        for village in changed:
+            if action == "on":
+                session.broadcast_village(
+                    village, f"&Y[Village bonus: {display_name} activated for 24 hours!]&x",
+                    exclude_self=True,
+                )
+            else:
+                session.broadcast_village(
+                    village, f"&D[Village bonus: {display_name} has been disabled.]&x",
+                    exclude_self=True,
+                )
+    if untouched:
+        session.send(
+            f"&D{display_name} was not the active immortal override in: "
+            f"{', '.join(untouched)}.&x"
+        )
+
+
 def cmd_respawn(session, args: List[str]) -> None:
     if not olc._require_admin(session):
         return
@@ -9062,6 +9191,7 @@ COMMANDS = {
     "sage": sage_mode.command,
     "summon": sage_mode.summon_command,
     "restore": cmd_restore, "respawn": cmd_respawn,
+    "vperk": cmd_vperk, "villageperk": cmd_vperk,
     "emotes": cmd_emotes, "emojis": cmd_emotes,
     "look": cmd_look, "l": cmd_look,
     "scan": cmd_scan,
