@@ -5331,6 +5331,13 @@ def cmd_buy(session, args: List[str]) -> None:
         )
         return
 
+    # Bulk purchases require an explicit item query. Property purchases,
+    # mission-point rewards and perks remain one-at-a-time commands.
+    if args and (args[0].lower() == "all" or
+                 (args[0].isdigit() and len(args) >= 2)):
+        _buy_multiple(session, args)
+        return
+
     if _own_kage_chamber(player):
         if not args:
             session.send("Buy what? Try 'list' to see available perks and legendary items.")
@@ -5469,6 +5476,119 @@ def cmd_buy(session, args: List[str]) -> None:
     player.ryo -= match["price"]
     session.send(f"You buy {rarity_colored_name(match['name'])} for {match['price']} ryo.")
     _fire_item_trigger(session, match["name"], "get")
+
+
+
+def _buy_multiple(session, args: List[str]) -> None:
+    """Buy as many copies of a named item as possible or a fixed quantity.
+
+    'buy all sardine' is bounded by actual stock in player shops and by
+    Ryo/inventory stack limits in NPC shops. 'buy 3 sardine' buys up to 3.
+    Never treat a bare 'buy all' as permission to buy the whole shop.
+    """
+    player = session.player
+    query = " ".join(args[1:]).strip().lower()
+    if not query:
+        session.send("Usage: buy all <item>  |  buy <number> <item>")
+        return
+    unlimited = args[0].lower() == "all"
+    limit = None if unlimited else int(args[0])
+    if limit is not None and limit < 1:
+        session.send("Enter a positive number of items to buy.")
+        return
+    if _own_kage_chamber(player):
+        session.send("Kage rewards and village perks must be bought individually.")
+        return
+
+    shopkeeper = _find_shopkeeper(player.room_vnum)
+    shop = None if shopkeeper else content.SHOPS.get(player.room_vnum)
+    if not shopkeeper and not shop:
+        session.send("There is nothing to buy here.")
+        return
+
+    bought = []
+    total_ryo = 0
+    stop_reason = None
+
+    if shopkeeper and shopkeeper.player_shop_owner:
+        # Real, individually stocked player shop items can sell out.
+        stock = [
+            entry for entry in playershops.stock_for_display(shopkeeper)
+            if entry["price"] is not None and _item_matches(query, entry["item_name"])
+        ]
+        if not stock:
+            session.send(f"{shopkeeper.name.capitalize()} doesn't sell that.")
+            return
+        count = len(stock) if unlimited else min(limit, len(stock))
+        for _ in range(count):
+            ok, result, price = playershops.buy_from_shop(shopkeeper, player, query)
+            if not ok:
+                stop_reason = result
+                break
+            bought.append(result)
+            total_ryo += price
+            _fire_item_trigger(session, result, "get")
+        if not unlimited and count < limit and not stop_reason:
+            stop_reason = "The shop has no more of that item in stock."
+
+    else:
+        if shopkeeper:
+            obj_vnum = next((
+                vnum for vnum in combat.mob_shop_items(shopkeeper)
+                if vnum in olc.OBJECT_TEMPLATES
+                and _item_matches(query, olc.OBJECT_TEMPLATES[vnum]["short_desc"])
+            ), None)
+            if obj_vnum is None:
+                session.send(f"{shopkeeper.name.capitalize()} doesn't sell that.")
+                return
+            obj = olc.OBJECT_TEMPLATES[obj_vnum]
+            name, cost, proto = obj["short_desc"], obj["cost"], obj
+        else:
+            entry = next((
+                item for item in shop["items"]
+                if _item_matches(query, item["name"])
+            ), None)
+            if entry is None:
+                session.send("They don't sell that here.")
+                return
+            name, cost = entry["name"], entry["price"]
+            proto = _find_object_prototype_by_name(name)
+
+        level_error = playershops.purchase_level_error(player, proto, name)
+        if level_error:
+            session.send(level_error)
+            return
+        # NPC stores have unlimited stock, but inventory stacks hold at
+        # most 64 copies per exact item, even when an item is free.
+        count = inventory.MAX_STACK_SIZE if unlimited else min(limit, inventory.MAX_STACK_SIZE)
+        for _ in range(count):
+            if player.ryo < cost:
+                stop_reason = "You can't afford any more of that item."
+                break
+            ok, reason = inventory.add_item(player.inventory, name)
+            if not ok:
+                stop_reason = inventory.full_message(reason, name)
+                break
+            player.ryo -= cost
+            bought.append(name)
+            total_ryo += cost
+            _fire_item_trigger(session, name, "get")
+        if not unlimited and limit > count and not stop_reason:
+            stop_reason = "Your inventory stack limit was reached."
+
+    if not bought:
+        session.send(stop_reason or "You couldn't buy any matching items.")
+        return
+    counts = inventory.slot_counts(bought)
+    details = ", ".join(
+        f"{rarity_colored_name(name)} x{quantity}"
+        for name, quantity in counts.items()
+    )
+    message = f"You buy {len(bought)} item(s) for {total_ryo:,} ryo: {details}."
+    if stop_reason:
+        message += f" {stop_reason}"
+    session.send(message)
+
 
 
 def cmd_sell(session, args: List[str]) -> None:
