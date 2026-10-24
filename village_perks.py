@@ -184,6 +184,20 @@ def purchase(village: str, perk_key: str) -> None:
     }
 
 
+def staff_perks_display(village: str) -> List[str]:
+    """Administrative view of 24-hour overrides and their remaining time."""
+    lines = []
+    for category in CATEGORIES:
+        entry = _staff_entry(village, category)
+        if entry:
+            remaining = max(0, int(entry["expires_at"] - time.time()))
+            hours, leftover = divmod(remaining, 3600)
+            minutes = leftover // 60
+            name = PERK_TYPES[entry["perk"]]["display_name"]
+            lines.append(f"{name}: {hours}h {minutes}m remaining")
+    return lines
+
+
 def xp_multiplier(village: str) -> float:
     entry = _active_entry(village, "exp")
     return PERK_TYPES[entry["perk"]]["multiplier"] if entry else 1.0
