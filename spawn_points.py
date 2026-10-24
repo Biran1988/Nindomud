@@ -91,6 +91,16 @@ def refresh_template_snapshots() -> int:
     import storage
 
     state = storage.load_custom_templates()
+
+    # Deleting a builder prototype must not allow an old templates.json
+    # entry to resurrect it on the next reboot. Retain copies only while
+    # the corresponding prototype is still part of the current world.
+    for kind, live in (("mobs", combat.MOB_TEMPLATES), ("items", olc.OBJECT_TEMPLATES)):
+        saved = state.setdefault(kind, {})
+        for vnum in list(saved):
+            if int(vnum) not in live:
+                del saved[vnum]
+
     refreshed = set()
     for point in list_spawn_points():
         kind, vnum = point["kind"], point["vnum"]
