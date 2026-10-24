@@ -5222,7 +5222,7 @@ def cmd_list(session, args: List[str]) -> None:
 def cmd_buy(session, args: List[str]) -> None:
     player = session.player
 
-    if args and "apartment" in " ".join(args).lower():
+    if args and args[0].lower() != "all" and not args[0].isdigit() and "apartment" in " ".join(args).lower():
         current_room = WORLD.get(player.room_vnum)
         if not current_room or not current_room.apartment:
             session.send("You can only buy an apartment while standing inside one that's available.")
