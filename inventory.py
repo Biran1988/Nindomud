@@ -4,7 +4,7 @@ Inventory stacking (Section 62).
 Items with the same name stack together, up to MAX_STACK_SIZE units
 per stack; a player can hold at most MAX_INVENTORY_SLOTS distinct
 stacks at once (a "slot" is a distinct item name, not a single unit --
-64 Sardines is one slot, not 64).
+2,000 Sardines is one slot, not 2,000).
 
 The underlying `player.inventory` list is UNCHANGED in shape: it's
 still one string per unit (three kunai is the string "A Basic Kunai"
@@ -18,7 +18,7 @@ how it's DISPLAYED (consolidated into "Name (xN)" lines by
 commands.cmd_inventory, replacing one line per unit).
 """
 
-MAX_STACK_SIZE = 64
+MAX_STACK_SIZE = 2000
 MAX_INVENTORY_SLOTS = 20
 
 
