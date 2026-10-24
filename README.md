@@ -231,6 +231,13 @@ open individual imported areas in the room editor. Map autosave and a portable
 world backup carry linked area drafts with them. Editing a world overview
 never imports or replaces game world files. See `builder/README.md`.
 
+The live MUD now saves successful room, mob and item builder edits automatically,
+without extra chat output. A background writer serializes world checkpoints
+to `data/world_state.json` and preserves the prior version as
+`data/world_state.json.bak`. `reboot` waits for any pending writes and
+saves the final world before restarting; if saving fails, reboot is cancelled.
+Keep the entire `data/` directory when installing a new release.
+
 Version 15.312 expands the offline area editor with multi-project autosaves,
 portable backup/restore, full room/mob/item builder settings, programs, shop
 stock, exit door settings and spawn caps. Game imports validate advanced edits
