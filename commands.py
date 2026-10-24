@@ -5510,7 +5510,7 @@ def cmd_sell(session, args: List[str]) -> None:
         )
         return
 
-    if args and "apartment" in " ".join(args).lower():
+    if args and args[0].lower() != "all" and not args[0].isdigit() and "apartment" in " ".join(args).lower():
         if player.apartment_room_vnum is None:
             session.send("You don't own an apartment to sell.")
             return
@@ -5538,6 +5538,11 @@ def cmd_sell(session, args: List[str]) -> None:
             f"You sign over the deed (and every room you built) and receive {total_refund:,} ryo "
             f"(50% of what each room cost)."
         )
+        return
+
+    if args and (args[0].lower() == "all" or
+                 (args[0].isdigit() and len(args) > 1)):
+        _sell_multiple(session, args)
         return
 
     shopkeeper = _find_shopkeeper(player.room_vnum)
@@ -5598,6 +5603,105 @@ def cmd_sell(session, args: List[str]) -> None:
     player.inventory.remove(match)
     player.ryo += price
     session.send(f"You sell {match} for {price} ryo.")
+
+
+
+def _sell_multiple(session, args: List[str]) -> None:
+    """Sell every matching inventory item, or up to an exact quantity.
+
+    Syntax: sell all <item> | sell <count> <item>.
+    The item query is mandatory, preventing accidental inventory-wide sales.
+    Equipped items are not in the inventory list and cannot be selected.
+    """
+    player = session.player
+    query = " ".join(args[1:]).strip().lower()
+    if not query:
+        session.send("Usage: sell all <item>  |  sell <number> <item>")
+        return
+    unlimited = args[0].lower() == "all"
+    quantity = None if unlimited else int(args[0])
+    if quantity is not None and quantity < 1:
+        session.send("Enter a positive number of items to sell.")
+        return
+
+    shopkeeper = _find_shopkeeper(player.room_vnum)
+    shop = None if shopkeeper else content.SHOPS.get(player.room_vnum)
+    if not shopkeeper and not shop:
+        session.send("There is nowhere to sell that here.")
+        return
+
+    # Record real inventory indices: multiple copies have identical strings,
+    # and carried container contents are indexed by their inventory position.
+    candidates = [
+        (i, item) for i, item in enumerate(player.inventory)
+        if _item_matches(query, item)
+    ]
+    selected = candidates if unlimited else candidates[:quantity]
+    if not selected:
+        session.send(f"You aren't carrying anything like '{query}'.")
+        return
+
+    import seasonal_events
+    sold = []
+    total_ryo = 0
+    skipped = 0
+    rejected_category = None
+    buys_categories = combat.mob_shop_buys_categories(shopkeeper) if shopkeeper else None
+
+    # Descending order keeps the original indices of pending candidates valid.
+    for index, item in reversed(selected):
+        if item.endswith(" [glued]") or player.backpack_contents.get(str(index)):
+            skipped += 1
+            continue
+        category = item_types.classify_item(item)
+        is_feather = item == seasonal_events.TURKEY_FEATHER
+        if shopkeeper:
+            if buys_categories and category not in buys_categories and not is_feather:
+                rejected_category = category
+                skipped += 1
+                continue
+            multiplier = 1.0 if buys_categories else 0.5
+        else:
+            shop_type = shop["type"]
+            if not data_shops.can_sell_here(shop_type, category):
+                rejected_category = category
+                skipped += 1
+                continue
+            multiplier = data_shops.sell_multiplier(shop_type)
+
+        dish_price = cooking.price_for_dish(item)
+        base_price = dish_price if dish_price is not None else item_types.base_sell_price(item)
+        price = 500 if shopkeeper and is_feather else max(1, int(base_price * multiplier))
+        del player.inventory[index]
+        # An empty container may be sold, but do not orphan the contents
+        # mapping of a different backpack positioned later in inventory.
+        shifted = {}
+        for raw_position, contents in player.backpack_contents.items():
+            position = int(raw_position)
+            if position != index:
+                shifted[str(position - 1 if position > index else position)] = contents
+        player.backpack_contents = shifted
+        sold.append(item)
+        total_ryo += price
+
+    if not sold:
+        if rejected_category is not None:
+            if shopkeeper:
+                session.send(f"{shopkeeper.name.capitalize()} doesn't buy {rejected_category} items.")
+            else:
+                display_name = data_shops.SHOP_TYPES[shop["type"]]["display_name"]
+                session.send(f"{display_name} doesn't buy {rejected_category} items.")
+        else:
+            session.send("Those items are protected or contain stored items and cannot be sold.")
+        return
+
+    player.ryo += total_ryo
+    counts = inventory.slot_counts(sold)
+    details = ", ".join(f"{name} x{count}" for name, count in counts.items())
+    message = f"You sell {len(sold)} item(s) for {total_ryo:,} ryo: {details}."
+    if skipped:
+        message += f" {skipped} matching item(s) could not be sold."
+    session.send(message)
 
 
 CHOU_HAN_CHOICES = {"chou": "chou", "even": "chou", "han": "han", "odd": "han"}
@@ -6826,6 +6930,48 @@ def cmd_get(session, args: List[str]) -> None:
         return
 
     room = WORLD.get(player.room_vnum)
+
+    # "get all" picks up every portable object on the floor, while
+    # "get all sardine" limits the pickup to matching ground items.
+    # Ryo remains a separate currency pile and occupies no inventory slot.
+    if full_query == "all" or full_query.startswith("all "):
+        keyword = full_query[4:].strip() if full_query != "all" else ""
+        candidates = [
+            item for item in list(room.ground_items)
+            if not keyword or _item_matches(keyword, item)
+        ]
+        picked = []
+        fixed = 0
+        full = 0
+        for item in candidates:
+            if _has_no_take_flag(item):
+                fixed += 1
+                continue
+            ok, _reason = inventory.add_item(player.inventory, item)
+            if not ok:
+                full += 1
+                continue
+            room.ground_items.remove(item)
+            picked.append(item)
+
+        has_ryo = full_query == "all" and bool(getattr(room, "ground_ryo", []))
+        if picked:
+            counts = inventory.slot_counts(picked)
+            details = ", ".join(
+                f"{rarity_colored_name(name)} x{count}"
+                for name, count in counts.items()
+            )
+            session.send(f"You pick up {len(picked)} item(s): {details}.")
+        if has_ryo:
+            currency_piles.pickup(session, "all ryo")
+        if not picked and not has_ryo:
+            session.send("There is nothing here you can pick up.")
+        if full or fixed:
+            session.send(
+                f"Left behind: {full} item(s) due to inventory limits, "
+                f"{fixed} fixed decoration(s)."
+            )
+        return
 
     query = full_query
     match = find_indexed_item(query, room.ground_items)
