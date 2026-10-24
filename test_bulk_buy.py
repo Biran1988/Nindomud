@@ -119,8 +119,8 @@ class BulkBuyTests(unittest.TestCase):
             commands.cmd_buy(self.session, ["all", "sardine"])
         self.assertEqual(self.player.inventory, [])
         commands.cmd_buy(self.session, ["all", "apartment decoration"])
-        self.assertEqual(self.player.inventory, ["apartment decoration"])
-        self.assertEqual(self.player.ryo, 997)
+        self.assertEqual(self.player.inventory, ["apartment decoration"] * inventory.MAX_STACK_SIZE)
+        self.assertEqual(self.player.ryo, 1000 - 3 * inventory.MAX_STACK_SIZE)
 
 
 if __name__ == "__main__":
