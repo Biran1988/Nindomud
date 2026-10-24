@@ -47,6 +47,7 @@ class MovementStaminaTests(unittest.TestCase):
         player = Player("TiredWalker", "TiredWalker")
         player.room_vnum = start.vnum
         player.stamina = 0
+        player.position = "resting"
         session = SimpleNamespace(player=player, account=None, combat_target=None,
                                   trade=None, send=Mock(), broadcast_room=Mock())
         with patch.object(commands.WORLD, "get", side_effect={703: start, 704: finish}.get), \
@@ -57,6 +58,7 @@ class MovementStaminaTests(unittest.TestCase):
             commands.cmd_move(session, "north")
             self.assertEqual(player.room_vnum, start.vnum)
             self.assertEqual(player.stamina, 0)
+            self.assertEqual(player.position, "resting")
             self.assertIn("too exhausted", session.send.call_args.args[0])
             roll.assert_not_called()
             before_move.assert_not_called()
