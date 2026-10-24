@@ -102,7 +102,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -135,12 +135,12 @@ def dispatch_line(session, line: str) -> None:
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
-            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jutsu", "inventory",
+            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "jutsu", "inventory",
                                        "inv", "skills", "prac", "imms", "immortal",
                                        "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
-    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jutsu", "quit", "save"):
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jinchuriki", "jutsu", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
@@ -1885,6 +1885,24 @@ def cmd_izanagi(session, args: List[str]) -> None:
         jutsu_colors.send(session, "&RReality bends around you -- fate itself now answers to your will.&x")
     else:
         jutsu_colors.send(session, "&RYou release your grip on fate. Izanagi fades.&x")
+
+
+def cmd_jinchuriki(session, args: List[str]) -> None:
+    """Show the player's sealed beast and its separate combat mastery."""
+    if args:
+        session.send("Usage: jinchuriki")
+        return
+    import data_tailed_beasts
+    player = session.player
+    beast = data_tailed_beasts.TAILED_BEASTS_BY_KEY.get(player.jinchuriki_beast_key)
+    if beast is None:
+        session.send("You do not have a Tailed Beast sealed within you.")
+        return
+    session.send("\n".join((
+        "&WJinchuriki Mastery&x",
+        f"&CBeast:&x {beast['display_name']} ({beast['tails']} {'tail' if beast['tails'] == 1 else 'tails'})",
+        f"&CMastery:&x {player.jinchuriki_mastery}%",
+    )))
 
 
 def cmd_tailed_beast_mode(session, args: List[str]) -> None:
@@ -8708,6 +8726,7 @@ COMMANDS = {
     "who": cmd_who,
     "whois": cmd_whois,
     "sharingan": cmd_sharingan, "shar": cmd_sharingan,
+    "jinchuriki": cmd_jinchuriki,
     "beastmode": cmd_tailed_beast_mode,
     "izanagi": cmd_izanagi,
     "guess": cmd_guess,

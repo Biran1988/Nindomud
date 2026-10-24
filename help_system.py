@@ -1186,6 +1186,20 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "jinchuriki",
+        "keywords": ["jinchuriki", "jinchuriki mastery", "tailed beast mastery"],
+        "title": "Jinchuriki Mastery",
+        "body": (
+            "Syntax: jinchuriki\n\n"
+            "Shows your sealed Tailed Beast, its tail count, and your exact mastery percentage "
+            "from 0% to 100%. This is separate from ordinary skill proficiency. "
+            "Mastery grows through combat while carrying a beast; rampage risk ends at 65%, "
+            "and beastmode becomes available at 100%. Viewing this display costs nothing "
+            "and does not toggle Beastmode. If you have no sealed beast, the command says so."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "beastmode",
         "keywords": ["beastmode", "tailed beast mode"],
         "title": "Beastmode",

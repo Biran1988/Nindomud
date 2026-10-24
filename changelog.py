@@ -499,4 +499,5 @@ CHANGELOG = [
     ("15.351", "Hidden Mist Jutsu is now a room-bound on/off toggle with 1 Chakra upkeep every 5 seconds and no duration limit. Mist stays where cast, can be dismissed remotely, and fades when upkeep fails or its caster disconnects. Room visuals and concealment follow the toggle."),
     ("15.352", "Chisei is now an on/off toggle maintained for 1 Chakra every 5 seconds. Its Chakra capacity and Genjutsu accuracy bonuses persist while active and are removed when released or upkeep fails; recasting cannot stack bonuses."),
     ("15.353", "Recent update recap: Hidden Mist and Chisei are upkeep toggles; Silent Movement stays on until dismissed or Stamina runs short. Targetless combat jutsu use your opponent, unleash beast accepts 1-9, and 1000 Years of Death has its corrected name. Beast announcements, the full sealing window and visible room jutsu are included."),
+    ("15.354", "Added jinchuriki: a separate display showing your sealed Tailed Beast, tail count and exact mastery percentage. Viewing mastery costs nothing and does not activate Beastmode."),
 ]
