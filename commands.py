@@ -8550,7 +8550,7 @@ def _reboot_preflight() -> str:
 
 def cmd_reboot(session, args: List[str]) -> None:
     """Implementor-only: saves every connected player, warns everyone,
-    then restarts the whole server process in place. Restricted to the
+    then saves the world before restarting the whole server process in place. Restricted to the
     single highest staff tier given the severity -- this affects every
     connected player, not just the one running the command."""
     if not session.account or session.account.staff_level != "implementor":
@@ -8560,6 +8560,15 @@ def cmd_reboot(session, args: List[str]) -> None:
     error = _reboot_preflight()
     if error:
         session.send(f"&RReboot cancelled: the installed files failed the startup check. The server is still online.\n{error}&x")
+        return
+
+    # Save world before warning players or beginning process replacement.
+    # If the disk is unavailable, do not reboot and lose builder edits.
+    import world_persistence
+    try:
+        world_persistence.save_world()
+    except Exception as exc:
+        session.send(f"&RReboot cancelled: could not save the world ({exc}). The server is still online.&x")
         return
 
     from session import ACTIVE_SESSIONS
