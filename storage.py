@@ -333,17 +333,27 @@ def save_world_state(state: dict) -> None:
             # Keep the preceding successful snapshot as a fallback. Do not
             # remove/rename the primary until the replacement is complete.
             if os.path.isfile(path):
-                backup_fd, backup_temp = tempfile.mkstemp(
-                    prefix=".world_backup-", suffix=".tmp", dir=directory)
+                # Never replace the last good .bak with a damaged primary.
+                # This also makes recovery safe if an administrator saves
+                # again after fallback loading from a corrupted main file.
                 try:
-                    with os.fdopen(backup_fd, "wb") as destination, open(path, "rb") as source:
-                        shutil.copyfileobj(source, destination)
-                        destination.flush()
-                        os.fsync(destination.fileno())
-                    os.replace(backup_temp, path + ".bak")
-                finally:
-                    if os.path.exists(backup_temp):
-                        os.unlink(backup_temp)
+                    with open(path, "r", encoding="utf-8") as prior:
+                        json.load(prior)
+                    primary_valid = True
+                except (OSError, ValueError, UnicodeError):
+                    primary_valid = False
+                if primary_valid:
+                    backup_fd, backup_temp = tempfile.mkstemp(
+                        prefix=".world_backup-", suffix=".tmp", dir=directory)
+                    try:
+                        with os.fdopen(backup_fd, "wb") as destination, open(path, "rb") as source:
+                            shutil.copyfileobj(source, destination)
+                            destination.flush()
+                            os.fsync(destination.fileno())
+                        os.replace(backup_temp, path + ".bak")
+                    finally:
+                        if os.path.exists(backup_temp):
+                            os.unlink(backup_temp)
 
             os.replace(temp_path, path)
             # Flush directory metadata on POSIX so renames survive a crash.
