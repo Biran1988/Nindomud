@@ -237,7 +237,7 @@ stock, exit door settings and spawn caps. Game imports validate advanced edits
 against the original server export before applying them.
 
 Version 15.307 added a trainable signature move: select a 100%-mastered active
-jutsu with `signature <move>`, practice it to 150%, then gain a 25% bonus to
+jutsu with `signature <move>`, raise it to 150% through successful use (not teacher practice), then gain a 25% bonus to
 its damage or effect duration. Switching drops the old move back to 100%.
 The visual area editor remains at `builder/Nindo_Area_Builder.html`.
 See `builder/README.md` for the offline-to-server workflow. Earlier updates
