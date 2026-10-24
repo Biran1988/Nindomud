@@ -36,11 +36,10 @@ each a real fork with a meaningfully different outcome:
    overwrites whatever content.py would have built at that same
    vnum, never the other way around.
 
-3. MANUAL save, not automatic -- a real 'save world' command a staff
-   member runs when ready, not an autosave firing on every single
-   edit. Matches the classic ROM-style 'asave'/'osave' convention
-   this whole project is deliberately modeled on, and avoids writing
-   to disk constantly while actively mid-build.
+3. Automatic builder saves -- successful OLC room, mob and item edits
+   queue silent background world snapshots. Multiple edits are coalesced
+   without concurrent writes; 'save world' remains available as a manual
+   full checkpoint, and 'reboot' saves the latest world before restarting.
 
 Registered as world_state.json (storage.save_world_state/
 load_world_state) -- a single flat file holding every room, mob
@@ -206,9 +205,9 @@ def apply_deleted_areas(state=None) -> None:
 
 def save_world() -> dict:
     """Writes the current live world state to disk, per the 'save
-    world' staff command -- everything currently in memory becomes
-    what gets restored on every future restart from here on, until
-    the next 'save world'. Returns the same counts snapshot_world's
+    world' staff command -- everything currently in memory is saved
+    and restored on future restarts, as with automatic builder saves.
+    Returns the same counts snapshot_world's
     payload holds, so the caller can report exactly how much was
     saved (e.g. "Saved 214 rooms, 58 mobs, 130 items.")."""
     import spawn_points
