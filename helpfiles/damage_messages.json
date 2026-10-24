@@ -1,14 +1,15 @@
 {
   "primary_keyword": "damage messages",
   "keywords": [
+    "damage",
     "damage messages",
     "damage values",
     "damage words",
     "damage colors",
     "colored damage"
   ],
-  "title": "Damage Messages",
-  "body": "Syntax: (automatic during combat)\n\nDescription: Every combat damage word corresponds to the actual damage dealt. The word is colored from a broad palette so you can judge a hit at a glance. The exact scale is:\n\n            0-1 damage  &[245]TRIVIAL&x\n            2-4 damage  &[110]GLANCING&x\n            5-9 damage  &[123]STINGING&x\n          10-19 damage  &[39]BONE-JARRING&x\n          20-34 damage  &[75]RIB-RATTLING&x\n          35-54 damage  &[135]THUNDEROUS&x\n          55-79 damage  &[171]BRUTAL&x\n         80-119 damage  &[168]FEROCIOUS&x\n        120-179 damage  &[174]CRUSHING&x\n        180-259 damage  &[215]SAVAGE&x\n        260-399 damage  &[190]MANGLE-INDUCING&x\n        400-599 damage  &[220]DEVASTATING&x\n        600-899 damage  &[214]ANNIHILATING&x\n      900-1,299 damage  &[208]OBLITERATING&x\n    1,300-1,999 damage  &[202]CATASTROPHIC&x\n    2,000-2,999 damage  &[196]CATACLYSMIC&x\n    3,000-4,999 damage  &[197]WORLD-BREAKING&x\n    5,000-7,499 damage  &[93]REALITY-RENDING&x\n    7,500-9,999 damage  &[201]REALITY-SHATTERING&x\n        10,000+ damage  &[213]EXTINCTION-LEVEL&x\n\nHits beyond 10,000 stay EXTINCTION-LEVEL. Damaging jutsu base hits climb this word ladder with their unlock level: level 75 reaches CATASTROPHIC, and level 100 reaches EXTINCTION-LEVEL. Multi-strike jutsu split their base across strikes. Bonuses and defenses can move a final hit to another word. Damage words appear in combat instead of raw numbers.\n\nDate: 2026-10-03",
+  "title": "Damage Words and Number Ranges",
+  "body": "Syntax: help damage | help damage messages\n\nDescription: Look up a combat damage word below to find its numeric damage range. Each word covers a range, so it cannot tell you the exact damage of an individual hit. Colors match the words used in combat. The exact scale is:\n\n            0-1 damage  &[245]TRIVIAL&x\n            2-4 damage  &[110]GLANCING&x\n            5-9 damage  &[123]STINGING&x\n          10-19 damage  &[39]BONE-JARRING&x\n          20-34 damage  &[75]RIB-RATTLING&x\n          35-54 damage  &[135]THUNDEROUS&x\n          55-79 damage  &[171]BRUTAL&x\n         80-119 damage  &[168]FEROCIOUS&x\n        120-179 damage  &[174]CRUSHING&x\n        180-259 damage  &[215]SAVAGE&x\n        260-399 damage  &[190]MANGLE-INDUCING&x\n        400-599 damage  &[220]DEVASTATING&x\n        600-899 damage  &[214]ANNIHILATING&x\n      900-1,299 damage  &[208]OBLITERATING&x\n    1,300-1,999 damage  &[202]CATASTROPHIC&x\n    2,000-2,999 damage  &[196]CATACLYSMIC&x\n    3,000-4,999 damage  &[197]WORLD-BREAKING&x\n    5,000-7,499 damage  &[93]REALITY-RENDING&x\n    7,500-9,999 damage  &[201]REALITY-SHATTERING&x\n        10,000+ damage  &[213]EXTINCTION-LEVEL&x\n\nHits beyond 10,000 stay EXTINCTION-LEVEL. Damaging jutsu base hits climb this word ladder with their unlock level: level 75 reaches CATASTROPHIC, and level 100 reaches EXTINCTION-LEVEL. Multi-strike jutsu split their base across strikes. Bonuses and defenses can move a final hit to another word. Damage words appear in combat instead of raw numbers.\n\nDate: 2026-10-23",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0.0

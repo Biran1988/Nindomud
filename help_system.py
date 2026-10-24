@@ -3183,16 +3183,16 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "damage messages",
-        "keywords": ["damage messages", "damage values", "damage words", "damage colors", "colored damage"],
-        "title": "Damage Messages",
+        "keywords": ["damage", "damage messages", "damage values", "damage words", "damage colors", "colored damage"],
+        "title": "Damage Words and Number Ranges",
         "body": (
-            "Syntax: (automatic during combat)\n"
+            "Syntax: help damage | help damage messages\n"
             "\n"
-            "Description: Every combat damage word corresponds to the actual damage dealt. The word is colored from a broad palette so you can judge a hit at a glance. The exact scale is:\n\n"
+            "Description: Look up a combat damage word below to find its numeric damage range. Each word covers a range, so it cannot tell you the exact damage of an individual hit. Colors match the words used in combat. The exact scale is:\n\n"
             + damage_messages.help_scale_lines() + "\n\n"
             "Hits beyond 10,000 stay EXTINCTION-LEVEL. Damaging jutsu base hits climb this word ladder with their unlock level: level 75 reaches CATASTROPHIC, and level 100 reaches EXTINCTION-LEVEL. Multi-strike jutsu split their base across strikes. Bonuses and defenses can move a final hit to another word. Damage words appear in combat instead of raw numbers.\n"
             "\n"
-            "Date: 2026-10-03"
+            "Date: 2026-10-23"
         ),
         "created_by": "System",
         "updated_by": "System",
