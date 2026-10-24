@@ -4,6 +4,7 @@ from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
 
 import commands
+import inventory
 import content
 import currency_piles
 import olc
@@ -40,10 +41,10 @@ class BulkItemCommandTests(unittest.TestCase):
                             for c in self.session.send.call_args_list))
 
     def test_get_all_only_picks_up_what_fits_and_continues_after_a_full_stack(self):
-        self.player.inventory = ["a sardine"] * 64
+        self.player.inventory = ["a sardine"] * inventory.MAX_STACK_SIZE
         self.room.ground_items = ["a sardine", "a minnow"]
         commands.cmd_get(self.session, ["all"])
-        self.assertEqual(self.player.inventory.count("a sardine"), 64)
+        self.assertEqual(self.player.inventory.count("a sardine"), inventory.MAX_STACK_SIZE)
         self.assertIn("a minnow", self.player.inventory)
         self.assertEqual(self.room.ground_items, ["a sardine"])
 
