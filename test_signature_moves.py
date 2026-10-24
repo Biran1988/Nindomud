@@ -10,6 +10,7 @@ import commands
 import data_jutsu
 import leveling
 import signature_moves
+import upkeep_reports
 import storage
 import world
 from models import Player
@@ -31,18 +32,23 @@ class SignatureMoveTests(unittest.TestCase):
         commands.cmd_signature(self.session, ["Soto", "Uke"])
         self.assertFalse(self.player.signature_move)
 
-    def test_switch_resets_old_to_100_and_requires_new_training(self):
+    def test_switch_resets_old_to_100_and_requires_new_use(self):
         commands.cmd_signature(self.session, ["Dynamic", "Entry"])
         self.assertEqual(self.player.signature_move, "Dynamic Entry")
         self.assertFalse(signature_moves.empowered(self.player, data_jutsu.JUTSU["dynamic entry"]))
+        points = self.player.practice_points
         with patch.object(commands, "_find_matching_teacher", return_value=object()):
-            for _ in range(12):
-                commands.cmd_practice(self.session, ["Dynamic", "Entry"])
+            commands.cmd_practice(self.session, ["Dynamic", "Entry"])
+        self.assertEqual(self.player.skill_proficiencies["Dynamic Entry"], 100)
+        self.assertEqual(self.player.practice_points, points)
+        self.assertIn("through successful use", self.session.send.call_args.args[0])
+        with patch.object(combat.random, "randint", return_value=1):
+            for _ in range(25):
+                combat.grow_skill_from_usage(self.player, "Dynamic Entry", session=self.session)
         self.assertEqual(self.player.skill_proficiencies["Dynamic Entry"], 150)
         self.assertTrue(signature_moves.empowered(self.player, data_jutsu.JUTSU["dynamic entry"]))
-        points = self.player.practice_points
-        commands.cmd_practice(self.session, ["Dynamic", "Entry"])
-        self.assertEqual(self.player.practice_points, points)
+        combat.grow_skill_from_usage(self.player, "Dynamic Entry", session=self.session)
+        self.assertEqual(self.player.skill_proficiencies["Dynamic Entry"], 150)
         commands.cmd_signature(self.session, ["Mae", "Geri"])
         self.assertEqual(self.player.skill_proficiencies["Dynamic Entry"], 100)
         self.assertEqual(self.player.signature_move, "Mae Geri")
@@ -52,6 +58,19 @@ class SignatureMoveTests(unittest.TestCase):
         self.assertEqual(self.player.skill_proficiencies["Mae Geri"], 100)
         commands.cmd_signature(self.session, ["clear"])
         self.assertFalse(self.player.signature_move)
+
+    def test_signature_toggle_can_grow_by_active_use_not_practice(self):
+        self.player.signature_move = "Barrier"
+        with patch.object(upkeep_reports.time, "monotonic", side_effect=[0, 10]), \
+             patch.object(upkeep_reports.random, "randint", return_value=1):
+            upkeep_reports.maintain_skill(self.player, "Barrier", session=self.session)
+            upkeep_reports.maintain_skill(self.player, "Barrier", session=self.session)
+        self.assertEqual(self.player.skill_proficiencies["Barrier"], 101)
+
+    def test_other_mastered_jutsu_remains_capped_at_100(self):
+        with patch.object(combat.random, "randint", return_value=1):
+            combat.grow_skill_from_usage(self.player, "Mae Geri", session=self.session)
+        self.assertEqual(self.player.skill_proficiencies["Mae Geri"], 100)
 
     def test_damage_status_and_utility_effects_only_at_150(self):
         damage = data_jutsu.JUTSU["dynamic entry"]
