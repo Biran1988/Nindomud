@@ -320,8 +320,6 @@ def cmd_move(session, direction: str) -> None:
         session.send("&RYou're too exhausted to walk! Rest until you recover stamina.&x")
         return
 
-    _wake_and_stand(session)
-
     if direction not in room.exits:
         session.send("You can't go that way.")
         return
@@ -376,6 +374,7 @@ def cmd_move(session, direction: str) -> None:
         )
         return
 
+    _wake_and_stand(session)
     import general_skills
     player.stamina -= movement_cost
     general_skills.before_move(session)
