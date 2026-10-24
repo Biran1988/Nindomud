@@ -4632,6 +4632,10 @@ def cmd_practice(session, args: List[str]) -> None:
     if data_passives.is_passive(match):
         session.send(f"{match} is a passive skill -- it improves automatically through combat experience, not practice.")
         return
+    import signature_moves
+    if match == signature_moves.selected_name(player) and player.skill_proficiencies.get(match, 0) >= 100:
+        session.send(f"{match} is your signature move: raise it from 100% to 150% through successful use, not teacher practice.")
+        return
     teacher = _find_matching_teacher(player.room_vnum, match)
     if not teacher:
         category = _category_for_skill(match)
@@ -4644,12 +4648,7 @@ def cmd_practice(session, args: List[str]) -> None:
         session.send("You have no practice points left.")
         return
     current = player.skill_proficiencies.get(match, 0)
-    import signature_moves
-    practice_cap = (signature_moves.SIGNATURE_CAP if signature_moves.selected_name(player) == match
-                    and signature_moves.eligible(next((j for j in data_jutsu.JUTSU.values()
-                                                       if j["display_name"] == match), {}))
-                    and current >= 100 else
-                    data_jutsu.PRACTICE_CAP_PERCENT.get(match, data_jutsu.DEFAULT_PRACTICE_CAP_PERCENT))
+    practice_cap = data_jutsu.PRACTICE_CAP_PERCENT.get(match, data_jutsu.DEFAULT_PRACTICE_CAP_PERCENT)
     if current >= practice_cap:
         if practice_cap < 100:
             if match == "Handsigns":
@@ -4678,8 +4677,6 @@ def cmd_practice(session, args: List[str]) -> None:
         session.send(f"&G+{(new_pct - current) * 10} experience from skill improvement.&x")
         for message in xp_messages:
             session.send(message)
-    if new_pct == signature_moves.SIGNATURE_CAP and match == signature_moves.selected_name(player):
-        session.send(f"&Y{match} is now fully trained as your signature move: +25% damage or effect duration!&x")
 
 
 def cmd_signature(session, args: List[str]) -> None:
@@ -4727,8 +4724,8 @@ def cmd_signature(session, args: List[str]) -> None:
     if current:
         player.skill_proficiencies[current] = min(100, player.skill_proficiencies.get(current, 0))
     player.signature_move = name
-    session.send(f"{name} is now your signature move. Practice it from 100% to 150% "
-                 "with a matching teacher before its +25% bonus activates.")
+    session.send(f"{name} is now your signature move. Raise it from 100% to 150% "
+                 "by successfully using it, not by teacher practice. The +25% bonus activates at 150%.")
 
 
 def _skill_unlock_level(skill_name: str) -> Optional[int]:
