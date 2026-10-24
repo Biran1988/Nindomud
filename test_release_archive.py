@@ -3,6 +3,7 @@
 The download must be a direct ZIP of the regular multi-file Python code,
 not a zip-in-zip; it includes the generated runnable single-file launcher.
 """
+import ast
 import subprocess
 import sys
 import tempfile
@@ -55,6 +56,22 @@ class ReleaseArchiveTests(unittest.TestCase):
                 self.assertIn(b"15.340", archive.read("changelog.py"))
                 self.assertIn(b"15.341", archive.read("changelog.py"))
                 self.assertIn(b"15.342", archive.read("changelog.py"))
+                # Both launch methods must ship the same complete changelog.
+                # Checking just old version markers missed stale release copies.
+                current_changes = (build_release.ROOT / "changelog.py").read_bytes()
+                self.assertEqual(archive.read("changelog.py"), current_changes)
+                bundled_tree = ast.parse(archive.read("Nindo_mud").decode("utf-8"))
+                bundled_sources = next(
+                    ast.literal_eval(node.value)
+                    for node in bundled_tree.body
+                    if isinstance(node, ast.Assign) and any(
+                        isinstance(target, ast.Name) and target.id == "_SOURCES"
+                        for target in node.targets
+                    )
+                )
+                self.assertEqual(bundled_sources["changelog"], current_changes.decode("utf-8"))
+                for version in range(343, 354):
+                    self.assertIn(f'"15.{version}"'.encode(), current_changes)
                 self.assertIn(b"def focused_accuracy", archive.read("general_skills.py"))
                 self.assertIn("general_skills.py", names)
                 self.assertIn("test_general_skills.py", names)
@@ -77,6 +94,22 @@ class ReleaseArchiveTests(unittest.TestCase):
                 cwd=install, capture_output=True, text=True, timeout=45,
             )
             self.assertEqual(preflight.returncode, 0, preflight.stderr[-3500:])
+            # Exercise the player-facing command from the actual download.
+            changes_check = (
+                "import changelog, commands; "
+                "from types import SimpleNamespace; "
+                "messages=[]; "
+                "commands.cmd_changes(SimpleNamespace(send_paginated=messages.append), []); "
+                "lines=messages[0].splitlines(); "
+                "assert changelog.CHANGELOG[-1][0] in lines[1]; "
+                "assert all(version in messages[0] for version, _ in changelog.CHANGELOG[-11:])"
+            )
+            for mode in ("", "import runpy; runpy.run_path('Nindo_mud', run_name='release_test'); "):
+                changes = subprocess.run(
+                    [sys.executable, "-c", mode + changes_check],
+                    cwd=install, capture_output=True, text=True, timeout=45,
+                )
+                self.assertEqual(changes.returncode, 0, changes.stderr[-3500:])
             # The portable launcher must carry its own complete country DB,
             # even when run without any neighboring source or database files.
             standalone_install = output / "standalone"
