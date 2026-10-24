@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "jutsu shortcuts",
+  "keywords": [
+    "jutsu shortcuts",
+    "jutsu shorts",
+    "shortcuts",
+    "shorthands"
+  ],
+  "title": "One-Word Jutsu Shortcuts",
+  "body": "Syntax: jutsu shorts | jutsu shortcuts\n\nEvery jutsu has a unique one-word shortcut. Type it directly, followed by a target or on/off when needed. Examples: dyn bandit, ras bandit, hmist on, smove off. You can also use per <shortcut>, such as per ras bandit. Without a target, offensive jutsu use your current opponent as usual.\n\nJutsu shorts lists shortcuts for techniques you have learned. Jutsu all shows shortcuts alongside your class catalog. Help <shortcut> opens that technique's normal help page. Existing full names and older shortcuts still work. Shortcuts do not bypass learning, practice, access rules, hand signs, costs or cooldowns.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

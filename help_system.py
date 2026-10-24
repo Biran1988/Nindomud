@@ -1187,10 +1187,10 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "jinchuriki",
-        "keywords": ["jinchuriki", "jinchuriki mastery", "tailed beast mastery"],
+        "keywords": ["jinchuriki", "mastery", "jinchuriki mastery", "tailed beast mastery"],
         "title": "Jinchuriki Mastery",
         "body": (
-            "Syntax: jinchuriki\n\n"
+            "Syntax: jinchuriki | mastery\n\n"
             "Shows your sealed Tailed Beast, its tail count, and your exact mastery percentage "
             "from 0% to 100%. This is separate from ordinary skill proficiency. "
             "Mastery grows through combat while carrying a beast; rampage risk ends at 65%, "
@@ -1636,7 +1636,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: perform <jutsu name> <target>  (alias: per)\n"
             "\n"
-            "Description: Uses a Ninjutsu or Genjutsu technique on a target -- these classes require the deliberate 'perform' command rather than a bare jutsu name. Taijutsu and Bukijutsu jutsu can instead be used by typing their name directly (e.g. 'dynamic entry <target>'). Works against another player too, not just mobs -- same targeting rules as 'attack' (a PvP-safe room blocks it, an already-defeated player can't be targeted).\n"
+            "Description: Uses a Ninjutsu or Genjutsu technique by full or partial name. Every class also has explicit one-word shortcuts: type a shortcut directly or after per (e.g. 'dyn bandit' or 'per dyn bandit'). Use jutsu shorts to list learned shortcuts. Traditional Taijutsu and Bukijutsu names still work directly (e.g. 'dynamic entry <target>'). Works against another player too, not just mobs -- same targeting rules as 'attack' (a PvP-safe room blocks it, an already-defeated player can't be targeted).\n"
             "\n"
             "Ninjutsu and Genjutsu specifically involve forming hand signs first (see 'help handsigns') -- there's a real delay before the technique actually goes off, but your ordinary attacks keep landing normally the whole time, and the jutsu lands separately on top once it resolves. If this is what starts the fight (you weren't already fighting anything), combat doesn't actually begin until the jutsu itself resolves -- hit or miss -- not the instant you give the command.\n"
             "\n"
@@ -1825,12 +1825,29 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "jutsu shortcuts",
+        "keywords": ["jutsu shortcuts", "jutsu shorts", "shortcuts", "shorthands"],
+        "title": "One-Word Jutsu Shortcuts",
+        "body": (
+            "Syntax: jutsu shorts | jutsu shortcuts\n\n"
+            "Every jutsu has a unique one-word shortcut. Type it directly, followed by "
+            "a target or on/off when needed. Examples: dyn bandit, ras bandit, "
+            "hmist on, smove off. You can also use per <shortcut>, such as per ras bandit. "
+            "Without a target, offensive jutsu use your current opponent as usual.\n\n"
+            "Jutsu shorts lists shortcuts for techniques you have learned. Jutsu all shows "
+            "shortcuts alongside your class catalog. Help <shortcut> opens that technique's "
+            "normal help page. Existing full names and older shortcuts still work. "
+            "Shortcuts do not bypass learning, practice, access rules, hand signs, costs or cooldowns."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "jutsu all",
         "keywords": ["jutsu all", "jutsu catalog", "jutsu list"],
         "title": "Jutsu Catalog",
         "body": (
-            "Syntax: jutsu all\\n"
-            "\\n"
+            "Syntax: jutsu all\n"
+            "\n"
             "Shows every cataloged technique for your chosen combat class, "
             "including techniques not yet learned and their minimum levels. "
             "Shared general jutsu appear in a separate section. "
@@ -1839,8 +1856,8 @@ DEFAULT_HELP_ENTRIES = [
             "are marked Release, Six Paths, or Scroll; levels alone do not "
             "guarantee they can be learned. Undiscovered scroll-only jutsu "
             "are not revealed to normal characters. The list is paginated "
-            "(Enter for more, q to stop). 'skills' lists learned techniques.\\n"
-            "\\n"
+            "(Enter for more, q to stop). 'skills' lists learned techniques. Every catalog row shows its one-word shortcut; type that shortcut directly or use jutsu shorts for a compact learned list.\n"
+            "\n"
             "Date: 2026-10-22"
         ),
         "created_by": "System",
@@ -4317,7 +4334,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | {"unleash beast", "hidden mist jutsu"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | {"unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
@@ -4377,8 +4394,10 @@ def find_by_keyword(query: str) -> Optional[dict]:
     # to an unrelated jutsu page, and ambiguous prefixes stay unresolved.
     key, consumed = data_jutsu.match_prefix(query.split())
     if key and consumed == len(query.split()):
-        return next((entry for entry in entries
-                     if entry["primary_keyword"].lower() == key), None)
+        primary = next((entry for entry in entries
+                        if entry["primary_keyword"].lower() == key), None)
+        return primary or next((entry for entry in entries
+                                if key in [name.lower() for name in entry.get("keywords", [])]), None)
     return None
 
 
@@ -4406,6 +4425,10 @@ def cmd_help(session, args: List[str]) -> None:
         session.send("This helpfile doesn't exist, contact an admin to create it.")
         return
     lines = [f"&Y{entry['title']}&x", "", entry["body"]]
+    names = [entry["primary_keyword"], *entry.get("keywords", [])]
+    key = next((name.lower() for name in names if name.lower() in data_jutsu.JUTSU), None)
+    if key:
+        lines.extend(("", "&COne-word shortcut:&x " + data_jutsu.JUTSU_SHORTCUTS[key]))
     if len(entry.get("keywords", [])) > 1:
         lines.append("")
         lines.append("&D(Keywords: " + ", ".join(entry["keywords"]) + ")&x")

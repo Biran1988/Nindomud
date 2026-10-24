@@ -501,4 +501,5 @@ CHANGELOG = [
     ("15.353", "Recent update recap: Hidden Mist and Chisei are upkeep toggles; Silent Movement stays on until dismissed or Stamina runs short. Targetless combat jutsu use your opponent, unleash beast accepts 1-9, and 1000 Years of Death has its corrected name. Beast announcements, the full sealing window and visible room jutsu are included."),
     ("15.354", "Added jinchuriki: a separate display showing your sealed Tailed Beast, tail count and exact mastery percentage. Viewing mastery costs nothing and does not activate Beastmode."),
     ("15.355", "Added help damage as a direct lookup for every combat damage word and its numeric range, using the same live thresholds and colors as combat."),
+    ("15.356", "Every jutsu now has a unique one-word shortcut usable directly or with per, checked against command names, command prefixes and existing jutsu aliases. Use jutsu shorts for learned shortcuts, jutsu all for catalog shortcuts, or help <shortcut>. Mastery now aliases the jinchuriki mastery display."),
 ]

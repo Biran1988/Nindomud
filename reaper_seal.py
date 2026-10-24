@@ -14,7 +14,7 @@ SCROLL_VNUM = 9821
 MASK_NAME = "A Shikigami Mask"
 SCROLL_NAME = "A Scroll of the Reaper Death Seal"
 ROOM_BASE = 1500000
-SAFE_COMMANDS = {"look", "l", "say", "ooc", "help", "score", "level", "uptime", "jinchuriki",
+SAFE_COMMANDS = {"look", "l", "say", "ooc", "help", "score", "level", "uptime", "jinchuriki", "mastery",
                  "inventory", "inv", "equipment", "eq", "aff", "affects", "skills",
                  "who", "quit", "save", "bug", "idea"}
 

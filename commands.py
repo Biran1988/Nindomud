@@ -102,7 +102,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -115,13 +115,11 @@ def _blocked_while_sleeping(session, verb: str) -> bool:
 
 
 def dispatch_line(session, line: str) -> None:
-    """Top-level entry point: try a Taijutsu/Bukijutsu jutsu command first
-    (these can be used by bare name -- e.g. 'dynamic entry <target>' or
-    'throw shuriken <target>'), then fall back to ordinary single-word
-    verb commands. Ninjutsu and Genjutsu are NOT matched here -- they
-    require 'perform <name>' (see cmd_perform), reflecting that they take
-    a deliberate hand seal / incantation rather than a reflexive physical
-    strike or thrown weapon."""
+    """Resolve exact commands and explicit shortcuts before legacy jutsu names.
+
+    The new one-word shortcuts work directly for every class. Traditional
+    Taijutsu/Bukijutsu names remain direct; other full names use perform.
+    """
     words = line.split()
     if not words:
         return
@@ -135,16 +133,20 @@ def dispatch_line(session, line: str) -> None:
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
-            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "jutsu", "inventory",
+            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "inventory",
                                        "inv", "skills", "prac", "imms", "immortal",
                                        "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
-    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jinchuriki", "jutsu", "quit", "save"):
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
     if world.normalize_direction(lower_words[0]):
+        dispatch(session, words[0], words[1:])
+        return
+
+    if lower_words[0] in COMMANDS or lower_words[0] in data_jutsu.SHORTCUT_JUTSU:
         dispatch(session, words[0], words[1:])
         return
 
@@ -194,10 +196,14 @@ def dispatch(session, verb: str, args: List[str]) -> None:
         return
 
     handler = COMMANDS.get(verb)
-    if not handler:
-        session.send("Huh?")
+    if handler:
+        handler(session, args)
         return
-    handler(session, args)
+    jutsu_key = data_jutsu.SHORTCUT_JUTSU.get(verb)
+    if jutsu_key:
+        cmd_use_jutsu(session, jutsu_key, args)
+        return
+    session.send("Huh?")
 
 
 # --- Movement --------------------------------------------------------
@@ -3632,9 +3638,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
 
 
 def cmd_perform(session, args: List[str]) -> None:
-    """Ninjutsu and Genjutsu require this deliberate 'perform <jutsu>'
-    entry point instead of a bare jutsu name (unlike Taijutsu/Bukijutsu,
-    which can be used directly -- see dispatch_line)."""
+    """Cast by full/partial name or an explicit one-word shortcut.
+
+    Shortcuts work for every class; traditional full Taijutsu/Bukijutsu
+    names still use their direct command path.
+    """
     if not args:
         session.send("Perform what?")
         return
@@ -3644,7 +3652,8 @@ def cmd_perform(session, args: List[str]) -> None:
         session.send("You don't know a jutsu by that name.")
         return
     jutsu = data_jutsu.JUTSU[jutsu_key]
-    if jutsu["class_requirement"] in BARE_NAME_JUTSU_CATEGORIES:
+    if (jutsu["class_requirement"] in BARE_NAME_JUTSU_CATEGORIES
+            and lower_words[0] not in data_jutsu.SHORTCUT_JUTSU):
         jutsu_colors.send(session, f"{jutsu['display_name']} is a {jutsu['class_requirement'].capitalize()} technique -- just use its name directly, no 'perform' needed.")
         return
     cmd_use_jutsu(session, jutsu_key, args[consumed:])
@@ -4677,6 +4686,8 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
         return ["You do not have a recognized combat class."]
 
     known = set(player.learned_skills)
+    shortcuts = {info["display_name"]: data_jutsu.JUTSU_SHORTCUTS[key]
+                 for key, info in data_jutsu.JUTSU.items()}
     sections = [(name, data_classes.CLASSES[name]["display_name"])
                 for name in classes]
     sections.append(("general", "General Jutsu"))
@@ -4713,25 +4724,36 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
             if info.get("jutsu_id", "").startswith("six_paths_"):
                 conditions.append("Six Paths")
             extra = f" &D[{', '.join(conditions)}]&x" if conditions else ""
-            lines.append(f"  &WLv {level:>3}&x  {color}{name}&x  {status}{extra}")
+            lines.append(f"  &WLv {level:>3}&x  {color}{name}&x  {status}{extra}  &DShort: {shortcuts[name]}&x")
         lines.append(f"&D{len(entries)} {title.lower()} technique(s)&x")
     lines.append("")
-    lines.append("&DUse 'skills' to see only your learned skills, "
+    lines.append("&DType a listed shortcut directly. Use 'jutsu shorts' for learned shortcuts, "
+                 "'skills' to see only your learned skills, "
                  "or 'help <jutsu name>' for details.&x")
     return lines
 
 
 def cmd_jutsu(session, args: List[str]) -> None:
-    """Display the jutsu roster for the player's class or all for staff."""
-    if len(args) != 1 or args[0].lower() != "all":
-        session.send("Usage: jutsu all  (shows the complete jutsu catalog for your class)")
+    """Show the full catalog or compact shortcuts for learned jutsu."""
+    mode = args[0].lower() if len(args) == 1 else ""
+    if mode not in {"all", "shorts", "shortcuts"}:
+        session.send("Usage: jutsu all | jutsu shorts  (catalog or learned one-word shortcuts)")
         return
-    immortal = bool(session.account and
-                    session.account.staff_level in WHO_LEADER_STAFF_LEVELS)
-    lines = build_jutsu_catalog_lines(session.player, immortal=immortal)
-    # The full immortal roster can be hundreds of lines long, so use the
-    # existing telnet pager. Simple test sessions without a pager still
-    # receive one complete message.
+    if mode == "all":
+        immortal = bool(session.account and
+                        session.account.staff_level in WHO_LEADER_STAFF_LEVELS)
+        lines = build_jutsu_catalog_lines(session.player, immortal=immortal)
+    else:
+        known = set(session.player.learned_skills)
+        lines = ["&WJutsu Shortcuts&x",
+                 "&DType a shortcut directly, or use per <shortcut>. "
+                 "Add a target or on/off after it as usual.&x", ""]
+        for key, info in sorted(data_jutsu.JUTSU.items(),
+                                key=lambda item: item[1]["display_name"].casefold()):
+            if info["display_name"] in known:
+                lines.append(f"  &C{data_jutsu.JUTSU_SHORTCUTS[key]:<9}&x {info['display_name']}")
+        if len(lines) == 3:
+            lines.append("You have not learned any jutsu yet.")
     output = "\n".join(lines)
     if callable(getattr(session, "send_paginated", None)):
         session.send_paginated(output)
@@ -8726,7 +8748,7 @@ COMMANDS = {
     "who": cmd_who,
     "whois": cmd_whois,
     "sharingan": cmd_sharingan, "shar": cmd_sharingan,
-    "jinchuriki": cmd_jinchuriki,
+    "jinchuriki": cmd_jinchuriki, "mastery": cmd_jinchuriki,
     "beastmode": cmd_tailed_beast_mode,
     "izanagi": cmd_izanagi,
     "guess": cmd_guess,
@@ -8899,3 +8921,12 @@ COMMANDS = {
     "ostat": olc.cmd_ostat,
     "rstat": olc.cmd_rstat,
 }
+
+
+# Reserve full command names, every command prefix, and all movement aliases.
+# The explicit shortcut map must stay stable when new commands/jutsu are added.
+from jutsu_shortcuts import validate_shortcuts
+_shortcut_reserved_words = set(COMMANDS) | set(world.DIRECTION_ALIASES) | set(world.OPPOSITE_DIRECTION)
+validate_shortcuts(data_jutsu.JUTSU, data_jutsu.JUTSU_ALIASES,
+                   {word[:length] for word in _shortcut_reserved_words
+                    for length in range(1, len(word) + 1)})

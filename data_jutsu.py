@@ -841,6 +841,9 @@ JUTSU_ALIASES = {
 }
 
 
+from jutsu_shortcuts import JUTSU_SHORTCUTS, SHORTCUT_JUTSU
+
+
 def match_prefix(lower_words):
     """Match a jutsu from the given lowercased word list. Two things
     can happen, tried longest-input-first so the full name still works
@@ -886,6 +889,9 @@ def match_prefix(lower_words):
     for alias in sorted(JUTSU_ALIASES, key=lambda name: -len(name.split())):
         if joined == alias or joined.startswith(alias + " "):
             return JUTSU_ALIASES[alias], len(alias.split())
+
+    if lower_words and lower_words[0] in SHORTCUT_JUTSU:
+        return SHORTCUT_JUTSU[lower_words[0]], 1
 
     max_jutsu_words = max((len(k.split()) for k in JUTSU), default=1)
     for length in range(min(max_jutsu_words, len(lower_words)), 0, -1):
