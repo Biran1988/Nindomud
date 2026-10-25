@@ -58,7 +58,7 @@ def _color_glyph_line(village: str, line: str) -> str:
 
 
 def five_villages_banner() -> str:
-    lines = ["&Y=== THE FIVE GREAT SHINOBI VILLAGES ===&x", ""]
+    lines = ["&[223]               THE FIVE GREAT SHINOBI VILLAGES&x", ""]
     for row in range(4):
         parts = [
             _color_glyph_line(village, GLYPHS[village][row].center(GLYPH_WIDTH))
@@ -94,11 +94,18 @@ def mud_name_title() -> str:
     spaced = "  ".join(config.MUD_NAME.upper())
     width = max(len(spaced) + 8, 40)
     return (
-        f"&Y{'=' * width}&x\n"
-        f"&Y{spaced.center(width)}&x\n"
-        f"&Y{'=' * width}&x"
+        f"&[208]{'=' * width}&x\n"
+        f"&[223]{spaced.center(width)}&x\n"
+        f"&[208]{'=' * width}&x"
     )
 
 
 def login_screen() -> str:
-    return mud_name_title() + "\n\n" + five_villages_banner() + "\n\n" + footer()
+    return (
+        mud_name_title()
+        + "\n&[244]      A WORLD OF SHINOBI | FORGE YOUR OWN LEGEND&x\n\n"
+        + five_villages_banner()
+        + "\n\n&[208]----------------------------------------------------------&x"
+        + "\n&[244]" + footer() + "&x"
+        + "\n&[208]----------------------------------------------------------&x"
+    )
