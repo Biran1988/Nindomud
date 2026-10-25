@@ -17,6 +17,7 @@ from enum import Enum, auto
 from typing import Callable, List, Optional
 
 import ascii_art
+import shinobi_notices
 import canon_names
 import colors
 import commands
@@ -148,6 +149,7 @@ class Session:
         self.pending_action: Optional[dict] = None
         self.chakra_charge: Optional[dict] = None  # timed Chakra Charge channel; never persisted
         self.controlled_clone = None  # live elemental clone Mob; transient, body stays in its room
+        self._suppress_departure_announcement = False  # reconnect takeover is not a logout
 
         # Scratch chargen state
         self._pending_name: Optional[str] = None
@@ -166,8 +168,8 @@ class Session:
 
         ACTIVE_SESSIONS.append(self)
         self.send(ascii_art.login_screen())
-        self.send("Welcome to the Naruto-Inspired ROM 2.4-style MUD.")
-        self.send("By what name shall we call you?")
+        self.send("&[223]Five villages. Countless paths. One ninja way.&x")
+        self.send("&[208]Enter your shinobi name:&x")
 
     # --- Output helpers ---------------------------------------------------
 
@@ -252,15 +254,10 @@ class Session:
             import mangekyo
             mangekyo.end_tsukuyomi_on_departure(self, world)
             mangekyo.end_kamui_on_departure(self, world)
-        if self.state == State.PLAYING and self.player:
-            import commands
-            import config
-            village_colored = commands.village_name_colored(self.player.village)
-            self.broadcast_all(
-                f"&[226]***&x  &[51]{self.player.name}&x of {village_colored} "
-                f"has left &[45]{config.MUD_NAME}&x!  &[226]***&x",
-                exclude_self=True,
-            )
+        if (self.state == State.PLAYING and self.player
+                and not self._suppress_departure_announcement):
+            self.broadcast_all(shinobi_notices.departure(self.player.name),
+                               exclude_self=True)
         self.state = State.CLOSED
         if self in ACTIVE_SESSIONS:
             ACTIVE_SESSIONS.remove(self)
@@ -972,6 +969,7 @@ class Session:
         for other in list(ACTIVE_SESSIONS):
             if other is not self and other.player and other.player.name.lower() == player.name.lower():
                 other.send("\n&RYour connection has been taken over by a new login.&x")
+                other._suppress_departure_announcement = True
                 other.request_close()
 
         # Tsukuyomi rooms exist only in memory. A reboot, dropped link,
@@ -1057,15 +1055,10 @@ class Session:
                 "moved to a safe room.)&x"
             )
 
-        self.send(f"\n&GYou are now playing {player.name}.&x")
         from data_villages import VILLAGES as _VILLAGES
         village_name = _VILLAGES[player.village]["village_name"]
-        village_colored = commands.village_name_colored(player.village)
-        self.broadcast_all(
-            f"&[226]***&x  &[51]{player.name}&x of {village_colored} "
-            f"has joined &[45]{config.MUD_NAME}&x!  &[226]***&x",
-            exclude_self=True,
-        )
+        self.send(shinobi_notices.welcome(player, village_name))
+        self.broadcast_all(shinobi_notices.arrival(player.name), exclude_self=True)
         # Per direct confirmation (Section 143): a genuine, safe
         # fallback for any existing character whose own saved
         # room_vnum points at a room that no longer exists (e.g. one
