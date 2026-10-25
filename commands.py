@@ -8455,7 +8455,8 @@ def cmd_delete(session, args: List[str]) -> None:
 
 def cmd_quit(session, args: List[str]) -> None:
     storage.save_player(session.player)
-    session.send("Saving and disconnecting. Farewell, ninja.")
+    import shinobi_notices
+    session.send(shinobi_notices.farewell(session.player.name))
     session.request_close()
 
 
