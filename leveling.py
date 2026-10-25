@@ -11,6 +11,7 @@ from typing import List
 import config
 import data_jutsu
 import storage
+import shinobi_notices
 from models import Player
 
 MAX_LEVEL = 100
@@ -188,10 +189,12 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         return []
 
     lines = []
+    reached_levels = []
     player.experience += amount
 
     while player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
         player.level += 1
+        reached_levels.append(player.level)
         health_gain = HEALTH_PER_LEVEL + _constitution_health_bonus(player.constitution)
         chakra_gain = CHAKRA_PER_LEVEL + _chakra_gain_bonus(player.intelligence, player.wisdom)
         stamina_gain = STAMINA_PER_LEVEL + _dexterity_stamina_bonus(player.dexterity)
@@ -271,6 +274,8 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         # the player the level they just earned.
         storage.save_player(player)
 
+    for reached_level in reached_levels:
+        shinobi_notices.announce_level(player, reached_level)
     return lines
 
 
