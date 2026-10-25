@@ -155,4 +155,8 @@ def add_job_xp(player, job: str, amount: int) -> list:
             setattr(player, current_field, getattr(player, current_field) + stat_gained)
             messages.append(f"  &R+{stat_gained} {label}&x")
 
+    for reached_level in range(current_level + 1, new_level + 1):
+        import shinobi_notices
+        shinobi_notices.announce_level(player, reached_level, job=job)
+
     return messages
