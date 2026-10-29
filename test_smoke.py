@@ -1335,8 +1335,7 @@ def test_village_perks():
 
 def test_kage_promotions_enabled():
     """Kage promotions, re-enabled per explicit request. The ladder
-    covers every rank in kage.RANK_ORDER above Chunin (Special Jonin
-    through Village Elder) -- Genin -> Chunin was deliberately removed
+    covers ranks above Chunin through Elite Jonin -- Genin -> Chunin was deliberately removed
     from this ladder in a later follow-up, since that promotion now
     requires passing the Chunin Exam (chunin_exam.py) instead of a
     simple Kage request; see test_chunin_exam_forest_of_death for that
@@ -1351,7 +1350,7 @@ def test_kage_promotions_enabled():
     a qualified player is promoted, with their headband upgrading in
     step at every single rank (data_headbands.apply_rank_headband,
     wired into handle_promotion_request) all the way through to
-    Village Elder; and a further promotion attempt at the top rank is
+    Elite Jonin (Village Elder is appointed by staff); and a further promotion attempt at the top rank is
     refused with "no further promotion available", not an error."""
     import content
     import kage
@@ -1398,10 +1397,9 @@ def test_kage_promotions_enabled():
 
     # Every remaining promotion in the ladder, each with its own headband upgrade.
     ladder = [
-        (30, 50, "special jonin", "A Konoha Special Jonin Headband"),
-        (45, 100, "jonin", "A Konoha Jonin Headband"),
-        (60, 500, "elite jonin", "A Konoha Elite Jonin Headband"),
-        (80, 1000, "village elder", "A Konoha Elder's Headband"),
+        (80, 50, "special jonin", "A Konoha Special Jonin Headband"),
+        (135, 100, "jonin", "A Konoha Jonin Headband"),
+        (200, 500, "elite jonin", "A Konoha Elite Jonin Headband"),
     ]
 
     # Unqualified for the first ladder step: refused, exact requirements shown, rank unchanged.
@@ -1409,7 +1407,7 @@ def test_kage_promotions_enabled():
     text_refused = "".join(out)
     out.clear()
     assert s.player.village_rank == "chunin"
-    assert "level 30" in text_refused.lower()
+    assert "level 80" in text_refused.lower()
     assert "50 completed mission" in text_refused.lower()
 
     for level, missions, expected_rank, expected_headband in ladder:
@@ -1427,7 +1425,7 @@ def test_kage_promotions_enabled():
     text_top = "".join(out)
     out.clear()
     assert "no further promotion available" in text_top.lower()
-    assert s.player.village_rank == "village elder"
+    assert s.player.village_rank == "elite jonin"
 
     print("KAGE PROMOTIONS ENABLED TEST PASSED")
 
