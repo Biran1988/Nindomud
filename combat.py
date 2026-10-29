@@ -56,6 +56,7 @@ import world
 import dice
 import inventory
 import leveling
+import mob_balance
 import status_effects
 import signature_moves
 import ninja_arts
@@ -97,6 +98,7 @@ DEFAULT_MOB_FIELDS = {
     # Gameplay-critical fields combat.py actually resolves against:
     "experience_reward": 0, "ryo_reward": 0, "loot_items": [], "respawns": True,
     "enabled": True,  # immortal-only toggle -- disabled prototypes refuse to spawn
+    "auto_balance": True,  # shared HP/damage standard; disable per mob for scripted bosses
     # Shopkeeper fields -- a builder places a shopkeeper anywhere by
     # setting "shopkeeper" true; players can't attack them, and they sell
     # whatever object prototypes are added to "shop_items" at that
@@ -326,21 +328,29 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     t = MOB_TEMPLATES[template_vnum]
     if not t.get("enabled", True):
         return None
-    max_hp = max(1, dice.roll(t["hit_dice"]))
     # A runtime safeguard even if a holiday template gets edited above 50.
     level = (min(t["level"], MAX_KILLABLE_EVENT_MOB_LEVEL)
              if t.get(EVENT_KILLABLE_TAG) else t["level"])
+    # Preserve deliberately scripted event encounters; ordinary mobs get
+    # identical baseline HP and expected damage for the same level.
+    auto_balance = (t.get("auto_balance", True)
+                    and not t.get("_halloween_event")
+                    and not t.get("_custom_boss_balance"))
+    max_hp = (mob_balance.hp_for_level(level) if auto_balance
+              else max(1, dice.roll(t["hit_dice"])))
+    effective_damage_dice = (mob_balance.damage_dice_for_level(level) if auto_balance
+                             else t["damage_dice"])
     max_chakra = mob_chakra_for_level(level)
     max_stamina = mob_stamina_for_level(level)
     import data_classes
     import biomes
-    derived_strength, derived_dexterity = derive_mob_combat_attributes(t.get("hit_roll", 0), t["damage_dice"])
+    derived_strength, derived_dexterity = derive_mob_combat_attributes(t.get("hit_roll", 0), effective_damage_dice)
     mob = Mob(
         instance_id=next(_id_counter), template_vnum=template_vnum,
         name=t.get("short_desc") or f"mob {template_vnum}",
         level=level, health=max_hp, max_health=max_hp, room_vnum=room_vnum,
         experience_reward=t["experience_reward"], ryo_reward=t["ryo_reward"],
-        damage_dice=t["damage_dice"], attacks=max(1, t.get("attacks", 1)),
+        damage_dice=effective_damage_dice, attacks=max(1, t.get("attacks", 1)),
         armor_class=t.get("armor_class", 0), hit_roll=t.get("hit_roll", 0),
         respawns=t.get("respawns", True), loot_items=list(t.get("loot_items", [])),
         chakra=max_chakra, maximum_chakra=max_chakra,
