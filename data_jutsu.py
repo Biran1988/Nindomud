@@ -748,6 +748,8 @@ import six_paths
 JUTSU.update(six_paths.jutsu_entries())
 import reaper_seal
 JUTSU.update(reaper_seal.jutsu_entries())
+import whirlpool_fuinjutsu
+JUTSU.update(whirlpool_fuinjutsu.jutsu_entries())
 import hyuga
 JUTSU.update(hyuga.registry())
 _scale_base_damage_to_level()
@@ -946,7 +948,7 @@ def jutsu_for_class_at_level(class_name: str, level: int):
     return [
         key for key, data in JUTSU.items()
         if data["class_requirement"] in (class_name, "general") and data["level_requirement"] == level
-        and not data.get("scroll_only") and not data.get("kkg_gate")
+        and not data.get("scroll_only") and not data.get("kkg_gate") and not data.get("required_village")
     ]
 
 
@@ -960,5 +962,5 @@ def all_unlocked_for_class(class_name: str, level: int):
     return [
         key for key, data in JUTSU.items()
         if data["class_requirement"] in (class_name, "general") and data["level_requirement"] <= level
-        and not data.get("scroll_only") and not data.get("kkg_gate")
+        and not data.get("scroll_only") and not data.get("kkg_gate") and not data.get("required_village")
     ]

@@ -129,6 +129,13 @@ def dispatch_line(session, line: str) -> None:
     if not words:
         return
     lower_words = [w.lower() for w in words]
+    # Contract consent is a direct yes/no prompt only while a live request
+    # belongs to this specific player; ordinary yes/no semantics are unchanged.
+    if len(lower_words) == 1 and lower_words[0] in {"yes", "no"}:
+        import whirlpool_fuinjutsu
+        if whirlpool_fuinjutsu.has_pending_consent(session):
+            whirlpool_fuinjutsu.contract_consent(session, lower_words)
+            return
     import reaper_seal
     if reaper_seal.blocks_command(session, lower_words[0]):
         return
@@ -333,12 +340,22 @@ def cmd_move(session, direction: str) -> None:
     if status_effects.has_effect(player.active_status_effects, "entangled"):
         session.send("You're entangled and can't move!")
         return
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.is_active(player, "fuinjutsu_rooted"):
+        session.send("Whirlpool binding script pins your feet in place.")
+        return
     if player.stamina <= 0:
         session.send("&RYou're too exhausted to walk! Rest until you recover stamina.&x")
         return
 
     if direction not in room.exits:
         session.send("You can't go that way.")
+        return
+
+    import whirlpool_fuinjutsu
+    barrier_message = whirlpool_fuinjutsu.check_movement(player, room.vnum, direction)
+    if barrier_message and not (session.account and session.account.staff_level != "player"):
+        session.send(barrier_message)
         return
 
     is_staff = session.account is not None and session.account.staff_level != "player"
@@ -910,6 +927,10 @@ def process_chakra_charge(session, now: Optional[float] = None) -> None:
 def cmd_charge(session, args: List[str]) -> None:
     """Channel a chosen amount of Stamina into Chakra over 20 seconds."""
     player = session.player
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocks_chakra_regen(player) and args != ["stop"]:
+        session.send("Your chakra coils are sealed; you cannot charge Chakra.")
+        return
     if "Chakra Charge" not in player.learned_skills:
         session.send(f"Chakra Charge unlocks at level {data_jutsu.CHAKRA_CHARGE_LEVEL}.")
         return
@@ -991,6 +1012,9 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
         label = direction.title()
         if "door" in flags_here and not room.exit_door_open.get(direction, False):
             label += " (closed)"
+        import whirlpool_fuinjutsu
+        if whirlpool_fuinjutsu.current_barrier(room.vnum, direction):
+            label += " (sealed)"
         if is_staff and "hidden" in flags_here:
             label += " (hidden)"
         directions.append(label)
@@ -2542,6 +2566,10 @@ def cmd_spawnpoint(session, args: List[str]) -> None:
 
 def cmd_recall(session, args: List[str]) -> None:
     player = session.player
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocks_teleport(player):
+        session.send("A teleportation anchor prevents your recall.")
+        return
     if session.combat_target is not None:
         session.send("You can't recall while you're fighting!")
         return
@@ -2578,6 +2606,10 @@ def cmd_anki(session, args: List[str]) -> None:
     1000), the same real room used elsewhere for the Hokage's own
     chamber."""
     player = session.player
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocks_teleport(player):
+        session.send("A teleportation anchor prevents Anki.")
+        return
     if session.combat_target is not None:
         session.send("You can't use Anki while you're fighting!")
         return
@@ -3122,6 +3154,14 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     import reaper_seal
     if reaper_seal.imprisoned(player):
         session.send("The Reaper's seal binds your soul; you cannot perform jutsu.")
+        return
+    import whirlpool_fuinjutsu
+    suppressed = whirlpool_fuinjutsu.blocked_jutsu(player, jutsu_data)
+    if suppressed:
+        session.send(suppressed)
+        return
+    if jutsu_data.get("jutsu_type") == "whirlpool_seal":
+        whirlpool_fuinjutsu.cast(session, jutsu_key, target_words)
         return
     if jutsu_data.get("jutsu_type") == "reaper_seal":
         reaper_seal.cast(session, jutsu_key, target_words)
@@ -9253,6 +9293,7 @@ COMMANDS = {
     "imms": cmd_imms, "immortal": cmd_imms, "immortals": cmd_imms,
     "sage": sage_mode.command,
     "summon": sage_mode.summon_command,
+    "sealconsent": __import__("whirlpool_fuinjutsu").contract_consent,
     "restore": cmd_restore, "respawn": cmd_respawn,
     "vperk": cmd_vperk, "villageperk": cmd_vperk,
     "emotes": cmd_emotes, "emojis": cmd_emotes,

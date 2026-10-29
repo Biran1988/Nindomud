@@ -12,6 +12,14 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    # Whirlpool fuinjutsu: distinct temporary locks, not permanent skill loss.
+    "fuinjutsu_no_ninjutsu": {"display_name": "Ninjutsu Sealed", "duration": 18, "message": None},
+    "fuinjutsu_no_genjutsu": {"display_name": "Genjutsu Sealed", "duration": 18, "message": None},
+    "fuinjutsu_no_handsigns": {"display_name": "Hand Signs Sealed", "duration": 11, "message": None},
+    "fuinjutsu_rooted": {"display_name": "Formula Bound", "duration": 10, "message": None},
+    "fuinjutsu_chakra_locked": {"display_name": "Chakra Locked", "duration": 20, "message": None},
+    "fuinjutsu_teleport_anchor": {"display_name": "Teleportation Anchored", "duration": 35, "message": None},
+    "fuinjutsu_summon_locked": {"display_name": "Summoning Contract Sealed", "duration": 45, "message": None},
     # Hyuga: finite defensive windows rather than permanent invulnerability.
     "hyuga_rotation": {"display_name": "protected by Rotation", "duration": 3,
         "damage_reduction_pct": 40, "message": None},

@@ -2,6 +2,20 @@
 
 # These are explicit so future jutsu additions never rename an existing shortcut.
 JUTSU_SHORTCUTS = {
+    'chakra suppression seal': 'wnin',
+    'mind suppression seal': 'wgen',
+    'hand sign suppression seal': 'whand',
+    'binding formula seal': 'wbind',
+    'chakra lock seal': 'wlock',
+    'chakra siphon seal': 'wsiph',
+    'seal release': 'wrel',
+    'flowing barrier seal': 'wflow',
+    'timed barrier seal': 'wtime',
+    'imbued barrier seal': 'wimbue',
+    'multi exit barrier': 'wmulti',
+    'teleportation anchor seal': 'wanchor',
+    'summoning contract seal': 'wsummon',
+    'summoning contract break': 'wbreak',
     '1000 years of death': '1000',
     'almighty push': 'alm',
     'amaterasu': 'ama',
