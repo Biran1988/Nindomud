@@ -21,7 +21,7 @@ GLOBAL_CAST_DELAY_SECONDS = 8.0
 
 # A generic NPC can safely use damaging single-target jutsu; other
 # jutsu types implement player-specific state or inventory requirements.
-SIMPLE_JUTSU_TYPES = frozenset((None, "attack", "ambush"))
+SIMPLE_JUTSU_TYPES = frozenset((None, "attack", "ambush", "thrown", "blade_strike"))
 
 
 def available_jutsu(mob, now=None):
@@ -42,8 +42,13 @@ def available_jutsu(mob, now=None):
                 or art.get("required_village") or art.get("requires_item")
                 or art.get("requires_item_count")
                 or art.get("required_weapon") or art.get("requires_weapon")
-                or art.get("requires_water") and mob.chakra_nature != "water"):
+                or (art.get("requires_water") and mob.chakra_nature != "water")):
             continue
+        weapon_types = art.get("required_weapon_types")
+        if weapon_types:
+            import data_weapons
+            if data_weapons.weapon_type_for_item(mob.equipment.get("wielded", "")) not in weapon_types:
+                continue
         element = art.get("element", "none")
         if element not in ("none", None) and element != mob.chakra_nature:
             continue
@@ -118,9 +123,9 @@ def try_cast(session, mob):
     # Player jutsu damage scales to a very high ladder; generic NPC
     # jutsu instead use the shared mob difficulty curve, at up to
     # twice this level's expected normal hit so battles remain playable.
-    damage = min(damage, max(5, mob_balance.target_damage_for_level(mob.level) * 2))
     if art.get("jutsu_type") == "ambush":
         damage = max(1, round(damage * art.get("ambush_multiplier", 1.0)))
+    damage = min(damage, max(5, mob_balance.target_damage_for_level(mob.level) * 2))
     if player.sharingan_active and player.bloodline_tomoe >= 3:
         damage = combat._sharingan_predict_and_reduce_damage(player, damage)
     damage = status_effects.reduce_outgoing_damage(mob.active_status_effects, damage)
