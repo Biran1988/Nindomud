@@ -48,7 +48,8 @@ COSTUME_MERCHANT = 100220
 CANDY_MERCHANT = 100221
 TRICK_NPC = 100222
 BOSS_VNUM = 100230
-FAST_RESPAWN_VNUMS = frozenset({MOB_BASE, MOB_BASE + 1, MOB_BASE + 2})
+# Only enemies in combat rooms: the scarecrow in the safe entrance cannot be farmed.
+FAST_RESPAWN_VNUMS = frozenset({MOB_BASE + 1, MOB_BASE + 2, MOB_BASE + 3})
 ROOMS = [
   {
     "name": "The Crooked Pumpkin Gate",
