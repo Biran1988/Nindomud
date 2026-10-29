@@ -4,8 +4,8 @@
     "use"
   ],
   "title": "Use",
-  "body": "Syntax: use <item>\n\nDescription: Uses a medical item. Its configured Health, Chakra, and/or Stamina recovery arrives gradually over time, including during combat; status cures take effect on use. Only accepts medical-category items.\n\nDate: 2026-08-17",
+  "body": "Syntax: use <item>\n\nDescription: Uses a medical item. You can also 'eat' medicine for the same effect. Healing arrives over time; cures work immediately. Both verbs consume one item and obey the same requirements.\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
