@@ -2801,6 +2801,11 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         handle_mob_defeat(session, mob)
 
 
+def _is_linkdead(session) -> bool:
+    """No PvP damage or effects may reach a disconnected character."""
+    return getattr(getattr(session, "state", None), "name", "") == "LINKDEAD"
+
+
 def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multiplier: float = 1.0, fan_direction: str = None) -> None:
     """PvP-enabled jutsu casting, per direct request ("make jutsu pvp
     enabled"). Mirrors use_jutsu's structure (gate/cooldown/resource
@@ -2819,6 +2824,9 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     direct confirmation: "still lands, but at reduced strength"),
     which passes elemental_counters.OVERPOWER_DAMAGE_MULTIPLIER."""
     player = session.player
+    if _is_linkdead(target_session) or _is_linkdead(session):
+        jutsu_colors.send(session, "That shinobi is disconnected and cannot be targeted.")
+        return
     if _is_action_blocked(player):
         jutsu_colors.send(session, "You are unable to act!")
         return
@@ -3167,6 +3175,7 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         qualifying = [
             m for m in session.group.members
             if m.player and m.player.room_vnum == mob.room_vnum and m.player.health > 0
+            and getattr(getattr(m, "state", None), "name", "PLAYING") == "PLAYING"
         ]
     else:
         qualifying = [session]
@@ -3357,6 +3366,8 @@ def handle_player_defeat(session) -> None:
 def start_pvp_attack(session, target_session) -> None:
     """Mutual aggro -- both sessions start attacking each other, mirroring
     how mob combat is a two-sided exchange each pulse."""
+    if (_is_linkdead(session) or _is_linkdead(target_session)):
+        return
     import general_skills
     if general_skills.concealed_from(session.player, target_session.player):
         return
@@ -3381,6 +3392,8 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     attacks fire normally during a hand-sign cast, matching
     _player_attack_mob_once's own identical reversal -- see that
     function's docstring for the full reasoning."""
+    if _is_linkdead(session) or _is_linkdead(target_session):
+        return
     if _is_action_blocked(player):
         session.send("You are unable to act!")
         return
@@ -3451,6 +3464,8 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
 
 
 def _clone_attack_target_once(session, player, target_session, target, clone) -> None:
+    if _is_linkdead(session) or _is_linkdead(target_session):
+        return
     """A live clone assists in PvP under the same safety and defense rules."""
     import hidden_mist
     if hidden_mist.obscures(player, target) or general_skills.concealed_from(player, target):
@@ -3512,6 +3527,11 @@ def resolve_pvp_pulse(session) -> None:
     player = session.player
     target_session = session.pvp_target
     if target_session is None:
+        return
+    if _is_linkdead(session) or _is_linkdead(target_session):
+        session.pvp_target = None
+        if target_session.pvp_target is session:
+            target_session.pvp_target = None
         return
     import element_choice
     if element_choice.in_choice(player) or element_choice.in_choice(target_session.player):
