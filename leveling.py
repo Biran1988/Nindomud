@@ -14,7 +14,7 @@ import storage
 import shinobi_notices
 from models import Player
 
-MAX_LEVEL = 100
+MAX_LEVEL = 250
 SCAN_LEVEL = 3
 EXPERIENCE_CURVE_VERSION = 2
 SAME_LEVEL_MOB_REWARD_PERCENT = 5
@@ -50,7 +50,8 @@ def grant_immortal_jutsu(player: Player) -> bool:
     return changed
 
 
-TRAINING_POINTS_PER_LEVEL = 6  # raised from 3 (Section 132, per direct request/confirmation): 99 level-ups x 6 = 594 total by level 100, just enough (small real surplus) to max all 9 real trainable attributes at the cap of 75 (needing 585 total: (75-10)*9)
+TRAINING_POINTS_PER_LEVEL = 6  # preserve progression through level 100
+HIGH_LEVEL_TRAINING_POINTS_PER_LEVEL = 2  # preserve stat-training value without 900 excess points
 PRACTICE_POINTS_BASE_PER_LEVEL = 3   # everyone gets at least this many
 
 # Extra practice points per level scale with Wisdom, up to this many bonus
@@ -210,7 +211,8 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         health_gain = reincarnation.augment_resource_gain(player, "health", health_gain)
         chakra_gain = reincarnation.augment_resource_gain(player, "chakra", chakra_gain)
         stamina_gain = reincarnation.augment_resource_gain(player, "stamina", stamina_gain)
-        training_gain = TRAINING_POINTS_PER_LEVEL
+        training_gain = (TRAINING_POINTS_PER_LEVEL if player.level <= 100
+                         else HIGH_LEVEL_TRAINING_POINTS_PER_LEVEL)
         practice_gain = PRACTICE_POINTS_BASE_PER_LEVEL + _wisdom_practice_bonus(player.wisdom)
 
         player.maximum_health += health_gain
