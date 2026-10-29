@@ -1132,7 +1132,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Awakening is automatic and random during real combat, not an action or quest: Sharingan and Byakugan first become eligible at level 25; Shikotsumyaku and other non-eye bloodlines still require level 50. Sharingan rolls at 1 in 150 per combat round; Byakugan and other bloodlines at 1 in 300. Reaching the level is not a guarantee of immediate awakening. A global announcement reveals the player, not which bloodline awakened.\n"
             "\n"
-            "&WSharingan&x unlocks its active eye toggle and tomoe growth through combat. &WByakugan&x unlocks an active chakra-vision toggle at level 25 after awakening, granting accuracy, dodge and directional chakra sensing; Gentle Fist and Eight Trigrams techniques unlock at later levels through practice and combat mastery. Potential 95+ can eventually reach Celestial Byakugan; only Potential 100 at level 100 with full mastery reaches the rare Tenseigan mode. See 'help sharingan' and 'help hyuga'.\n"
+            "&WSharingan&x unlocks its active eye toggle and tomoe growth through combat. &WByakugan&x unlocks an active chakra-vision toggle at level 25 after awakening, granting accuracy, dodge and directional chakra sensing; Gentle Fist and Eight Trigrams techniques unlock at later levels through practice and combat mastery. Exceptionally rare higher eye evolutions may exist, but their capabilities remain TOP SECRET until unlocked. See 'help sharingan' and 'help hyuga'.\n"
             "\n"
             "Element combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. Elemental releases have their own playable techniques.\n"
             "\n"
@@ -4381,7 +4381,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
@@ -4962,7 +4962,7 @@ DEFAULT_HELP_ENTRIES.append({
 
 DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "hyuga",
-    "keywords": ["hyuga", "hyuuga", "byakugan", "gentle fist", "eight trigrams", "tenketsu", "tenseigan"],
+    "keywords": ["hyuga", "hyuuga", "byakugan", "gentle fist", "eight trigrams", "tenketsu"],
     "title": "Hyuga Bloodline and Byakugan Techniques",
     "body": (
         "Every Hyuga inherits the Byakugan Kekkei Genkai. Its starting "
@@ -4984,13 +4984,10 @@ DEFAULT_HELP_ENTRIES.append({
         "Sixty-Four Palms grant short-lived defensive effects.\n\n"
         "Advanced: progressive Vacuum Palm, 128 Palms, Twin Lion Fists and "
         "361 Palms require combat-earned mastery and level milestones. "
-        "Only Potential 95+ can reach Celestial Byakugan and Fate Sight "
-        "at level 100, with substantial chakra upkeep. The mythical "
-        "Tenseigan Chakra Mode and Silver/Golden Wheel techniques require "
-        "the absolutely rarest Potential 100 character, level 100, and "
-        "full bloodline mastery; Tenseigan protection only lasts a few "
-        "combat pulses before the form ends. These celestial endgame "
-        "powers are NindoMUD adaptations, not standard clan techniques.\n\n"
+        "The rarest eye evolutions require extraordinary Potential, high "
+        "levels and genuine mastery. Their identities and exact capabilities "
+        "remain TOP SECRET until personally unlocked. These mythical "
+        "endgame powers are NindoMUD adaptations, not standard clan techniques.\n\n"
         "Learning: new bloodline techniques appear on level-up, on login "
         "for eligible older characters, and whenever an awakened and "
         "active Byakugan grows through combat. Most individual attacks "
@@ -5031,3 +5028,8 @@ for _hyuga_key, _hyuga_spec in _hyuga_help.REGISTRY.items():
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     })
+
+
+# Attach the live level, type and base damage after ALL techniques are loaded.
+import help_annotations as _help_annotations
+_TECHNIQUE_METADATA_HELP_TOPICS = _help_annotations.enrich(DEFAULT_HELP_ENTRIES, data_jutsu.JUTSU)
