@@ -24,11 +24,12 @@ KAGE_NAMES = {
 }
 
 # (min_level, min_completed_missions, next_rank) -- one entry per
-# promotion step, covering every rank in RANK_ORDER above Genin.
+# promotion step, covering Chunin through Elite Jonin (not Village Elder).
 # Re-enabled per explicit request; the requirements below intentionally
-# steepen toward the top (Village Elder demands both max-tier level
-# investment and a real mission history), so the highest rank feels
+# steepen toward the top (Elite Jonin demands substantial level
+# investment and a real mission history), so the highest earned rank feels
 # like a genuine, rare milestone rather than an automatic checkpoint.
+# Village Elder is a staff-appointed rank, not earned from this NPC.
 # Genin -> Chunin is deliberately NOT in this ladder -- that promotion
 # now requires passing the Chunin Exam (see chunin_exam.py) instead of
 # a simple Kage request; handle_promotion_request below redirects a
@@ -37,10 +38,10 @@ KAGE_NAMES = {
 RANK_LEVEL_CAPS = {
     "academy student": 10,
     "genin": 15,
-    "chunin": 30,
-    "special jonin": 45,
-    "jonin": 60,
-    "elite jonin": 80,
+    "chunin": 35,
+    "special jonin": 55,
+    "jonin": 80,
+    "elite jonin": 95,
     "village elder": 95,
     "kage": 100,
 }
@@ -49,7 +50,6 @@ PROMOTION_LADDER: List[Tuple[int, int, str]] = [
     (RANK_LEVEL_CAPS["chunin"], 50, "special jonin"),
     (RANK_LEVEL_CAPS["special jonin"], 100, "jonin"),
     (RANK_LEVEL_CAPS["jonin"], 500, "elite jonin"),
-    (RANK_LEVEL_CAPS["elite jonin"], 1000, "village elder"),
 ]
 
 RANK_ORDER = ["academy student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
