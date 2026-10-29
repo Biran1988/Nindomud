@@ -227,6 +227,8 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         player.practice_points += practice_gain
 
         lines.append(f"&YYou have reached level {player.level}!&x")
+        if player.level >= 100 and player.level % 25 == 0:
+            lines.append("&CYour fully mastered jutsu benefit from increased combat breakthrough power. Unmastered techniques do not.&x")
         lines.append(
             f"  &R+{health_gain} Max Health&x  &B+{chakra_gain} Max Chakra&x  "
             f"&G+{stamina_gain} Max Stamina&x  &C+{training_gain} Training Point(s)&x  "
