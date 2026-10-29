@@ -80,6 +80,7 @@ class RoomJutsuObjectTests(unittest.TestCase):
         target = Session(lambda text: None, lambda: None)
         self.addCleanup(ACTIVE_SESSIONS.remove, target)
         target.player = Player("Victim", "Victim", room_vnum=self.room.vnum)
+        target.player.health = target.player.maximum_health = 800
         target.state = State.PLAYING
         combat.resolve_amaterasu_cast(self.session, target, grow_handsigns=False)
         self.assertIsNotNone(room_jutsu_objects.find(self.room, "amaterasu"))
