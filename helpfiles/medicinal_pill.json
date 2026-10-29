@@ -5,8 +5,8 @@
     "medicine pill"
   ],
   "title": "Medicinal Pill",
-  "body": "Syntax: craft pill medicine <level>  |  examine <pill>  |  use <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level; it is saved in item data and shown by examine, not in the name. Using it restores Health, Chakra, and Stamina by 100 + six times its level, each over 30 seconds. It does not cure status effects. Use 2.pill to select the second matching pill.\n\nDate: 2026-09-27",
+  "body": "Syntax: craft pill medicine <level>  |  examine <pill>  |  use <pill>  |  eat <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level; it is saved in item data and shown by examine, not in the name. Using it restores Health, Chakra, and Stamina by 100 + six times its level, each over 30 seconds. It does not cure status effects. Use 'eat 2.pill' or 'use 2.pill' to select the second matching pill.\n\nDate: 2026-09-27",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
