@@ -15,24 +15,24 @@ from models import Player
 class RankCapTests(unittest.TestCase):
     def test_rank_caps_cover_every_ninja_rank(self):
         self.assertEqual(kage.RANK_LEVEL_CAPS, {
-            "academy student": 10, "genin": 15, "chunin": 35,
-            "special jonin": 55, "jonin": 80, "elite jonin": 95,
-            "village elder": 95, "kage": 100,
+            "academy student": 10, "genin": 35, "chunin": 80,
+            "special jonin": 135, "jonin": 200, "elite jonin": 250,
+            "village elder": 250, "kage": 250,
         })
         self.assertEqual([level for level, _, _ in kage.PROMOTION_LADDER],
-                         [35, 55, 80])
+                         [80, 135, 200])
 
     def test_elite_jonin_cannot_automatically_become_village_elder(self):
         player = Player("ElderCandidate", "ElderCandidate",
                         village="leaf", village_rank="elite jonin",
-                        level=95, completed_missions=list(range(1000)))
+                        level=250, completed_missions=list(range(1000)))
         result = kage.handle_promotion_request(player)
         self.assertEqual(player.village_rank, "elite jonin")
         self.assertIn("no further promotion", result.lower())
 
     def test_exp_cannot_cross_current_rank_cap(self):
         player = Player("CapTester", "CapTester", village_rank="genin",
-                        level=15, experience=leveling.cumulative_xp_for_level(15))
+                        level=35, experience=leveling.cumulative_xp_for_level(35))
         before = player.experience
         self.assertEqual(leveling.rank_level_cap(player), 15)
         self.assertEqual(leveling.grant_experience(player, 1_000_000), [])
