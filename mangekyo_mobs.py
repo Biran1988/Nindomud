@@ -72,7 +72,7 @@ def resolve(session, key, mob):
             room.amaterasu_fire_expires_at = time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
         # The flame lands immediately when the hand signs finish; the
         # separate target burn and lingering room fire tick afterward.
-        damage = data_mangekyo.AMATERASU_MOB_INITIAL_DAMAGE
+        damage = data_mangekyo.AMATERASU_INITIAL_DAMAGE
         damage = status_effects.reduce_incoming_damage(mob.active_status_effects, damage)
         mob.health = max(0, mob.health - damage)
         jutsu_colors.send(
@@ -103,37 +103,21 @@ def resolve(session, key, mob):
 
 
 def extinguish(session, args):
-    """The original Amaterasu caster may dismiss owned target and room flames."""
-    import session as session_module
+    """Only the temporary room fire can be dismissed; target flames never die."""
     caster = session.player.name
-    if not args:
-        jutsu_colors.send(session, "Usage: perform amaterasu extinguish <room|target|all>")
+    query = " ".join(args).lower().strip()
+    if not query:
+        jutsu_colors.send(session, "Usage: perform amaterasu extinguish <room|all>")
         return
-    query = " ".join(args).lower()
+    if query not in ("room", "all"):
+        jutsu_colors.send(session, "&RAmaterasu's black flames on a target can never be extinguished.&x")
+        return
+
     removed = 0
     rooms = world.WORLD.rooms.values() if query == "all" else [world.WORLD.get(session.player.room_vnum)]
-    if query in ("room", "all"):
-        for room in rooms:
-            if room and room.amaterasu_fire_caster == caster:
-                room.amaterasu_fire_caster = None
-                room.amaterasu_fire_expires_at = 0.0
-                removed += 1
-    if query == "all":
-        targets = [s.player for s in session_module.ACTIVE_SESSIONS if s.player]
-        targets += [mob for mobs in combat.MOBS_BY_ROOM.values() for mob in mobs]
-    elif query == "room":
-        targets = []
-    else:
-        targets = [s.player for s in session_module.ACTIVE_SESSIONS
-                   if s.player and s.player.room_vnum == session.player.room_vnum
-                   and query in s.player.name.lower()]
-        mob = combat.find_mob(session.player.room_vnum, query)
-        if mob:
-            targets.append(mob)
-    for target in targets:
-        if getattr(target, "mangekyo_amaterasu_caster", None) == caster:
-            if hasattr(target, "mangekyo_amaterasu_burning"):
-                target.mangekyo_amaterasu_burning = False
-            target.mangekyo_amaterasu_caster = None
+    for room in rooms:
+        if room and room.amaterasu_fire_caster == caster:
+            room.amaterasu_fire_caster = None
+            room.amaterasu_fire_expires_at = 0.0
             removed += 1
-    jutsu_colors.send(session, f"&YYou extinguish {removed} Amaterasu flame{'s' if removed != 1 else ''}.&x")
+    jutsu_colors.send(session, f"&YYou extinguish {removed} temporary Amaterasu room fire{'s' if removed != 1 else ''}.&x")
