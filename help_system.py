@@ -2321,7 +2321,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: eat <item>\n"
             "\n"
-            "Description: Eats a food item for an immediate effect (typically restoring Stamina). Only accepts food-category items.\n"
+            "Description: Eats a food item for an immediate effect (usually Stamina), or consumes medicine with the same healing and cure effects as 'use'. Medical recovery still takes its normal duration; antidotes only work when you are poisoned. Examples: eat soldier pill; eat medicinal pill; eat antidote pill.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -2351,7 +2351,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: use <item>\n"
             "\n"
-            "Description: Uses a medical item. Its configured Health, Chakra, and/or Stamina recovery arrives gradually over time, including during combat; status cures take effect on use. Only accepts medical-category items.\n"
+            "Description: Uses a medical item, just like 'eat <medicine>'. Configured Health, Chakra, and/or Stamina recovery arrives gradually over time, including during combat; cures take effect immediately. Both verbs consume exactly one item and obey the same restrictions.\n"
             "\n"
             "Date: 2026-08-17"
         ),
