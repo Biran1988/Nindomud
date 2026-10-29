@@ -37,13 +37,13 @@ KAGE_NAMES = {
 # Rank-based caps on combat levels; Kage is an Implementor appointment.
 RANK_LEVEL_CAPS = {
     "academy student": 10,
-    "genin": 15,
-    "chunin": 35,
-    "special jonin": 55,
-    "jonin": 80,
-    "elite jonin": 95,
-    "village elder": 95,
-    "kage": 100,
+    "genin": 35,
+    "chunin": 80,
+    "special jonin": 135,
+    "jonin": 200,
+    "elite jonin": 250,
+    "village elder": 250,
+    "kage": 250,
 }
 
 PROMOTION_LADDER: List[Tuple[int, int, str]] = [
