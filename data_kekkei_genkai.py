@@ -285,7 +285,8 @@ def attempt_awaken(player) -> dict:
     }
 
 
-AUTOMATIC_AWAKENING_LEVEL = 50  # unchanged for non-Sharingan bloodlines
+AUTOMATIC_AWAKENING_LEVEL = 50  # Shikotsumyaku and other non-eye bloodlines
+HYUGA_AWAKENING_LEVEL = 25  # guaranteed Hyuga Byakugan can first awaken at level 25
 AUTOMATIC_AWAKENING_CHANCE_PER_ROUND = 1 / 300
 SHARINGAN_AWAKENING_LEVEL = 25
 SHARINGAN_AWAKENING_CHANCE_PER_ROUND = 1 / 150  # twice the original chance
@@ -312,7 +313,7 @@ def attempt_automatic_awakening(player) -> dict:
     roll both succeed.
 
     A player is eligible only if they genuinely have an inherited
-    bloodline, are at least Sharingan level 25 or other-bloodline
+    bloodline, are at least Sharingan/Byakugan level 25 or other-bloodline
     level 50, and aren't already awakened. Silent
     (no roll, no state change) for anyone not eligible, so calling
     this every combat round for every player in the game is cheap and
@@ -325,7 +326,9 @@ def attempt_automatic_awakening(player) -> dict:
     some other way) -- callers use "awakened_this_call" to decide
     whether to narrate/announce anything at all."""
     sharingan = player.bloodline_id == "sharingan"
-    minimum_level = SHARINGAN_AWAKENING_LEVEL if sharingan else AUTOMATIC_AWAKENING_LEVEL
+    minimum_level = (SHARINGAN_AWAKENING_LEVEL if sharingan
+                     else HYUGA_AWAKENING_LEVEL if player.bloodline_id == "byakugan"
+                     else AUTOMATIC_AWAKENING_LEVEL)
     chance = (SHARINGAN_AWAKENING_CHANCE_PER_ROUND if sharingan
               else AUTOMATIC_AWAKENING_CHANCE_PER_ROUND)
     if not player.bloodline_id or player.bloodline_awakened or player.level < minimum_level:
