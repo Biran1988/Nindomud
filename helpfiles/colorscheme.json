@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "colorscheme",
+  "keywords": [
+    "colorscheme",
+    "roomscheme",
+    "room colors",
+    "global colors"
+  ],
+  "title": "Global Room Color Scheme (Administrator+)",
+  "body": "Syntax: colorscheme\\n        colorscheme name <0-255>\\n        colorscheme desc <0-255>\\n        colorscheme exits <0-255>\\n        colorscheme set <name> <desc> <exits>\\n        colorscheme show | colorscheme preview | colorscheme reset\\nAliases: roomscheme; name/title/roomname, desc/description/roomdesc, exits/exit. You may use numeric colors or &[208] xterm tags.\\n\\nAdministrator or Implementor access only. Changes affect EVERY player's future room look/scan display immediately. The command shows a preview of your current room after updating. Each accepted change is atomically and automatically saved in data/color_scheme.json, without needing save world. Colors are restored at server boot and survive reboots/crashes. Builder rooms and saved world/area files are NEVER rewritten by this command. Reset returns to Ember name 208, Sand description 223, and classic green exits.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

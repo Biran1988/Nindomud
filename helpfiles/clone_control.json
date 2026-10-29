@@ -1,0 +1,16 @@
+{
+  "primary_keyword": "clone control",
+  "keywords": [
+    "clone",
+    "clone control",
+    "clone disperse",
+    "clone scout",
+    "elemental clone reconnaissance",
+    "reconnaissance"
+  ],
+  "title": "Mastered Elemental Clone Reconnaissance",
+  "body": "Syntax: clone control  |  clone status  |  clone disperse\n\nMaster one elemental clone jutsu to 100% practice: Raiton Kage Bunshin, Mizu Bunshin, Deido Bunshin or Suna Bunshin. First create the clone with 'perform <elemental bunshin>'. Shadow Clone Jutsu 100% is still required to create it.\nYou cannot enter clone control during combat, while being attacked by another player, or while casting/performing a timed action.\n\nOnce connected, directions physically move the actual clone Mob through the game while YOUR ORIGINAL BODY stays in the room where you cast it. The clone looks/scans/examines, speaks and uses socials from its location, but does not fight or use your body equipment. Clones show your normal name and description; players looking at either your clone or your original body see an ordinary character. Clone speech and socials appear to come from you normally. Movement displays the room once, without duplicate travel echoes. Your original body is exposed and helpless while you're connected. The clone can be attacked and loses its own HP.\nThere is no free 'return' or exit command while linked. 'clone disperse' destroys the clone and restores your viewpoint. The same happens when its HP reaches zero in combat or when Chakra upkeep causes the clone to disperse. Logout/reboot does not save the link; your real body never moves in player saves.\nAn aggressive NPC can attack your real clone while scouting. Room no_wander flags do not block intentional clone movement.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "byakugan",
+  "keywords": [
+    "byakugan",
+    "byakugan",
+    "heye"
+  ],
+  "title": "Byakugan",
+  "body": "Syntax: byakugan [on|off|status|scan <direction>]\n\nMinimum level 25, Byakugan mastery 0% and inherited Potential 0 or higher. This toggles Byakugan or a short-lived defensive/celestial form. Higher modes have higher chakra upkeep. See 'help hyuga' for full bloodline rules. A technique only becomes available when level, mastery, and the character's permanent bloodline potential all qualify.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

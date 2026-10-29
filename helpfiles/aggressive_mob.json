@@ -1,0 +1,18 @@
+{
+  "primary_keyword": "aggressive mob",
+  "keywords": [
+    "aggressive",
+    "aggressive mob",
+    "aggressive_village",
+    "aggressive_clan",
+    "aggressive_everyone",
+    "mob aggro",
+    "mset aggro_village",
+    "mset aggro_clan"
+  ],
+  "title": "Mobile Aggression Flags",
+  "body": "Mob builder commands:\n  mset <mob vnum> flags aggressive_everyone\n  mset <mob vnum> flags aggressive_village\n  mset <mob vnum> aggro_village leaf\n  mset <mob vnum> flags aggressive_clan\n  mset <mob vnum> aggro_clan uchiha\n\naggressive_everyone attacks any online ordinary player who comes into the NPC's room. aggressive_village attacks only players belonging to the configured target village; aggressive_clan attacks only players belonging to the configured target clan. Multiple flags combine; either matching village OR clan makes the mob hostile. A village/clan flag without a configured target does not attack anyone on that basis. Set a target to off to clear it; use mset flags -aggressive_everyone to remove a flag.\nAutomatic aggression starts normal NPC combat and keeps existing loot, XP and death rules. Safe rooms, staff players and protected NPCs are exempt. Hostile mobs will also physically attack a matching player's controlled elemental clone if they encounter one. Save world to preserve the prototype flags.\nFlags and target fields are available in the offline visual builder.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

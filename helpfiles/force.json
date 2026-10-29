@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "force",
+  "keywords": [
+    "force",
+    "immortal force",
+    "mpforce",
+    "mforce",
+    "force all"
+  ],
+  "title": "Immortal Force / Mob Program MPforce",
+  "body": "Immortal command (Helper rank or higher):\n  force <online player name> <allowed player command>\n  force Sakura north\n  force Sakura say Prepare for the Chuunin Exams!\n  force Sakura @yawn\n  force Sakura attack bandit\nAdministrators and Implementors only (limited safe social actions):\n  force all say The Chuunin Exams have begun!\n\nMob program script command:\n  mpforce $n <allowed player command>\n  mpforce $n north\n  mpforce $n say Welcome, student.\n  mpforce $n attack bandit\n  mpforce look  (older shorthand; targets triggering player)\n\nForces a normal command through the target player's real command dispatcher, not a fake movement or action. Regular game rules and checks still apply. Only online ordinary player characters in the PLAYING state may be forced; staff, offline characters and characters in editors cannot be forced. The target receives a notification, and immortals' successful force actions are audited.\n\nAllowed: directional movement, look/scan, say/ask, native @social emotes, information/status commands, rest/sleep/stand, recall, ordinary combat attack/kill/flee and perform. Staff, account, bank/economy, equipment drop/trade/purchase, save, quit, world editor, force and other privileged commands are blocked. Recursive force loops are blocked. Bulk force all is limited to 50 ordinary players and basic harmless social/status commands.\n\nFull documentation: docs/SMAUG_MOB_PROGRAMS.md.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

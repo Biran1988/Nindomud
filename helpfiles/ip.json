@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "ip",
+  "keywords": [
+    "ip",
+    "connections"
+  ],
+  "title": "IP connections (immortals)",
+  "body": "Syntax: ip [player name or IP filter]\nLists all current connections, including players at login or in an editor, with their actual socket IP, port, country and state. Helper and higher only. Country estimates are offline and may reflect a VPN/proxy. IP geolocation by DB-IP (https://db-ip.com).",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

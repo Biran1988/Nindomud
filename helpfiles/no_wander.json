@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "no_wander",
+  "keywords": [
+    "no_wander",
+    "nowander",
+    "no wander",
+    "room wandering",
+    "rset flags no_wander"
+  ],
+  "title": "Room Flag: No Wander",
+  "body": "Builder syntax: rset flags no_wander\nToggles the no_wander flag on your current room. Use rstat to inspect room flags and save world to persist your changes.\n\nOrdinary mobs with the Wander act flag, and randomly roaming tailed beasts, will never pick this flagged room as a random exit destination. They can choose other eligible exits instead. When every destination is blocked they stay put, then retry at their own next independent movement time.\n\nno_wander does not affect players, existing monsters, deliberate spawns, summoned allies, or explicit scripted mob movement. Monsters already inside a no_wander room may still wander out. This flag is also available in the offline Nindo_mud visual area builder's room flag selector, and remains in area exports.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

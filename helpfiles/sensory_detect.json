@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "sensory detect",
+  "keywords": [
+    "sensory detect",
+    "sensory"
+  ],
+  "title": "Sensory Detect (General Skill, level 20)",
+  "body": "Syntax: sensory detect [on|off] | perform sensory detect [on|off]\nAll classes learn this skill at level 20; teacher practice is required first. Activation costs 20 Chakra; cooldown 15 seconds. Duration is 60 seconds plus mastery percent. While active, you can see, scan, track and target camouflaged ninja, and notice their silent walking. Costs 1 Chakra per second and ends when upkeep cannot be paid. This is an automatic counter while active: repeating look does not reroll detection. It does not reveal immortal invisibility or negate Hidden Mist. Use aff for its remaining duration.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}
