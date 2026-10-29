@@ -5,8 +5,8 @@
     "antidote"
   ],
   "title": "Antidote Pill",
-  "body": "Syntax: craft pill antidote <level>  |  examine <pill>  |  use <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level; it is saved in item data and shown by examine, not in the name. It cures poison only and is not consumed when you are not poisoned. Use 2.pill to select the second matching pill.\n\nDate: 2026-09-27",
+  "body": "Syntax: craft pill antidote <level>  |  examine <pill>  |  use <pill>  |  eat <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level; it is saved in item data and shown by examine, not in the name. It cures poison only and is not consumed when you are not poisoned. Use 'eat 2.pill' or 'use 2.pill' to select the second matching pill.\n\nDate: 2026-09-27",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
