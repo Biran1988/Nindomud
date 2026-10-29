@@ -162,13 +162,13 @@ MOB_SPAWNS = (
     (9, MOB_BASE + 5, 40, "a howling werewolf shinobi", 575, "1d20+20", 350, 110),
     (10, MOB_BASE + 6, 44, "a cursed academy instructor", 700, "1d23+21", 420, 150),
     (11, MOB_BASE + 7, 48, "a skeletal merchant", 775, "1d23+24", 475, 170),
-    (12, MOB_BASE + 8, 53, "a vengeful shinobi spirit", 890, "1d26+26", 620, 190),
-    (13, MOB_BASE + 9, 58, "a ghostly chunin examiner", 1080, "1d30+27", 750, 230),
-    (15, MOB_BASE + 10, 65, "a possessed straw guardian", 1400, "1d33+31", 850, 275),
-    (16, MOB_BASE + 11, 72, "a swamp-drowned jonin", 1800, "1d36+35", 1150, 325),
-    (17, MOB_BASE + 12, 78, "an ancient pumpkin revenant", 2200, "1d40+40", 1450, 400),
-    (18, MOB_BASE + 13, 85, "an undead royal shinobi", 2800, "1d43+43", 1850, 550),
-    (19, BOSS_VNUM, 100, "The Pumpkin King", 9500, "2d35+65", 8000, 2500),
+    (12, MOB_BASE + 8, 50, "a vengeful shinobi spirit", 890, "1d26+26", 620, 190),
+    (13, MOB_BASE + 9, 50, "a ghostly chunin examiner", 1080, "1d30+27", 750, 230),
+    (15, MOB_BASE + 10, 50, "a possessed straw guardian", 1400, "1d33+31", 850, 275),
+    (16, MOB_BASE + 11, 50, "a swamp-drowned jonin", 1800, "1d36+35", 1150, 325),
+    (17, MOB_BASE + 12, 50, "an ancient pumpkin revenant", 2200, "1d40+40", 1450, 400),
+    (18, MOB_BASE + 13, 50, "an undead royal shinobi", 2800, "1d43+43", 1850, 550),
+    (19, BOSS_VNUM, 50, "The Pumpkin King", 9500, "2d35+65", 8000, 2500),
 )
 
 
@@ -245,7 +245,10 @@ def _register_mob(vnum, name, level, hp, damage, xp, ryo, *, shop=None, stock=No
     if old is not None and not old.get(TAG):
         return False
     t = combat.default_template(vnum, name)
-    t.update({TAG: True, "level": level, "hit_dice": f"1d1+{hp-1}",
+    t.update({TAG: True, "level": min(level, combat.MAX_KILLABLE_EVENT_MOB_LEVEL)
+              if hostile else level,
+              combat.EVENT_KILLABLE_TAG: bool(hostile),
+              "hit_dice": f"1d1+{hp-1}",
               "damage_dice": damage, "experience_reward": xp,
               "ryo_reward": ryo, "respawns": False,
               "act_flags": ["Npc", "Sentinel"] + (["aggressive_everyone"] if hostile else []),
