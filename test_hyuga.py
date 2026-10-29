@@ -64,7 +64,7 @@ class HyugaTests(unittest.TestCase):
         self.assertFalse(hyuga.unlocked(ultimate, "tenseigan chakra mode"))
 
     def test_byakugan_activation_needs_awakening_not_teacher(self):
-        p = hyuga_player(25, 0, level=50)
+        p = hyuga_player(25, 0, level=25)
         class Session:
             player = p
             messages = []
