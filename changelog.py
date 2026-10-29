@@ -512,4 +512,5 @@ CHANGELOG = [
     ("15.364", "Amaterasu now strikes both players and mobs for 250 initial damage before defenses, then permanently burns targets for 40-60 damage per pulse, continuing after defeat and hospital recovery. Target flames cannot be extinguished; the independent room fire still lasts five minutes."),
     ("15.365", "Fixed immortal IP lookup failing when displaying connections by sending properly formatted pager text. IP and player-name filters work, connection totals are included and staff may view connections while sleeping."),
     ("15.366", "Mangekyo sacrifice now keeps all practiced skills and any earned proficiency at a minimum of 1% after its 25% mastery penalty. Skills that were never practiced and still have 0% stay at 0%; all other sacrifice penalties are unchanged."),
+    ("15.367", "Added administrator/Implementor setallprac <jutsu or skill> <1-100> to change mastery for every existing character who knows the technique, including offline and link-dead players. Setallprac who <technique> lists each holder and their current percentage; existing practice gates update, but unlearned jutsu are never granted."),
 ]
