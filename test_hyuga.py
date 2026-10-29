@@ -9,7 +9,7 @@ import commands
 from models import Player
 
 
-def hyuga_player(potential=40, mastery=0, level=100, awakened=True):
+def hyuga_player(potential=40, mastery=0, level=250, awakened=True):
     player = Player(name="Neji", account_name="Neji")
     player.clan = "hyuga"
     player.village = "leaf"
@@ -60,8 +60,21 @@ class HyugaTests(unittest.TestCase):
         ultimate = hyuga_player(100, 100)
         self.assertTrue(hyuga.unlocked(ultimate, "tenseigan chakra mode"))
         self.assertTrue(hyuga.unlocked(ultimate, "golden wheel reincarnation explosion"))
-        ultimate.level = 99
+        ultimate.level = 239
         self.assertFalse(hyuga.unlocked(ultimate, "tenseigan chakra mode"))
+        ultimate.level = 240
+        self.assertTrue(hyuga.unlocked(ultimate, "tenseigan chakra mode"))
+
+    def test_technique_progression_spans_full_250_levels(self):
+        self.assertEqual(hyuga.REGISTRY["byakugan"]["level_requirement"], 25)
+        self.assertEqual(hyuga.REGISTRY["gentle fist: chakra point strike"]["level_requirement"], 35)
+        self.assertEqual(hyuga.REGISTRY["celestial byakugan"]["level_requirement"], 215)
+        self.assertEqual(hyuga.REGISTRY["tenseigan chakra mode"]["level_requirement"], 240)
+        self.assertEqual(hyuga.REGISTRY["golden wheel reincarnation explosion"]["level_requirement"], 250)
+        elite = hyuga_player(potential=100, mastery=100, level=249)
+        self.assertFalse(hyuga.unlocked(elite, "golden wheel reincarnation explosion"))
+        elite.level = 250
+        self.assertTrue(hyuga.unlocked(elite, "golden wheel reincarnation explosion"))
 
     def test_byakugan_activation_needs_awakening_not_teacher(self):
         p = hyuga_player(25, 0, level=25)
