@@ -430,21 +430,26 @@ def _complete_mission(player: Player, mission: dict, entry: dict) -> List[str]:
     )
     xp_mult = village_perks.xp_multiplier(player.village)
     xp_reward = int(mission["reward_xp"] * xp_mult)
+    import leveling
+    experience_before = player.experience
+    xp_messages = leveling.grant_experience(player, xp_reward)
+    earned_xp = max(0, player.experience - experience_before)
     perk_notes = []
-    if xp_mult != 1.0:
+    if xp_mult != 1.0 and earned_xp:
         perk_notes.append(f"x{xp_mult:g} exp")
     if ryo_mult != 1.0:
         perk_notes.append(f"x{ryo_mult:g} ryo")
     perk_suffix = f" &Y({', '.join(perk_notes)} village perk)&x" if perk_notes else ""
+    cap_note = (" &Y(Rank cap: no experience awarded.)&x"
+                if not earned_xp and player.level >= leveling.rank_level_cap(player) else "")
     lines.append(
         f"&GMission complete: {mission['title']}!&x\n"
-        f"You receive {xp_reward} experience, {ryo_reward} ryo, "
+        f"You receive {earned_xp} experience, {ryo_reward} ryo, "
         f"and {mission['reward_mission_points']} mission point(s)."
-        + perk_suffix + "\n"
+        + perk_suffix + cap_note + "\n"
         f"This mission can be accepted again in {_format_duration(cooldown)}."
     )
-    import leveling
-    lines.extend(leveling.grant_experience(player, xp_reward))
+    lines.extend(xp_messages)
     return lines
 
 
