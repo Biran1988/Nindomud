@@ -9226,6 +9226,7 @@ COMMANDS = {
     "yes": cmd_finish_downed_yes,
     "release": cmd_release,
     "unleash": cmd_unleash,
+    "unseal": __import__("immortal_unseal").command,
     "no": cmd_finish_downed_no,
     "auction": cmd_auction,
     "price": cmd_price,
