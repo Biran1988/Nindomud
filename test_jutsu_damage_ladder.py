@@ -16,6 +16,14 @@ class JutsuDamageLadderTests(unittest.TestCase):
             if jutsu["damage"] is None or jutsu.get("jutsu_type") == "hyuga_strike":
                 continue  # Hyuga now scales against standardized mob HP, not this ladder.
             with self.subTest(jutsu=key):
+                if jutsu.get("jutsu_type") == "hyuga_strike":
+                    # The 250-level Hyuga tree scales by same-level mob HP.
+                    level = min(250, max(1, jutsu["level_requirement"]))
+                    hp = 80 + 20 * level + 2 * level * level
+                    low, high = jutsu["damage"]
+                    self.assertGreater(low, hp * 0.025)
+                    self.assertLessEqual(high, hp * 0.17)
+                    continue
                 level = min(100, max(1, jutsu["level_requirement"]))
                 index = 1 + ((level - 1) * (len(tiers) - 2) + 49) // 99
                 low, high = jutsu["damage"]
