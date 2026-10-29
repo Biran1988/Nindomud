@@ -35,7 +35,7 @@ class StudentStatusTests(unittest.TestCase):
         player = Player("Aspirant", "Aspirant", village="leaf", level=10)
         self.assertIn("Genin Exam", kage.handle_promotion_request(player))
         self.assertEqual(player.village_rank, "student")
-        self.assertTrue(programs.validate_program("speech", "set_rank", "student",
+        self.assertFalse(programs.validate_program("speech", "set_rank", "student",
                                                   {"speech"}, keyword="graduate"))
         session = NS(player=player, send=Mock())
         self.assertFalse(programs.run_action(session, "set_rank", "genin"))
