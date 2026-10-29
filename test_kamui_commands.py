@@ -131,7 +131,7 @@ class KamuiCommandTests(unittest.TestCase):
             self.assertEqual(mob.health, 0)
             defeat.assert_called_once_with(self.caster, mob)
 
-    def test_amaterasu_burn_on_mob_can_be_extinguished(self):
+    def test_amaterasu_burn_on_mob_cannot_be_extinguished(self):
         mob = combat.Mob(9002, 9002, "bandit", 10, 500, 500, 1, 0, 0)
         self.caster.player.mangekyo_eye_1 = "amaterasu"
         with patch.dict(combat.MOBS_BY_ROOM, {1: [mob]}, clear=True):
@@ -141,7 +141,12 @@ class KamuiCommandTests(unittest.TestCase):
             mangekyo_mobs.resolve(self.caster, "amaterasu", mob)
             self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
             self.caster.handle_line("perform amaterasu extinguish bandit")
-            self.assertIsNone(mob.mangekyo_amaterasu_caster)
+            self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
+            self.assertIn("can never be extinguished", "".join(self.output))
+            # The caster can still dismiss the separately timed room fire.
+            self.caster.handle_line("perform amaterasu extinguish all")
+            self.assertIsNone(world.WORLD.get(1).amaterasu_fire_caster)
+            self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
 
     def test_solo_pocket_disconnect_returns_caster(self):
         self.caster.handle_line("perform kamui: pocket dimension Caster")
@@ -222,22 +227,50 @@ class KamuiCommandTests(unittest.TestCase):
                 self.assertFalse(self.target.player.izanami_trapped)
                 self.target.player.room_vnum = 1
 
-    def test_amaterasu_burn_ends_on_defeat_and_room_fire_expires_in_five_minutes(self):
+    def test_amaterasu_player_takes_250_immediately_and_stays_burning_after_defeat(self):
         self.caster.player.mangekyo_eye_1 = "amaterasu"
+        self.target.player.maximum_health = 800
+        self.target.player.health = 800
         with patch("storage.save_player"):
             combat.resolve_amaterasu_cast(self.caster, self.target)
-        room = world.WORLD.get(1)
-        self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
-        self.assertEqual(data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS, 5 * 60)
-        import time
-        self.assertAlmostEqual(room.amaterasu_fire_expires_at - time.time(), 5 * 60, delta=2)
-        self.target.player.health = 0
-        combat.handle_player_defeat(self.target)
-        self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
+            room = world.WORLD.get(1)
+            self.assertEqual(self.target.player.health, 550)
+            self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
+            self.assertEqual(self.target.player.mangekyo_amaterasu_caster, "Caster")
+            self.assertEqual(data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS, 5 * 60)
+            import time
+            self.assertAlmostEqual(room.amaterasu_fire_expires_at - time.time(), 5 * 60, delta=2)
+            self.target.player.health = 0
+            combat.handle_player_defeat(self.target)
+            self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
+            self.assertEqual(self.target.player.mangekyo_amaterasu_caster, "Caster")
+            before = self.target.player.health
+            import session as session_module
+            with patch("mangekyo.random.randint", return_value=50):
+                mangekyo.process_amaterasu_player_burns(combat, session_module)
+            self.assertEqual(self.target.player.health, before - 50)
         self.assertTrue(room.amaterasu_fire_caster)
         with patch("mangekyo.time.time", return_value=room.amaterasu_fire_expires_at + 1):
             mangekyo.process_amaterasu_room_fires(combat, world)
         self.assertIsNone(room.amaterasu_fire_caster)
+        self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
+
+    def test_amaterasu_initial_pvp_hit_uses_defenses(self):
+        self.target.player.maximum_health = 800
+        self.target.player.health = 800
+        with patch("storage.save_player"), patch(
+                "combat.status_effects.reduce_incoming_damage", return_value=125) as reducer:
+            combat.resolve_amaterasu_cast(self.caster, self.target, grow_handsigns=False)
+        reducer.assert_called_with(self.target.player.active_status_effects, 250)
+        self.assertEqual(self.target.player.health, 675)
+        self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
+
+    def test_amaterasu_initial_pvp_kill_uses_pvp_defeat(self):
+        self.target.player.health = 100
+        with patch("storage.save_player"), patch.object(combat, "handle_pvp_defeat") as defeat:
+            combat.resolve_amaterasu_cast(self.caster, self.target, grow_handsigns=False)
+        defeat.assert_called_once_with(winner_session=self.caster, loser_session=self.target)
+        self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
 
 
 if __name__ == "__main__":
