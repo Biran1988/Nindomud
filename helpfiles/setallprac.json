@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "setallprac",
+  "keywords": [
+    "setallprac",
+    "global practice",
+    "bulk practice"
+  ],
+  "title": "Set All Practice (Administrator+)",
+  "body": "Syntax: setallprac who <skill or jutsu>\nsetallprac <skill or jutsu> <1-100>\n\nLists all current character percentages for a known skill/jutsu, or sets the selected percentage across all existing characters who have learned it, whether online, link-dead or offline. The change saves each affected character and marks the already-learned skill as practiced for normal first-practice gating. It never awards unknown skills or bypasses bloodline, village, class or level restrictions. Administrator and Implementor only.\n\nExample: setallprac who shadow clone jutsu\nExample: setallprac shadow clone jutsu 75\n\nThe normal who command continues to list online players.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
