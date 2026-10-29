@@ -936,9 +936,9 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     (tick_pending_casts, grow_handsigns=True) and the instant-cast
     path via the Silent Genjutsu passive (grow_handsigns=False),
     matching resolve_illusion_walk_cast's own exact established
-    pattern. Inflicts a burn that persists until defeat on the target
-    and sets their current room ablaze too (everyone in it except the
-    caster)."""
+    pattern. Deals 250 initial damage to a player (before defenses),
+    permanently ignites the target, and separately sets their room on
+    fire for five minutes (everyone in it except the caster)."""
     player = session.player
     if (
         target_session.state.name != "PLAYING"
@@ -957,10 +957,24 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     if room is not None:
         room.amaterasu_fire_caster = player.name
         room.amaterasu_fire_expires_at = time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
-    jutsu_colors.send(session, f"&RBlack flames erupt around {target_session.player.name} -- Amaterasu burns until they fall.&x")
-    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you in black flame!&x")
+    # Same immediate strike as the mob casting path. Existing defensive
+    # damage reduction still applies, but the direct flames never expire.
+    import sage_mode
+    damage = status_effects.reduce_incoming_damage(
+        target_session.player.active_status_effects, data_mangekyo.AMATERASU_INITIAL_DAMAGE)
+    damage = sage_mode.incoming(target_session.player, damage)
+    target_session.player.health -= damage
+    jutsu_colors.send(session, f"&RAmaterasu engulfs {target_session.player.name} for {damage_messages.describe_damage(damage)} initial damage! The black flames will never fade.&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you for {damage_messages.describe_damage(damage)} initial damage! The black flames will never fade.&x")
     if grow_handsigns:
         grow_skill_from_usage(player, "Handsigns", session=session)
+    if target_session.player.health <= 0:
+        if try_trigger_izanagi(target_session):
+            pass
+        elif is_immortal_immune_to_defeat(target_session):
+            clamp_immortal_health(target_session)
+        else:
+            handle_pvp_defeat(winner_session=session, loser_session=target_session)
 
 
 def resolve_kamui_limb_removal_cast(session, target_session) -> None:
@@ -1318,10 +1332,8 @@ def tick_all_mob_effects(sessions=None) -> None:
                 owner = next((s for s in sessions if s.player and
                               (s.combat_target is mob or s.player.name == mob.mangekyo_amaterasu_caster)), None)
                 if owner:
-                    mob.mangekyo_amaterasu_caster = None
                     handle_mob_defeat(owner, mob)
                 else:
-                    mob.mangekyo_amaterasu_caster = None
                     remove_mob(mob)
 
 
@@ -3394,10 +3406,6 @@ def handle_player_defeat(session) -> None:
         # combatants; nothing below this branch should ever run for
         # a duel loss.
         import duel as duel_module
-        if player.mangekyo_amaterasu_burning:
-            player.mangekyo_amaterasu_burning = False
-            player.mangekyo_amaterasu_caster = None
-            session.send("&YAmaterasu's flames go out as you fall.&x")
         duel_module.end_duel(session.duel, session)
         return
 
@@ -3416,10 +3424,8 @@ def handle_player_defeat(session) -> None:
             dismiss_summon(player)
             return
 
-    if player.mangekyo_amaterasu_burning:
-        player.mangekyo_amaterasu_burning = False
-        player.mangekyo_amaterasu_caster = None
-        session.send("&YAmaterasu's flames go out as you fall.&x")
+    # Amaterasu is permanent on a character, including after defeat
+    # and hospital respawn. Never clear its burning flag here.
     session.send("&RYour vision darkens as you collapse.&x")
 
     import leveling
