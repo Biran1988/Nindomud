@@ -38,7 +38,7 @@ KAGE_NAMES = {
 STUDENT_LEVEL_CAP = 10
 # Rank-based caps on combat levels; Kage is an Implementor appointment.
 RANK_LEVEL_CAPS = {
-    "genin": 35,
+    "genin": 15,
     "chunin": 80,
     "special jonin": 135,
     "jonin": 200,
