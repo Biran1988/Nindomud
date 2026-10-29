@@ -82,6 +82,7 @@ def _target_in_room(session, query):
     player = session.player
     for other in ACTIVE_SESSIONS:
         if (other is not session and other.player and
+                getattr(getattr(other, "state", None), "name", "") == "PLAYING" and
                 other.player.room_vnum == player.room_vnum and
                 query in other.player.name.lower() and
                 not commands._player_hidden_from(player, other.player)):
@@ -172,6 +173,7 @@ def begin_cast(session, key, words):
                         or combat.is_teacher(m) or combat.is_gambler(m) or combat.is_immortal_mob(m))]
         from session import ACTIVE_SESSIONS
         hostile_players = [s for s in ACTIVE_SESSIONS if s is not session and s.player
+                           and getattr(getattr(s, "state", None), "name", "") == "PLAYING"
                            and s.player.room_vnum == player.room_vnum and s.player.health > 0]
         if not hostile_mobs and (not hostile_players or (room and room.safe)):
             jutsu_colors.send(session, "There are no eligible targets here.")
@@ -252,7 +254,9 @@ def resolve_cast(session, key, payload):
         if not (room and room.safe):
             import data_kekkei_genkai
             for other in ACTIVE_SESSIONS:
-                if (other is session or not other.player or other.player.room_vnum != player.room_vnum
+                if (other is session or not other.player
+                        or getattr(getattr(other, "state", None), "name", "") != "PLAYING"
+                        or other.player.room_vnum != player.room_vnum
                         or other.player.health <= 0):
                     continue
                 chance = max(25, min(85, 70 + (player.level - other.player.level) * 2))
