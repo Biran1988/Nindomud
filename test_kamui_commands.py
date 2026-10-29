@@ -246,7 +246,7 @@ class KamuiCommandTests(unittest.TestCase):
             self.assertEqual(self.target.player.mangekyo_amaterasu_caster, "Caster")
             before = self.target.player.health
             import session as session_module
-            with patch("mangekyo.random.randint", return_value=50):
+            with patch("random.randint", return_value=50):
                 mangekyo.process_amaterasu_player_burns(combat, session_module)
             self.assertEqual(self.target.player.health, before - 50)
         self.assertTrue(room.amaterasu_fire_caster)
