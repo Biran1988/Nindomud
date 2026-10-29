@@ -1393,10 +1393,10 @@ def test_kage_promotions_enabled():
 
     # Every remaining promotion in the ladder, each with its own headband upgrade.
     ladder = [
-        (40, 50, "special jonin", "A Konoha Special Jonin Headband"),
-        (60, 100, "jonin", "A Konoha Jonin Headband"),
-        (80, 500, "elite jonin", "A Konoha Elite Jonin Headband"),
-        (95, 1000, "village elder", "A Konoha Elder's Headband"),
+        (30, 50, "special jonin", "A Konoha Special Jonin Headband"),
+        (45, 100, "jonin", "A Konoha Jonin Headband"),
+        (60, 500, "elite jonin", "A Konoha Elite Jonin Headband"),
+        (80, 1000, "village elder", "A Konoha Elder's Headband"),
     ]
 
     # Unqualified for the first ladder step: refused, exact requirements shown, rank unchanged.
@@ -1404,7 +1404,7 @@ def test_kage_promotions_enabled():
     text_refused = "".join(out)
     out.clear()
     assert s.player.village_rank == "chunin"
-    assert "level 40" in text_refused.lower()
+    assert "level 30" in text_refused.lower()
     assert "50 completed mission" in text_refused.lower()
 
     for level, missions, expected_rank, expected_headband in ladder:
