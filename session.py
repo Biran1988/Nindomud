@@ -74,6 +74,7 @@ class State(Enum):
     CHARGEN_PERSONALITY = auto()
     CHARGEN_CONFIRM = auto()
     PLAYING = auto()
+    LINKDEAD = auto()     # protected in-world grace period after a lost connection
     EDITING = auto()        # multi-line text editor (e.g. rset desc)
     PENDING_LINE = auto()   # single-line prompt (e.g. rset name)
     PAGING = auto()         # mid-pager, waiting for "continue" (see send_paginated)
@@ -150,6 +151,7 @@ class Session:
         self.chakra_charge: Optional[dict] = None  # timed Chakra Charge channel; never persisted
         self.controlled_clone = None  # live elemental clone Mob; transient, body stays in its room
         self._suppress_departure_announcement = False  # reconnect takeover is not a logout
+        self.linkdead_until = 0.0
 
         # Scratch chargen state
         self._pending_name: Optional[str] = None
@@ -232,6 +234,47 @@ class Session:
             if other.player and other.player.village == village:
                 other.send(text)
 
+    def begin_disconnect_grace(self, now: float = None) -> None:
+        """Retain an unexpectedly disconnected character for 15 minutes.
+
+        The player remains in the world but is completely excluded from
+        gameplay ticks and targeting until a password-authenticated reconnect
+        or expiration. 'quit' and administrative closes still use request_close.
+        """
+        if self.state != State.PLAYING or not self.player:
+            return
+        self.linkdead_until = (time.time() if now is None else now) + 15 * 60
+        self.state = State.LINKDEAD
+
+        # No abandoned attacks, queued casts, or timed jobs may continue
+        # while their owner is offline. Break mutual PvP immediately.
+        self.combat_target = None
+        self.pending_cast = None
+        self.pending_action = None
+        self.chakra_charge = None
+        for other in list(ACTIVE_SESSIONS):
+            if other.pvp_target is self:
+                other.pvp_target = None
+                if other.state == State.PLAYING:
+                    other.send("&DYour opponent loses their connection. Combat ends.&x")
+        self.pvp_target = None
+
+        # Scouting clones cannot continue under disconnected control.
+        clone = self.controlled_clone
+        self.controlled_clone = None
+        if clone is not None:
+            import combat
+            if any(m is clone for m in combat.MOBS_BY_ROOM.get(clone.room_vnum, ())):
+                combat.remove_mob(clone)
+        if self.trade is not None:
+            import trade
+            trade.cancel_trade(self.trade)
+        storage.save_player(self.player)
+        self.broadcast_all(
+            f"&[244][LINKDEAD]&x &[223]{self.player.name}&x has lost connection "
+            "and is protected for 15 minutes.", exclude_self=True
+        )
+
     def request_close(self) -> None:
         if self.player:
             import hidden_mist
@@ -250,11 +293,11 @@ class Session:
             import combat
             if any(m is clone for m in combat.MOBS_BY_ROOM.get(clone.room_vnum, ())):
                 combat.remove_mob(clone)
-        if self.state == State.PLAYING and self.player:
+        if self.state in (State.PLAYING, State.LINKDEAD) and self.player:
             import mangekyo
             mangekyo.end_tsukuyomi_on_departure(self, world)
             mangekyo.end_kamui_on_departure(self, world)
-        if (self.state == State.PLAYING and self.player
+        if (self.state in (State.PLAYING, State.LINKDEAD) and self.player
                 and not self._suppress_departure_announcement):
             self.broadcast_all(shinobi_notices.departure(self.player.name),
                                exclude_self=True)
@@ -959,17 +1002,32 @@ class Session:
     def _enter_world(self, player: Player) -> None:
         import reaper_seal
         reaper_seal.reconcile_player(player)
-        # Kick any stale/ghost session already playing as this same
-        # character. Covers a genuinely abrupt "linkdead" disconnect --
-        # no clean TCP close means the old session's connection loop
-        # never notices it died (readline() just hangs), so it's never
-        # removed from ACTIVE_SESSIONS on its own. Without this check,
-        # reconnecting just adds a SECOND session for the same player,
-        # which is exactly why they'd show up twice on 'who'.
+        # An authenticated reconnect during the grace period reclaims the
+        # SAME in-memory character (location, HP, XP, group), not the older
+        # player snapshot read from disk during password validation.
+        resumed_from_linkdead = False
         for other in list(ACTIVE_SESSIONS):
-            if other is not self and other.player and other.player.name.lower() == player.name.lower():
-                other.send("\n&RYour connection has been taken over by a new login.&x")
+            if other is self or not other.player or other.player.name.lower() != player.name.lower():
+                continue
+            if other.state == State.LINKDEAD and time.time() < other.linkdead_until:
+                player = other.player
+                resumed_from_linkdead = True
+                if other.group is not None:
+                    self.group = other.group
+                    self.group.members = [self if member is other else member
+                                          for member in self.group.members]
+                    if self.group.leader is other:
+                        self.group.leader = self
+                    other.group = None
+                # Retire the dead transport without triggering the real
+                # logout teardown, which would alter this live character.
+                other.state = State.CLOSED
+                ACTIVE_SESSIONS.remove(other)
+                other.close_callback()
+            else:
                 other._suppress_departure_announcement = True
+                if other.state == State.PLAYING:
+                    other.send("\n&RYour connection has been taken over by a new login.&x")
                 other.request_close()
 
         # Tsukuyomi rooms exist only in memory. A reboot, dropped link,
@@ -1058,6 +1116,8 @@ class Session:
         from data_villages import VILLAGES as _VILLAGES
         village_name = _VILLAGES[player.village]["village_name"]
         self.send(shinobi_notices.welcome(player, village_name))
+        if resumed_from_linkdead:
+            self.send("&GYour connection is restored. Your shinobi returns from the 15-minute grace period.&x")
         self.broadcast_all(shinobi_notices.arrival(player.name), exclude_self=True)
         # Per direct confirmation (Section 143): a genuine, safe
         # fallback for any existing character whose own saved
