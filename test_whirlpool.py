@@ -20,6 +20,7 @@ import session as sessions
 from models import Account
 from session import Session, State
 import storage
+import village_access
 import territory
 import world
 import world_persistence
@@ -64,18 +65,94 @@ class WhirlpoolTests(unittest.TestCase):
         self.assertIs(s.state, State.CHARGEN_VILLAGE)
         self.assertNotIn("whirlpool", "\n".join(out).lower())
 
-    def test_hidden_keyword_case_and_whitespace_advance_to_class(self):
+    def test_hidden_keyword_case_and_whitespace_requires_code(self):
         content.populate()
         s, out = self.session()
         s.handle_line("  WhIrLpOoL  ")
+        self.assertIs(s.state, State.CHARGEN_WHIRLPOOL_ACCESS)
+        self.assertIsNone(s._pending_village)
+        self.assertNotIn("whirlpool", "\n".join(out).lower())
+        s.handle_line("incorrect")
+        self.assertIs(s.state, State.CHARGEN_WHIRLPOOL_ACCESS)
+        self.assertIsNone(s._pending_village)
+        with patch.object(village_access, "verify_whirlpool_access_code", return_value=True):
+            s.handle_line("test-authorized-code")
         self.assertEqual(s._pending_village, "whirlpool")
+        self.assertTrue(s._whirlpool_access_granted)
         self.assertIs(s.state, State.CHARGEN_CLASS)
+
+    def test_access_code_verifier_uses_expected_secret_without_echoing(self):
+        # Test the verifier with a temporary test-only digest. Never publish
+        # a production authorization code or a reversible encoding of it.
+        import hashlib
+        code = "test-only-chargen-credential"
+        digest = hashlib.pbkdf2_hmac("sha256", code.encode(),
+                                    village_access._WH_SALT, 200_000).hex()
+        with patch.object(village_access, "_WH_DIGEST", digest):
+            self.assertTrue(village_access.verify_whirlpool_access_code(code))
+            self.assertFalse(village_access.verify_whirlpool_access_code(code + "1"))
+            self.assertFalse(village_access.verify_whirlpool_access_code(""))
+
+    def test_wrong_code_three_times_locks_selection_and_no_secret_leaks(self):
+        content.populate()
+        s, out = self.session()
+        s.handle_line("whirlpool")
+        for value in ("wrong", "invalid", "nope"):
+            s.handle_line(value)
+        self.assertEqual(s.state, State.CHARGEN_VILLAGE)
+        self.assertIsNone(s._pending_village)
+        s.handle_line("whirlpool")
+        self.assertEqual(s.state, State.CHARGEN_VILLAGE)
+        self.assertFalse(s._whirlpool_access_granted)
+        self.assertNotIn("whirlpool", "\n".join(out).lower())
+        for value in ("wrong", "invalid", "nope"):
+            self.assertNotIn(value, "\n".join(out))
+
+    def test_cancel_or_restart_never_carries_authorization(self):
+        content.populate()
+        s, _ = self.session()
+        s.handle_line("whirlpool")
+        s.handle_line("cancel")
+        self.assertEqual(s.state, State.CHARGEN_VILLAGE)
+        self.assertIsNone(s._pending_village)
+        s.handle_line("whirlpool")
+        with patch.object(village_access, "verify_whirlpool_access_code", return_value=True):
+            s.handle_line("test-authorized-code")
+        self.assertEqual(s.state, State.CHARGEN_CLASS)
+        s.state = State.CHARGEN_CONFIRM
+        s.handle_line("no")
+        self.assertFalse(s._whirlpool_access_granted)
+        self.assertIsNone(s._pending_village)
+        s.handle_line("leaf")
+        self.assertEqual(s.state, State.CHARGEN_CLASS)
+        self.assertEqual(s._pending_village, "leaf")
+        self.assertFalse(s._whirlpool_access_granted)
+
+    def test_final_confirmation_rechecks_authorization(self):
+        content.populate()
+        s, _ = self.session()
+        s._pending_village = "whirlpool"
+        s._pending_clan = "uzumaki"
+        s.state = State.CHARGEN_CONFIRM
+        s.handle_line("yes")
+        self.assertIsNone(s.player)
+        self.assertEqual(s.state, State.CHARGEN_VILLAGE)
+
+    def test_standard_villages_never_ask_for_special_code(self):
+        s, _ = self.session()
+        for village in ("leaf", "stone", "water", "cloud", "sand"):
+            s.state = State.CHARGEN_VILLAGE
+            s.handle_line(village)
+            self.assertEqual(s.state, State.CHARGEN_CLASS)
+            self.assertEqual(s._pending_village, village)
 
     def test_only_uzumaki_is_accepted_and_none_cannot_skip(self):
         content.populate()
         self.assertEqual(data_clans.clans_for_village("whirlpool"), ["uzumaki"])
         s, out = self.session()
         s.handle_line("whirlpool")
+        with patch.object(village_access, "verify_whirlpool_access_code", return_value=True):
+            s.handle_line("test-authorized-code")
         s.handle_line("ninjutsu")
         self.assertEqual(data_clans.clan_names_display("whirlpool").count("&C"), 1)
         for line in ("none", "", "uchiha", "senju", "hyuga"):
@@ -91,6 +168,9 @@ class WhirlpoolTests(unittest.TestCase):
             for line in ("whirlpool", "ninjutsu", "uzumaki", "balanced", "male", "tan",
                          "black", "brown", "athletic", "confident", "yes"):
                 s.handle_line(line)
+                if line == "whirlpool":
+                    with patch.object(village_access, "verify_whirlpool_access_code", return_value=True):
+                        s.handle_line("test-authorized-code")
         p = s.player
         self.assertIsNotNone(p)
         self.assertEqual((p.village, p.clan, p.room_vnum), ("whirlpool", "uzumaki", 80001))

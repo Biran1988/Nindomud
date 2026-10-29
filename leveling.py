@@ -286,6 +286,10 @@ def grant_experience(player: Player, amount: int) -> List[str]:
                 player.skill_proficiencies[display] = initial_proficiency(player)
                 lines.append(f"You have unlocked:\n  {display}")
 
+        import whirlpool_fuinjutsu
+        for name in whirlpool_fuinjutsu.sync_skills(player):
+            lines.append(f"You have unlocked:\n  {name}")
+
         import data_kekkei_genkai
         known_before = set(player.learned_skills)
         data_kekkei_genkai.sync_elemental_techniques(player)
@@ -433,6 +437,10 @@ def sync_universal_skills(player: Player) -> List[str]:
             player.learned_skills.append(display_name)
             player.skill_proficiencies[display_name] = initial_proficiency(player)
             lines.append(f"&Y(New since your last login: you have learned {display_name}!)&x")
+
+    import whirlpool_fuinjutsu
+    for name in whirlpool_fuinjutsu.sync_skills(player):
+        lines.append(f"&Y(New Whirlpool sealing art: {name}!)&x")
 
     import data_kekkei_genkai
     known_before = set(player.learned_skills)

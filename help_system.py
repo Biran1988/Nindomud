@@ -56,6 +56,18 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "sealconsent", "keywords": ["sealconsent", "contract consent"],
+        "title": "Consent to Summoning Contract Dissolution",
+        "body": "Syntax: sealconsent yes | sealconsent no (or simply yes/no during the request).\n\n"
+                "When a sealing specialist asks two players to dissolve their signed summoning "
+                "contracts, each affected player must approve separately within two minutes. "
+                "No response or any refusal cancels the entire request with no contract loss. "
+                "Approval removes your current summoning contract and associated Sage training "
+                "and ends any active summon. The specialist's own contract is unaffected. "
+                "You must remain together and out of combat until both players approve.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "unseal",
         "keywords": ["unseal", "unseal mob", "immortal unseal"],
         "title": "Unseal (Immortal Tailed Beast Extraction)",
@@ -451,7 +463,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Genuinely separate from 'mset' -- this exists outside the raw prototype editor specifically as its own reward tool, not a field to poke directly.\n"
             "\n"
-            "Already at the level cap (100)? Refuses outright rather than doing nothing silently.\n"
+            "Already at the level cap (250)? Refuses outright rather than doing nothing silently.\n"
             "\n"
             "Date: 2026-09-02"
         ),
@@ -1844,7 +1856,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: level\n"
             "\n"
-            "Description: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. At maximum level, XP Needed is 0.\n"
+            "Description: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. The maximum level is 250; levels 226-250 have progressively steeper XP requirements. At maximum level, XP Needed is 0.\n"
             "\n"
             "Date: 2026-10-21"
         ),
