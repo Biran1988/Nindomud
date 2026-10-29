@@ -3147,6 +3147,24 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "mobscale",
+        "keywords": ["mobscale", "mob balance", "mob difficulty"],
+        "title": "Mob Scaling (staff)",
+        "body": (
+            "Syntax: mobscale  |  mobscale preview <level>\n"
+            "        mobscale hp <25-400>  |  mobscale damage <25-400>\n"
+            "\n"
+            "Description: Ordinary mobs automatically receive a level-based health and attack-damage baseline. Identical levels use identical base HP and expected attack damage, allowing longer fights with time for techniques. HP and damage multipliers are global percentages (100 by default), saved in data/mob_balance.json. Adjust them in game, then newly spawned mobs use the updated balance. Existing fights are unchanged.\n"
+            "\n"
+            "To exempt a scripted encounter: mset <vnum> autobalance off. Then set custom hitdice/damagedice. Re-enable with mset <vnum> autobalance on. Halloween event encounters retain their special HP/damage.\n"
+            "\n"
+            "Only administrators and Implementors can use mobscale."
+        ),
+        "created_by": "System",
+        "updated_by": "System",
+        "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "mset",
         "keywords": ["mset"],
         "title": "Mset (staff)",
