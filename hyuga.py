@@ -334,6 +334,8 @@ def cmd_hyuga(session, args):
         lines = ["&CHyuga Bloodline Techniques&x", f"Mastery: {_ratio(player):.0%}; Level: {player.level}",
                  "Use 'byakugan on', 'byakugan scan <direction>' or any listed jutsu shortcut."]
         for key, spec in sorted(REGISTRY.items(), key=lambda pair: (pair[1]["level_requirement"], pair[0])):
+            if spec.get("hyuga_potential", 0) >= 95 and not unlocked(player, key):
+                continue  # never expose secret celestial art names prematurely
             if player.bloodline_potential >= spec.get("hyuga_potential", 0):
                 state = "learned" if unlocked(player, key) else f"requires mastery {spec.get('hyuga_mastery', 0):.0%}"
                 lines.append(f" Lv {spec['level_requirement']:3} {spec['display_name']} - {state}")
