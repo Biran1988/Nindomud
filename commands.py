@@ -46,6 +46,7 @@ import data_clans
 import biomes
 import data_jutsu
 import data_kekkei_genkai
+import hyuga
 import data_rarity
 import data_passives
 import data_shops
@@ -3107,6 +3108,9 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     if jutsu_data.get("jutsu_type") == "reaper_seal":
         reaper_seal.cast(session, jutsu_key, target_words)
         return
+    if jutsu_data.get("jutsu_type") == "hyuga_mode":
+        hyuga.cast(session, jutsu_key, target_words)
+        return
     if jutsu_data.get("jutsu_type") == "general_utility":
         import general_skills
         general_skills.activate(session, jutsu_key, target_words)
@@ -4859,6 +4863,8 @@ def _catalog_jutsu_visible(player, key, info) -> bool:
         import data_kekkei_genkai
         if gate in data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES:
             return data_kekkei_genkai.has_elemental_release(player, gate)
+        if gate == "byakugan":
+            return hyuga.eligible(player) and player.bloodline_potential >= info.get("hyuga_potential", 0)
         if gate == "mangekyo_technique":
             eye = info.get("mangekyo_roster_key", key)
             return (player.bloodline_id == "sharingan" and player.bloodline_mangekyo
@@ -9232,6 +9238,7 @@ COMMANDS = {
     "who": cmd_who,
     "whois": cmd_whois,
     "sharingan": cmd_sharingan, "shar": cmd_sharingan,
+    "byakugan": hyuga.cmd_byakugan, "hyuga": hyuga.cmd_hyuga,
     "jinchuriki": cmd_jinchuriki, "mastery": cmd_jinchuriki,
     "beastmode": cmd_tailed_beast_mode,
     "izanagi": cmd_izanagi,
