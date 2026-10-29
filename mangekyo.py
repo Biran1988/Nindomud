@@ -408,7 +408,7 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
 
 def process_amaterasu_player_burns(combat_module, session_module) -> None:
     """Called once per real pulse -- ticks every player's own,
-    direct Amaterasu burn. It has no timer; a real defeat clears it.
+    direct Amaterasu burn. It has no timer and even defeat cannot clear it.
     Separate from the room-fire tick above, since this travels with
     the player wherever they go."""
     import random
