@@ -141,7 +141,7 @@ their existing appearance. Iruka's only exam launch phrase is now
 launch the exam.
 
 Version 15.322 replaces Iruka (mob VNUM 11)'s instant Academy graduation
-with a challenging Genin written exam. Before starting, an Academy Student
+with a challenging Genin written exam. Before starting, a Student (not yet a ninja rank)
 must reach level 10 and master all five starting disciplines to 100%:
 Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing
 Technique, Throw Shuriken, and Strong Fist Style. Use

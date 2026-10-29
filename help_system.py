@@ -962,11 +962,11 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: ask <kage> about promotion\n"
             "\n"
-            "Description: Genin is the first ninja rank. Progression: Student (trainee) -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as an Student, with full access to combat and missions from the very first moment -- Student is not a ninja rank. There is no separate Academy exam.\n"
+            "Description: Genin is the first ninja rank. Progression: Student (trainee) -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as a Student, with full access to combat and missions from the very first moment -- Student is not a ninja rank. There is no separate Academy exam.\n"
             "\n"
             "Student -> Genin requires level 10, 100% mastery of Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style; then find Iruka (mob VNUM 11) and use 'say Start Genin exam' to take the written Genin Exam. He selects 10 different Naruto anime questions from a 20-question pool, shuffling the four choices on each attempt. All 10 answers must be correct; one mistake ends that attempt. Passing awards a Genin headband and 50 mission points. See 'help genin exam'.\n"
             "\n"
-            "Genin -> Chunin is earned by passing the Chunin Exam ('help exam') at level 35, not by asking the Kage.\n\nLevel caps: Student (trainee) 10, Genin 35, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin 250, Village Elder 250, Kage 250.\n"
+            "Genin -> Chunin is earned by passing the Chunin Exam ('help exam') at level 35, not by asking the Kage.\n\nTraining cap: Student 10. Ninja rank caps: Genin 35, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin 250, Village Elder 250, Kage 250.\n"
             "\n"
             "Special Jonin, Jonin and Elite Jonin promotions currently use your village Kage's chamber and check the following level and mission requirements:\n"
             "\n"
@@ -4819,13 +4819,13 @@ DEFAULT_HELP_ENTRIES.append({
 
 DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "genin exam",
-    "keywords": ["genin exam", "academy exam", "iruka", "graduation exam"],
+    "keywords": ["genin exam", "student graduation", "iruka", "graduation exam"],
     "title": "Iruka's Genin Graduation Exam",
     "body": (
         "Syntax: say Start Genin exam\n"
         "Answer: A, B, C or D, or answer A / answer B / answer C / answer D.\n"
         "Type cancel to abandon an active exam.\n\n"
-        "To qualify: be an Student at level 10 or higher and "
+        "To qualify: be a Student at level 10 or higher and "
         "master all five fundamentals to 100%: Shadow Shuriken Technique, "
         "Dynamic Entry, Demonic Illusion: Hell Viewing Technique, "
         "Throw Shuriken, and Strong Fist Style. Strong Fist Style grows "

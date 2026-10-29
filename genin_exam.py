@@ -1,6 +1,6 @@
 """Hardcoded Genin written exam administered only by Iruka, mob VNUM 11.
 
-At level 10, an Student needs all five starting martial/ninja
+At level 10, a Student needs all five starting martial/ninja
 techniques mastered at 100% to begin. Ten different Naruto-anime questions
 are selected from a twenty-question pool and each question's four answer
 positions are independently shuffled. Ten correct answers graduate the
