@@ -16,8 +16,8 @@ new, separate gate, it changes what happens once you're qualified.
 Genin are capped at 15 while awaiting promotion; older characters
 who were already above that cap can still take the exam.
 
-Every other rank (Special Jonin through Village Elder) is untouched --
-still handled by kage.handle_promotion_request exactly as before; only
+Other normal promotions (Special Jonin through Elite Jonin) are handled
+by kage.handle_promotion_request; Village Elder is staff-appointed. Only
 the Genin -> Chunin step moved out of that ladder and into this
 module. See kage.py's own PROMOTION_LADDER, which no longer has a
 Chunin entry, and its handle_promotion_request, which now redirects a
