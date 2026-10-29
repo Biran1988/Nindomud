@@ -81,7 +81,9 @@ TRAINABLE_ATTRIBUTES = [
 TRAIN_ATTRIBUTE_NAMES = {
     "str": "strength", "wis": "wisdom", "con": "constitution",
     "int": "intelligence", "dex": "dexterity", "luk": "luck",
-    "per": "perception", "wil": "willpower", "cc": "chakra_control",
+    "per": "perception", "perc": "perception", "wil": "willpower",
+    "will": "willpower", "will power": "willpower",
+    "cc": "chakra_control", "chakra control": "chakra_control",
     "chakractrl": "chakra_control", "chakracontrol": "chakra_control",
 }
 
@@ -261,6 +263,16 @@ def cmd_move(session, direction: str) -> None:
     player = session.player
 
     if player.illusion_walk_caster is not None:
+        # Willpower can break this ordinary illusion before the victim
+        # pays another movement-triggered stamina penalty.
+        if status_effects.willpower_breaks(player):
+            player.illusion_walk_caster = None
+            player.illusion_walk_real_room_vnum = None
+            player.illusion_walk_range = 0
+            player.illusion_walk_steps_taken = 0
+            session.send("&CYour Willpower shatters Illusion Walk. You see the real world again!&x")
+            cmd_look(session, [])
+            return
         player.stamina = max(0, player.stamina // 2)
         if player.stamina <= ILLUSION_WALK_STAMINA_FLOOR:
             caster_name = player.illusion_walk_caster
@@ -1266,6 +1278,37 @@ def cmd_scan(session, args: List[str]) -> None:
         lines.append(f"  &M{decoy['name']}&x seems to be lying here.")
     if len(lines) == 1:
         lines.append("  Nothing visible is there.")
+    # Perception gives practiced scouts longer sight lines without
+    # bypassing hidden exits, closed doors, inaccessible rooms, or
+    # Camouflage. The normal adjacent-room scan stays unchanged.
+    distant_rooms = 1 if player.perception < 40 else 2 if player.perception < 65 else 3
+    last_room = target
+    for distance in range(2, distant_rooms + 1):
+        if direction not in last_room.exits:
+            break
+        if "hidden" in last_room.exit_flags.get(direction, []) and not is_staff:
+            break
+        if "door" in last_room.exit_flags.get(direction, []) and not last_room.exit_door_open.get(direction, False):
+            break
+        farther = WORLD.get(last_room.exits[direction])
+        if (not farther or (not is_staff and
+                (not farther.enabled or (farther.apartment and farther.owner
+                                        and farther.owner != player.name)))):
+            break
+        lines.append(f"&CPerception sees {distance} rooms {direction}:&x {ui_palette.color_room_name(farther.name)}")
+        seen = 0
+        for other in session.active_sessions():
+            if (other.player and other.player.room_vnum == farther.vnum
+                    and not _player_hidden_from(player, other.player)):
+                lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.")
+                seen += 1
+        for mob in combat.mobs_in_room(farther.vnum):
+            if not _is_invisible_mob(mob):
+                lines.append(f"  {mob.name} is here.")
+                seen += 1
+        if not seen:
+            lines.append("  No visible shinobi or mobs.")
+        last_room = farther
     # Clone views are temporary copies; award mastery and XP to the real body.
     combat.grow_skill_from_usage(original_body or player, "Scan", session=session)
     session.send("\n".join(lines))
@@ -4519,8 +4562,8 @@ def cmd_request(session, args: List[str]) -> None:
 
 def cmd_train(session, args: List[str]) -> None:
     player = session.player
-    typed = args[0].lower() if len(args) == 1 else ""
-    attr = TRAIN_ATTRIBUTE_NAMES.get(typed, typed)
+    typed = " ".join(args).strip().lower()
+    attr = TRAIN_ATTRIBUTE_NAMES.get(typed, typed.replace(" ", "_"))
     if attr not in TRAINABLE_ATTRIBUTES:
         session.send("Usage: train <attribute> (str, wis, con, int, dex, luk, per, wil, cc)")
         return
