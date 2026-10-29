@@ -116,6 +116,14 @@ def handle_command(session, line: str) -> bool:
         return False
     if not pending(session.player):
         return False
+    if not (session.player.element_choice_paper_used
+            or session.player.element_choice_return_room_vnum is not None):
+        words = line.strip().split()
+        if words and (words[0].lower() == "choose"
+                      or (len(words) == 1 and words[0].lower() in ELEMENTS)):
+            session.send("Channel another Sheet of Chakra Paper before choosing your second element.")
+            return True
+        return False
     if not begin(session):
         session.send("Your village Kage chamber is unavailable; contact an administrator.")
         return False
