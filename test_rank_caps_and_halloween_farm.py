@@ -15,12 +15,23 @@ from models import Player
 class RankCapTests(unittest.TestCase):
     def test_rank_caps_cover_every_ninja_rank(self):
         self.assertEqual(kage.RANK_LEVEL_CAPS, {
-            "academy student": 10, "genin": 35, "chunin": 80,
+            "genin": 35, "chunin": 80,
             "special jonin": 135, "jonin": 200, "elite jonin": 250,
             "village elder": 250, "kage": 250,
         })
         self.assertEqual([level for level, _, _ in kage.PROMOTION_LADDER],
                          [80, 135, 200])
+
+    def test_student_is_a_trainee_not_a_ninja_rank(self):
+        self.assertEqual(kage.RANK_ORDER[0], "genin")
+        self.assertNotIn("student", kage.RANK_ORDER)
+        self.assertNotIn("student", kage.RANK_LEVEL_CAPS)
+        player = Player("Beginner", "Beginner")
+        self.assertEqual(player.village_rank, "student")
+        self.assertEqual(leveling.rank_level_cap(player), 10)
+        player.village = "leaf"
+        result = kage.handle_promotion_request(player)
+        self.assertIn("Genin Exam", result)
 
     def test_elite_jonin_cannot_automatically_become_village_elder(self):
         player = Player("ElderCandidate", "ElderCandidate",

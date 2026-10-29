@@ -7,7 +7,7 @@
     "graduation exam"
   ],
   "title": "Iruka's Genin Graduation Exam",
-  "body": "Syntax: say Start Genin exam\nAnswer: A, B, C, or D (also 1-4 or 'answer B').\nType cancel to quit an active attempt.\n\nReach level 10 as an Academy Student. Master these five techniques to 100%: Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style. Strong Fist Style improves through combat, not regular practice.\n\nFind Iruka (mob VNUM 11) in person. Each attempt randomly selects 10 different questions from 20 Naruto-anime trivia questions. The four possible answers are independently shuffled A-D every time. All 10 answers must be correct; a single error fails that attempt. Successful students are awarded Genin rank, the Genin headband, 50 mission points, and a global promotion announcement.",
+  "body": "Syntax: say Start Genin exam\nAnswer: A, B, C, or D (also 1-4 or 'answer B').\nType cancel to quit an active attempt.\n\nReach level 10 as an Student. Master these five techniques to 100%: Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style. Strong Fist Style improves through combat, not regular practice.\n\nFind Iruka (mob VNUM 11) in person. Each attempt randomly selects 10 different questions from 20 Naruto-anime trivia questions. The four possible answers are independently shuffled A-D every time. All 10 answers must be correct; a single error fails that attempt. Successful students are awarded Genin rank, the Genin headband, 50 mission points, and a global promotion announcement.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0

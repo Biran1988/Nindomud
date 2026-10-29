@@ -191,6 +191,8 @@ def migrate_experience_curve(player: Player) -> bool:
 def rank_level_cap(player: Player) -> int:
     """Return the maximum level permitted by this character's ninja rank."""
     import kage
+    if player.village_rank == "student":
+        return kage.STUDENT_LEVEL_CAP
     return min(MAX_LEVEL, kage.RANK_LEVEL_CAPS.get(player.village_rank, MAX_LEVEL))
 
 

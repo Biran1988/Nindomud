@@ -31,7 +31,7 @@ class IrukaGraduationTests(unittest.TestCase):
         self.fake_teacher = combat.spawn_mob(12, 30)
         self.player = Player("Aspirant", "Aspirant", room_vnum=30)
         self.player.level = 10
-        self.player.village_rank = "academy student"
+        self.player.village_rank = "student"
         self.player.learned_skills = list(genin_exam.STARTER_SKILLS)
         self.player.skill_proficiencies = {name: 100 for name in genin_exam.STARTER_SKILLS}
         self.session = NS(player=self.player, send=Mock(), broadcast_room=Mock(),
@@ -126,7 +126,7 @@ class IrukaGraduationTests(unittest.TestCase):
         quiz = self._start()
         wrong = (quiz["paper"][0][2] + 1) % 4
         self.assertTrue(genin_exam.handle_answer(self.session, "ABCD"[wrong]))
-        self.assertEqual(self.player.village_rank, "academy student")
+        self.assertEqual(self.player.village_rank, "student")
         self.assertIsNone(self.session.iruka_exam)
 
     def test_all_ten_answers_required_to_graduate_and_reward_once(self):
@@ -137,7 +137,7 @@ class IrukaGraduationTests(unittest.TestCase):
                 answer = state["paper"][index][2]
                 genin_exam.handle_answer(self.session, f"answer {'ABCD'[answer]}")
                 if index < 9:
-                    self.assertEqual(self.player.village_rank, "academy student")
+                    self.assertEqual(self.player.village_rank, "student")
             self.assertEqual(self.player.village_rank, "genin")
             self.assertEqual(self.player.mission_points, 50)
             self.assertIsNone(self.session.iruka_exam)
@@ -156,14 +156,14 @@ class IrukaGraduationTests(unittest.TestCase):
             self.session, template["mob_programs"], "graduate",
             speaker_name=self.iruka.name, mob_template=template, mob=self.iruka))
         self.assertIsNone(self.session.iruka_exam)
-        self.assertEqual(self.player.village_rank, "academy student")
+        self.assertEqual(self.player.village_rank, "student")
         self.assertFalse(programs.run_action(
             self.session, "iruka_graduation_check", "", mob=self.fake_teacher))
         self.assertIsNone(self.session.iruka_exam)
 
     def test_generic_set_rank_program_cannot_bypass_iruka(self):
         self.assertFalse(programs.run_action(self.session, "set_rank", "genin"))
-        self.assertEqual(self.player.village_rank, "academy student")
+        self.assertEqual(self.player.village_rank, "student")
         self.assertIsNone(self.session.iruka_exam)
 
 

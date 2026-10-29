@@ -17,7 +17,7 @@ way, since that's the one color mechanism already wired into every
 place an item's name is displayed (inventory, equipment, sell,
 etc.) -- rather than inventing a second, parallel coloring system
 that would only work in the one or two places built to know about it.
-7 ranks don't map 1:1 onto 5 rarity tiers, so the two lowest and two
+7 actual ranks don't map 1:1 onto 5 rarity tiers, so the two lowest and two
 highest ranks share a tier with their neighbor (see
 RANK_HEADBAND_RARITY below) -- everything in between gets its own.
 
@@ -38,13 +38,13 @@ from typing import Optional
 # than imported, to avoid a circular import (kage.py doesn't need to
 # know anything about headbands to keep working -- see
 # apply_rank_headband below, which IS the one place that imports both).
-RANK_ORDER = ["academy student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
+RANK_ORDER = ["genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
 
-# Progressively larger Armor Class bonus per rank. academy student stays
+# Progressively larger Armor Class bonus per rank. The unranked student stays
 # at the existing headband's original 0 bonus (purely cosmetic) so
 # nothing about the very first headband a player ever gets changes.
 RANK_HEADBAND_AC_BONUS = {
-    "academy student": 0,
+    "student": 0,
     "genin": 2,
     "chunin": 4,
     "special jonin": 6,
@@ -56,10 +56,10 @@ RANK_HEADBAND_AC_BONUS = {
 
 # Which of the 5 existing rarity tiers each rank's headband is colored
 # as when displayed (rarity_colored_name, already wired in everywhere
-# an item name is shown). academy student and genin share the lowest
+# an item name is shown). students and genin share the lowest
 # tier, since there's no tier below "common".
 RANK_HEADBAND_RARITY = {
-    "academy student": "common",
+    "student": "common",
     "genin": "common",
     "chunin": "uncommon",
     "special jonin": "rare",
@@ -69,11 +69,11 @@ RANK_HEADBAND_RARITY = {
     "kage": "legendary",
 }
 
-# The rank-specific part of the headband's name -- "" for academy
+# The rank-specific part of the headband's name -- "" for a
 # student, so its name stays exactly "A Konoha Headband" (no rank
 # word, no stat suffix, since its bonus is 0).
 RANK_HEADBAND_TITLE = {
-    "academy student": "",
+    "student": "",
     "genin": "Genin Headband",
     "chunin": "Chunin Headband",
     "special jonin": "Special Jonin Headband",

@@ -2032,8 +2032,9 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
             value_text = value_text.lower()
         if field == "village_rank":
             import kage
-            if value_text.lower() not in kage.RANK_ORDER:
-                session.send(f"'{value_text}' isn't a known rank. Valid: {', '.join(kage.RANK_ORDER)}")
+            if value_text.lower() not in (*kage.RANK_ORDER, "student"):
+                session.send(f"'{value_text}' isn't a known rank or trainee status. "
+                             f"Valid: student, {', '.join(kage.RANK_ORDER)}")
                 return
             value_text = value_text.lower()
         setattr(target, field, value_text.lower() if field in ("village", "primary_class", "clan") else value_text)

@@ -58,7 +58,7 @@ class Player:
 
     # Permanent choices (Section 3) -- protected from player edits
     village: Optional[str] = None
-    village_rank: str = "academy student"
+    village_rank: str = "student"  # unranked trainee until the Genin Exam
     primary_class: Optional[str] = None
 
     level: int = 1
@@ -603,4 +603,9 @@ class Player:
         field no longer exists anywhere in the running game) rather
         than crashing the entire boot."""
         valid_names = {f.name for f in fields(Player)}
-        return Player(**{k: v for k, v in d.items() if k in valid_names})
+        data = {k: v for k, v in d.items() if k in valid_names}
+        # Existing accounts previously saved trainees under "academy student".
+        # Convert only that old label; never alter real earned ranks or levels.
+        if data.get("village_rank") == "academy student":
+            data["village_rank"] = "student"
+        return Player(**data)

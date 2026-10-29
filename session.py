@@ -933,9 +933,9 @@ class Session:
         storage.save_player(player)
         self.send(
             f"\nWelcome, {player.name} of {VILLAGES[player.village]['village_name']}!\n"
-            + ("You awaken in the Sealing Hall, a new academy student."
+            + ("You awaken in the Sealing Hall, a new student."
                if player.village == "whirlpool" else
-               "You awaken in your village's Kage Chamber, a new academy student.")
+               "You awaken in your village's Kage Chamber, a new student.")
         )
         if player.reincarnation:
             import reincarnation
@@ -953,7 +953,7 @@ class Session:
         player = Player(name=name, account_name=account_name, reincarnation_roll_complete=False,
                         reincarnation_starting_perks_applied=False)
         player.village = village
-        player.village_rank = "academy student"
+        player.village_rank = "student"
         player.primary_class = primary_class
         apply_class_stat_bonus(player)
         player.clan = clan

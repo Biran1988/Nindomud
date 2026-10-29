@@ -1,6 +1,6 @@
-"""Hardcoded Genin Academy written exam administered only by Iruka, mob VNUM 11.
+"""Hardcoded Genin written exam administered only by Iruka, mob VNUM 11.
 
-At level 10, an Academy Student needs all five starting martial/ninja
+At level 10, an Student needs all five starting martial/ninja
 techniques mastered at 100% to begin. Ten different Naruto-anime questions
 are selected from a twenty-question pool and each question's four answer
 positions are independently shuffled. Ten correct answers graduate the
@@ -100,8 +100,8 @@ def start_exam(session):
     if getattr(session, "iruka_exam", None) is not None:
         session.send('Iruka says, "Finish the exam in progress, or type cancel."')
         return False
-    if player.village_rank != "academy student":
-        session.send('Iruka says, "You have already left the Academy Student rank."')
+    if player.village_rank != "student":
+        session.send('Iruka says, "Only Students may take the Genin Exam. You have already earned a rank."')
         return False
     if player.level < MIN_LEVEL:
         session.send(f'Iruka says, "Reach level {MIN_LEVEL} before taking my Genin Exam."')
@@ -173,7 +173,7 @@ def handle_answer(session, line):
         return True
 
     # Another guard against mutable ranks/mastery mid-exam via staff actions.
-    if session.player.village_rank != "academy student" or missing_masteries(session.player):
+    if session.player.village_rank != "student" or missing_masteries(session.player):
         session.iruka_exam = None
         session.send('Iruka says, "Your eligibility changed. The exam is cancelled."')
         return True

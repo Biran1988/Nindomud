@@ -185,7 +185,7 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
         import data_headbands
         import kage
         new_rank = args.lower()
-        if new_rank == "genin" and player.village_rank == "academy student":
+        if new_rank == "genin" and player.village_rank == "student":
             session.send("The Genin rank must be earned through Iruka's exam.")
             return False
         player.village_rank = new_rank

@@ -34,9 +34,10 @@ KAGE_NAMES = {
 # now requires passing the Chunin Exam (see chunin_exam.py) instead of
 # a simple Kage request; handle_promotion_request below redirects a
 # Genin who asks about promotion to go take the exam.
+# Student is an unranked trainee; Genin is the first actual ninja rank.
+STUDENT_LEVEL_CAP = 10
 # Rank-based caps on combat levels; Kage is an Implementor appointment.
 RANK_LEVEL_CAPS = {
-    "academy student": 10,
     "genin": 35,
     "chunin": 80,
     "special jonin": 135,
@@ -52,7 +53,7 @@ PROMOTION_LADDER: List[Tuple[int, int, str]] = [
     (RANK_LEVEL_CAPS["jonin"], 500, "elite jonin"),
 ]
 
-RANK_ORDER = ["academy student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
+RANK_ORDER = ["genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
 
 # "kage" is deliberately NOT reachable through PROMOTION_LADDER above --
 # per explicit request, it can only ever be granted by an Implementor
@@ -120,7 +121,7 @@ def award_genin_mission_points_if_applicable(session, player, new_rank: str) -> 
         return
     player.mission_points += GENIN_PROMOTION_MISSION_POINTS
     player.mission_points_earned_total += GENIN_PROMOTION_MISSION_POINTS
-    session.send(f"&GYou receive {GENIN_PROMOTION_MISSION_POINTS} mission point(s) for graduating the academy.&x")
+    session.send(f"&GYou receive {GENIN_PROMOTION_MISSION_POINTS} mission point(s) for passing the Genin Exam.&x")
 
 
 def handle_promotion_request(player: Player) -> str:
@@ -130,7 +131,11 @@ def handle_promotion_request(player: Player) -> str:
             f"focus on mastering the basics for now.\""
         )
 
-    current_index = RANK_ORDER.index(player.village_rank) if player.village_rank in RANK_ORDER else 0
+    if player.village_rank == "student":
+        return (f"{kage_title(player.village)} says, \"Students must pass Iruka\'s Genin Exam "
+                "to earn their first ninja rank.\"")
+
+    current_index = RANK_ORDER.index(player.village_rank) if player.village_rank in RANK_ORDER else -1
     completed = len(player.completed_missions)
 
     if player.village_rank == "genin":

@@ -181,11 +181,11 @@ def _register_shared_items() -> None:
 
     # A real item prototype for each village's headband, for EVERY
     # rank tier (data_headbands.RANK_HEADBAND_TITLE). The
-    # academy-student tier keeps its EXACT original vnum/name (no
+    # unranked student headband keeps its EXACT original vnum/name (no
     # rank word, no stat suffix, since its bonus is 0) so nothing
     # about the original starting headband changes; the 7 higher
     # tiers are for promotions (currently disabled game-wide except
-    # for the user's own future mob-program-driven academy-student ->
+    # for the user's own future mob-program-driven student ->
     # genin promotion, but wired in correctly for when the rest
     # aren't). See data_headbands.py's own docstring for the full
     # "colored via existing rarity tiers, stat-boosted via the
@@ -203,8 +203,6 @@ def _register_shared_items() -> None:
     }
     for _village_data in data_villages.VILLAGES.values():
         for _rank in data_headbands.RANK_ORDER:
-            if _rank == "academy student":
-                continue  # already registered above, at its own fixed vnum
             _name = data_headbands.headband_base_name(_village_data["village_short_name"], _rank)
             make(_headband_vnum, _name, "armor", _RANK_COST[_rank],
                  rarity=data_headbands.RANK_HEADBAND_RARITY[_rank], wear_loc="head")
