@@ -46,6 +46,7 @@ from typing import Dict, List, Optional
 
 import config
 import data_jutsu
+import hyuga
 import data_mangekyo
 import data_passives
 import data_weapons
@@ -1253,6 +1254,7 @@ def tick_effects_pulse(session) -> None:
         if not try_trigger_izanagi(session) and not is_immortal_immune_to_defeat(session):
             handle_player_defeat(session)
 
+    hyuga.tick_upkeep(session)
     import upkeep_reports
     upkeep_reports.tick_active_toggles(session)
 
@@ -2134,7 +2136,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -2180,7 +2182,7 @@ def _clone_attack_mob_once(session, player, mob, clone=None) -> None:
     set_bonus = commands_module.equipped_set_bonus_percent(player)
     player_hit_roll = derived_stats.hit_roll(player, set_bonus + data_personality.personality_bonus_percent(player, "hit_roll") + tailed_beasts.rampage_bonus_percent(player) + tailed_beasts.mode_bonus_percent(player)) + commands_module.equipped_weapon_hitroll_bonus(player)
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     element = getattr(clone, "clone_element", "none")
@@ -2348,8 +2350,13 @@ def resolve_pulse(session) -> None:
         session.send(message)
     for message in tick_sharingan_mastery_gain(player):
         session.send(message)
+    for message in hyuga.combat_tick(player):
+        session.send(message)
     for message in tick_automatic_bloodline_awakening(player):
         session.send(message)
+    if hyuga.eligible(player):
+        for new_skill in hyuga.sync(player):
+            session.send(f'&CByakugan technique unlocked: {new_skill}!&x')
 
     # A body projecting its senses through a remote clone is helpless:
     # it cannot autoattack, cast, flee or secretly fight while scouting.
@@ -2406,7 +2413,7 @@ def resolve_pulse(session) -> None:
         session.send(f"&R{mob.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player):
+    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player) + hyuga.dodge(player):
         session.send(f"&CYou dodge {mob.name}'s attack!&x")
         return
 
@@ -2506,6 +2513,8 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
                 and six_paths.active(player)
                 and jutsu["display_name"] in player.learned_skills)
     import data_kekkei_genkai
+    if gate == "byakugan":
+        return hyuga.can_use(player, jutsu_key or jutsu["display_name"].lower())
     if gate in data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES:
         return (_staff_testing_mangekyo(player)
                 or (data_kekkei_genkai.has_elemental_release(player, gate)
@@ -2733,7 +2742,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
     to_hit += _genjutsu_hit_bonus(player, jutsu) + jutsu.get("accuracy_bonus", 0)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
@@ -2779,6 +2788,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     dmg = sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg), jutsu=True)
     dmg = signature_moves.amount(player, jutsu, dmg)
     mob.health -= dmg
+    hyuga.on_strike(session, mob, jutsu)
     _genjutsu_impact(jutsu, mob)
     grow_skill_from_usage(player, jutsu["display_name"], session=session)
     perk_note = f" &Y(x{dmg_mult:g} village perk)&x" if dmg_mult != 1.0 else ""
@@ -2941,7 +2951,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         jutsu_colors.send(session, f"You use {colored_name} on {target.name}, but it misses!")
@@ -2956,7 +2966,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             jutsu_colors.send(target_session, f"&R{player.name}'s {colored_name} passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) - hidden_mist.advantage(player, target)):
         jutsu_colors.send(session, f"&C{target.name} dodges your {colored_name}!&x")
         if not silent_to_target:
             jutsu_colors.send(target_session, f"&CYou dodge {player.name}'s {colored_name}!&x")
@@ -3017,6 +3027,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     dmg = signature_moves.amount(player, jutsu, dmg)
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
+    hyuga.on_strike(session, target, jutsu)
     _genjutsu_impact(jutsu, target)
     grow_skill_from_usage(player, jutsu["display_name"], session=session)
     perk_note = f" &Y(x{dmg_mult:g} village perk)&x" if dmg_mult != 1.0 else ""
@@ -3442,7 +3453,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
@@ -3467,7 +3478,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         target_session.send(f"&R{player.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) - hidden_mist.advantage(player, target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your attack!&x")
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
@@ -3516,7 +3527,7 @@ def _clone_attack_target_once(session, player, target_session, target, clone) ->
     if target.kamui_intangibility_rounds_left > 0:
         target.kamui_intangibility_rounds_left -= 1
         return
-    if random.randint(1, 100) <= derived_stats.dodge_chance(target) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target):
+    if random.randint(1, 100) <= derived_stats.dodge_chance(target) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target):
         target_session.send(f"&CYou dodge {player.name}'s {label}!&x")
         return
     damage = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE * (1.25 if element == "earth" else 1))
@@ -3627,8 +3638,13 @@ def resolve_pvp_pulse(session) -> None:
         session.send(message)
     for message in tick_sharingan_mastery_gain(player):
         session.send(message)
+    for message in hyuga.combat_tick(player):
+        session.send(message)
     for message in tick_automatic_bloodline_awakening(player):
         session.send(message)
+    if hyuga.eligible(player):
+        for new_skill in hyuga.sync(player):
+            session.send(f'&CByakugan technique unlocked: {new_skill}!&x')
     import hidden_mist
     if hidden_mist.obscures(player, target) or general_skills.concealed_from(player, target):
         session.send("&CYou search the mist but cannot target your opponent.&x")
