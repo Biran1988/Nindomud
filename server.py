@@ -6,7 +6,6 @@ regeneration.
 
 import asyncio
 import socket
-import time
 
 import config
 import consumables
@@ -163,10 +162,8 @@ async def pulse_loop() -> None:
         # The expiration clock runs even when nobody else is connected.
         # Only after 15 full minutes do we perform the real logout,
         # releasing group slots and sending the global departure notice.
-        for gone in list(ACTIVE_SESSIONS):
-            if (gone.state == State.LINKDEAD
-                    and time.time() >= gone.linkdead_until):
-                gone.request_close()
+        from session import expire_linkdead_sessions
+        expire_linkdead_sessions()
 
         elapsed_since_regen += PULSE_SECONDS
         elapsed_since_idle_upkeep += PULSE_SECONDS
