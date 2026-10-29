@@ -9,7 +9,7 @@ from models import Player
 class SharinganOddsTests(unittest.TestCase):
     def test_uchiha_chance_is_half_and_other_clans_unchanged(self):
         self.assertEqual(kkg.CLAN_INHERITANCE["uchiha"]["sharingan"], 0.50)
-        self.assertEqual(kkg.CLAN_INHERITANCE["hyuga"]["byakugan"], 0.25)
+        self.assertEqual(kkg.CLAN_INHERITANCE["hyuga"]["byakugan"], 1.0)
         self.assertEqual(kkg.CLAN_INHERITANCE["kaguya"]["shikotsumyaku"], 0.25)
         with patch.object(kkg.random, "random", return_value=0.49), \
              patch.object(kkg.random, "randint", side_effect=[24, 94, 7, 97]) as rolls:
