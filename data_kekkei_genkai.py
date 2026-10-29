@@ -80,6 +80,10 @@ KEKKEI_GENKAI = {
     },
 }
 
+# Uchiha have an exclusive either/or birthright: Sharingan if inherited,
+# otherwise guaranteed elemental Kekkei Genkai with no second chance roll.
+# The elemental identity comes from the two chakra natures the character
+# reveals/chooses at level 25; no second nature is chosen behind their back.
 # Elemental releases are derived from natures, never clan names. A character
 # who already carries an inherited clan bloodline cannot also gain one.
 # Two distinct natures produce one release; each has one two-nature recipe.
@@ -108,6 +112,24 @@ ELEMENTAL_RELEASE_REVEAL_LEVEL = 25  # Second chakra nature is chosen here.
 DUST_RELEASE_NATURES = frozenset(("earth", "wind", "fire"))
 
 
+def sync_uchiha_elemental_heritage(player) -> bool:
+    """Persist the guaranteed alternate inheritance for non-Sharingan Uchiha.
+
+    Called at character creation and for legacy saves. No random roll and no
+    early ability disclosure: the elemental release itself is resolved by the
+    chakra-paper/second-nature system at level 25. Sharingan and other clan
+    bloodlines always exclude the elemental branch. An already-granted Uchiha
+    birthright survives cosmetic clan changes, but not acquiring a bloodline.
+    """
+    inherited = bool(getattr(player, "bloodline_id", None))
+    old_value = bool(getattr(player, "uchiha_elemental_heritage", False))
+    new_value = not inherited and (old_value or getattr(player, "clan", "").lower() == "uchiha")
+    if new_value == old_value:
+        return False
+    player.uchiha_elemental_heritage = new_value
+    return True
+
+
 def sync_elemental_release(player) -> bool:
     """Derive an elemental release from revealed natures if no clan bloodline exists.
 
@@ -116,12 +138,15 @@ def sync_elemental_release(player) -> bool:
     whether saved state changed; the first two-nature result stays stable if
     a third nature offers a second possible pair.
     """
+    # Reconcile older Uchiha saves automatically; the fallback itself
+    # never requires an extra RNG check or an additional awakening roll.
+    heritage_changed = sync_uchiha_elemental_heritage(player)
     if player.bloodline_id:
         if player.elemental_release_id:
             player.elemental_release_id = None
             sync_elemental_techniques(player)
             return True
-        return sync_elemental_techniques(player)
+        return sync_elemental_techniques(player) or heritage_changed
     natures = []
     if player.chakra_nature_revealed and player.chakra_nature:
         natures.append(player.chakra_nature)
@@ -143,7 +168,7 @@ def sync_elemental_release(player) -> bool:
     if changed:
         player.elemental_release_id = desired
     techniques_changed = sync_elemental_techniques(player)
-    return changed or techniques_changed
+    return changed or techniques_changed or heritage_changed
 
 
 def has_elemental_release(player, release_id: str) -> bool:
@@ -228,6 +253,9 @@ def roll_inheritance(clan: str) -> dict:
                 "potential": potential,
                 "talent": talent,
             }
+    # For Uchiha, this is an alternate elemental inheritance, not an
+    # absence of powers. session.py persists that result via
+    # sync_uchiha_elemental_heritage; the public return shape stays stable.
     return {"bloodline_id": None, "potential": 0, "talent": 0}
 
 

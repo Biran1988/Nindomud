@@ -241,6 +241,12 @@ class Player:
     # characters, even those from an eligible clan). potential/talent
     # are both 0 when bloodline_id is None.
     bloodline_id: Optional[str] = None
+    # Uchiha who do not inherit Sharingan have an automatic elemental
+    # Kekkei Genkai path instead. This hidden, persistent birthright is
+    # resolved once at creation or migrated for existing non-eye Uchiha;
+    # it grants a two-nature release at level 25 after the second nature
+    # is chosen, never Sharingan and an elemental release together.
+    uchiha_elemental_heritage: bool = False
     bloodline_potential: int = 0    # 1-100 -- the mastery ceiling, never raised by training
     bloodline_talent: int = 0       # 1-100 -- learning/mastery speed, does NOT raise the ceiling
     bloodline_awakened: bool = False   # only True after the future awakening quest (or a staff force-awaken)

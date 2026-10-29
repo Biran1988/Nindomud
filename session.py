@@ -32,6 +32,7 @@ import data_kekkei_genkai
 import leveling
 import profanity_filter
 import security
+import village_access
 import storage
 import world
 from data_classes import CLASSES, class_names_display, apply_class_stat_bonus
@@ -73,6 +74,7 @@ class State(Enum):
     ADMIN_BOOTSTRAP_PASSWORD = auto()
     ADMIN_BOOTSTRAP_CONFIRM = auto()
     CHARGEN_VILLAGE = auto()
+    CHARGEN_WHIRLPOOL_ACCESS = auto()
     CHARGEN_CLASS = auto()
     CHARGEN_CLAN = auto()
     CHARGEN_LOADOUT = auto()
@@ -168,6 +170,8 @@ class Session:
         self._pending_name: Optional[str] = None
         self._pending_password: Optional[str] = None
         self._pending_village: Optional[str] = None
+        self._whirlpool_access_granted = False  # Only for this chargen attempt; never saved
+        self._whirlpool_access_failures = 0
         self._pending_class: Optional[str] = None
         self._pending_clan: str = ""
         self._pending_loadout: str = "balanced"
@@ -529,6 +533,8 @@ class Session:
                 self._handle_admin_bootstrap_confirm(line)
             elif self.state == State.CHARGEN_VILLAGE:
                 self._handle_chargen_village(line)
+            elif self.state == State.CHARGEN_WHIRLPOOL_ACCESS:
+                self._handle_whirlpool_access(line)
             elif self.state == State.CHARGEN_CLASS:
                 self._handle_chargen_class(line)
             elif self.state == State.CHARGEN_CLAN:
@@ -721,6 +727,8 @@ class Session:
 
     def _handle_chargen_village(self, line: str) -> None:
         village = line.strip().lower()
+        self._pending_village = None
+        self._whirlpool_access_granted = False
         if village not in VILLAGES:
             self.send("That is not a valid village. Please choose one of the listed villages.")
             self._prompt_village_selection()
@@ -733,6 +741,36 @@ class Session:
                 self.send("That is not an available starting village. Please choose a village.")
                 self._prompt_village_selection()
                 return
+        if village == "whirlpool":
+            if self._whirlpool_access_failures >= 3:
+                self.send("This selection is unavailable for this session.")
+                self._prompt_village_selection()
+                return
+            self.state = State.CHARGEN_WHIRLPOOL_ACCESS
+            self.send("Enter the village access code (or 'cancel' to choose again):")
+            return
+        self._advance_chargen_village(village)
+
+    def _handle_whirlpool_access(self, line: str) -> None:
+        # The submitted code is never included in messages, saves, helpfiles,
+        # logs, or gameplay spy output (spy ignores non-playing states).
+        if line.strip().lower() == "cancel":
+            self.state = State.CHARGEN_VILLAGE
+            self._prompt_village_selection()
+            return
+        if not village_access.verify_whirlpool_access_code(line.strip()):
+            self._whirlpool_access_failures += 1
+            if self._whirlpool_access_failures >= 3:
+                self.send("Access denied. Choose a different village.")
+                self.state = State.CHARGEN_VILLAGE
+                self._prompt_village_selection()
+            else:
+                self.send("Access denied. Enter the access code again or 'cancel':")
+            return
+        self._whirlpool_access_granted = True
+        self._advance_chargen_village("whirlpool")
+
+    def _advance_chargen_village(self, village: str) -> None:
         self._pending_village = village
         self.state = State.CHARGEN_CLASS
         self.send("&YChoose your primary combat class (this choice is PERMANENT):&x")
@@ -916,7 +954,18 @@ class Session:
             return
         if answer in ("n", "no"):
             self.send("Let's choose again.")
+            self._pending_village = None
+            self._whirlpool_access_granted = False
             self.state = State.CHARGEN_VILLAGE
+            self._prompt_village_selection()
+            return
+
+        # Guard the final save as well as the selection step: a valid code
+        # is required for THIS attempt, never carried over from a prior one.
+        if self._pending_village == "whirlpool" and not self._whirlpool_access_granted:
+            self._pending_village = None
+            self.state = State.CHARGEN_VILLAGE
+            self.send("Village selection is not authorized.")
             self._prompt_village_selection()
             return
 
@@ -1007,6 +1056,11 @@ class Session:
         player.bloodline_id = bloodline_roll["bloodline_id"]
         player.bloodline_potential = bloodline_roll["potential"]
         player.bloodline_talent = bloodline_roll["talent"]
+        # A failed Sharingan inheritance roll guarantees the Uchiha's
+        # alternate elemental Kekkei Genkai path (no second random roll).
+        # The actual release is determined by the player's two natures
+        # when they select their second nature at level 25.
+        data_kekkei_genkai.sync_uchiha_elemental_heritage(player)
 
         # Chakra nature (Section 79, per direct request) -- a secret,
         # one-time roll, exactly like the Kekkei Genkai roll just
