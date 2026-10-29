@@ -1359,9 +1359,12 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
     player.skill_proficiencies[skill_name] = new_pct
     if new_pct > current:
         xp = (new_pct - current) * 10
+        experience_before = player.experience
         level_up_messages = leveling.grant_experience(player, xp)
+        earned_xp = max(0, player.experience - experience_before)
         if session is not None:
-            session.send(f"&G{skill_name} improves to {new_pct}%! +{xp} experience.&x")
+            xp_note = f" +{earned_xp} experience." if earned_xp else ""
+            session.send(f"&G{skill_name} improves to {new_pct}%!{xp_note}&x")
             for message in level_up_messages:
                 session.send(message)
             if new_pct == signature_moves.SIGNATURE_CAP and cap == signature_moves.SIGNATURE_CAP:
@@ -1383,8 +1386,11 @@ def tick_passive_skill_growth(player: Player) -> list:
         if random.randint(1, 100) <= PASSIVE_GROWTH_CHANCE_PCT:
             new_pct = min(100, current + PASSIVE_GROWTH_AMOUNT)
             player.skill_proficiencies[skill] = new_pct
+            experience_before = player.experience
             messages.extend(leveling.grant_experience(player, (new_pct - current) * 10))
-            messages.append(f"&G+{(new_pct - current) * 10} experience from {skill} improvement.&x")
+            earned_xp = max(0, player.experience - experience_before)
+            if earned_xp:
+                messages.append(f"&G+{earned_xp} experience from {skill} improvement.&x")
             messages.append(f"&D(Your {skill} improves through combat experience: {new_pct}%.)&x")
     return messages
 
@@ -2586,8 +2592,11 @@ def use_shadow_clone_jutsu(session) -> None:
     player.skill_proficiencies["Shadow Clone Jutsu"] = new_mastery
     if new_mastery > mastery:
         xp = (new_mastery - mastery) * 10
+        experience_before = player.experience
         level_up_messages = leveling.grant_experience(player, xp)
-        session.send(f"&GShadow Clone Jutsu improves to {new_mastery}%! +{xp} experience.&x")
+        earned_xp = max(0, player.experience - experience_before)
+        xp_note = f" +{earned_xp} experience." if earned_xp else ""
+        session.send(f"&GShadow Clone Jutsu improves to {new_mastery}%!{xp_note}&x")
         for message in level_up_messages:
             session.send(message)
 
@@ -3255,11 +3264,15 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         team_suffix = f" &C(+{teams.TEAM_XP_BONUS_PCT}% team bonus)&x" if team_bonus_applied else ""
         loyal_suffix = f" &C(+{data_personality.LOYAL_GROUP_XP_BONUS_PCT}% loyal bonus)&x" if loyal_bonus_applied else ""
         holiday_suffix = " &M(+10% candy perk)&x" if member_player.holiday_xp_boost_until > time.time() else ""
-        if member_session is session:
-            session.send(f"You gain {member_xp} experience.{perk_suffix}{team_suffix}{loyal_suffix}{holiday_suffix}")
-        else:
-            member_session.send(f"You gain {member_xp} experience from the group's kill.{perk_suffix}{team_suffix}{loyal_suffix}{holiday_suffix}")
-        for line in leveling.grant_experience(member_player, member_xp):
+        experience_before = member_player.experience
+        xp_messages = leveling.grant_experience(member_player, member_xp)
+        earned_xp = max(0, member_player.experience - experience_before)
+        if earned_xp:
+            if member_session is session:
+                session.send(f"You gain {earned_xp} experience.{perk_suffix}{team_suffix}{loyal_suffix}{holiday_suffix}")
+            else:
+                member_session.send(f"You gain {earned_xp} experience from the group's kill.{perk_suffix}{team_suffix}{loyal_suffix}{holiday_suffix}")
+        for line in xp_messages:
             member_session.send(line)
         import element_choice
         element_choice.begin(member_session)
