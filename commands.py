@@ -7720,8 +7720,8 @@ def cmd_channel(session, args: List[str]) -> None:
     """Consume paper to reveal the first nature at 10 or third at 100.
 
     The distinct second nature is chosen at level 25 in a protected
-    Kage chamber; channeling a second paper starts that choice without
-    consuming the sheet. Existing revealed second natures remain valid.
+    Kage chamber; channeling a second paper consumes the sheet before
+    opening the choice. Existing revealed second natures remain valid.
     """
     player = session.player
     if not args:
