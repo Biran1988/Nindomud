@@ -69,7 +69,7 @@ class MobJutsuTests(unittest.TestCase):
         art = data_jutsu.JUTSU["chakra ball"]
         with patch("mob_jutsu.available_jutsu", return_value=[("chakra ball", art)]), \
              patch("mob_jutsu.time.time", return_value=100.0), \
-             patch("mob_jutsu.random.randint", return_value=1), \
+             patch("mob_jutsu.random.randint", side_effect=[1, 1, 100]), \
              patch("mob_jutsu.random.choice", side_effect=lambda seq: seq[0]), \
              patch("combat.roll_jutsu_damage", return_value=(40, False)):
             self.assertTrue(mob_jutsu.try_cast(session, mob))
@@ -102,7 +102,7 @@ class MobJutsuTests(unittest.TestCase):
         art = data_jutsu.JUTSU["chakra ball"]
         with patch("mob_jutsu.available_jutsu", return_value=[("chakra ball", art)]), \
              patch("mob_jutsu.time.time", return_value=100.0), \
-             patch("mob_jutsu.random.randint", return_value=1), \
+             patch("mob_jutsu.random.randint", side_effect=[1, 1, 100]), \
              patch("mob_jutsu.random.choice", side_effect=lambda seq: seq[0]), \
              patch("combat.roll_jutsu_damage", return_value=(40, False)), \
              patch("combat.handle_player_defeat") as defeat:
