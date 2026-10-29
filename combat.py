@@ -1102,6 +1102,18 @@ def tick_pending_casts() -> None:
 
         session.pending_cast = None
         player = session.player
+        # Check BEFORE special Mangekyo dispatches (Tsukuyomi, Kamui,
+        # Amaterasu, etc.), not just ordinary damaging jutsu below.
+        # Otherwise a cast started while someone was online could still
+        # strike them after their connection dropped.
+        if cast.is_pvp:
+            opponent = cast.target
+            if (getattr(getattr(opponent, "state", None), "name", "PLAYING") != "PLAYING"
+                    or not getattr(opponent, "player", None)
+                    or opponent.player.room_vnum != player.room_vnum
+                    or opponent.player.health <= 0):
+                session.send("&DYour hand signs fade -- that shinobi is no longer an active target.&x")
+                continue
         if cast.is_pvp and getattr(cast.target, "player", None):
             import hidden_mist
             if hidden_mist.obscures(player, cast.target.player) or general_skills.concealed_from(player, cast.target.player):
