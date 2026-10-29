@@ -6,6 +6,7 @@ regeneration.
 
 import asyncio
 import socket
+import time
 
 import config
 import consumables
@@ -88,11 +89,12 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
     except (ConnectionResetError, asyncio.IncompleteReadError):
         pass
     finally:
-        import mangekyo
-        import world
-        mangekyo.end_tsukuyomi_on_departure(session, world)
-        if session in ACTIVE_SESSIONS:
-            ACTIVE_SESSIONS.remove(session)
+        # A lost socket is not a quit: preserve the player in a protected
+        # link-dead state. Explicit quit has already marked it CLOSED.
+        if session.state.name == "PLAYING":
+            session.begin_disconnect_grace()
+        elif session.state.name != "CLOSED":
+            session.request_close()
         try:
             writer.close()
         except Exception:
@@ -157,6 +159,15 @@ async def pulse_loop() -> None:
 
     while True:
         await asyncio.sleep(PULSE_SECONDS)
+
+        # The expiration clock runs even when nobody else is connected.
+        # Only after 15 full minutes do we perform the real logout,
+        # releasing group slots and sending the global departure notice.
+        for gone in list(ACTIVE_SESSIONS):
+            if (gone.state == State.LINKDEAD
+                    and time.time() >= gone.linkdead_until):
+                gone.request_close()
+
         elapsed_since_regen += PULSE_SECONDS
         elapsed_since_idle_upkeep += PULSE_SECONDS
         elapsed_since_autosave += PULSE_SECONDS
