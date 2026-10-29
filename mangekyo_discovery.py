@@ -18,6 +18,17 @@ def record_use(player, jutsu_key: str) -> None:
 
 def can_read(session, entry: dict) -> bool:
     key = entry["primary_keyword"].lower()
+    staff = getattr(getattr(session, "account", None), "staff_level", "player") != "player"
+    player = getattr(session, "player", None)
+    # Rare celestial and Tenseigan-family Hyuga help is equally private.
+    # A character must personally satisfy level, mastery and Potential.
+    import hyuga
+    hyuga_art = hyuga.REGISTRY.get(key)
+    if hyuga_art and hyuga_art.get("hyuga_potential", 0) >= 95:
+        return staff or bool(player and hyuga.unlocked(player, key))
+    if key == "mangekyo help":
+        return staff or bool(player and player.bloodline_id == "sharingan"
+                             and player.bloodline_mangekyo)
     if key in {"stab", "impale", "burn", "crush", "unmake"}:
         key = "tsukuyomi"
     jutsu = data_jutsu.JUTSU.get(key)
