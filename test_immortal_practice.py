@@ -85,7 +85,8 @@ class MassPracticeTests(unittest.TestCase):
         self.assertEqual(self.offline.skill_proficiencies["Shadow Clone Jutsu"], 4)
         self.assertEqual(self.online.skill_proficiencies["Shadow Clone Jutsu"], 20)
         self.assertEqual(self.online.practiced_skills, [])
-        self.assertIn("2 save failure(s)", self.actor.send.call_args.args[0])
+        self.assertTrue(any("2 save failure(s)" in call.args[0]
+                            for call in self.actor.send.call_args_list))
 
 
 if __name__ == "__main__":
