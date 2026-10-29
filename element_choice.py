@@ -67,8 +67,8 @@ def begin(session, show_prompt=True) -> bool:
 
 def choose(session, answer: str) -> None:
     player = session.player
-    if not pending(player):
-        session.send("You have already chosen your second chakra nature.")
+    if not pending(player) or not in_choice(player):
+        session.send("Channel a second Chakra Paper before choosing your nature.")
         return
     choice = answer.strip().lower()
     if choice not in ELEMENTS or choice == player.chakra_nature:
