@@ -90,6 +90,20 @@ class HyugaTests(unittest.TestCase):
         hyuga.cmd_byakugan(s, ["off"])
         self.assertFalse(p.byakugan_active)
 
+    def test_top_secret_celestial_help_requires_personal_unlock(self):
+        from types import SimpleNamespace as NS
+        import mangekyo_discovery
+        p = hyuga_player(potential=100, mastery=100, level=200)
+        session = NS(player=p, account=NS(staff_level="player"))
+        page = {"primary_keyword": "tenseigan chakra mode"}
+        self.assertFalse(mangekyo_discovery.can_read(session, page))
+        p.level = 240
+        self.assertTrue(mangekyo_discovery.can_read(session, page))
+        p.bloodline_potential = 75
+        self.assertFalse(mangekyo_discovery.can_read(session, page))
+        session.account.staff_level = "administrator"
+        self.assertTrue(mangekyo_discovery.can_read(session, page))
+
     def test_registry_shortcuts_and_guard_definitions(self):
         import status_effects
         import jutsu_shortcuts
