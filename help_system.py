@@ -68,7 +68,7 @@ DEFAULT_HELP_ENTRIES = [
             "beast as a real roaming mob, with a global announcement. "
             "Only one Tailed Beast may roam at a time. Examples: unseal list; "
             "unseal Biran; unseal mob Kurama; unseal mob 9. "
-            "Reaper Death Seal is player-only and is not affected."
+            "This command only affects captured Tailed Beasts."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
