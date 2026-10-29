@@ -1737,6 +1737,9 @@ def test_partial_jutsu_names():
         feed_local("leaf"); feed_local(cls); feed_local("nara"); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         for cmd in ["south"]:
             feed_local(cmd)
+        # This smoke case validates shorthand parsing and casting, not
+        # teacher lessons; practice-gate behavior has separate tests.
+        s.player.practice_gate_enabled = False
         return s
 
     def resolve_pending(session):
