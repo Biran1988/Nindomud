@@ -640,6 +640,18 @@ def _scale_base_damage_to_level() -> None:
         if jutsu.get("damage") is None:
             continue
         original_low, original_high = jutsu["damage"]
+        if jutsu.get("jutsu_type") == "hyuga_strike":
+            # Hyuga strikes use same-level regular-mob HP as the reference
+            # rather than the legacy 100-level damage ladder. Core moves
+            # aim for longer fights; extremely rare evolved eyes hit harder.
+            level = min(250, max(1, jutsu["level_requirement"]))
+            standard_hp = 80 + 20 * level + 2 * level * level
+            potential = jutsu.get("hyuga_potential", 0)
+            percent = (6 + level // 100 + (2 if potential >= 75 else 0)
+                       + (2 if potential >= 95 else 0))
+            center = max(1, standard_hp * percent // 100)
+            jutsu["damage"] = (max(1, center * 4 // 5), center * 6 // 5)
+            continue
         level = max(1, min(100, jutsu["level_requirement"]))
         # The first tier is reserved for zero/one damage; even a starting
         # attack should deal a few points. Level 100 reaches the top tier.
