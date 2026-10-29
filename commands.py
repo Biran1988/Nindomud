@@ -105,7 +105,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"spy", "stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -146,8 +146,8 @@ def dispatch_line(session, line: str) -> None:
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
             and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "inventory",
-                                       "inv", "skills", "prac", "imms", "immortal",
-                                       "immortals", "changes", "say", "ooc", "quit", "save"}):
+                                       "inv", "skills", "prac", "ip", "imms", "immortal",
+                                       "immortals", "ip", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
     if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
