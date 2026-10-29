@@ -94,6 +94,22 @@ def choose(session, answer: str) -> None:
     session.send("Your choice is complete. You may use all commands again.")
 
 
+def start_with_paper(session, item_name: str) -> bool:
+    """Use a second sheet to open the choice of a second chakra nature."""
+    player = session.player
+    if not pending(player) or not player.chakra_nature_revealed:
+        return False
+    player.element_choice_paper_used = True
+    if not begin(session, show_prompt=False):
+        player.element_choice_paper_used = False
+        return False
+    player.inventory.remove(item_name)
+    storage.save_player(player)
+    session.send("Your second Chakra Paper responds to your chakra.")
+    prompt(session)
+    return True
+
+
 def handle_command(session, line: str) -> bool:
     """Return True when a pending choice consumes the input."""
     if session.account and session.account.staff_level != "player":
