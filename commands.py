@@ -2204,9 +2204,27 @@ def cmd_force(session, args: List[str]) -> None:
         session.send("Only immortals can force a player command.")
         return
     if len(args) < 2:
-        session.send("Usage: force <player name> <allowed command>  |  force all <safe social command> (administrator+)")
+        session.send("Usage: force <player name> <allowed command>  |  force all <safe social command|save> (administrator+)")
         return
     who, cmd = args[0].strip(), " ".join(args[1:])
+    # Deliberately special-case administrator 'force all save': never expose
+    # save to generic mpforce or to ordinary player-command forcing.
+    if who.lower() == "all" and cmd.strip().lower() == "save":
+        if session.account.staff_level not in {"administrator", "implementor"}:
+            session.send("Only administrators and Implementors may use force all save.")
+            return
+        targets = [s for s in session.active_sessions()
+                   if s is not session and s.player and s.account
+                   and getattr(getattr(s, "state", None), "name", None) == "PLAYING"
+                   and s.account.staff_level == "player"]
+        if len(targets) > 50:
+            session.send("Refused: force all save is limited to 50 online characters.")
+            return
+        for target in targets:
+            storage.save_player(target.player)
+            olc._log(session.player.name, "force", target.player.name, "command: save")
+        session.send(f"Saved {len(targets)} online player character(s).")
+        return
     error = force_commands.validate_forced_command(cmd)
     if error:
         session.send(error)
@@ -2221,7 +2239,7 @@ def cmd_force(session, args: List[str]) -> None:
         # Bulk force is deliberately informational/social, not a way to
         # move or attack the entire server in one command.
         if cmd.split()[0].lower() not in {"look", "l", "say", "emote", "stand", "wake", "rest"}:
-            session.send("force all is limited to look, say, emote, stand, wake and rest.")
+            session.send("force all is limited to look, say, emote, stand, wake, rest and save.")
             return
         targets = [s for s in online if s is not session and s.account.staff_level == "player"]
         if not targets:
@@ -7837,6 +7855,9 @@ def cmd_read(session, args: List[str]) -> None:
 
 
 def cmd_eat(session, args: List[str]) -> None:
+    import halloween_event
+    if halloween_event.consume_candy(session, " ".join(args)):
+        return
     import seasonal_events
     if seasonal_events.eat_july_fourth_food(session, " ".join(args)):
         return
@@ -7852,9 +7873,6 @@ def cmd_drink(session, args: List[str]) -> None:
 def cmd_use(session, args: List[str]) -> None:
     import lightsabers
     if lightsabers.use(session, " ".join(args)):
-        return
-    import halloween_event
-    if halloween_event.consume_candy(session, " ".join(args)):
         return
     import seasonal_events
     if seasonal_events.use_fireworks(session, " ".join(args)):
@@ -8284,7 +8302,8 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
     hp_color = colors.resource_color(p.health, p.maximum_health)
     ch_color = colors.resource_color(p.chakra, p.maximum_chakra)
     st_color = colors.resource_color(p.stamina, p.maximum_stamina)
-    next_xp = leveling.xp_for_next_level(p.level)
+    rank_cap = leveling.rank_level_cap(p)
+    next_xp = leveling.xp_for_next_level(p.level) if p.level < rank_cap else p.experience
     set_bonus = equipped_set_bonus_percent(p)
     stats = derived_stats.compute_all(p, set_bonus)
     tool_item = p.equipment.get("tool")
@@ -8304,6 +8323,7 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
         _row("Rank", p.village_rank.title(), "Clan", data_clans.display_name(p.clan)),
         _row("Level", p.level, "Class", p.primary_class.capitalize()),
         _row("Experience", p.experience, "Next Level", next_xp),
+        _row("Rank Level Cap", rank_cap, "Advancement", "Promotion required" if p.level >= rank_cap and rank_cap < leveling.MAX_LEVEL else "Open"),
         _row("Ryo", p.ryo, "Age", p.age),
         _row("Sex", data_appearance.sex_display(p.sex), "Skin Tone", data_appearance.skin_tone_display(p.skin_tone)),
         _row("Hair Color", data_appearance.hair_color_display(p.hair_color), "Eye Color", data_appearance.eye_color_display(p.eye_color)),
@@ -8402,12 +8422,18 @@ def cmd_score(session, args: List[str]) -> None:
 def cmd_level(session, args: List[str]) -> None:
     """Compact level and experience report using score's exact XP values."""
     p = session.player
-    next_xp = leveling.xp_for_next_level(p.level)
-    xp_needed = max(0, next_xp - p.experience) if p.level < leveling.MAX_LEVEL else 0
-    session.send("\n".join((
+    cap = leveling.rank_level_cap(p)
+    capped = p.level >= cap
+    next_xp = leveling.xp_for_next_level(p.level) if not capped else p.experience
+    xp_needed = max(0, next_xp - p.experience) if not capped else 0
+    lines = [
         _row("Level", p.level, "Experience", p.experience),
         _row("Next Level", next_xp, "XP Needed", xp_needed),
-    )))
+        _row("Ninja Rank", p.village_rank.title(), "Rank Cap", cap),
+    ]
+    if capped and cap < leveling.MAX_LEVEL:
+        lines.append(" &YPromotion required to gain more levels.&x")
+    session.send("\n".join(lines))
 
 
 def cmd_uptime(session, args: List[str]) -> None:
