@@ -176,7 +176,9 @@ async def pulse_loop() -> None:
         elapsed_since_area_reset += PULSE_SECONDS
 
         combat.process_respawns()
-        # Holiday populations only need minute-level calendar checks.
+        import halloween_event
+        halloween_event.process_fast_respawns()
+        # Other holiday populations only need minute-level calendar checks.
         elapsed_since_seasonal += PULSE_SECONDS
         if elapsed_since_seasonal >= 60:
             elapsed_since_seasonal = 0.0
