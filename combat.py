@@ -358,8 +358,12 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         respawns=t.get("respawns", True), loot_items=list(t.get("loot_items", [])),
         chakra=max_chakra, maximum_chakra=max_chakra,
         stamina=max_stamina, maximum_stamina=max_stamina,
+        # Below level 10, preserve the old no-class default; these mobs
+        # cannot cast. Combat mobs at 10+ without a builder-assigned class
+        # roll one of the four normal ninja classes on spawn.
         primary_class=(t.get("primary_class") if t.get("primary_class") in data_classes.CLASSES
-                       else random.choice(tuple(data_classes.CLASSES))),
+                       else random.choice(tuple(data_classes.CLASSES)) if level >= 10
+                       else None),
         chakra_nature=biomes.roll_chakra_nature(),
         strength=derived_strength, dexterity=derived_dexterity,
     )
