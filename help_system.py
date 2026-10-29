@@ -4931,10 +4931,10 @@ DEFAULT_HELP_ENTRIES.append({
         "own permanent Potential (how far the eye can evolve) and Talent "
         "(how quickly mastery grows). Not every Hyuga can master the highest "
         "techniques. Existing Hyuga missing the old inheritance roll receive "
-        "their bloodline on login without rerolling earlier lucky characters.\\n\\n"
+        "their bloodline on login without rerolling earlier lucky characters.\n\n"
         "Awakening: at level 25 or higher, Byakugan has the normal hidden "
         "1-in-300-per-round chance to awaken during real combat. The eye does not reveal itself "
-        "early or grant combat perks until awakened.\\n\\n"
+        "early or grant combat perks until awakened.\n\n"
         "Commands: byakugan [on|off|status], byakugan scan <direction>, "
         "hyuga list, jutsu all, prac, and perform <technique> [target]. "
         "Byakugan is a chakra-upkeep toggle. See enemies' chakra and peer "
@@ -4942,7 +4942,7 @@ DEFAULT_HELP_ENTRIES.append({
         "Active Byakugan (level 25+) improves accuracy and evasion. Gentle Fist techniques "
         "directly reduce chakra or stamina and may briefly close tenketsu, "
         "preventing jutsu use. Eight Trigrams Rotation and Protecting "
-        "Sixty-Four Palms grant short-lived defensive effects.\\n\\n"
+        "Sixty-Four Palms grant short-lived defensive effects.\n\n"
         "Advanced: progressive Vacuum Palm, 128 Palms, Twin Lion Fists and "
         "361 Palms require combat-earned mastery and level milestones. "
         "Only Potential 95+ can reach Celestial Byakugan and Fate Sight "
@@ -4951,7 +4951,7 @@ DEFAULT_HELP_ENTRIES.append({
         "the absolutely rarest Potential 100 character, level 100, and "
         "full bloodline mastery; Tenseigan protection only lasts a few "
         "combat pulses before the form ends. These celestial endgame "
-        "powers are NindoMUD adaptations, not standard clan techniques.\\n\\n"
+        "powers are NindoMUD adaptations, not standard clan techniques.\n\n"
         "Learning: new bloodline techniques appear on level-up, on login "
         "for eligible older characters, and whenever an awakened and "
         "active Byakugan grows through combat. Most individual attacks "
@@ -4979,7 +4979,7 @@ for _hyuga_key, _hyuga_spec in _hyuga_help.REGISTRY.items():
                      data_jutsu.JUTSU_SHORTCUTS[_hyuga_key]],
         "title": _hyuga_spec["display_name"],
         "body": (
-            f"Syntax: {'byakugan [on|off|status|scan <direction>]' if _hyuga_key == 'byakugan' else 'perform ' + _hyuga_key + (' [on|off]' if _mode else ' [target]')}\\n\\n"
+            f"Syntax: {'byakugan [on|off|status|scan <direction>]' if _hyuga_key == 'byakugan' else 'perform ' + _hyuga_key + (' [on|off]' if _mode else ' [target]')}\n\n"
             + _requires
             + ("This toggles Byakugan or a short-lived defensive/celestial form. "
                "Higher modes have higher chakra upkeep. " if _mode else
