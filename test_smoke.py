@@ -3690,7 +3690,7 @@ def test_job_leveling_and_fishing():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Fisherjob", "y", "FisherTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Fisherjob", "y", "FisherTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -3799,7 +3799,7 @@ def test_rod_crafting_and_give():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Crafterjob", "y", "CrafterTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Crafterjob", "y", "CrafterTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -3815,7 +3815,7 @@ def test_rod_crafting_and_give():
     # 'give' still works (player-to-player item transfer).
     s2 = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Craftertrader", "y", "TraderTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Craftertrader", "y", "TraderTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s2.handle_line(line)
         out.clear()
@@ -3871,7 +3871,7 @@ def test_appraisal_and_examine():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Examinerjob", "y", "ExaminerPass123", "leaf", "taijutsu", "none",
+    for line in ["Examinerjob", "y", "ExaminerPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -3953,7 +3953,7 @@ def test_appraisal_login_sync_backfill():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Backfilltester", "y", "BackfillPass123", "leaf", "taijutsu", "none",
+    for line in ["Backfilltester", "y", "BackfillPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -3988,7 +3988,7 @@ def test_prac_shows_only_learned_skills():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Praconlylearned", "y", "PracOnlyLearnedPass1", "leaf", "taijutsu", "none",
+    for line in ["Praconlylearned", "y", "PracOnlyLearnedPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -4140,7 +4140,7 @@ def test_scoresheet_reference_helpfiles():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Scoresheethelptest", "y", "ScoreHelpTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Scoresheethelptest", "y", "ScoreHelpTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -4206,7 +4206,7 @@ def test_constitution_affects_health_per_level():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
         return s
@@ -4318,7 +4318,7 @@ def test_linkdead_session_kicked_on_reconnect():
         s1.handle_line(line)
         out1.clear()
 
-    for line in ["Linkdeadbugtest", "y", "LinkdeadBugPass1", "leaf", "taijutsu", "none",
+    for line in ["Linkdeadbugtest", "y", "LinkdeadBugPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed1(line)
 
@@ -4368,7 +4368,7 @@ def test_score_sheet_restructure():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Restructuretest", "y", "RestructurePass1", "leaf", "taijutsu", "none",
+    for line in ["Restructuretest", "y", "RestructurePass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -4421,7 +4421,7 @@ def test_inventory_stacking():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Stackingtest", "y", "StackingTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Stackingtest", "y", "StackingTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -4504,7 +4504,7 @@ def test_drop_and_get():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Droptestjob", "y", "DropTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Droptestjob", "y", "DropTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -4560,7 +4560,7 @@ def test_jobs_command_and_helpfile():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Jobscommandtest", "y", "JobsCommandPass1", "leaf", "taijutsu", "none",
+    for line in ["Jobscommandtest", "y", "JobsCommandPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -4612,7 +4612,7 @@ def test_pager_mechanism():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Pagermechtest", "y", "PagerMechPass123", "leaf", "taijutsu", "none",
+    for line in ["Pagermechtest", "y", "PagerMechPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
 
@@ -4683,7 +4683,7 @@ def test_invalid_room_recovery():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Invalidroomtest", "y", "InvalidRoomPass1", "leaf", "taijutsu", "none",
+    for line in ["Invalidroomtest", "y", "InvalidRoomPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -4770,7 +4770,7 @@ def test_login_broadcast():
             s.handle_line(line)
             out.clear()
 
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             feed_local(line)
         return s
 
@@ -4825,7 +4825,7 @@ def test_reboot_command():
             s.handle_line(line)
             out.clear()
 
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             feed_local(line)
         return s
 
@@ -4898,7 +4898,7 @@ def test_mining_and_lumberjack():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Miningtestjob", "y", "MiningTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Miningtestjob", "y", "MiningTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -5035,7 +5035,7 @@ def test_gathering_fail_chance():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Failchancejob", "y", "FailChanceJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Failchancejob", "y", "FailChanceJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -5102,7 +5102,7 @@ def test_hit_roll_and_armor_class_wired_into_combat():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Hitrolltest", "y", "HitRollTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Hitrolltest", "y", "HitRollTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -5212,7 +5212,7 @@ def test_every_command_and_jutsu_has_a_helpfile():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Everyhelptest", "y", "EveryHelpTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Everyhelptest", "y", "EveryHelpTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -5414,7 +5414,7 @@ def test_consider_command():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Considertestjob", "y", "ConsiderTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Considertestjob", "y", "ConsiderTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -5521,7 +5521,7 @@ def test_wimpy_auto_flee():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Wimpytestjob", "y", "WimpyTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Wimpytestjob", "y", "WimpyTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
 
@@ -5729,7 +5729,7 @@ def test_dynamic_mission_ranks():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Dynamicmissiontest", "y", "DynamicMissionTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Dynamicmissiontest", "y", "DynamicMissionTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
 
@@ -5906,7 +5906,7 @@ def test_weather_and_day_night():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in ["Weatherjobtest", "y", "WeatherJobTestPass1", "leaf", "taijutsu", "none",
+        for line in ["Weatherjobtest", "y", "WeatherJobTestPass1", "leaf", "taijutsu", "nara",
                      "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -5965,7 +5965,7 @@ def test_auction_house():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male", "tan",
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male", "tan",
                      "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -6173,7 +6173,7 @@ def test_sacrifice_ground_items_only():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Sacgrounditemtest", "y", "SacGroundItemTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Sacgrounditemtest", "y", "SacGroundItemTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -6254,7 +6254,7 @@ def test_goto_command():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male", "tan",
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male", "tan",
                      "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -6326,7 +6326,7 @@ def test_blank_line_above_prompt():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Blanklinepromptjob", "y", "BlankLinePromptPass1", "leaf", "taijutsu", "none",
+    for line in ["Blanklinepromptjob", "y", "BlankLinePromptPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -6358,7 +6358,7 @@ def test_exits_shown_before_mobs_and_items():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Roomorderjobtest", "y", "RoomOrderJobTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Roomorderjobtest", "y", "RoomOrderJobTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -6402,7 +6402,7 @@ def test_look_self():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Lookselftestjob", "y", "LookSelfTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Lookselftestjob", "y", "LookSelfTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -6495,7 +6495,7 @@ def test_job_actions_cost_stamina():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Staminajobtest", "y", "StaminaJobTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Staminajobtest", "y", "StaminaJobTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -6574,7 +6574,7 @@ def test_sacrifice_all_and_no_sac_flag():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Sacalltestjob", "y", "SacAllTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Sacalltestjob", "y", "SacAllTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -6638,7 +6638,7 @@ def test_every_registered_item_can_be_sacrificed():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Sacsurveytestjob", "y", "SacSurveyTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Sacsurveytestjob", "y", "SacSurveyTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -6704,7 +6704,7 @@ def test_wear_loc_and_wear_all_remove_all():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Wearloctestjob", "y", "WearLocTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Wearloctestjob", "y", "WearLocTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
 
@@ -6803,7 +6803,7 @@ def test_weapon_skill_learned_on_wield():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Weaponskilltestjob", "y", "WeaponSkillTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Weaponskilltestjob", "y", "WeaponSkillTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
 
@@ -6850,7 +6850,7 @@ def test_level_up_shows_stat_gains():
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
 
-    for line in ["Levelstattestjob", "y", "LevelStatTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Levelstattestjob", "y", "LevelStatTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -6937,7 +6937,7 @@ def test_item_stat_bonuses_and_flags():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Itemdatatest", "y", "ItemDataTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Itemdatatest", "y", "ItemDataTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
 
@@ -7043,7 +7043,7 @@ def test_attack_verb_matches_weapon_type():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Attackverbtestjob", "y", "AttackVerbTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Attackverbtestjob", "y", "AttackVerbTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -7457,7 +7457,7 @@ def test_gather_mission_shows_deliver_hint():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Delivhinttestjob", "y", "DelivHintTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Delivhinttestjob", "y", "DelivHintTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -7532,7 +7532,7 @@ def test_rset_oset_flags_helpfiles():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Flagshelptestjob", "y", "FlagsHelpTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Flagshelptestjob", "y", "FlagsHelpTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -7561,7 +7561,7 @@ def test_astat():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Astattestjob", "y", "AstatTestJobPass123", "leaf", "taijutsu", "none",
+    for line in ["Astattestjob", "y", "AstatTestJobPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -7656,7 +7656,7 @@ def test_report_command():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Reporttestjobtwo", "y", "ReportTestJobTwoPass1", "leaf", "taijutsu", "none",
+    for line in ["Reporttestjobtwo", "y", "ReportTestJobTwoPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -7817,7 +7817,7 @@ def test_flag_validation():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Flagvalidationtest", "y", "FlagValidationTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Flagvalidationtest", "y", "FlagValidationTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -7964,7 +7964,7 @@ def test_look_shows_room_description():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Lookdescriptiontest", "y", "LookDescriptionTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Lookdescriptiontest", "y", "LookDescriptionTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8022,7 +8022,7 @@ def test_rset_teleports_and_always_defaults_to_current_room():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Rsetteleportfinal", "y", "RsetTeleportFinalPass1", "leaf", "taijutsu", "none",
+    for line in ["Rsetteleportfinal", "y", "RsetTeleportFinalPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8277,7 +8277,7 @@ def test_examine_shows_structured_stats_and_equipment_bonuses_apply():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Examinestatstest", "y", "ExamineStatsTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Examinestatstest", "y", "ExamineStatsTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8389,7 +8389,7 @@ def test_job_stat_bonuses_generalized():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Jobstatgentest", "y", "JobStatGenTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Jobstatgentest", "y", "JobStatGenTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8471,7 +8471,7 @@ def test_weaponsmith_armorsmith_hidden():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Hiddenjobstestfinal", "y", "HiddenJobsTestFinalPass1", "leaf", "taijutsu", "none",
+    for line in ["Hiddenjobstestfinal", "y", "HiddenJobsTestFinalPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8515,7 +8515,7 @@ def test_mset_act_flags_validation():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Actflagvalidtest", "y", "ActFlagValidTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Actflagvalidtest", "y", "ActFlagValidTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8576,7 +8576,7 @@ def test_regen_never_outpaces_flat_action_drain():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Regencapfixtest", "y", "RegenCapFixTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Regencapfixtest", "y", "RegenCapFixTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8625,7 +8625,7 @@ def test_score_sheet_practice_points_matches_actual():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Scorepracticetest", "y", "ScorePracticeTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Scorepracticetest", "y", "ScorePracticeTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8686,7 +8686,7 @@ def test_multi_attack_skills_show_in_prac():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Pracmultiattack", "y", "PracMultiAttackPass123", "leaf", "taijutsu", "none",
+    for line in ["Pracmultiattack", "y", "PracMultiAttackPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8709,7 +8709,7 @@ def test_multi_attack_skills_show_in_prac():
     # login, and it must show up in prac immediately afterward.
     sync_session = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Pracloginsync", "y", "PracLoginSyncPass123", "leaf", "taijutsu", "none",
+    for line in ["Pracloginsync", "y", "PracLoginSyncPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         sync_session.handle_line(line)
         out.clear()
@@ -8750,7 +8750,7 @@ def test_starter_jutsu_messages_are_colored():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Jutsucolortest", "y", "JutsuColorTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Jutsucolortest", "y", "JutsuColorTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8806,7 +8806,7 @@ def test_whois_command():
     out1 = []
     s1 = Session(lambda t: out1.append(t), lambda: out1.append("[[CLOSED]]"))
     out1.clear()
-    for line in ["Whoistargetfinal", "y", "WhoisTargetFinalPass1", "leaf", "taijutsu", "none",
+    for line in ["Whoistargetfinal", "y", "WhoisTargetFinalPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s1.handle_line(line)
         out1.clear()
@@ -8878,7 +8878,7 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     out1 = []
     target = Session(lambda t: out1.append(t), lambda: out1.append("[[CLOSED]]"))
     out1.clear()
-    for line in ["Mstatkkgtargettest", "y", "MstatKkgTargetTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Mstatkkgtargettest", "y", "MstatKkgTargetTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         target.handle_line(line)
         out1.clear()
@@ -8939,7 +8939,7 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     out4 = []
     plain_target = Session(lambda t: out1.append(t), lambda: out1.append("[[CLOSED]]"))
     out4.clear()
-    for line in ["Mstatkkgplaintest", "y", "MstatKkgPlainTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Mstatkkgplaintest", "y", "MstatKkgPlainTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         plain_target.handle_line(line)
         out1.clear()
@@ -8972,7 +8972,7 @@ def test_awaken_command():
     out1 = []
     target = Session(lambda t: out1.append(t), lambda: out1.append("[[CLOSED]]"))
     out1.clear()
-    for line in ["Awakencmdtargettest", "y", "AwakenCmdTargetTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Awakencmdtargettest", "y", "AwakenCmdTargetTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         target.handle_line(line)
         out1.clear()
@@ -9248,7 +9248,7 @@ def test_sharingan_two_tomoe_upkeep_discount():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Tomoetwodisctest", "y", "TomoeTwoDiscTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Tomoetwodisctest", "y", "TomoeTwoDiscTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -9438,7 +9438,7 @@ def test_sharingan_mastery_driven_tomoe():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Quietwatchertwo", "y", "QuietWatcherTwoPass123", "leaf", "taijutsu", "none",
+    for line in ["Quietwatchertwo", "y", "QuietWatcherTwoPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -9482,7 +9482,7 @@ def test_sharingan_mastery_driven_tomoe():
     # --- SECURITY: an actively progressing Sharingan still leaks nothing ---
     security_session = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Quietwatcherthree", "y", "QuietWatcherThreePass1", "leaf", "taijutsu", "none",
+    for line in ["Quietwatcherthree", "y", "QuietWatcherThreePass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         security_session.handle_line(line)
         out.clear()
@@ -9619,7 +9619,7 @@ def test_sharingan_three_tomoe_hitroll_and_prediction():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Quietwatcherfour", "y", "QuietWatcherFourPass123", "leaf", "taijutsu", "none",
+    for line in ["Quietwatcherfour", "y", "QuietWatcherFourPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -9717,7 +9717,7 @@ def test_aff_command():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Quietwatcherfive", "y", "QuietWatcherFivePass1", "leaf", "taijutsu", "none",
+    for line in ["Quietwatcherfive", "y", "QuietWatcherFivePass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -9790,7 +9790,7 @@ def test_quit_announcement():
     out1 = []
     watcher = Session(lambda t: out1.append(t), lambda: out1.append("[[CLOSED]]"))
     out1.clear()
-    for line in ["Quitannouncewatch", "y", "QuitAnnounceWatchPass1", "leaf", "taijutsu", "none",
+    for line in ["Quitannouncewatch", "y", "QuitAnnounceWatchPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         watcher.handle_line(line)
         out1.clear()
@@ -9859,7 +9859,7 @@ def test_sharingan_idle_upkeep_and_combat_scaling():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Idleupkeepfinal", "y", "IdleUpkeepFinalPass123", "leaf", "taijutsu", "none",
+    for line in ["Idleupkeepfinal", "y", "IdleUpkeepFinalPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10126,7 +10126,7 @@ def test_sharingan_tomoe_four_five_six():
     # --- Tomoe 6's amplified bonuses exceed tomoe 3/5's ---
     solo_session = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Quietwatchersix", "y", "QuietWatcherSixPass123", "leaf", "taijutsu", "none",
+    for line in ["Quietwatchersix", "y", "QuietWatcherSixPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         solo_session.handle_line(line)
         out.clear()
@@ -10191,7 +10191,7 @@ def test_sharingan_activation_message_reflects_tomoe():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Quietwatcherseven", "y", "QuietWatcherSevenPass1", "leaf", "taijutsu", "none",
+    for line in ["Quietwatcherseven", "y", "QuietWatcherSevenPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10423,7 +10423,7 @@ def test_tips_system():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Tipssystemtest", "y", "TipsSystemTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Tipssystemtest", "y", "TipsSystemTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10538,7 +10538,7 @@ def test_travel_mode_removed_wander_is_act_flag():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Wanderflagfinaltest", "y", "WanderFlagFinalTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Wanderflagfinaltest", "y", "WanderFlagFinalTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10606,7 +10606,7 @@ def test_aset_shorthand_and_current_area():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Asetfinaltest", "y", "AsetFinalTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Asetfinaltest", "y", "AsetFinalTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10677,7 +10677,7 @@ def test_mset_act_shorthand():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Msetactshorttest", "y", "MsetActShortTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Msetactshorttest", "y", "MsetActShortTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10734,7 +10734,7 @@ def test_sharingan_upkeep_doubled_again():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Upkeeptripletest", "y", "UpkeepTripleTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Upkeeptripletest", "y", "UpkeepTripleTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10794,7 +10794,7 @@ def test_wielded_item_shows_hitroll_damroll_damage():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Wieldfieldtest", "y", "WieldFieldTestPass123", "leaf", "taijutsu", "none",
+    for line in ["Wieldfieldtest", "y", "WieldFieldTestPass123", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -10939,7 +10939,7 @@ def test_pager_can_be_quit_early():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Pagerquittest", "y", "PagerQuitTestPass1234", "leaf", "taijutsu", "none",
+    for line in ["Pagerquittest", "y", "PagerQuitTestPass1234", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -11015,7 +11015,7 @@ def test_bexit_auto_creates_missing_room():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Bexitautocreate", "y", "BexitAutoCreatePass1234", "leaf", "taijutsu", "none",
+    for line in ["Bexitautocreate", "y", "BexitAutoCreatePass1234", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -11131,7 +11131,7 @@ def test_shadow_clone_jutsu():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Shadowclonetest", "y", "ShadowCloneTestPassword", "leaf", "taijutsu", "none",
+    for line in ["Shadowclonetest", "y", "ShadowCloneTestPassword", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -11481,7 +11481,7 @@ def test_universal_fifty_percent_practice_cap():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Fiftypercentcap", "y", "FiftyPercentCapPass1", "leaf", "taijutsu", "none",
+    for line in ["Fiftypercentcap", "y", "FiftyPercentCapPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -11812,7 +11812,7 @@ def test_secret_combat_partner_tracker():
     def make(name, pw):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -12031,7 +12031,7 @@ def test_pre_existing_character_gets_chakra_nature_on_channel():
     # --- The core fix: a pre-existing character (None nature) channels successfully, no crash ---
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Prenaturetest", "y", "PreNatureTestPassword1", "leaf", "taijutsu", "none",
+    for line in ["Prenaturetest", "y", "PreNatureTestPassword1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -12068,7 +12068,7 @@ def test_pre_existing_character_gets_chakra_nature_on_channel():
     # --- A genuinely NEW character (real nature already set at chargen) is completely unaffected ---
     fresh_char = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Freshnaturetest", "y", "FreshNatureTestPassword", "leaf", "taijutsu", "none",
+    for line in ["Freshnaturetest", "y", "FreshNatureTestPassword", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         fresh_char.handle_line(line)
         out.clear()
@@ -12118,7 +12118,7 @@ def test_secondary_chakra_nature_at_level_100():
     # --- Full sequential flow: primary at 50, secondary correctly gated at 100 even with primary known ---
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Secondnaturefull", "y", "SecondNatureFullPassword", "leaf", "taijutsu", "none",
+    for line in ["Secondnaturefull", "y", "SecondNatureFullPassword", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -12170,7 +12170,7 @@ def test_secondary_chakra_nature_at_level_100():
     # --- A level 100+ character who has NEVER revealed the primary gets the PRIMARY first, not the secondary ---
     fresh = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Secondnaturefresh", "y", "SecondNatureFreshPassword", "leaf", "taijutsu", "none",
+    for line in ["Secondnaturefresh", "y", "SecondNatureFreshPassword", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         fresh.handle_line(line)
         out.clear()
@@ -12358,7 +12358,7 @@ def test_chakra_nature_on_score_sheet():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Scoresheetnaturetest", "y", "ScoreSheetNatureTestPass", "leaf", "taijutsu", "none",
+    for line in ["Scoresheetnaturetest", "y", "ScoreSheetNatureTestPass", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -12559,7 +12559,7 @@ def test_handsigns_and_casting_delay():
     # --- Universal level-20 grant, 1% practice cap ---
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Handsignstestchar", "y", "HandsignsTestCharPass", "leaf", "taijutsu", "none",
+    for line in ["Handsignstestchar", "y", "HandsignsTestCharPass", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -12882,7 +12882,7 @@ def test_chatlog():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Chatlogtest", "y", "ChatlogTestPassword1", "leaf", "taijutsu", "none",
+    for line in ["Chatlogtest", "y", "ChatlogTestPassword1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13120,7 +13120,7 @@ def test_chat_moderation():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Chatmoderationtest", "y", "ChatModerationTestP1", "leaf", "taijutsu", "none",
+    for line in ["Chatmoderationtest", "y", "ChatModerationTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13467,7 +13467,7 @@ def test_mset_short_long_aliases():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Msetshortlongtest", "y", "MsetShortLongTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Msetshortlongtest", "y", "MsetShortLongTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13553,7 +13553,7 @@ def test_reload_command():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Reloadcmdtest", "y", "ReloadCmdTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Reloadcmdtest", "y", "ReloadCmdTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13785,7 +13785,7 @@ def test_redit_alias_for_rset():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Reditaliastest", "y", "ReditAliasTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Reditaliastest", "y", "ReditAliasTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13837,7 +13837,7 @@ def test_idea_command_mirrors_report():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Ideacmdtest", "y", "IdeaCmdTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Ideacmdtest", "y", "IdeaCmdTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13861,7 +13861,7 @@ def test_idea_command_mirrors_report():
     out2 = []
     s2 = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Ideacmdstaff", "y", "IdeaCmdStaffPass1", "leaf", "taijutsu", "none",
+    for line in ["Ideacmdstaff", "y", "IdeaCmdStaffPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s2.handle_line(line)
         out2.clear()
@@ -14220,7 +14220,7 @@ def test_staffconfig_covers_staff_notify_ideas():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Staffconfigtest", "y", "StaffConfigTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Staffconfigtest", "y", "StaffConfigTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -14293,7 +14293,7 @@ def test_automatic_bloodline_awakening():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "taijutsu", "nara", "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -14839,7 +14839,7 @@ def test_summoning_contracts():
     other_out = []
     other_s = Session(lambda t: other_out.append(t), lambda: other_out.append("[[CLOSED]]"))
     other_out.clear()
-    for line in ["Summontestother", "y", "SummonTestOtherPass1", "leaf", "taijutsu", "none",
+    for line in ["Summontestother", "y", "SummonTestOtherPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         other_s.handle_line(line)
         other_out.clear()
@@ -16666,7 +16666,7 @@ def test_level_gate_custom_message():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Levelgatemsgtest", "y", "LevelGateMsgTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Levelgatemsgtest", "y", "LevelGateMsgTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16720,7 +16720,7 @@ def test_look_never_shows_mob_health():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Lookhealthpermtest", "y", "LookHealthPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Lookhealthpermtest", "y", "LookHealthPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16755,7 +16755,7 @@ def test_room_description_defaults_to_yellow():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Roomdescpermtest", "y", "RoomDescPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Roomdescpermtest", "y", "RoomDescPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16797,7 +16797,7 @@ def test_look_at_mob_shows_description():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Mobdescpermtest", "y", "MobDescPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Mobdescpermtest", "y", "MobDescPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16839,7 +16839,7 @@ def test_mset_class_sets_real_primary_class():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Mobclasspermtest", "y", "MobClassPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Mobclasspermtest", "y", "MobClassPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16883,7 +16883,7 @@ def test_wear_message_program_action():
     wearer_out = []
     wearer = Session(lambda t: wearer_out.append(t), lambda: wearer_out.append("[[CLOSED]]"))
     wearer_out.clear()
-    for line in ["Wearmsgpermtest", "y", "WearMsgPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Wearmsgpermtest", "y", "WearMsgPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         wearer.handle_line(line)
         wearer_out.clear()
@@ -16891,7 +16891,7 @@ def test_wear_message_program_action():
     bystander_out = []
     bystander = Session(lambda t: bystander_out.append(t), lambda: bystander_out.append("[[CLOSED]]"))
     bystander_out.clear()
-    for line in ["Wearmsgpermbystand", "y", "WearMsgPermBystandP1", "leaf", "taijutsu", "none",
+    for line in ["Wearmsgpermbystand", "y", "WearMsgPermBystandP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         bystander.handle_line(line)
         bystander_out.clear()
@@ -16951,7 +16951,7 @@ def test_mset_rset_oset_delete():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Deletecmdpermtest", "y", "DeleteCmdPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Deletecmdpermtest", "y", "DeleteCmdPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17021,7 +17021,7 @@ def test_ground_item_uses_long_desc():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Grounditempermtest", "y", "GroundItemPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Grounditempermtest", "y", "GroundItemPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17066,7 +17066,7 @@ def test_rarity_tags_hidden_except_examine():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Raritytagpermtest", "y", "RarityTagPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Raritytagpermtest", "y", "RarityTagPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17176,7 +17176,7 @@ def test_program_star_substitution_and_trigger_order():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Starordertest", "y", "StarOrderTestPass1", "leaf", "taijutsu", "none",
+    for line in ["Starordertest", "y", "StarOrderTestPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17248,7 +17248,7 @@ def test_spawnpoint_setspawn_merge():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Spawnpointmergeperm", "y", "SpawnpointMergePermP1", "leaf", "taijutsu", "none",
+    for line in ["Spawnpointmergeperm", "y", "SpawnpointMergePermP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17293,7 +17293,7 @@ def test_iruka_graduation_check():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Irukacheckpermtest", "y", "IrukaCheckPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Irukacheckpermtest", "y", "IrukaCheckPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17340,7 +17340,7 @@ def test_genin_promotion_mission_points_bonus():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Geninbonuspermtest", "y", "GeninBonusPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Geninbonuspermtest", "y", "GeninBonusPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17404,7 +17404,7 @@ def test_indexed_targeting_convention():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Indexedtargetingperm", "y", "IndexedTargetingPermP1", "leaf", "taijutsu", "none",
+    for line in ["Indexedtargetingperm", "y", "IndexedTargetingPermP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17435,7 +17435,7 @@ def test_backpack_container_system():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Backpackpermtest", "y", "BackpackPermTestP1", "leaf", "taijutsu", "none",
+    for line in ["Backpackpermtest", "y", "BackpackPermTestP1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17582,7 +17582,7 @@ def test_join_banner_no_border_bright_colors():
     out1 = []
     s1 = Session(lambda t: out1.append(t), lambda: out1.append("[[CLOSED]]"))
     out1.clear()
-    for line in ["Joinbannerwatcher", "y", "JoinBannerWatcherPass1", "leaf", "taijutsu", "none",
+    for line in ["Joinbannerwatcher", "y", "JoinBannerWatcherPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s1.handle_line(line)
         out1.clear()
@@ -18289,7 +18289,7 @@ def test_loot_all_finds_corpse():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Lootalltestjob", "y", "LootAllTestJobPass1", "leaf", "taijutsu", "none",
+    for line in ["Lootalltestjob", "y", "LootAllTestJobPass1", "leaf", "taijutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
