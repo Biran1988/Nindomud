@@ -282,7 +282,9 @@ def sync_turkeys(today=None, now=None) -> None:
     now = time.time() if now is None else now
     template = combat.default_template(TURKEY_VNUM, "a Thanksgiving turkey")
     template.update({"description": "A plump wild turkey struts here, gobbling at passersby.",
-                     "level": 15, "hit_dice": "1d1+149", "damage_dice": "1d8+3",
+                     "level": min(15, combat.MAX_KILLABLE_EVENT_MOB_LEVEL),
+                     combat.EVENT_KILLABLE_TAG: True,
+                     "hit_dice": "1d1+149", "damage_dice": "1d8+3",
                      "respawns": False, "loot_items": [TURKEY_MEAL, TURKEY_FEATHER, TURKEY_FEATHER]})
     combat.MOB_TEMPLATES[TURKEY_VNUM] = template
     area_rooms = _area_rooms()
