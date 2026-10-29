@@ -120,6 +120,8 @@ def dispatch_line(session, line: str) -> None:
     The new one-word shortcuts work directly for every class. Traditional
     Taijutsu/Bukijutsu names remain direct; other full names use perform.
     """
+    if getattr(getattr(session, "state", None), "name", "") == "LINKDEAD":
+        return
     words = line.split()
     if not words:
         return
@@ -164,6 +166,8 @@ def dispatch_line(session, line: str) -> None:
 
 
 def dispatch(session, verb: str, args: List[str]) -> None:
+    if getattr(getattr(session, "state", None), "name", "") == "LINKDEAD":
+        return
     verb = verb.lower()
     import reaper_seal
     if reaper_seal.blocks_command(session, verb):
@@ -1119,6 +1123,13 @@ def cmd_look(session, args: List[str]) -> None:
         if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _player_hidden_from(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
             lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
+    # Linkdead characters remain physically present but are untargetable.
+    import session as session_module
+    for other in session_module.ACTIVE_SESSIONS:
+        if (other.state == session_module.State.LINKDEAD and other.player
+                and other.player.room_vnum == player.room_vnum
+                and other is not session and not _player_hidden_from(player, other.player)):
+            lines.append(f"  &D{genjutsu.apparent_name(other.player)}&x is here. &[244][LINKDEAD - Protected]&x")
     # A pilot viewing the original room must still see their physical
     # body, but as an ordinary character. Spectators already see it via
     # the normal active-session loop; never show control metadata.
@@ -1679,6 +1690,15 @@ def cmd_who(session, args: List[str]) -> None:
             rank_label = f"{rank_color}{rank_text}&W"
             name_text = p.name
         lines.append(f"&W[{village_display}&W][{rank_label}][{level_label}]&W[{clan_text}]&Y {name_text}&D{_who_tags(p)}")
+
+    # Retained characters are listed separately: present in the world,
+    # but not connected, attackable, or counted as currently online.
+    import session as session_module
+    linkdead = [s for s in session_module.ACTIVE_SESSIONS
+                if s.state == session_module.State.LINKDEAD and s.player]
+    for s in linkdead:
+        remaining = max(0, int((s.linkdead_until - time.time() + 59) // 60))
+        lines.append(f"&D[LINKDEAD] {s.player.name} - protected ({remaining}m until logout)&x")
 
     count = len(online)
     noun = "shinobi is" if count == 1 else "shinobi are"
