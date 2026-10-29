@@ -30,7 +30,7 @@ STRIKES = (
 )
 # name, level, chakra cast, stamina cast, cooldown, mastery, potential, effect
 MODES = (
-    ("Byakugan", 50, 8, 0, 2, 0, 0, "byakugan"),
+    ("Byakugan", 25, 8, 0, 2, 0, 0, "byakugan"),
     ("Eight Trigrams Palms Revolving Heaven", 70, 42, 26, 30, .30, 0, "rotation"),
     ("Protecting Eight Trigrams Sixty-Four Palms", 75, 55, 30, 40, .48, 0, "protecting"),
     ("Celestial Byakugan", 100, 95, 20, 30, .90, 95, "celestial"),
