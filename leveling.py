@@ -15,6 +15,10 @@ import shinobi_notices
 from models import Player
 
 MAX_LEVEL = 250
+# Earning the last 25 levels (226-250) costs progressively more XP.
+FINAL_STRETCH_START_LEVEL = 225
+FINAL_STRETCH_BASE_XP_PERCENT = 150
+FINAL_STRETCH_STEP_XP_PERCENT = 5
 SCAN_LEVEL = 3
 EXPERIENCE_CURVE_VERSION = 2
 SAME_LEVEL_MOB_REWARD_PERCENT = 5
@@ -190,6 +194,41 @@ def rank_level_cap(player: Player) -> int:
     return min(MAX_LEVEL, kage.RANK_LEVEL_CAPS.get(player.village_rank, MAX_LEVEL))
 
 
+def endgame_xp_cost_percent(level: int) -> int:
+    """100% in regular levels; gradually 150%-270% for the last 25."""
+    if level < FINAL_STRETCH_START_LEVEL:
+        return 100
+    return FINAL_STRETCH_BASE_XP_PERCENT + min(
+        level - FINAL_STRETCH_START_LEVEL,
+        MAX_LEVEL - FINAL_STRETCH_START_LEVEL - 1,
+    ) * FINAL_STRETCH_STEP_XP_PERCENT
+
+
+def credited_experience(player: Player, amount: int, cap: int) -> int:
+    """Charge XP by level band, so a large gain cannot skip the endgame tax."""
+    earned = max(0, int(amount))
+    level = player.level
+    progress = player.experience
+    while earned > 0 and level < cap:
+        threshold = xp_for_next_level(level)
+        if progress >= threshold:
+            level += 1
+            continue
+        distance = threshold - progress
+        percent = endgame_xp_cost_percent(level)
+        price = (distance * percent + 99) // 100
+        if earned >= price:
+            progress = threshold
+            earned -= price
+            level += 1
+        else:
+            progress += min(distance, earned * 100 // percent)
+            break
+    ceiling = (cumulative_xp_for_level(MAX_LEVEL) if cap == MAX_LEVEL
+               else xp_for_next_level(cap) - 1)
+    return min(progress, ceiling)
+
+
 def grant_experience(player: Player, amount: int) -> List[str]:
     """Apply combat, skill or job experience without passing the rank cap."""
     cap = rank_level_cap(player)
@@ -199,9 +238,7 @@ def grant_experience(player: Player, amount: int) -> List[str]:
     lines = []
     reached_levels = []
     # Do not bank enough XP to skip levels after promotion.
-    player.experience = min(player.experience + amount,
-                            cumulative_xp_for_level(MAX_LEVEL) if cap == MAX_LEVEL
-                            else xp_for_next_level(cap) - 1)
+    player.experience = credited_experience(player, amount, cap)
 
     while player.level < cap and player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
         player.level += 1
