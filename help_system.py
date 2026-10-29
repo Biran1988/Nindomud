@@ -4915,3 +4915,44 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "hyuga",
+    "keywords": ["hyuga", "hyuuga", "byakugan", "gentle fist", "eight trigrams", "tenketsu", "tenseigan"],
+    "title": "Hyuga Bloodline and Byakugan Techniques",
+    "body": (
+        "Every Hyuga inherits the Byakugan Kekkei Genkai. Its starting "
+        "inheritance is guaranteed, but each character secretly rolls their "
+        "own permanent Potential (how far the eye can evolve) and Talent "
+        "(how quickly mastery grows). Not every Hyuga can master the highest "
+        "techniques. Existing Hyuga missing the old inheritance roll receive "
+        "their bloodline on login without rerolling earlier lucky characters.\\n\\n"
+        "Awakening: at level 50 or higher, Byakugan has the normal hidden "
+        "chance to awaken during real combat. The eye does not reveal itself "
+        "early or grant combat perks until awakened.\\n\\n"
+        "Commands: byakugan [on|off|status], byakugan scan <direction>, "
+        "hyuga list, jutsu all, prac, and perform <technique> [target]. "
+        "Byakugan is a chakra-upkeep toggle. See enemies' chakra and peer "
+        "several rooms ahead without bypassing sealed exits or private homes. "
+        "Active eyes improve accuracy and evasion. Gentle Fist techniques "
+        "directly reduce chakra or stamina and may briefly close tenketsu, "
+        "preventing jutsu use. Eight Trigrams Rotation and Protecting "
+        "Sixty-Four Palms grant short-lived defensive effects.\\n\\n"
+        "Advanced: progressive Vacuum Palm, 128 Palms, Twin Lion Fists and "
+        "361 Palms require combat-earned mastery and level milestones. "
+        "Only Potential 95+ can reach Celestial Byakugan and Fate Sight "
+        "at level 100, with substantial chakra upkeep. The mythical "
+        "Tenseigan Chakra Mode and Silver/Golden Wheel techniques require "
+        "the absolutely rarest Potential 100 character, level 100, and "
+        "full bloodline mastery; Tenseigan protection only lasts a few "
+        "combat pulses before the form ends. These celestial endgame "
+        "powers are NindoMUD adaptations, not standard clan techniques.\\n\\n"
+        "Learning: new bloodline techniques appear on level-up, on login "
+        "for eligible older characters, and whenever an awakened and "
+        "active Byakugan grows through combat. Most individual attacks "
+        "must be practiced once with a teacher before use; Byakugan "
+        "activation itself does not require that first lesson."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
