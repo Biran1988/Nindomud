@@ -56,6 +56,23 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "unseal",
+        "keywords": ["unseal", "unseal mob", "immortal unseal"],
+        "title": "Unseal (Immortal Tailed Beast Extraction)",
+        "body": (
+            "Syntax: unseal list | unseal <player> | unseal player <player> | "
+            "unseal mob <beast name or tail number 1-9>\\n\\n"
+            "Description: Immortal-only. Removes a sealed Tailed Beast from an "
+            "online or offline jinchuriki, clearing mastery, Beast Mode and "
+            "rampage, and immediately saves the character. It releases the "
+            "beast as a real roaming mob, with a global announcement. "
+            "Only one Tailed Beast may roam at a time. Examples: unseal list; "
+            "unseal Biran; unseal mob Kurama; unseal mob 9. "
+            "Reaper Death Seal is player-only and is not affected."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "vperk", "keywords": ["vperk", "villageperk"],
         "title": "Immortal Global Village Perks",
         "body": "Syntax: vperk list | vperk status | vperk <perk> on|off | vperk on|off <perk>\\n\\nDescription: Immortal only (helper rank and higher). Activates a perk for every player in the entire MUD for 24 hours, at no mission-point cost; survives reboots and crashes. Only one global perk per category can be active at once: experience, damage or Ryo. Re-enabling refreshes the timer; 'off' cancels that global bonus. Ordinary Kage purchases remain village-only, last one hour, and are not erased.\\n\\nExamples: vperk double exp on | vperk triple damage on | vperk double ryo off | vperk status.\\n\\nPerks: double exp, triple exp, double damage, triple damage, double ryo, triple ryo.",
