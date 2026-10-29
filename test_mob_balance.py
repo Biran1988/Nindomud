@@ -58,8 +58,9 @@ class MobBalanceTests(unittest.TestCase):
         self.assertEqual(mob.max_health, 40)
         self.assertEqual(mob.damage_dice, "1d1+3")
 
-    def test_seasonal_template_preserves_event_boss_stats(self):
-        self.template.update({"_halloween_event": True, "hit_dice": "1d1+299",
+    def test_seasonal_boss_preserves_its_custom_stats(self):
+        self.template.update({"_halloween_event": True, "auto_balance": False,
+                              "hit_dice": "1d1+299",
                               "damage_dice": "1d1+11"})
         mob = combat.spawn_mob(self.vnum, self.room)
         self.assertEqual((mob.max_health, mob.damage_dice), (300, "1d1+11"))
