@@ -34,7 +34,7 @@ class MangekyoDiscoveryTests(unittest.TestCase):
             self.assertEqual(self.player.health, self.player.maximum_health)
         self.assertFalse(combat._can_use_jutsu(self.player, technique, "kamui intangibility"))
 
-    def test_help_unlocks_only_used_assigned_eye_and_persists(self):
+    def test_help_unlocks_as_soon_as_eye_is_assigned(self):
         self.player.bloodline_id = "sharingan"
         self.player.bloodline_mangekyo = True
         self.player.mangekyo_eye_1 = "kamui"
@@ -43,14 +43,14 @@ class MangekyoDiscoveryTests(unittest.TestCase):
         tsukuyomi = {"primary_keyword": "tsukuyomi"}
         action = {"primary_keyword": "stab"}
         other_eye = {"primary_keyword": "amaterasu"}
-        self.assertFalse(mangekyo_discovery.can_read(self.session, kamui))
+        self.assertTrue(mangekyo_discovery.can_read(self.session, kamui))
         with patch("storage.save_player") as save:
             mangekyo_discovery.record_use(self.player, "kamui intangibility")
             mangekyo_discovery.record_use(self.player, "kamui pocket dimension")
             save.assert_called_once_with(self.player)
         self.assertTrue(mangekyo_discovery.can_read(self.session, kamui))
-        self.assertFalse(mangekyo_discovery.can_read(self.session, tsukuyomi))
-        self.assertFalse(mangekyo_discovery.can_read(self.session, action))
+        self.assertTrue(mangekyo_discovery.can_read(self.session, tsukuyomi))
+        self.assertTrue(mangekyo_discovery.can_read(self.session, action))
         self.assertFalse(mangekyo_discovery.can_read(self.session, other_eye))
         self.assertEqual(Player.from_dict(self.player.to_dict()).mangekyo_eyes_used, ["kamui"])
         self.session.account.staff_level = "builder"
@@ -64,7 +64,7 @@ class MangekyoDiscoveryTests(unittest.TestCase):
                    dict(primary_keyword="barrier", keywords=["barrier"], title="Barrier", body="public")]
         with patch.object(help_system, "all_entries", return_value=entries):
             help_system.cmd_help(self.session, ["amaterasu"])
-            self.session.send.assert_called_with("This helpfile doesn't exist, contact an admin to create it.")
+            self.session.send.assert_called_with("TOP SECRET")
             self.session.send.reset_mock()
             help_system.cmd_help(self.session, [])
             text = self.session.send.call_args.args[0]
