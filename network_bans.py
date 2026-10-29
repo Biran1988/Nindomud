@@ -102,9 +102,13 @@ def cmd_ip(session, args):
             continue
         rows.append(f"{name:<18} {ip:<39} {str(getattr(other, 'connection_port', '') or ''):<5} "
                     f"{country_geo.label(getattr(other, 'connection_country', None))} [{other.state.name}]")
-    session.send("Player             IP address                              Port  Country [state]")
-    session.send_paginated(rows or ["No matching connections."])
-    session.send(f"{len(rows)} connection(s). IP geolocation by DB-IP (https://db-ip.com).")
+    # Session.send_paginated expects a string, not a list of rows.
+    # Include the header and footer in the same pager so a long roster
+    # cannot place its total after a partially displayed page.
+    lines = ["Player             IP address                              Port  Country [state]"]
+    lines.extend(rows or ["No matching connections."])
+    lines.append(f"{len(rows)} connection(s). IP geolocation by DB-IP (https://db-ip.com).")
+    session.send_paginated("\n".join(lines))
 
 
 def cmd_ban(session, args):
