@@ -56,6 +56,12 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "mob jutsu", "keywords": ["mob jutsu", "npc jutsu", "mob casting"],
+        "title": "NPC Combat Jutsu",
+        "body": "Hostile mobs at level 10 and above may use damage-dealing jutsu from their own ninja class (Taijutsu, Ninjutsu, Genjutsu, or Bukijutsu) and at or below their level. Their chakra nature must match elemental techniques. A mob with no set class receives a random class when spawned at level 10 or higher; builders can use mset class to choose a particular class. Level 1-9 mobs NEVER cast jutsu. NPC jutsu consume Chakra/Stamina and have cooldowns, may miss or be dodged, respect Kamui, Sharingan, barriers, Sage defenses and normal death protection, and can apply the listed ordinary status effects. Casting replaces that round's melee attack and follows the level-based mob damage-balance limits. Special bloodline, item-dependent, summoning and room-wide techniques are not automatically cast by NPCs. Mobs regain casting resources between fights. Administrators can use mobscale to adjust global mob damage.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "sealconsent", "keywords": ["sealconsent", "contract consent"],
         "title": "Consent to Summoning Contract Dissolution",
         "body": "Syntax: sealconsent yes | sealconsent no (or simply yes/no during the request).\n\n"
