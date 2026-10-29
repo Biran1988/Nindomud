@@ -307,7 +307,8 @@ def process_kamui_pocket_dimensions(combat_module, world_module, session_module)
     entirely (see leave_pocket_dimension) the moment the caster's own
     chakra can't sustain it anymore."""
     for s in session_module.ACTIVE_SESSIONS:
-        if not s.player or not s.player.kamui_pocket_dimension_active:
+        if (not s.player or s.state != session_module.State.PLAYING
+                or not s.player.kamui_pocket_dimension_active):
             continue
         vnum = s.player.kamui_pocket_dimension_vnum
         target_present = any(
@@ -366,7 +367,8 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
             continue
 
         for s in session_module.ACTIVE_SESSIONS:
-            if not s.player or s.player.room_vnum != room.vnum:
+            if (not s.player or s.state != session_module.State.PLAYING
+                    or s.player.room_vnum != room.vnum):
                 continue
             if s.player.name == room.amaterasu_fire_caster:
                 continue
@@ -403,7 +405,8 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
     import random
 
     for s in session_module.ACTIVE_SESSIONS:
-        if not s.player or not s.player.mangekyo_amaterasu_burning:
+        if (not s.player or s.state != session_module.State.PLAYING
+                or not s.player.mangekyo_amaterasu_burning):
             continue
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
         dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
@@ -442,7 +445,8 @@ def process_kekkei_no_me(combat_module, world_module, session_module) -> None:
             continue
 
         for s in session_module.ACTIVE_SESSIONS:
-            if not s.player or s.player.room_vnum != room.vnum:
+            if (not s.player or s.state != session_module.State.PLAYING
+                    or s.player.room_vnum != room.vnum):
                 continue
             if s.player.name == room.kekkei_no_me_caster:
                 continue
