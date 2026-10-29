@@ -3886,6 +3886,9 @@ def test_appraisal_and_examine():
     assert "rarity" not in text0.lower(), "examine must show nothing about the item below the required level"
 
     # Unlocked via the REAL level-up mechanism, not manually granted.
+    # Rank caps now prevent students or Genin from reaching level 20.
+    # The Chunin rank allows this level-up without bypassing progression.
+    s.player.village_rank = "chunin"
     s.player.level = data_jutsu.APPRAISAL_LEVEL_REQUIREMENT - 1
     lines = leveling.grant_experience(s.player, leveling.xp_for_next_level(s.player.level) + 1)
     assert s.player.level == data_jutsu.APPRAISAL_LEVEL_REQUIREMENT
