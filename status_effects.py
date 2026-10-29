@@ -146,10 +146,56 @@ def genjutsu_duration(name: str) -> int:
     return GENJUTSU_DURATIONS.get(name, EFFECT_DEFS[name]["duration"])
 
 
-def apply_effect(effects: Dict[str, dict], name: str, source: str = "", duration_override: int = None) -> None:
+# Willpower is trainable from 10 to 75. At maximum Willpower, ordinary
+# Genjutsu has a 30% chance to fail on application and a 13% chance to
+# break on each later one-second pulse. Neither roll negates direct jutsu
+# damage, and neither bypasses Mangekyo's unique puzzle/dimension rules.
+WILLPOWER_BASE = 10
+WILLPOWER_RESIST_CAP = 30
+WILLPOWER_ESCAPE_CAP = 13
+
+
+def willpower_resist_chance(willpower: int) -> int:
+    """Percentage chance to shrug off an ordinary Genjutsu status on cast."""
+    return min(WILLPOWER_RESIST_CAP, max(0, (willpower - WILLPOWER_BASE) // 2))
+
+
+def willpower_escape_chance(willpower: int) -> int:
+    """Per-second chance to force an ordinary active Genjutsu effect off."""
+    return min(WILLPOWER_ESCAPE_CAP, max(0, (willpower - WILLPOWER_BASE) // 5))
+
+
+def willpower_resists(player) -> bool:
+    chance = willpower_resist_chance(getattr(player, "willpower", WILLPOWER_BASE))
+    return chance > 0 and random.randint(1, 100) <= chance
+
+
+def willpower_breaks(player) -> bool:
+    chance = willpower_escape_chance(getattr(player, "willpower", WILLPOWER_BASE))
+    return chance > 0 and random.randint(1, 100) <= chance
+
+
+def break_genjutsu_effects(effects: Dict[str, dict], player) -> list:
+    """Remove ONLY statuses explicitly tagged as ordinary Genjutsu.
+
+    Never free a target from Mangekyo-specific frozen/loop states or
+    natural sleep, poison, ordinary non-Genjutsu stuns, or physical traps.
+    """
+    broken = []
+    for name, state in list(effects.items()):
+        if state.get("genjutsu") and willpower_breaks(player):
+            effects.pop(name, None)
+            broken.append(name)
+    return broken
+
+
+def apply_effect(effects: Dict[str, dict], name: str, source: str = "",
+                 duration_override: int = None, *, genjutsu: bool = False) -> None:
     defn = EFFECT_DEFS[name]
     duration = duration_override if duration_override is not None else defn["duration"]
     effects[name] = {"duration": duration, "source": source}
+    if genjutsu:
+        effects[name]["genjutsu"] = True
 
 
 def has_effect(effects: Dict[str, dict], name: str) -> bool:
