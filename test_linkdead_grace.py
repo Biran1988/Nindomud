@@ -100,6 +100,8 @@ class LinkdeadGraceTests(unittest.TestCase):
     def test_not_online_or_attackable_but_listed_as_linkdead(self):
         observer = session.Session(Mock(), Mock())
         observer.player = Player("Observer", "Observer")
+        observer.player.village = "leaf"
+        observer.player.clan = "nara"
         observer.state = session.State.PLAYING
         self.session.begin_disconnect_grace(now=100)
         self.assertNotIn(self.session, observer.active_sessions())
