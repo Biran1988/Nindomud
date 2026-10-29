@@ -1849,6 +1849,20 @@ def _kekkei_no_me_damage_multiplier(player: Player, jutsu: dict) -> float:
     return 1.0 + (data_mangekyo.KEKKEI_NO_ME_ELEMENT_DAMAGE_BONUS_PCT / 100.0)
 
 
+
+def mastered_jutsu_breakthrough_percent(player: Player, jutsu: dict) -> int:
+    """Modest high-level bonus only for techniques fully mastered by actual use.
+
+    A high character level does not confer this benefit to untrained jutsu.
+    Signature techniques can exceed 100% proficiency, and still qualify.
+    """
+    if player.level < 100:
+        return 0
+    if player.skill_proficiencies.get(jutsu.get("display_name", ""), 0) < 100:
+        return 0
+    return 2 * (1 + min(6, (player.level - 100) // 25))
+
+
 def roll_jutsu_damage(jutsu: dict) -> "tuple[int, bool]":
     """Rolls this jutsu's damage, returning (amount, was_explosive).
     Every ordinary jutsu (no "explosive_chance_pct" field at all)
@@ -2794,6 +2808,9 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, mob, dmg)
     dmg += _jutsu_damage_bonus(player)
+    breakthrough_pct = mastered_jutsu_breakthrough_percent(player, jutsu)
+    if breakthrough_pct:
+        dmg = max(1, dmg * (100 + breakthrough_pct) // 100)
     if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary, player.chakra_nature_tertiary):
         dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
@@ -3022,6 +3039,9 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, target, dmg)
     dmg += _jutsu_damage_bonus(player)
+    breakthrough_pct = mastered_jutsu_breakthrough_percent(player, jutsu)
+    if breakthrough_pct:
+        dmg = max(1, dmg * (100 + breakthrough_pct) // 100)
     if jutsu.get("wind_damage_bonus_pct") and "wind" in (player.chakra_nature, player.chakra_nature_secondary, player.chakra_nature_tertiary):
         dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
