@@ -4476,6 +4476,12 @@ def cmd_help(session, args: List[str]) -> None:
         session.send("TOP SECRET")
         return
     lines = [f"&Y{entry['title']}&x", "", entry["body"]]
+    # Staff-written and legacy pages also receive authoritative live
+    # progression details without overwriting their custom descriptions.
+    import help_annotations
+    extra = help_annotations.metadata(entry, data_jutsu.JUTSU)
+    if extra and "Level gained:" not in entry["body"]:
+        lines.extend(("", extra))
     names = [entry["primary_keyword"], *entry.get("keywords", [])]
     key = next((name.lower() for name in names if name.lower() in data_jutsu.JUTSU), None)
     if key:
