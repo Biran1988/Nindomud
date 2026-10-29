@@ -11,7 +11,8 @@ from models import Player
 class LevelCommandTests(unittest.TestCase):
     def setUp(self):
         self.player = Player("LevelTester", "LevelTester", level=25,
-                             village="leaf", clan="nara", primary_class="taijutsu")
+                             village="leaf", clan="nara", primary_class="taijutsu",
+                             village_rank="chunin")
         self.player.experience = 15_500_000
         self.session = NS(player=self.player, account=NS(staff_level="player"),
                           combat_target=None, send=Mock())
@@ -24,6 +25,7 @@ class LevelCommandTests(unittest.TestCase):
         self.assertEqual(shown, "\n".join((
             commands._row("Level", 25, "Experience", 15_500_000),
             commands._row("Next Level", threshold, "XP Needed", 125_000),
+            commands._row("Ninja Rank", "Chunin", "Rank Cap", 30),
         )))
         score = commands.build_score_lines(self.player, "Nobody")
         self.assertIn(commands._row("Level", 25, "Class", self.player.primary_class.capitalize()), score)
