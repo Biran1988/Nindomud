@@ -4,8 +4,8 @@
     "eat"
   ],
   "title": "Eat",
-  "body": "Syntax: eat <item>\n\nDescription: Eats a food item for an immediate effect (typically restoring Stamina). Only accepts food-category items.\n\nDate: 2026-08-17",
+  "body": "Syntax: eat <item>\n\nDescription: Eats food for immediate recovery or consumes medicine using the same effects as 'use'. Medicinal pills, antidotes, soldier pills and other medical items can be eaten. Medical healing still takes its configured duration and antidotes are preserved if you are not poisoned. Use 'eat 2.pill' to select an individual pill.\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
