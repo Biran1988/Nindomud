@@ -25,7 +25,7 @@ class LevelCommandTests(unittest.TestCase):
         self.assertEqual(shown, "\n".join((
             commands._row("Level", 25, "Experience", 15_500_000),
             commands._row("Next Level", threshold, "XP Needed", 125_000),
-            commands._row("Ninja Rank", "Chunin", "Rank Cap", 30),
+            commands._row("Ninja Rank", "Chunin", "Rank Cap", 35),
         )))
         score = commands.build_score_lines(self.player, "Nobody")
         self.assertIn(commands._row("Level", 25, "Class", self.player.primary_class.capitalize()), score)
