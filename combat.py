@@ -334,7 +334,6 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     # Preserve deliberately scripted event encounters; ordinary mobs get
     # identical baseline HP and expected damage for the same level.
     auto_balance = (t.get("auto_balance", True)
-                    and not t.get("_halloween_event")
                     and not t.get("_custom_boss_balance"))
     max_hp = (mob_balance.hp_for_level(level) if auto_balance
               else max(1, dice.roll(t["hit_dice"])))
