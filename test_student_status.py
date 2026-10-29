@@ -20,7 +20,7 @@ class StudentStatusTests(unittest.TestCase):
         student = Player("Aspirant", "Aspirant")
         self.assertEqual(student.village_rank, "student")
         self.assertEqual(leveling.rank_level_cap(student), 10)
-        self.assertEqual(kage.RANK_LEVEL_CAPS["genin"], 35)
+        self.assertEqual(kage.RANK_LEVEL_CAPS["genin"], 15)
 
     def test_old_character_saves_are_upgraded_without_loss(self):
         saved = Player("Aspirant", "Aspirant", level=7, experience=216000,

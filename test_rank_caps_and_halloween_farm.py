@@ -15,7 +15,7 @@ from models import Player
 class RankCapTests(unittest.TestCase):
     def test_rank_caps_cover_every_ninja_rank(self):
         self.assertEqual(kage.RANK_LEVEL_CAPS, {
-            "genin": 35, "chunin": 80,
+            "genin": 15, "chunin": 80,
             "special jonin": 135, "jonin": 200, "elite jonin": 250,
             "village elder": 250, "kage": 250,
         })
@@ -55,11 +55,11 @@ class RankCapTests(unittest.TestCase):
 
     def test_exp_cannot_cross_current_rank_cap(self):
         player = Player("CapTester", "CapTester", village_rank="genin",
-                        level=35, experience=leveling.cumulative_xp_for_level(35))
+                        level=15, experience=leveling.cumulative_xp_for_level(15))
         before = player.experience
-        self.assertEqual(leveling.rank_level_cap(player), 35)
+        self.assertEqual(leveling.rank_level_cap(player), 15)
         self.assertEqual(leveling.grant_experience(player, 1_000_000), [])
-        self.assertEqual((player.level, player.experience), (35, before))
+        self.assertEqual((player.level, player.experience), (15, before))
 
     def test_after_promotion_leveling_resumes(self):
         player = Player("PromotionTester", "PromotionTester",
