@@ -44,6 +44,22 @@ class RecentHelpTests(unittest.TestCase):
                 self.assertFalse(any(name.startswith("data/") for name in names))
                 self.assertIn("60% chance", archive.read("helpfiles/jubaku_satsu.json").decode())
 
+    def test_skill_help_includes_live_level_and_damage_information(self):
+        import help_annotations
+        for page in help_system.DEFAULT_HELP_ENTRIES:
+            if help_annotations.metadata(page, data_jutsu.JUTSU):
+                with self.subTest(topic=page["primary_keyword"]):
+                    self.assertIn("Level gained:", page["body"])
+                    self.assertIn("Damage type:", page["body"])
+        for key in ("camouflage", "kamui intangibility", "byakugan",
+                    "golden wheel reincarnation explosion", "shadow shuriken technique"):
+            page = next(p for p in help_system.DEFAULT_HELP_ENTRIES
+                        if p["primary_keyword"] == key)
+            self.assertIn(f"Level gained: {data_jutsu.JUTSU[key]['level_requirement']}",
+                          page["body"])
+        self.assertIn("Damage type: None", next(p for p in help_system.DEFAULT_HELP_ENTRIES
+                                                  if p["primary_keyword"] == "camouflage")["body"])
+
     def test_every_command_and_sage_family_has_help(self):
         entries = help_system.DEFAULT_HELP_ENTRIES
         lookup = {keyword.lower() for entry in entries
