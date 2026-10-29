@@ -4956,3 +4956,35 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+
+# Every distinct Hyuga move has its own searchable helpfile and one-word
+# shortcut, just like ordinary jutsu; the general "help hyuga" page is
+# deliberately not a substitute for specific individual move references.
+import hyuga as _hyuga_help
+for _hyuga_key, _hyuga_spec in _hyuga_help.REGISTRY.items():
+    _mode = _hyuga_spec["jutsu_type"] == "hyuga_mode"
+    _requires = (
+        f"Minimum level {_hyuga_spec['level_requirement']}, "
+        f"Byakugan mastery {_hyuga_spec['hyuga_mastery']:.0%} and "
+        f"inherited Potential {_hyuga_spec['hyuga_potential']} or higher. "
+    )
+    DEFAULT_HELP_ENTRIES.append({
+        "primary_keyword": _hyuga_key,
+        "keywords": [_hyuga_key, _hyuga_spec["display_name"].lower(),
+                     data_jutsu.JUTSU_SHORTCUTS[_hyuga_key]],
+        "title": _hyuga_spec["display_name"],
+        "body": (
+            f"Syntax: {'byakugan [on|off|status|scan <direction>]' if _hyuga_key == 'byakugan' else 'perform ' + _hyuga_key + (' [on|off]' if _mode else ' [target]')}\\n\\n"
+            + _requires
+            + ("This toggles Byakugan or a short-lived defensive/celestial form. "
+               "Higher modes have higher chakra upkeep. " if _mode else
+               "This is a clan-exclusive Gentle Fist technique, dealing damage "
+               "to the opponent and targeting chakra/stamina pathways. Successful "
+               "hits may seal tenketsu briefly, stopping jutsu use. ")
+            + "See 'help hyuga' for full bloodline rules. "
+            + "A technique only becomes available when level, mastery, and "
+            + "the character's permanent bloodline potential all qualify."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    })
