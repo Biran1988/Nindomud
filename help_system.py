@@ -4320,8 +4320,8 @@ for _entry in DEFAULT_HELP_ENTRIES:
     elif _topic == "elements":
         _entry["body"] = (
             "Five base elements: Fire, Water, Wind, Earth, Lightning. Channel Chakra Paper "
-            "at level 10 to reveal your first nature. At level 25 you choose a different "
-            "second nature in your village Kage chamber. Type 'help fire', 'help water', "
+            "at level 10 to reveal your first nature. At level 25, a second sheet "
+            "must be channeled before you can choose a different second nature in your village Kage chamber. Type 'help fire', 'help water', "
             "'help wind', 'help earth', or 'help lightning' to see every pairing and its "
             "elemental Kekkei Genkai. A third paper at level 100 can reveal a third nature. "
             "Elemental jutsu still require their matching nature."
