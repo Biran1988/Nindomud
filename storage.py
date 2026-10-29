@@ -552,6 +552,9 @@ def load_player(name: str) -> Optional[Player]:
     player = Player.from_dict(raw)
     # A maintained battle mode must be activated and paid for again on login.
     player.six_paths_active = False
+    player.byakugan_active = False
+    player.celestial_byakugan_active = False
+    player.tenseigan_active = False
     import genjutsu
     chisei_orphaned = player.chisei_chakra_bonus and "chisei" not in player.active_status_effects
     if chisei_orphaned:
@@ -567,6 +570,7 @@ def load_player(name: str) -> Optional[Player]:
         player.bloodline_awakened = False
         player.bloodline_mastery = 0
     import data_kekkei_genkai
+    hyuga_migrated = data_kekkei_genkai.ensure_hyuga_inheritance(player)
     elemental_release_migrated = data_kekkei_genkai.sync_elemental_release(player)
     import data_summons
     chosen_summon = next((family for family in player.signed_summoning_contracts
@@ -613,7 +617,7 @@ def load_player(name: str) -> Optional[Player]:
     experience_migrated = leveling.migrate_experience_curve(player)
     if (chisei_orphaned or renamed_technique or vital_surge_migrated or summon_contracts_migrated or sage_training_migrated
             or experience_migrated or removed_bloodline_migrated
-            or elemental_release_migrated or legacy_first_practice):
+            or elemental_release_migrated or hyuga_migrated or legacy_first_practice):
         save_player(player)
     import reaper_seal
     if reaper_seal.reconcile_player(player):
