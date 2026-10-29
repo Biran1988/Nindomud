@@ -218,7 +218,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n"
             "\n"
-            "Description: Your nine core attributes, trained one point at a time with 'train <attribute>' using training points earned each level. Short forms like 'train str' and 'train con' work too. Every attribute is capped at 75.\n"
+            "Description: All nine core attributes are trainable one point at a time for one training point per increase, including Perception, Willpower, and Chakra Control. Short forms (per, wil, cc) and full names including 'train chakra control' work. All attributes are capped at 75.\n"
             "\n"
             "&CStrength&x - Increases your damage in combat: +1 to your basic attack's damage for every 4 points.\n"
             "  &G[Active]&x\n"
@@ -238,13 +238,13 @@ DEFAULT_HELP_ENTRIES = [
             "&CConstitution&x - Increases how much max Health you gain each level: base 8 HP/level, plus +0.5 HP for every point above 10, with no cap of its own.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&CPerception&x - Intended to represent awareness and attentiveness.\n"
-            "  &R[Not Yet Implemented -- planned for a future update]&x\n"
+            "&CPerception&x - Expands Scan beyond the adjacent room along an open route: 1 room below 40 Perception, 2 rooms at 40-64, and 3 rooms at 65+. Never reveals invisible or camouflaged targets, hidden exits or blocked doors. Train with 'train per'.\n"
+            "  &G[Active and trainable]&x\n"
             "\n"
-            "&CWillpower&x - Intended to represent mental fortitude and resistance to fear or illusion effects.\n"
-            "  &R[Not Yet Implemented -- planned for a future update]&x\n"
+            "&CWillpower&x - Your mental defense against ordinary Genjutsu. Each 2 points above 10 add 1% chance to resist a new Genjutsu status (up to 30%). Each 5 points above 10 add 1% per-second chance to break a Genjutsu status already on you (up to 13%). Can also resist or escape Illusion Walk; it never bypasses Mangekyo's special dimension/loop conditions. Train with 'train wil'.\n"
+            "  &G[Active and trainable]&x\n"
             "\n"
-            "&CChakra Control&x - Each point trained above 10 permanently adds 10 max Chakra right away (not tied to leveling). Also discounts Genjutsu/Ninjutsu chakra costs by up to 50%, and boosts chakra regen past the usual cap.\n"
+            "&CChakra Control&x - Train with 'train cc' or 'train chakra control'. Each point trained above 10 immediately and permanently adds 10 maximum Chakra. Also discounts Genjutsu and Ninjutsu Chakra costs by up to 50%, and improves Chakra regeneration.\n"
             "  &G[Active]&x\n"
             "\n"
             "&D(See also: 'help combatstats', 'help scoresheet')&x\n"
@@ -702,7 +702,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: scan <direction>  (n, s, e, w, ne, nw, se, sw, u, d also work)\n"
             "\n"
-            "Description: General Skill learned at level 3. See the visible players, mobs, corpses, and ground items in one adjacent room. Invisible targets do not appear. Closed doors and hidden exits block scanning. Practice with a teacher before first use. Each completed scan, including an empty room, can improve proficiency using the normal jutsu usage rules: a (100 - current proficiency)% chance to gain up to 2 percentage points, capped at 100%. Each percentage point gained awards 10 character XP. Failed or blocked scans grant no growth. Scanning through a controlled elemental clone trains the real character.\n"
+            "Description: General Skill learned at level 3. See the visible players, mobs, corpses, and ground items in one adjacent room. Perception 40+ reveals room names and visible characters/mobs a second room away; Perception 65+ reaches a third room along the same open route. Invisible targets do not appear. Closed doors and hidden exits block scanning. Practice with a teacher before first use. Each completed scan, including an empty room, can improve proficiency using the normal jutsu usage rules: a (100 - current proficiency)% chance to gain up to 2 percentage points, capped at 100%. Each percentage point gained awards 10 character XP. Failed or blocked scans grant no growth. Scanning through a controlled elemental clone trains the real character.\n"
             "\n"
             "Date: 2026-10-23"
         ),
@@ -2699,7 +2699,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n"
             "\n"
-            "Description: Spends a training point to raise one attribute by one point, up to the cap of 75. See 'help attributes' for what each attribute does.\n"
+            "Description: Spends one training point to raise any of the nine attributes by one, to a maximum of 75. Perception (train per), Willpower (train wil), and Chakra Control (train cc or train chakra control) are all trainable; Willpower now protects against ordinary Genjutsu, Perception extends Scan, and Chakra Control increases maximum Chakra and efficiency. See 'help attributes' for the details.\n"
             "\n"
             "Date: 2026-08-17"
         ),
