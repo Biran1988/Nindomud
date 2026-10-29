@@ -72,6 +72,36 @@ class HalloweenEventTests(unittest.TestCase):
         self.assertTrue(combat.is_shopkeeper(combat.mobs_in_room(100002)[0]))
         self.assertEqual(len(combat.mob_shop_items(combat.mobs_in_room(100002)[0])), 5)
 
+    def test_all_killable_halloween_mobs_including_boss_are_level_50_or_less(self):
+        self.build()
+        self.assertEqual(event.MOB_SPAWNS[-1][2], combat.MAX_KILLABLE_EVENT_MOB_LEVEL)
+        for room_index, vnum, configured_level, *_ in event.MOB_SPAWNS:
+            template = self.mob_templates[vnum]
+            self.assertLessEqual(configured_level, combat.MAX_KILLABLE_EVENT_MOB_LEVEL)
+            self.assertLessEqual(template["level"], combat.MAX_KILLABLE_EVENT_MOB_LEVEL)
+            self.assertTrue(template[combat.EVENT_KILLABLE_TAG])
+            spawned = next(mob for mob in combat.mobs_in_room(event.ROOM_START + room_index)
+                           if mob.template_vnum == vnum)
+            self.assertEqual(spawned.level, configured_level)
+
+        boss = combat.mobs_in_room(event.ROOM_START + 19)[0]
+        self.assertEqual(boss.max_health, 9500)  # Boss difficulty is preserved.
+        for vnum in (event.COSTUME_MERCHANT, event.CANDY_MERCHANT, event.TRICK_NPC):
+            self.assertFalse(self.mob_templates[vnum][combat.EVENT_KILLABLE_TAG])
+
+    def test_event_spawn_level_cap_protects_against_high_template_level(self):
+        self.build()
+        vnum = event.BOSS_VNUM
+        self.mob_templates[vnum]["level"] = 100
+        extra_boss = combat.spawn_mob(vnum, event.ROOM_START + 19)
+        self.assertEqual(extra_boss.level, combat.MAX_KILLABLE_EVENT_MOB_LEVEL)
+        # Other world mobs are deliberately not subject to this seasonal cap.
+        normal = combat.default_template(999991, "a non-event guardian")
+        normal["level"] = 90
+        self.mob_templates[999991] = normal
+        other = combat.spawn_mob(999991, 999)
+        self.assertEqual(other.level, 90)
+
     def test_no_builder_collision_or_snapshot_pollution(self):
         self.w.add_room(world.Room(100010, "Custom Area", "Saved builder area."))
         self.build()
