@@ -245,6 +245,11 @@ class Player:
     bloodline_talent: int = 0       # 1-100 -- learning/mastery speed, does NOT raise the ceiling
     bloodline_awakened: bool = False   # only True after the future awakening quest (or a staff force-awaken)
     bloodline_mastery: int = 0      # framework placeholder for future progression stages -- unused until then
+    # Hyuga Byakugan modes. Every Hyuga inherits the eye, but rare potential
+    # ceilings determine who can evolve it into Celestial/Tenseigan forms.
+    byakugan_active: bool = False
+    celestial_byakugan_active: bool = False
+    tenseigan_active: bool = False
     # Mangekyo Sharingan unlock (Section 116, per direct request):
     # "the second stage of sharingan mangekyo can only be unlocked
     # with the friendship/most grouped player by killing them...that
