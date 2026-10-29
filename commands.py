@@ -4751,17 +4751,19 @@ def cmd_practice(session, args: List[str]) -> None:
     player.skill_proficiencies[match] = new_pct
     import skill_training
     skill_training.mark_practiced(player, match)
+    experience_before = player.experience
     xp_messages = leveling.grant_experience(player, (new_pct - current) * 10)
+    earned_xp = max(0, player.experience - experience_before)
     player.practice_points -= 1
     player.practice_sessions_used += 1
     session.send(
         f"You practice {match} (+{new_pct - current}% from your Intelligence). "
         f"Proficiency is now {new_pct}% ({proficiency_level_name(new_pct)})."
     )
-    if new_pct > current:
-        session.send(f"&G+{(new_pct - current) * 10} experience from skill improvement.&x")
-        for message in xp_messages:
-            session.send(message)
+    if earned_xp:
+        session.send(f"&G+{earned_xp} experience from skill improvement.&x")
+    for message in xp_messages:
+        session.send(message)
 
 
 def cmd_signature(session, args: List[str]) -> None:
