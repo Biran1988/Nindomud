@@ -199,7 +199,9 @@ def grant_experience(player: Player, amount: int) -> List[str]:
     lines = []
     reached_levels = []
     # Do not bank enough XP to skip levels after promotion.
-    player.experience = min(player.experience + amount, xp_for_next_level(cap) - 1)
+    player.experience = min(player.experience + amount,
+                            cumulative_xp_for_level(MAX_LEVEL) if cap == MAX_LEVEL
+                            else xp_for_next_level(cap) - 1)
 
     while player.level < cap and player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
         player.level += 1
