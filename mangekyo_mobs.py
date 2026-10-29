@@ -72,7 +72,7 @@ def resolve(session, key, mob):
             room.amaterasu_fire_expires_at = time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
         # The flame lands immediately when the hand signs finish; the
         # separate target burn and lingering room fire tick afterward.
-        damage = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
+        damage = data_mangekyo.AMATERASU_MOB_INITIAL_DAMAGE
         damage = status_effects.reduce_incoming_damage(mob.active_status_effects, damage)
         mob.health = max(0, mob.health - damage)
         jutsu_colors.send(
