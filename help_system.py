@@ -115,6 +115,12 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
+        "primary_keyword": "setallprac", "keywords": ["setallprac", "global practice", "bulk practice"],
+        "title": "Set All Practice (Administrator+)",
+        "body": "Syntax: setallprac who <skill or jutsu>\\nsetallprac <skill or jutsu> <1-100>\\nShows every online/offline character who knows the named skill and their current percentage, or sets the same proficiency for all characters who already know it. For example: setallprac who shadow clone jutsu; setallprac shadow clone jutsu 75. Only Administrator and Implementor can use it. Updates and saves online and offline characters immediately, marks the existing known skill as teacher-practiced, does not grant new jutsu or bypass bloodline and level restrictions. Characters who have not learned the skill are skipped. The ordinary 'who' command still lists online players.",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "ip", "keywords": ["ip", "connections"],
         "title": "IP connections (immortals)",
         "body": "Syntax: ip [player name or IP filter]\nLists all current connections, including players at login or in an editor, with their actual socket IP, port, country and state. Helper and higher only. Country estimates are offline and may reflect a VPN/proxy. IP geolocation by DB-IP (https://db-ip.com).",
