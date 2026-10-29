@@ -974,7 +974,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: ask <kage> about promotion\n"
             "\n"
-            "Description: Student is the first ninja rank and is automatically assigned at creation. Progression: Student -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as a Student, with full access to combat and missions from the very first moment -- Student is the starting ninja rank. There is no separate Academy exam.\n"
+            "Description: Student is the automatic starting designation, not an obtainable rank. Genin is the first rank a player can earn, by passing Iruka's Genin Exam. Progression: Student -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as a Student, with full access to combat and missions from the very first moment. There is no separate Academy exam.\n"
             "\n"
             "Student -> Genin requires level 10, 100% mastery of Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style; then find Iruka (mob VNUM 11) and use 'say Start Genin exam' to take the written Genin Exam. He selects 10 different Naruto anime questions from a 20-question pool, shuffling the four choices on each attempt. All 10 answers must be correct; one mistake ends that attempt. Passing awards a Genin headband and 50 mission points. See 'help genin exam'.\n"
             "\n"

@@ -1,4 +1,4 @@
-"""Student is the starting rank, granted immediately; Genin is earned by exam."""
+"""Student is an assigned starting designation; Genin is the first obtainable rank."""
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
@@ -12,8 +12,9 @@ from models import Player
 
 
 class StudentStatusTests(unittest.TestCase):
-    def test_student_is_assigned_as_first_rank_at_creation(self):
+    def test_student_is_assigned_before_first_obtainable_rank(self):
         self.assertEqual(kage.RANK_ORDER[0], "student")
+        self.assertEqual(kage.RANK_ORDER[1], "genin")
         self.assertIn("student", kage.RANK_ORDER)
         self.assertEqual(kage.RANK_LEVEL_CAPS["student"], 10)
         self.assertEqual(data_headbands.RANK_ORDER[0], "student")

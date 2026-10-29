@@ -34,7 +34,8 @@ KAGE_NAMES = {
 # now requires passing the Chunin Exam (see chunin_exam.py) instead of
 # a simple Kage request; handle_promotion_request below redirects a
 # Genin who asks about promotion to go take the exam.
-# Student is an actual ninja rank, granted automatically at character creation.
+# Student is automatically assigned at creation, never earned as a promotion.
+# Genin is the FIRST obtainable ninja rank, earned through Iruka's Genin Exam.
 STUDENT_LEVEL_CAP = 10
 # Rank-based caps on combat levels; Kage is an Implementor appointment.
 RANK_LEVEL_CAPS = {
