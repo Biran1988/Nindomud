@@ -155,9 +155,9 @@ class Mob:
     kamui_return_room_vnum: Optional[int] = None
     # Mob stats/class parity (Section 86, per direct request: "give
     # mobs all that stats and classes that players do") -- scoped
-    # down through direct confirmation to real numeric chakra/stamina
-    # pools plus a primary_class and chakra_nature, explicitly NOT
-    # jutsu-casting AI (mobs still never cast jutsu back at a player).
+    # down through real numeric chakra/stamina pools, a primary class,
+    # and a chakra nature. Level-10+ mobs now cast suitable class jutsu
+    # in normal combat using these same real resources.
     # Needed so the elemental status effects Drained (chakra loss) and
     # Off Balance (stamina loss) have something real to act on when
     # inflicted on a mob, not just players. See
@@ -170,6 +170,10 @@ class Mob:
     stamina: int = 0
     maximum_stamina: int = 0
     primary_class: Optional[str] = None
+    # Per-instance NPC casting; prevents several players fighting one NPC
+    # from provoking a jutsu on every session's combat pulse.
+    jutsu_cooldowns: Dict[str, float] = field(default_factory=dict)
+    next_jutsu_at: float = 0.0
     # Real attribute fields (Section 147, per direct request: "mopbs
     # must be able to wear gear too" -> confirmed full parity, not
     # just cosmetic). Baseline 10, same as a fresh player. strength/
@@ -355,7 +359,7 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         chakra=max_chakra, maximum_chakra=max_chakra,
         stamina=max_stamina, maximum_stamina=max_stamina,
         primary_class=(t.get("primary_class") if t.get("primary_class") in data_classes.CLASSES
-                       else None),
+                       else random.choice(tuple(data_classes.CLASSES))),
         chakra_nature=biomes.roll_chakra_nature(),
         strength=derived_strength, dexterity=derived_dexterity,
     )
@@ -2440,6 +2444,12 @@ def resolve_pulse(session) -> None:
     import hidden_mist
     if hidden_mist.obscures(mob, player):
         session.send(f"&C{mob.name} searches the mist but cannot target you.&x")
+        return
+
+    # Jutsu uses the NPC's attack turn instead of stacking a free attack
+    # on top of its normal melee sequence. Level 1-9 mobs never cast.
+    import mob_jutsu
+    if mob_jutsu.try_cast(session, mob):
         return
 
     import commands as commands_module
