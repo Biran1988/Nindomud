@@ -82,6 +82,7 @@ def choose(session, answer: str) -> None:
     release = player.elemental_release_id
     return_vnum = player.element_choice_return_room_vnum
     player.element_choice_return_room_vnum = None
+    player.element_choice_paper_used = False
     if return_vnum is not None and world.WORLD.get(return_vnum) is not None:
         player.room_vnum = return_vnum
     storage.save_player(player)
