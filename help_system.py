@@ -4470,6 +4470,10 @@ def cmd_help(session, args: List[str]) -> None:
     if not entry or not lightsabers.can_read(session, entry):
         session.send("This helpfile doesn't exist, contact an admin to create it.")
         return
+    import mangekyo_discovery
+    if not mangekyo_discovery.can_read(session, entry):
+        session.send("TOP SECRET")
+        return
     lines = [f"&Y{entry['title']}&x", "", entry["body"]]
     names = [entry["primary_keyword"], *entry.get("keywords", [])]
     key = next((name.lower() for name in names if name.lower() in data_jutsu.JUTSU), None)
