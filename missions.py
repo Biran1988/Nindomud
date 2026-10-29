@@ -191,7 +191,7 @@ RANK_LEVEL_OFFSETS = {
     "A-Rank": (20, 70),
     "S-Rank": (40, 100),
 }
-MAX_CHARACTER_LEVEL = 100
+MAX_CHARACTER_LEVEL = 250
 
 
 def level_window_for_rank(player_level: int, rank: str):
