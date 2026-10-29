@@ -400,6 +400,12 @@ def cmd_mstat(session, args: List[str]) -> None:
             schedule = f"{remaining}s" if live_mob.next_wander_at else "scheduling"
             lines.append(f"&WInstance ID:&x {live_mob.instance_id}   "
                          f"&WNext Wander:&x {schedule} (independent mob timer)")
+    if t.get("auto_balance", True) and not t.get("_custom_boss_balance"):
+        import mob_balance
+        lines.append(
+            f"&WLevel Standard:&x {mob_balance.hp_for_level(t['level']):,} HP / "
+            f"{mob_balance.target_damage_for_level(t['level']):,} damage per hit"
+        )
     lines += [
         f"&WArmor Class:&x {t['armor_class']}   &WHit Roll:&x {t['hit_roll']}   &WDamage Roll:&x {t['damage_roll']}",
         f"&WDamage Dice:&x {t['damage_dice']}   &WAttacks:&x {t['attacks']}",
