@@ -14,7 +14,7 @@ from models import Player
 
 class ActiveToggleTrainingTests(unittest.TestCase):
     def session(self, skill):
-        p = Player("ToggleLearner", "ToggleLearner", level=50, chakra=500,
+        p = Player("ToggleLearner", "ToggleLearner", level=50, village_rank="jonin", chakra=500,
                    maximum_chakra=500, primary_class="ninjutsu", chakra_nature="water")
         p.learned_skills = [skill]
         p.skill_proficiencies[skill] = 50
