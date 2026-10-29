@@ -142,8 +142,10 @@ def tick_player(player) -> list:
 
     player.health = min(player.maximum_health,
                         player.health + _regen_amount(player.maximum_health, "health", multiplier, hospital=hospital))
-    player.chakra = min(player.maximum_chakra,
-                         player.chakra + _regen_amount(player.maximum_chakra, "chakra", multiplier, hospital=hospital) + chakra_control_regen_bonus(player.chakra_control))
+    import whirlpool_fuinjutsu
+    if not whirlpool_fuinjutsu.blocks_chakra_regen(player):
+        player.chakra = min(player.maximum_chakra,
+                             player.chakra + _regen_amount(player.maximum_chakra, "chakra", multiplier, hospital=hospital) + chakra_control_regen_bonus(player.chakra_control))
     player.stamina = min(player.maximum_stamina,
                           player.stamina + _regen_amount(player.maximum_stamina, "stamina", multiplier, hospital=hospital))
 

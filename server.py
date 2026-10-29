@@ -205,6 +205,8 @@ async def pulse_loop() -> None:
         mangekyo.process_kekkei_no_me(combat, world_module, session_module)
         import hidden_mist
         hidden_mist.process_rooms(ACTIVE_SESSIONS)
+        import whirlpool_fuinjutsu
+        whirlpool_fuinjutsu.process_barriers(sessions=ACTIVE_SESSIONS)
         programs.process_random_triggers()
         territory.ensure_war_window_scheduled(_broadcast_all)
         territory.tick_captures(_broadcast_all)

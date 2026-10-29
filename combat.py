@@ -2520,8 +2520,13 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     real matching nature (though no jutsu combines both gates today)."""
     # Authenticate from the live session. Immortals can test every jutsu
     # regardless of nature, bloodline, level, gear, location or mastery.
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocked_jutsu(player, jutsu):
+        return False
     if _staff_testing_mangekyo(player):
         return True
+    if jutsu.get("jutsu_type") == "whirlpool_seal":
+        return whirlpool_fuinjutsu.eligible(player) and player.level >= jutsu["level_requirement"] and jutsu["display_name"] in player.learned_skills
     if jutsu.get("jutsu_type") == "reaper_seal":
         import reaper_seal
         return (reaper_seal.eligible(player) and jutsu["display_name"] in player.learned_skills

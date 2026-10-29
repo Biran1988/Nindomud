@@ -174,6 +174,10 @@ def command(session, args):
             session.send("Choose a mastered family: sage on <toad|snake|slug|ninken|monkey>.")
             return
     chosen = chosen_contract(player)
+    import whirlpool_fuinjutsu
+    if action != "train" and whirlpool_fuinjutsu.blocks_summoning(player):
+        session.send("A Whirlpool contract seal prevents Sage Mode activation.")
+        return
     if contract != chosen:
         session.send(f"Your {chosen.title()} contract is permanent; you cannot learn another family's Sage Mode." if chosen
                      else "You must sign this family's summoning contract first.")
@@ -227,6 +231,10 @@ def summon_command(session, args):
             session.send("You dismiss your summon.")
         else:
             session.send("You have no summon to dismiss.")
+        return
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocks_summoning(player):
+        session.send("A Whirlpool contract seal prevents summoning or signing a contract.")
         return
     if args and args[0].lower() == "sign":
         sign_command(session, args[1:])

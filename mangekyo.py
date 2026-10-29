@@ -55,6 +55,9 @@ def _create_pocket_room(world_module) -> int:
 
 def open_pocket_dimension(caster_session, target_session, world_module) -> int:
     """Send a same-room target into a new pocket without moving the caster."""
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocks_teleport(target_session.player):
+        raise ValueError("A teleportation anchor prevents the target from being warped.")
     if caster_session.player.room_vnum != target_session.player.room_vnum:
         raise ValueError("There's nobody here by that name.")
     if caster_session.player.kamui_pocket_dimension_vnum in world_module.WORLD.rooms:
@@ -98,6 +101,9 @@ def enter_own_pocket_dimension(caster_session) -> bool:
     """
     import world
     player = caster_session.player
+    import whirlpool_fuinjutsu
+    if whirlpool_fuinjutsu.blocks_teleport(player):
+        raise ValueError("A teleportation anchor prevents entry into Kamui.")
     vnum = player.kamui_pocket_dimension_vnum
     current_room = world.WORLD.get(player.room_vnum)
     if current_room and current_room.name == "A Pocket Dimension" and player.room_vnum != vnum:
@@ -202,6 +208,9 @@ def open_tsukuyomi(caster_session, target_session, world_module) -> None:
     of the caster's own actions the technique lasts."""
     import random
     from world import Room
+    import whirlpool_fuinjutsu
+    if any(whirlpool_fuinjutsu.blocks_teleport(s.player) for s in (caster_session, target_session)):
+        raise ValueError("A teleportation anchor prevents entry into Tsukuyomi.")
 
     target_session.player.tsukuyomi_return_room_vnum = target_session.player.room_vnum
     caster_return_vnum = caster_session.player.room_vnum
