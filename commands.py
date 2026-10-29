@@ -147,10 +147,10 @@ def dispatch_line(session, line: str) -> None:
     if (session.player and session.player.tsukuyomi_frozen
             and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "inventory",
                                        "inv", "skills", "prac", "ip", "imms", "immortal",
-                                       "immortals", "ip", "changes", "say", "ooc", "quit", "save"}):
+                                       "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
-    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("ip", "look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
