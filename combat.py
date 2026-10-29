@@ -3388,9 +3388,9 @@ def handle_player_defeat(session) -> None:
         session.send("&YAmaterasu's flames go out as you fall.&x")
     session.send("&RYour vision darkens as you collapse.&x")
 
-    if player.level < 100:
+    import leveling
+    if player.level < leveling.MAX_LEVEL:
         loss = int(player.experience * 0.01)
-        import leveling
         min_xp_for_level = leveling.cumulative_xp_for_level(player.level)
         new_xp = max(min_xp_for_level, player.experience - loss)
         actual_loss = player.experience - new_xp
@@ -3398,7 +3398,7 @@ def handle_player_defeat(session) -> None:
         if actual_loss:
             session.send(f"You lose {actual_loss} experience points.")
     else:
-        session.send("You are level 100 and do not lose any experience.")
+        session.send(f"You are level {leveling.MAX_LEVEL} and do not lose any experience.")
 
     ryo_loss = int(player.ryo * 0.05)
     player.ryo -= ryo_loss
