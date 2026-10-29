@@ -162,8 +162,7 @@ def _stop(session):
     import genjutsu
     genjutsu.clear_chisei(player)
     player.active_status_effects.clear()
-    player.mangekyo_amaterasu_burning = False
-    player.mangekyo_amaterasu_caster = None
+    # Black flames from Amaterasu persist even through Reaper imprisonment.
     player.rampage_until = 0
     import tracking
     tracking.stop_tracking(player)
