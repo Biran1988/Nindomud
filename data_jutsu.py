@@ -736,6 +736,8 @@ import six_paths
 JUTSU.update(six_paths.jutsu_entries())
 import reaper_seal
 JUTSU.update(reaper_seal.jutsu_entries())
+import hyuga
+JUTSU.update(hyuga.registry())
 _scale_base_damage_to_level()
 
 # The universal starting kit -- every player gets exactly these,
