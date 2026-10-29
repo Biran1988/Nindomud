@@ -47,15 +47,16 @@ design conversation:
   out (or an early-end command triggers), both players return, and
   the target is left with very little HP and no stamina.
 
-- Amaterasu: mobs take 250 impact damage when the cast lands,
-  followed by a persistent burn on the target (40-60 dmg/tick,
-  ends on defeat). The spell ALSO simultaneously
+- Amaterasu: both mobs and players take 250 initial impact damage
+  when the cast lands, followed by permanent black flames (40-60
+  damage per tick). The flames never extinguish, even on defeat,
+  after hospital recovery, or after a protective save. The spell ALSO
   sets the room they're standing in on fire too, burning everyone in
   it except the caster (25-40 dmg/tick). If the burned target
   leaves, their own burn travels with them; the room's fire stays
   behind (confirmed directly) and would burn anyone else who walks
-  in. The room-fire lasts five minutes from the cast. The player burn
-  ends when the target is defeated; there is no sealing cure yet.
+  in. The separate room-fire lasts five minutes from the cast; target
+  flames have no timer or cure, even at the caster's command.
 
 - Kamui: 3 SEPARATE real jutsu (confirmed directly), not one combined
   ability:
@@ -141,7 +142,7 @@ TSUKUYOMI_COMMANDS = {
 }
 
 # Confirmed real numbers (Section 140 design conversation).
-AMATERASU_MOB_INITIAL_DAMAGE = 250
+AMATERASU_INITIAL_DAMAGE = 250
 AMATERASU_PLAYER_BURN_PER_TICK = (40, 60)
 AMATERASU_ROOM_BURN_PER_TICK = (25, 40)
 AMATERASU_ROOM_FIRE_DURATION_SECONDS = 5 * 60
