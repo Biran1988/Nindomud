@@ -12,6 +12,15 @@ import random
 from typing import Dict
 
 EFFECT_DEFS = {
+    # Hyuga: finite defensive windows rather than permanent invulnerability.
+    "hyuga_rotation": {"display_name": "protected by Rotation", "duration": 3,
+        "damage_reduction_pct": 40, "message": None},
+    "hyuga_protecting": {"display_name": "guarded by Eight Trigrams", "duration": 3,
+        "damage_reduction_pct": 28, "message": None},
+    "hyuga_fate": {"display_name": "peering into imminent futures", "duration": 3,
+        "message": None},
+    "hyuga_tenseigan": {"display_name": "surrounded by Tenseigan chakra", "duration": 5,
+        "damage_reduction_pct": 20, "message": None},
     "camouflage": {"display_name": "Camouflaged", "duration": 1, "toggled": True, "message": None},
     "silent_movement": {"display_name": "Moving Silently", "duration": 1,
                         "toggled": True, "message": None},
