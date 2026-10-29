@@ -4309,11 +4309,12 @@ for _entry in DEFAULT_HELP_ENTRIES:
     elif _topic == "channel":
         _entry["body"] = (
             "Syntax: channel <chakra paper>\n\nAt level 10, Chakra Paper reveals your first nature. "
-            "At level 25, you are brought to your village Kage chamber to choose a different "
-            "second nature. Type 'choose <element>' or the element's name. You are safe from "
+            "At level 25, channel a second Sheet of Chakra Paper to enter your village "
+            "Kage chamber and choose a different second nature. The sheet is consumed. "
+            "Only then use 'choose <element>' or the element's name. You are safe from "
             "mobs and PvP, with only help and chat available until you choose. "
             "Type 'help <your first element>' to compare all four possible releases. "
-            "The choice needs no second Chakra Paper. At level 100, a further paper can reveal "
+            "The second-paper choice never starts automatically. At level 100, another paper can reveal "
             "a third distinct nature. Clan bloodlines cannot also gain an elemental release."
         )
     elif _topic == "elements":
