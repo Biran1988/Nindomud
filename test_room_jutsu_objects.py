@@ -29,7 +29,7 @@ class RoomJutsuObjectTests(unittest.TestCase):
         self.session.state = State.PLAYING
         self.addCleanup(ACTIVE_SESSIONS.remove, self.session)
         self.session.player.chakra = 1000
-        self.mob = combat.Mob(992820, 992820, "Test Bandit", 30, 500, 500,
+        self.mob = combat.Mob(992820, 992820, "Test Bandit", 30, 1000, 1000,
                               self.room.vnum, 0, 0)
         combat.MOBS_BY_ROOM[self.room.vnum] = [self.mob]
         self.addCleanup(combat.MOBS_BY_ROOM.pop, self.room.vnum, None)
