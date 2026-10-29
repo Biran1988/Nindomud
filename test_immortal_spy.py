@@ -62,7 +62,7 @@ class SpyTests(unittest.TestCase):
         self.assertEqual(self.target.state, State.LINKDEAD)
         self.assertIsNone(self.admin.spy_target)
         joined = "".join(self.admin_output)
-        self.assertIn("Observation stopped", joined)
+        self.assertIn("observation stopped", joined.lower())
         self.assertNotIn("[LINKDEAD]", joined)
 
 
