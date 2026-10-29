@@ -25,13 +25,13 @@ class LevelCommandTests(unittest.TestCase):
         self.assertEqual(shown, "\n".join((
             commands._row("Level", 25, "Experience", 15_500_000),
             commands._row("Next Level", threshold, "XP Needed", 125_000),
-            commands._row("Ninja Rank", "Chunin", "Rank Cap", 35),
+            commands._row("Ninja Rank", "Chunin", "Rank Cap", 80),
         )))
         score = commands.build_score_lines(self.player, "Nobody")
         self.assertIn(commands._row("Level", 25, "Class", self.player.primary_class.capitalize()), score)
         self.assertIn(commands._row("Experience", 15_500_000, "Next Level", threshold), score)
 
-    def test_level_100_needs_no_further_xp(self):
+    def test_maximum_level_needs_no_further_xp(self):
         self.player.level = leveling.MAX_LEVEL
         self.player.experience = leveling.xp_for_next_level(self.player.level)
         commands.cmd_level(self.session, [])
