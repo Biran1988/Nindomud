@@ -1388,6 +1388,11 @@ def test_kage_promotions_enabled():
     # its own dedicated test) so the rest of the Kage-driven ladder
     # can be exercised the same way it always was.
     s.player.village_rank = "chunin"
+    # This smoke test is about promotions, not the level-25 element
+    # selection. Mark that mandatory choice completed before jumping
+    # directly to each rank's level cap.
+    s.player.chakra_nature_secondary = "water"
+    s.player.chakra_nature_secondary_revealed = True
     import data_headbands
     data_headbands.apply_rank_headband(s.player, "chunin")
 
