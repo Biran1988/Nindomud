@@ -81,9 +81,9 @@ DEFAULT_MOB_FIELDS = {
     # A builder's own real, fixed combat class (Taijutsu/Ninjutsu/
     # Genjutsu/Bukijutsu), per direct confirmation (Section 147
     # follow-up: "mset class genjutsu/ninjutsu ect"). None (the real
-    # default) means spawn_mob keeps rolling one at random, exactly
-    # as it already does today -- setting this field just lets a
-    # builder fix a specific mob to always be one particular class.
+    # default) means a level-10+ mob rolls a random ninja class at
+    # spawn; level 1-9 remain unclassed. Builders can fix any mob's
+    # class explicitly instead.
     "primary_class": None,
     "hit_dice": "1d1+20", "mana": 100, "move": 100,
     "armor_class": 0, "hit_roll": 0, "damage_roll": 0, "damage_dice": "1d4+0", "attacks": 1,
@@ -1336,6 +1336,12 @@ def tick_all_mob_effects(sessions=None) -> None:
                                     handle_mob_defeat(owner, mob)
                                 break
             status_effects.tick_effects(mob.active_status_effects)
+            # A mob's casting Chakra/Stamina slowly regenerate between
+            # fights, so old wandering NPCs don't become permanent
+            # non-casters after fighting the first player they meet.
+            if mob.health > 0 and not _mob_is_being_fought(mob):
+                mob.chakra = min(mob.maximum_chakra, mob.chakra + max(1, mob.maximum_chakra // 60))
+                mob.stamina = min(mob.maximum_stamina, mob.stamina + max(1, mob.maximum_stamina // 60))
             if mob.health <= 0 and sessions and mob in room_mobs:
                 owner = next((s for s in sessions if s.player and
                               (s.combat_target is mob or s.player.name == mob.mangekyo_amaterasu_caster)), None)
