@@ -17,7 +17,7 @@ way, since that's the one color mechanism already wired into every
 place an item's name is displayed (inventory, equipment, sell,
 etc.) -- rather than inventing a second, parallel coloring system
 that would only work in the one or two places built to know about it.
-7 actual ranks don't map 1:1 onto 5 rarity tiers, so the two lowest and two
+8 ranks don't map 1:1 onto 5 rarity tiers, so the two lowest and two
 highest ranks share a tier with their neighbor (see
 RANK_HEADBAND_RARITY below) -- everything in between gets its own.
 
@@ -38,9 +38,9 @@ from typing import Optional
 # than imported, to avoid a circular import (kage.py doesn't need to
 # know anything about headbands to keep working -- see
 # apply_rank_headband below, which IS the one place that imports both).
-RANK_ORDER = ["genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
+RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
 
-# Progressively larger Armor Class bonus per rank. The unranked student stays
+# Progressively larger Armor Class bonus per rank. The starting Student rank stays
 # at the existing headband's original 0 bonus (purely cosmetic) so
 # nothing about the very first headband a player ever gets changes.
 RANK_HEADBAND_AC_BONUS = {

@@ -181,7 +181,7 @@ def _register_shared_items() -> None:
 
     # A real item prototype for each village's headband, for EVERY
     # rank tier (data_headbands.RANK_HEADBAND_TITLE). The
-    # unranked student headband keeps its EXACT original vnum/name (no
+    # starting Student-rank headband keeps its EXACT original vnum/name (no
     # rank word, no stat suffix, since its bonus is 0) so nothing
     # about the original starting headband changes; the 7 higher
     # tiers are for promotions (currently disabled game-wide except
@@ -202,7 +202,7 @@ def _register_shared_items() -> None:
         "jonin": 8000, "elite jonin": 30000, "village elder": 100000, "kage": 500000,
     }
     for _village_data in data_villages.VILLAGES.values():
-        for _rank in data_headbands.RANK_ORDER:
+        for _rank in data_headbands.RANK_ORDER[1:]:  # Student headband is already registered above
             _name = data_headbands.headband_base_name(_village_data["village_short_name"], _rank)
             make(_headband_vnum, _name, "armor", _RANK_COST[_rank],
                  rarity=data_headbands.RANK_HEADBAND_RARITY[_rank], wear_loc="head")

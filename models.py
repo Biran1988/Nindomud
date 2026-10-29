@@ -58,7 +58,7 @@ class Player:
 
     # Permanent choices (Section 3) -- protected from player edits
     village: Optional[str] = None
-    village_rank: str = "student"  # unranked trainee until the Genin Exam
+    village_rank: str = "student"  # first rank, assigned at creation; Genin requires the Genin Exam
     primary_class: Optional[str] = None
 
     level: int = 1

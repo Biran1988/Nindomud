@@ -11,7 +11,7 @@ exam and taking theirs. Reaching the tower with both scrolls completes
 the exam and promotes the player to Chunin on the spot.
 
 The entry gate itself is UNCHANGED from the old Genin -> Chunin
-requirement (level 35, 25 completed missions) -- this doesn't add a
+requirement (level 15, 25 completed missions) -- this doesn't add a
 new, separate gate, it changes what happens once you're qualified.
 Genin are capped at 15 while awaiting promotion; older characters
 who were already above that cap can still take the exam.
