@@ -21,6 +21,7 @@ MASK = "The Pumpkin King's Cursed Mask"
 MASK_CHANCE = 0.035  # A 3.5% boss-only drop: rare and genuinely powerful.
 GLOBAL_CANDY_CHANCE = 0.22
 MOB_RESPAWN_SECONDS = 7 * 60
+FAST_MOB_RESPAWN_SECONDS = 8  # Low-level Halloween farming spawns.
 BOSS_RESPAWN_SECONDS = 30 * 60
 TRICK_COOLDOWN_KEY = "halloween_treat_next"
 _owned_rooms = {}
@@ -47,6 +48,7 @@ COSTUME_MERCHANT = 100220
 CANDY_MERCHANT = 100221
 TRICK_NPC = 100222
 BOSS_VNUM = 100230
+FAST_RESPAWN_VNUMS = frozenset({MOB_BASE, MOB_BASE + 1, MOB_BASE + 2})
 ROOMS = [
   {
     "name": "The Crooked Pumpkin Gate",
@@ -232,7 +234,7 @@ def register_collectibles():
             continue
         obj = olc.default_object(vnum, name)
         obj.update({"item_type": "food", "cost": cost, TAG: True,
-                    "description": "Halloween Town candy. Use it for recovery and a timed experience boost."})
+                    "description": "Halloween Town candy. Eat it for recovery and a timed experience boost."})
         olc.OBJECT_TEMPLATES[vnum] = obj
 
 
@@ -272,9 +274,11 @@ def _register_enemies():
     _register_mob(TRICK_NPC, "Mayor Jack Lantern", 1, 9999, "1d1+1", 0, 0)
 
 
-def _spawn_population(now):
+def _spawn_population(now, fast_only=False):
     import combat
     for index, vnum, *_rest in MOB_SPAWNS:
+        if fast_only and vnum not in FAST_RESPAWN_VNUMS:
+            continue
         rv = ROOM_START + index
         if not owns_room(rv):
             continue
@@ -282,7 +286,8 @@ def _spawn_population(now):
             continue
         if any(m.template_vnum == vnum for m in combat.mobs_in_room(rv)):
             continue
-        delay = BOSS_RESPAWN_SECONDS if vnum == BOSS_VNUM else MOB_RESPAWN_SECONDS
+        delay = (BOSS_RESPAWN_SECONDS if vnum == BOSS_VNUM else
+                 FAST_MOB_RESPAWN_SECONDS if vnum in FAST_RESPAWN_VNUMS else MOB_RESPAWN_SECONDS)
         if now < _deaths.get(vnum, -1e20) + delay:
             continue
         combat.spawn_mob(vnum, rv)
@@ -291,6 +296,13 @@ def _spawn_population(now):
         if (owns_room(rv) and combat.MOB_TEMPLATES.get(vnum, {}).get(TAG)
                 and not any(m.template_vnum == vnum for m in combat.mobs_in_room(rv))):
             combat.spawn_mob(vnum, rv)
+
+
+def process_fast_respawns(now=None):
+    """Pulse-driven fast respawns; normal undead and the boss keep longer timers."""
+    if not _owned_rooms or not active():
+        return
+    _spawn_population(time.time() if now is None else now, fast_only=True)
 
 
 def _fallback_room(player):
@@ -444,7 +456,7 @@ def command_trickortreat(session, args):
         gift = random.choice(CANDY_NAMES)
         ok, reason = inventory.add_item(session.player.inventory, gift)
         if ok:
-            session.send(f"&G'Treat!' The Mayor gives you {gift}. Use it to claim its perks.&x")
+            session.send(f"&G'Treat!' The Mayor gives you {gift}. Eat it to claim its perks.&x")
         else:
             session.send(inventory.full_message(reason, gift))
     import storage
@@ -477,7 +489,7 @@ def mob_defeated(mob, now=None):
 
 
 def consume_candy(session, query):
-    """Use seasonal candy even after the week ends."""
+    """Eat seasonal candy even after the week ends."""
     import inventory
     index, key = inventory.parse_indexed_query(query)
     words = key.lower().split()
