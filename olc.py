@@ -403,6 +403,7 @@ def cmd_mstat(session, args: List[str]) -> None:
     lines += [
         f"&WArmor Class:&x {t['armor_class']}   &WHit Roll:&x {t['hit_roll']}   &WDamage Roll:&x {t['damage_roll']}",
         f"&WDamage Dice:&x {t['damage_dice']}   &WAttacks:&x {t['attacks']}",
+        f"&WAuto Level Balance:&x {'ON' if t.get('auto_balance', True) else 'OFF'}",
         _rule(),
         f"&C{'FLAGS AND BEHAVIOR'.center(62)}&x",
         _rule(),
@@ -1725,7 +1726,7 @@ MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defe
                     "resistant", "immune", "susceptible", "body_parts", "speaks",
                     "speaking", "loot_items", "shop_buys_categories"}
 MOB_ATTR_FIELDS = {"str", "int", "wis", "dex", "con", "cha", "luck"}
-MOB_BOOL_FIELDS = {"shopkeeper", "gambler", "respawns", "enabled"}
+MOB_BOOL_FIELDS = {"shopkeeper", "gambler", "respawns", "enabled", "auto_balance"}
 
 # Builder input uses short, readable names. The stored prototype keys stay
 # unchanged so existing saves and programs continue to load unchanged.
@@ -2582,6 +2583,8 @@ def cmd_mset(session, args: List[str]) -> None:
         if field in ("hit_dice", "damage_dice") and not dice.is_valid(value_text):
             session.send(f"'{value_text}' isn't valid dice notation (expected e.g. '2d6+4').")
             return
+        if field in ("hit_dice", "damage_dice"):
+            t["auto_balance"] = False  # explicit custom dice override the shared standard
         if field == "aggro_village":
             import data_villages
             # Validate every genuinely configured village without
