@@ -4,7 +4,7 @@
     "level"
   ],
   "title": "Level",
-  "body": "Syntax: level\n\nDescription: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. At your ninja rank's cap, XP Needed is 0 and a promotion is required before advancing. Level caps: Academy Student 10, Genin 15, Chunin 35, Special Jonin 55, Jonin 80, Elite Jonin 95, Village Elder 95, Kage 100.\n\nDate: 2026-10-21",
+  "body": "Syntax: level\n\nDescription: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. At your ninja rank's cap, XP Needed is 0 and a promotion is required before advancing. Level caps: Academy Student 10, Genin 35, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin 250, Village Elder 250, Kage 250.\n\nDate: 2026-10-21",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
