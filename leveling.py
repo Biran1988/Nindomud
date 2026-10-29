@@ -268,6 +268,9 @@ def grant_experience(player: Player, amount: int) -> List[str]:
                 player.skill_proficiencies[skill_name] = initial_proficiency(player)
                 lines.append(f"You have unlocked:\n  {skill_name}")
 
+        import hyuga
+        for new_skill in hyuga.sync(player):
+            lines.append(f"You have unlocked:\\n  {new_skill}")
         import six_paths
         lines.extend(six_paths.sync_skills(player))
         # Save immediately -- a crash right after a level-up shouldn't cost
@@ -383,6 +386,9 @@ def sync_universal_skills(player: Player) -> List[str]:
         if name not in known_before:
             lines.append(f"&Y(New since your last login: you have learned {name}!)&x")
 
+    import hyuga
+    for new_skill in hyuga.sync(player):
+        lines.append(f"&Y(New Byakugan technique: {new_skill}!)&x")
     import six_paths
     lines.extend(six_paths.sync_skills(player))
     if lines or ice_changed:
