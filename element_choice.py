@@ -30,7 +30,7 @@ def prompt(session) -> None:
     )
 
 
-def begin(session) -> bool:
+def begin(session, show_prompt=True) -> bool:
     player = session.player
     if session.account and session.account.staff_level != "player":
         return False
