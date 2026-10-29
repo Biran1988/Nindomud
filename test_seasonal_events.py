@@ -78,6 +78,8 @@ class SeasonalTests(unittest.TestCase):
             self.assertEqual(len(combat.mobs_in_room(101)), 2)
             self.assertEqual(len(combat.mobs_in_room(201)), 2)
             turkey = combat.mobs_in_room(101)[0]
+            self.assertLessEqual(turkey.level, combat.MAX_KILLABLE_EVENT_MOB_LEVEL)
+            self.assertTrue(combat.MOB_TEMPLATES[events.TURKEY_VNUM][combat.EVENT_KILLABLE_TAG])
             self.assertEqual(turkey.loot_items, [events.TURKEY_MEAL, events.TURKEY_FEATHER, events.TURKEY_FEATHER])
             events.turkey_defeated(turkey, now=1000)
             combat.remove_mob(turkey)
