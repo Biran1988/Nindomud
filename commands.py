@@ -7760,7 +7760,7 @@ def cmd_channel(session, args: List[str]) -> None:
 
     if revealing_secondary:
         import element_choice
-        if not element_choice.begin(session):
+        if not element_choice.start_with_paper(session, match):
             session.send("Your village's Kage chamber is unavailable. Contact an administrator.")
         return
 
