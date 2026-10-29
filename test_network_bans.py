@@ -161,6 +161,7 @@ class NetworkBanTests(unittest.TestCase):
             output.append, lambda: None, connection_ip="198.51.100.10",
             connection_port=4512, connection_country="US",
         )
+        self.addCleanup(session_module.ACTIVE_SESSIONS.remove, actor)
         actor.player = Player("Administrator", "Administrator")
         actor.account = Account("Administrator", "", "", staff_level="implementor")
         actor.state = session_module.State.PLAYING
