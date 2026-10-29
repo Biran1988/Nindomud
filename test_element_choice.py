@@ -42,8 +42,14 @@ class ElementChoiceTests(unittest.TestCase):
         self.player.level = 24
         self.assertFalse(element_choice.begin(self.session))
         self.player.level = 25
-        with patch.object(element_choice.storage, "save_player") as save:
-            self.assertTrue(element_choice.begin(self.session))
+        self.assertFalse(element_choice.begin(self.session))
+        self.session.handle_line("choose wind")
+        self.assertIn("second", "".join(self.messages).lower())
+        self.player.inventory.append("A Sheet of Chakra Paper")
+        with patch.object(commands, "_find_object_prototype_by_name", return_value={"item_type": "misc"}), patch.object(element_choice.storage, "save_player") as save:
+            self.session.handle_line("channel chakra paper")
+            self.assertTrue(self.player.element_choice_paper_used)
+            self.assertNotIn("A Sheet of Chakra Paper", self.player.inventory)
             self.assertEqual(self.player.room_vnum, self.kage)
             self.assertEqual(self.player.element_choice_return_room_vnum, 995002)
             self.session.handle_line("north")
@@ -68,6 +74,7 @@ class ElementChoiceTests(unittest.TestCase):
             self.assertGreaterEqual(save.call_count, 2)
 
     def test_resume_after_reconnect_and_all_help_pairings(self):
+        self.player.element_choice_paper_used = True
         with patch.object(element_choice.storage, "save_player"):
             element_choice.begin(self.session)
             restored = Player.from_dict(self.player.to_dict())
