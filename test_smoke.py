@@ -1413,7 +1413,7 @@ def test_kage_promotions_enabled():
         s.handle_line("ask kage about promotion")
         text = "".join(out)
         out.clear()
-        assert f"promote you to {expected_rank}" in text.lower()
+        assert f"promote you to {expected_rank}" in text.lower(), (level, missions, s.player.village_rank, text)
         assert s.player.village_rank == expected_rank
         assert s.player.equipment.get("head") == expected_headband
 
