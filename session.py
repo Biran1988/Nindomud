@@ -42,6 +42,16 @@ from prompt import render_prompt
 ACTIVE_SESSIONS: List["Session"] = []
 
 
+def expire_linkdead_sessions(now: float = None) -> int:
+    """Finalize genuinely expired disconnected players; returns logout count."""
+    now = time.time() if now is None else now
+    expired = [s for s in list(ACTIVE_SESSIONS)
+               if s.state == State.LINKDEAD and now >= s.linkdead_until]
+    for s in expired:
+        s.request_close()
+    return len(expired)
+
+
 def _terminal_safe_text(text: str) -> str:
     """Send plain ASCII so legacy telnet clients show the same text as phones.
 
@@ -269,6 +279,12 @@ class Session:
         if self.trade is not None:
             import trade
             trade.cancel_trade(self.trade)
+        if self.duel is not None:
+            import duel
+            if self.duel.accepted:
+                duel.end_duel(self.duel, self)
+            else:
+                duel.cancel_duel(self.duel)
         storage.save_player(self.player)
         self.broadcast_all(
             f"&[244][LINKDEAD]&x &[223]{self.player.name}&x has lost connection "
