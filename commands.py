@@ -1126,7 +1126,7 @@ def cmd_look(session, args: List[str]) -> None:
     # Linkdead characters remain physically present but are untargetable.
     import session as session_module
     for other in session_module.ACTIVE_SESSIONS:
-        if (other.state == session_module.State.LINKDEAD and other.player
+        if (getattr(other, "state", None) == session_module.State.LINKDEAD and other.player
                 and other.player.room_vnum == player.room_vnum
                 and other is not session and not _player_hidden_from(player, other.player)):
             lines.append(f"  &D{genjutsu.apparent_name(other.player)}&x is here. &[244][LINKDEAD - Protected]&x")
