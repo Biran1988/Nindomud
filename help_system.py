@@ -247,9 +247,11 @@ DEFAULT_HELP_ENTRIES = [
             "&CChakra Control&x - Train with 'train cc' or 'train chakra control'. Each point trained above 10 immediately and permanently adds 10 maximum Chakra. Also discounts Genjutsu and Ninjutsu Chakra costs by up to 50%, and improves Chakra regeneration.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&D(See also: 'help combatstats', 'help scoresheet')&x\n"
+            "&D(Bloodlines are separate from trainable attributes. Every Hyuga inherits Byakugan; from level 25 it can awaken in combat. Active Byakugan improves combat accuracy, dodge, and long-range chakra sight, but does not increase your trained Perception stat. Strength, Dexterity, Perception, Willpower, and Chakra Control remain trainable up to 75.)&x\n"
             "\n"
-            "Date: 2026-08-17"
+            "&D(See also: 'help combatstats', 'help scoresheet', 'help hyuga', 'help kekkei genkai')&x\n"
+            "\n"
+            "Date: 2026-10-28"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -271,8 +273,8 @@ DEFAULT_HELP_ENTRIES = [
             "&CHit Roll&x - Rises with Dexterity, and further with your wielded weapon's own crafted Hit Roll bonus, if it has one. Improves your own chance of landing a hit, against a target's Armor Class.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&CDamage Roll&x - Rises with Strength.\n"
-            "  &R[Not Yet Implemented as its own mechanic -- your Strength DOES affect your real damage directly (see 'help attributes'), and so does your wielded weapon's own type (a Sword hits harder than a Kunai, etc.), but this particular displayed number isn't yet what combat actually uses]&x\n"
+            "&CDamage Roll&x - Rises with Strength and adds to actual basic-attack and jutsu damage, alongside weapon bonuses.\n"
+            "  &G[Active]&x\n"
             "\n"
             "&CInitiative&x - Rises with Dexterity.\n"
             "  &R[Not Yet Implemented -- there's no turn-order system yet for this to affect]&x\n"
@@ -283,9 +285,11 @@ DEFAULT_HELP_ENTRIES = [
             "&CCritical Chance&x - Your percent chance for an attack to land as a critical hit (50% extra damage). 5% at baseline Luck, up to 30% at a maxed Luck -- a completed armor set's bonus can push this even higher.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&D(See also: 'help attributes')&x\n"
+            "&D(Activated Sharingan and awakened Byakugan add special combat accuracy/evasion bonuses beyond normal trained stats; they are not permanent increases to the attributes shown by 'score'. Every Hyuga can inherit Byakugan, which can awaken from level 25 in combat. See 'help hyuga' for special techniques and rare mastery caps.)&x\n"
             "\n"
-            "Date: 2026-08-17"
+            "&D(See also: 'help attributes', 'help scoresheet', 'help hyuga')&x\n"
+            "\n"
+            "Date: 2026-10-28"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -648,8 +652,8 @@ DEFAULT_HELP_ENTRIES = [
             "&CRank&x - Your current village rank (e.g. Genin), raised through missions and time in service.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&CClan&x - A family affiliation chosen at creation, or changed later with 'clan join'.\n"
-            "  &R[Not Yet Implemented -- cosmetic only, no mechanical bonus yet]&x\n"
+            "&CClan / Bloodline&x - Your clan determines which inherited Kekkei Genkai you can receive. All Hyuga inherit Byakugan, Uchiha may inherit Sharingan, and rare bloodlines have distinct permanent Potential/Talent. Hyuga Byakugan can awaken in combat from level 25, but only exceptional Potential reaches the celestial forms. Bloodlines are not directly trainable attributes.\n"
+            "  &G[Active]&x\n"
             "\n"
             "&CLevel / Experience&x - Your overall combat level and progress toward the next one, gained from defeating enemies and completing missions.\n"
             "  &G[Active]&x\n"
@@ -672,9 +676,9 @@ DEFAULT_HELP_ENTRIES = [
             "&CTotal Play Time&x - How long you've spent logged in and playing.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&D(See also: 'help attributes', 'help combatstats', 'help jobs')&x\n"
+            "&D(See also: 'help attributes', 'help combatstats', 'help hyuga', 'help kekkei genkai', 'help jobs')&x\n"
             "\n"
-            "Date: 2026-08-17"
+            "Date: 2026-10-28"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -1123,17 +1127,17 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: help kekkei genkai\n"
             "\n"
-            "Description: Clan Kekkei Genkai (Sharingan, Byakugan, Shikotsumyaku) are inherited at character creation. Elemental releases instead depend on your revealed chakra natures, regardless of clan. A character with a clan Kekkei Genkai cannot also gain an elemental release.\n"
+            "Description: Clan Kekkei Genkai are inherited at character creation: Hyuga have 100% Byakugan inheritance, Uchiha have a 50% Sharingan chance, and Kaguya have a 25% Shikotsumyaku chance. Individual bloodline Potential limits the highest attainable powers; Talent governs mastery speed. Elemental releases instead depend on your revealed chakra natures. A character with a clan Kekkei Genkai cannot also gain an elemental release.\n"
             "\n"
-            "Awakening isn't something you trigger yourself, and there's no quest to accept or command to type for it -- once you're level 50 or higher, it can happen at any moment during real combat, entirely on its own. When it does, everyone connected sees a global announcement that someone's bloodline has awakened, though it never says whose or which one -- that part stays yours to discover, or keep to yourself. Once awakened, a Kekkei Genkai can develop further the more it's actually used, becoming sharper and more capable with real experience rather than all at once.\n"
+            "Awakening is automatic and random during real combat, not an action or quest: Sharingan and Byakugan first become eligible at level 25; Shikotsumyaku and other non-eye bloodlines still require level 50. Sharingan rolls at 1 in 150 per combat round; Byakugan and other bloodlines at 1 in 300. Reaching the level is not a guarantee of immediate awakening. A global announcement reveals the player, not which bloodline awakened.\n"
             "\n"
-            "&WThe Sharingan&x is the one Kekkei Genkai with real, playable abilities right now. Its core: an active toggle ('sharingan' -- see 'help sharingan' for the command itself) that sharpens your senses in combat at a small ongoing cost, growing more capable the more tomoe you carry. Broadly, across its full progression: better instincts for reading and avoiding attacks, sharper offense, resistance to being caught off guard by illusion techniques, a technique of its own to cast, and -- at its rarest -- the fleeting ability to read and turn an opponent's own technique back on them. Not every Sharingan is destined to develop the same way or reach the same heights; some simply have more room to grow than others.\n"
+            "&WSharingan&x unlocks its active eye toggle and tomoe growth through combat. &WByakugan&x unlocks an active chakra-vision toggle at level 25 after awakening, granting accuracy, dodge and directional chakra sensing; Gentle Fist and Eight Trigrams techniques unlock at later levels through practice and combat mastery. Potential 95+ can eventually reach Celestial Byakugan; only Potential 100 at level 100 with full mastery reaches the rare Tenseigan mode. See 'help sharingan' and 'help hyuga'.\n"
             "\n"
-            "Element combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. These elemental releases have no dedicated jutsu yet.\n"
+            "Element combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. Elemental releases have their own playable techniques.\n"
             "\n"
             "Staff: see 'help bloodstat' and 'help bloodset' for the tools to inspect and edit a player's hidden Kekkei Genkai state, and 'help awaken' for force-awakening one directly.\n"
             "\n"
-            "Date: 2026-09-02"
+            "Date: 2026-10-28"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -4357,7 +4361,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | {"camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
@@ -4928,14 +4932,14 @@ DEFAULT_HELP_ENTRIES.append({
         "(how quickly mastery grows). Not every Hyuga can master the highest "
         "techniques. Existing Hyuga missing the old inheritance roll receive "
         "their bloodline on login without rerolling earlier lucky characters.\\n\\n"
-        "Awakening: at level 50 or higher, Byakugan has the normal hidden "
-        "chance to awaken during real combat. The eye does not reveal itself "
+        "Awakening: at level 25 or higher, Byakugan has the normal hidden "
+        "1-in-300-per-round chance to awaken during real combat. The eye does not reveal itself "
         "early or grant combat perks until awakened.\\n\\n"
         "Commands: byakugan [on|off|status], byakugan scan <direction>, "
         "hyuga list, jutsu all, prac, and perform <technique> [target]. "
         "Byakugan is a chakra-upkeep toggle. See enemies' chakra and peer "
         "several rooms ahead without bypassing sealed exits or private homes. "
-        "Active eyes improve accuracy and evasion. Gentle Fist techniques "
+        "Active Byakugan (level 25+) improves accuracy and evasion. Gentle Fist techniques "
         "directly reduce chakra or stamina and may briefly close tenketsu, "
         "preventing jutsu use. Eight Trigrams Rotation and Protecting "
         "Sixty-Four Palms grant short-lived defensive effects.\\n\\n"
