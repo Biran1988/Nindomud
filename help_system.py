@@ -4941,6 +4941,21 @@ DEFAULT_HELP_ENTRIES.append({
 
 
 DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "spy",
+    "keywords": ["spy", "snoop", "immortal spy"],
+    "title": "Spy (administrator)",
+    "body": (
+        "Syntax: spy <online player> | spy off | spy status\\n\\n"
+        "Only administrators and Implementors can observe a regular player's "
+        "live commands, output and prompt from any room. Login/password "
+        "entries and sensitive account commands are not shown. "
+        "Sessions are never saved; monitoring ends on disconnect. "
+        "Start/stop events are recorded in the staff audit log, not captured content."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "hyuga",
     "keywords": ["hyuga", "hyuuga", "byakugan", "gentle fist", "eight trigrams", "tenketsu", "tenseigan"],
     "title": "Hyuga Bloodline and Byakugan Techniques",

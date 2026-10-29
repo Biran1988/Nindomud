@@ -162,6 +162,7 @@ class Session:
         self.controlled_clone = None  # live elemental clone Mob; transient, body stays in its room
         self._suppress_departure_announcement = False  # reconnect takeover is not a logout
         self.linkdead_until = 0.0
+        self.spy_target = None  # live admin observation, never persisted
 
         # Scratch chargen state
         self._pending_name: Optional[str] = None
@@ -195,6 +196,9 @@ class Session:
             text = jutsu_colors.highlight_names(text)
         rendered = colors.render(text, self.color_enabled)
         self.send_raw(rendered + "\r\n")
+        if self.state == State.PLAYING:
+            import immortal_spy
+            immortal_spy.forward_output(self, text)
 
     def send_jutsu(self, text: str) -> None:
         """Highlight technique names in cast, hit, and help messages."""
@@ -213,6 +217,8 @@ class Session:
             p = (f"&C[Clone Scout: {clone.health}/{clone.max_health} HP]&x " + p)
         if p:
             self.send_raw("\r\n" + colors.render(_terminal_safe_text(p), self.color_enabled) + "\r\n")
+            import immortal_spy
+            immortal_spy.forward_prompt(self, p)
 
     def active_sessions(self) -> List["Session"]:
         return [s for s in ACTIVE_SESSIONS if s.state == State.PLAYING]
@@ -254,6 +260,8 @@ class Session:
         if self.state != State.PLAYING or not self.player:
             return
         self.linkdead_until = (time.time() if now is None else now) + 15 * 60
+        import immortal_spy
+        immortal_spy.disconnect(self)
         self.state = State.LINKDEAD
 
         # No abandoned attacks, queued casts, or timed jobs may continue
@@ -286,12 +294,11 @@ class Session:
             else:
                 duel.cancel_duel(self.duel)
         storage.save_player(self.player)
-        self.broadcast_all(
-            f"&[244][LINKDEAD]&x &[223]{self.player.name}&x has lost connection "
-            "and is protected for 15 minutes.", exclude_self=True
-        )
+        # Link-dead transitions are private; no server-wide announcement.
 
     def request_close(self) -> None:
+        import immortal_spy
+        immortal_spy.disconnect(self)
         if self.player:
             import hidden_mist
             if hidden_mist.owned_room(self.player):
@@ -1156,6 +1163,8 @@ class Session:
 
     def _handle_playing(self, line: str) -> None:
         line = line.strip()
+        import immortal_spy
+        immortal_spy.forward_input(self, line)
         if not line:
             self.send_prompt()
             return

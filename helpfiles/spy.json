@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "spy",
+  "keywords": [
+    "spy",
+    "snoop",
+    "immortal spy"
+  ],
+  "title": "Spy (administrator)",
+  "body": "Syntax: spy <online player> | spy off | spy status\n\nOnly administrators and Implementors can observe a regular player's live commands, output and prompt from any room. Login/password entries and sensitive account commands are not shown. Monitoring ends on disconnect. Start/stop events are audited, not captured content.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

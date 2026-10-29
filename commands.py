@@ -105,7 +105,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"spy", "stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -9287,6 +9287,7 @@ COMMANDS = {
     "goto": cmd_goto,
     "transfer": cmd_transfer,
     "force": cmd_force,
+    "spy": __import__("immortal_spy").command,
     "return": cmd_return,
     "apartment": cmd_apartment,
     "description": cmd_description,
