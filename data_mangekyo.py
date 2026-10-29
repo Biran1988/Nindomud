@@ -47,7 +47,7 @@ design conversation:
   out (or an early-end command triggers), both players return, and
   the target is left with very little HP and no stamina.
 
-- Amaterasu: mobs take 40-60 impact damage when the cast lands,
+- Amaterasu: mobs take 250 impact damage when the cast lands,
   followed by a persistent burn on the target (40-60 dmg/tick,
   ends on defeat). The spell ALSO simultaneously
   sets the room they're standing in on fire too, burning everyone in
@@ -141,6 +141,7 @@ TSUKUYOMI_COMMANDS = {
 }
 
 # Confirmed real numbers (Section 140 design conversation).
+AMATERASU_MOB_INITIAL_DAMAGE = 250
 AMATERASU_PLAYER_BURN_PER_TICK = (40, 60)
 AMATERASU_ROOM_BURN_PER_TICK = (25, 40)
 AMATERASU_ROOM_FIRE_DURATION_SECONDS = 5 * 60
