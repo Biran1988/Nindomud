@@ -95,5 +95,55 @@ class PillCraftingTests(unittest.TestCase):
         self.assertEqual(self.player.medical_healing[0]["amount"], 400)
 
 
+    def test_eat_uses_same_timed_medicine_logic_as_use(self):
+        self.player.maximum_health = 500
+        self.player.maximum_chakra = 500
+        self.player.maximum_stamina = 500
+        self.player.health = self.player.chakra = self.player.stamina = 25
+        eaten = pill_crafting.encode_pill("Medicinal", 25)
+        used = pill_crafting.encode_pill("Medicinal", 35)
+        self.player.inventory.extend([eaten, used])
+        with patch.object(consumables.time, "time", return_value=1000):
+            commands.cmd_eat(self.session, ["medicinal", "pill"])
+        self.assertEqual(self.player.inventory, [used])
+        self.assertEqual(len(self.player.medical_healing), 1)
+        self.assertEqual(self.player.medical_healing[0]["amount"], 250)
+        # Eating medicine does not instantly heal or consume the second pill.
+        self.assertEqual((self.player.health, self.player.chakra, self.player.stamina),
+                         (25, 25, 25))
+        with patch.object(consumables.time, "time", return_value=1000):
+            commands.cmd_use(self.session, ["medicinal", "pill"])
+        self.assertEqual(self.player.inventory, [])
+        self.assertEqual(len(self.player.medical_healing), 2)
+        self.assertEqual([dose["amount"] for dose in self.player.medical_healing], [250, 310])
+
+    def test_eat_antidote_does_not_consume_without_poison(self):
+        pill = pill_crafting.encode_pill("Antidote", 30)
+        self.player.inventory.append(pill)
+        commands.cmd_eat(self.session, ["antidote"])
+        self.assertEqual(self.player.inventory, [pill])
+        self.assertEqual(self.player.medical_healing, [])
+        self.player.active_status_effects["poisoned"] = {"duration": 3}
+        commands.cmd_eat(self.session, ["antidote"])
+        self.assertEqual(self.player.inventory, [])
+        self.assertNotIn("poisoned", self.player.active_status_effects)
+        self.assertEqual(self.player.medical_healing, [])
+
+    def test_indexed_eat_pill_and_legacy_medicine(self):
+        first = pill_crafting.encode_pill("Medicinal", 20)
+        second = pill_crafting.encode_pill("Medicinal", 50)
+        self.player.inventory.extend([first, second, "A Soldier Pill", "A Rice Ball"])
+        with patch.object(consumables.time, "time", return_value=1000):
+            commands.cmd_eat(self.session, ["2.pill"])
+            commands.cmd_eat(self.session, ["soldier", "pill"])
+        self.assertEqual(self.player.inventory, [first, "A Rice Ball"])
+        self.assertEqual([dose["amount"] for dose in self.player.medical_healing], [400, 40])
+        # Food remains eat-only: use must not spend the rice ball.
+        commands.cmd_use(self.session, ["rice", "ball"])
+        self.assertEqual(self.player.inventory, [first, "A Rice Ball"])
+        commands.cmd_eat(self.session, ["rice", "ball"])
+        self.assertEqual(self.player.inventory, [first])
+
+
 if __name__ == "__main__":
     unittest.main()
