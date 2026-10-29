@@ -89,14 +89,14 @@ def main():
     # --- Phase 1-2: account + chargen -----------------------------------
     # Per direct correction (Section 104: "when i asked to remove the
     # academy i specifically said they would not goto genin they would
-    # still start as an academy student...then i would create my own
+    # still start as an student...then i would create my own
     # academy using mob programs...the mob itself would promote the
     # character...no mission or level gating"): a new character starts
-    # as "academy student" (a real, distinct rank below Genin), standing
+    # as "student" (a real, distinct rank below Genin), standing
     # in their own village's real Kage Chamber -- there's no physical
     # academy building right now (the user is constructing their own,
     # separately), and combat/missions are completely UNGATED for an
-    # academy student -- promotion to genin will happen entirely via
+    # student -- promotion to genin will happen entirely via
     # the user's own future mob-program-driven academy NPC, not any
     # level/mission requirement in this code.
     #
@@ -123,7 +123,7 @@ def main():
     feed(session, "confident")
     feed(session, "y")
 
-    assert session.player.village_rank == "academy student"
+    assert session.player.village_rank == "student"
     assert session.player.ryo == 100
     assert session.player.room_vnum == 1
 
@@ -208,7 +208,7 @@ def main():
 
     # --- Phase 5: Kage interaction (too low level for promotion yet) ----
     feed(session, "ask kage promotion")
-    assert session.player.village_rank == "academy student"  # not promoted yet
+    assert session.player.village_rank == "student"  # not promoted yet
 
     # --- Phase 7: Kage's own real perk shop (the only shop reachable
     # from the single room that exists -- per direct correction,
@@ -1371,7 +1371,7 @@ def test_kage_promotions_enabled():
         feed_local(cmd)
 
     s.player.room_vnum = content._VILLAGE_ROOMS["leaf"]["kage"]
-    s.player.village_rank = "genin"  # this scenario specifically needs a Genin -- chargen's own default is "academy student"
+    s.player.village_rank = "genin"  # this scenario specifically needs a Genin -- chargen's own default is "student"
 
     # A Genin asking about promotion is redirected to the exam, not
     # shown a level/mission requirement check -- that check now lives
@@ -3242,7 +3242,7 @@ def test_chargen_routes_to_own_village():
         assert s.player.room_vnum == expected_kage_room, \
             f"{village} character started in {s.player.room_vnum}, expected their own Kage Chamber {expected_kage_room}"
         assert s.player.village == village
-        assert s.player.village_rank == "academy student"
+        assert s.player.village_rank == "student"
 
     print("CHARGEN ROUTES TO OWN VILLAGE TEST PASSED")
 
@@ -13929,7 +13929,7 @@ def test_set_rank_program_and_global_announcement():
     original_sessions = list(session_module.ACTIVE_SESSIONS)
     session_module.ACTIVE_SESSIONS = sessions
     try:
-        assert player_s.player.village_rank == "academy student"
+        assert player_s.player.village_rank == "student"
 
         player_s.account.staff_level = "implementor"
         player_s.handle_line("mset create 66960 an academy proctor cmd test")
@@ -17284,17 +17284,8 @@ def test_spawnpoint_setspawn_merge():
 
 
 def test_iruka_graduation_check():
-    """Per direct request (Section 153): "i need Iruka sensei vnum 11
-    room vnum 30 to have the mob program/code that gates genin rank
-    at level 10 and promotes them when the player says graduate..
-    checking the players current level AND rank so that if they are
-    already a genin or above it doesnt change rank." A genuinely
-    one-off, hardcoded action (not a generic, reusable one, per
-    direct confirmation: "just hardcode it to this mob he will not
-    be changed or moved") -- gates promotion on BOTH level >= 10 AND
-    current rank still below genin in the real kage.RANK_ORDER,
-    speaking the exact confirmed lines for both failure cases."""
-    import combat
+    """Legacy 'say graduate' is not a second exam or a shortcut to Genin."""
+    import programs
 
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
@@ -17303,45 +17294,14 @@ def test_iruka_graduation_check():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "implementor"
-
-    s.handle_line("rset create 71053")
-    out.clear()
-    s.player.room_vnum = 71053
-    s.handle_line("mset create 71051 Iruka Sensei perm test")
-    out.clear()
-    s.handle_line("mset addprogram 71051 speech graduate iruka_graduation_check")
-    out.clear()
-    s.handle_line("mset spawn 71051 71053")
-    out.clear()
-    s.account.staff_level = "player"
-
-    # Too low level -- refused, no rank change.
-    s.player.level = 5
-    s.player.village_rank = "academy student"
-    s.handle_line("say graduate")
-    text1 = "".join(out)
-    out.clear()
-    assert "You need level 10 to graduate the academy." in text1
-    assert s.player.village_rank == "academy student"
-
-    # Eligible -- genuinely promoted to genin.
+    s.player.village_rank = "student"
     s.player.level = 10
-    s.handle_line("say graduate")
-    text2 = "".join(out)
-    out.clear()
-    assert "Congratulations, you have graduated the academy!" in text2
-    assert s.player.village_rank == "genin"
-
-    # Already above genin -- never re-promoted or demoted.
-    s.player.village_rank = "chunin"
-    s.handle_line("say graduate")
-    text3 = "".join(out)
-    out.clear()
-    assert "You've already graduated the academy." in text3
-    assert s.player.village_rank == "chunin"
-
-    print("IRUKA GRADUATION CHECK TEST PASSED")
+    before = s.player.mission_points
+    assert not programs.run_action(s, "iruka_graduation_check", "")
+    assert s.player.village_rank == "student"
+    assert s.player.mission_points == before
+    # Passing Iruka's actual Genin Exam is tested in test_genin_exam.py.
+    print("LEGACY GRADUATION BYPASS DISABLED TEST PASSED")
 
 
 def test_xp_reward_level_tiers():
@@ -17372,15 +17332,8 @@ def test_xp_reward_level_tiers():
 
 
 def test_genin_promotion_mission_points_bonus():
-    """Per direct request/confirmation (Section 157): "when soemone
-    becomes a genin have it award 50 mission points ontop of the
-    headband" -- confirmed to apply regardless of which real path
-    causes the promotion (Iruka's own hardcoded academy check, or the
-    generic set_rank program action), via a single, centralized
-    kage.award_genin_mission_points_if_applicable function both call.
-    A no-op for any other rank, confirmed directly."""
-    import combat
-
+    """The first official rank gives 50 mission points; no other rank does."""
+    import kage
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
@@ -17388,61 +17341,14 @@ def test_genin_promotion_mission_points_bonus():
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
-    s.account.staff_level = "implementor"
-
-    s.handle_line("rset create 71080")
-    out.clear()
-    s.player.room_vnum = 71080
-
-    # --- Iruka's own real path ---
-    s.handle_line("mset create 71081 Iruka Sensei perm bonus test")
-    out.clear()
-    s.handle_line("mset addprogram 71081 speech graduate iruka_graduation_check")
-    out.clear()
-    s.handle_line("mset spawn 71081 71080")
-    out.clear()
-    s.account.staff_level = "player"
-
-    s.player.level = 10
-    s.player.village_rank = "academy student"
-    before_mp = s.player.mission_points
-    s.handle_line("say graduate")
-    text = "".join(out)
-    out.clear()
-    assert "You receive 50 mission point(s) for graduating the academy." in text
-    assert s.player.mission_points - before_mp == 50
-
-    # --- generic set_rank path ---
-    s.account.staff_level = "implementor"
-    s.handle_line("mset create 71082 a generic promoter perm test mob")
-    out.clear()
-    s.handle_line("mset addprogram 71082 speech promoteme set_rank genin")
-    out.clear()
-    s.handle_line("mset spawn 71082 71080")
-    out.clear()
-    s.account.staff_level = "player"
-
-    s.player.village_rank = "academy student"
-    before_mp2 = s.player.mission_points
-    s.handle_line("say promoteme")
-    out.clear()
-    assert s.player.mission_points - before_mp2 == 50
-
-    # --- no bonus for a different rank ---
-    s.account.staff_level = "implementor"
-    s.handle_line("mset create 71083 a chunin promoter perm test mob")
-    out.clear()
-    s.handle_line("mset addprogram 71083 speech promotechunin set_rank chunin")
-    out.clear()
-    s.handle_line("mset spawn 71083 71080")
-    out.clear()
-    s.account.staff_level = "player"
-
-    before_mp3 = s.player.mission_points
-    s.handle_line("say promotechunin")
-    out.clear()
-    assert s.player.mission_points - before_mp3 == 0
-
+    s.player.village_rank = "student"
+    before = s.player.mission_points
+    kage.award_genin_mission_points_if_applicable(s, s.player, "genin")
+    assert s.player.mission_points - before == 50
+    assert "Genin Exam" in "".join(out)
+    before = s.player.mission_points
+    kage.award_genin_mission_points_if_applicable(s, s.player, "chunin")
+    assert s.player.mission_points == before
     print("GENIN PROMOTION MISSION POINTS BONUS TEST PASSED")
 
 
@@ -18210,7 +18116,7 @@ def test_chunin_exam_forest_of_death():
 
     # A Genin asking the Kage about promotion is redirected to the exam.
     s.player.room_vnum = content._VILLAGE_ROOMS["leaf"]["kage"]
-    s.player.village_rank = "genin"  # this scenario specifically needs a Genin -- chargen's own default is "academy student"
+    s.player.village_rank = "genin"  # this scenario specifically needs a Genin -- chargen's own default is "student"
     result = kage.handle_promotion_request(s.player)
     assert "chunin exam" in result.lower()
     assert s.player.village_rank == "genin"
