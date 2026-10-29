@@ -3525,7 +3525,7 @@ def test_starting_loadout_choice():
             out.clear()
 
         feed_local(name); feed_local("y"); feed_local(pw)
-        feed_local("leaf"); feed_local("taijutsu"); feed_local("none")
+        feed_local("leaf"); feed_local("taijutsu"); feed_local("nara")
 
         # An invalid choice is rejected and the menu is shown again.
         s.handle_line("notarealloadout")
