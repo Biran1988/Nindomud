@@ -29,5 +29,6 @@ def can_read(session, entry: dict) -> bool:
     if not player or player.bloodline_id != "sharingan" or not player.bloodline_mangekyo:
         return False
     eye = roster_key(key) if jutsu else "izanagi"
-    return (eye in (player.mangekyo_eye_1, player.mangekyo_eye_2)
-            and eye in player.mangekyo_eyes_used)
+    # An assigned eye is unlocked immediately. First use is no longer
+    # necessary to read its helpfile.
+    return eye in (player.mangekyo_eye_1, player.mangekyo_eye_2)
