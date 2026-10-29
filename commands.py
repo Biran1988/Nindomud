@@ -9406,6 +9406,7 @@ COMMANDS = {
     "aset": olc.cmd_aset,
     "astat": olc.cmd_astat,
     "mset": olc.cmd_mset,
+    "mobscale": __import__("mob_balance").cmd_mobscale,
     "mpedit": olc.cmd_mpedit,
     "mpstat": olc.cmd_mpstat,
     "mpset": olc.cmd_mpset,
