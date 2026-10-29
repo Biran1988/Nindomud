@@ -54,14 +54,14 @@ import random
 
 # clan_key -> {kekkei_genkai_id: inheritance chance, 0.0-1.0}. A clan
 # not listed here (most of them) has zero bloodline potential.
-# Centralized probabilities for balancing. Sharingan is now easier to
-# inherit, while Byakugan and Shikotsumyaku keep their existing 25%.
+# All Hyuga inherit Byakugan, but their separately rolled Potential/Talent
+# control how far it can ever evolve. Other clans keep their own odds.
 # Every clan key exists in data_clans.CLANS_BY_VILLAGE.
 SHARINGAN_INHERITANCE_CHANCE = 0.50
 SHARINGAN_TRAIT_ROLL_COUNT = 2  # best of two independent rolls per stat
 CLAN_INHERITANCE = {
     "uchiha": {"sharingan": SHARINGAN_INHERITANCE_CHANCE},
-    "hyuga": {"byakugan": 0.25},
+    "hyuga": {"byakugan": 1.00},
     "kaguya": {"shikotsumyaku": 0.25},
 }
 
@@ -229,6 +229,22 @@ def roll_inheritance(clan: str) -> dict:
                 "talent": talent,
             }
     return {"bloodline_id": None, "potential": 0, "talent": 0}
+
+
+def ensure_hyuga_inheritance(player) -> bool:
+    """One-time migration for Hyuga created before guaranteed inheritance.
+
+    Preserve any existing Byakugan roll and mastery; only characters who
+    previously missed the old 25% birthright acquire a fresh private roll.
+    """
+    if getattr(player, "clan", "").lower() != "hyuga" or player.bloodline_id:
+        return False
+    player.bloodline_id = "byakugan"
+    player.bloodline_potential = random.randint(1, 100)
+    player.bloodline_talent = random.randint(1, 100)
+    player.bloodline_awakened = False
+    player.bloodline_mastery = 0
+    return True
 
 
 def attempt_awaken(player) -> dict:
