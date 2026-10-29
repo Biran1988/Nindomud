@@ -152,7 +152,7 @@ JUTSU_SHORTCUTS = {
     'wind rasengan': 'wiras',
     'wood binding roots': 'wbr',
     'wood splinter barrage': 'wsb',
-    'byakugan': 'byak',
+    'byakugan': 'heye',
     'gentle fist: chakra point strike': 'hpoint',
     'gentle fist: tenketsu needle': 'hten',
     'eight trigrams sixteen palms': 'h16',
