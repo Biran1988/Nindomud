@@ -33,11 +33,23 @@ KAGE_NAMES = {
 # now requires passing the Chunin Exam (see chunin_exam.py) instead of
 # a simple Kage request; handle_promotion_request below redirects a
 # Genin who asks about promotion to go take the exam.
+# Rank-based caps on combat levels; Kage is an Implementor appointment.
+RANK_LEVEL_CAPS = {
+    "academy student": 10,
+    "genin": 15,
+    "chunin": 30,
+    "special jonin": 45,
+    "jonin": 60,
+    "elite jonin": 80,
+    "village elder": 95,
+    "kage": 100,
+}
+
 PROMOTION_LADDER: List[Tuple[int, int, str]] = [
-    (40, 50, "special jonin"),
-    (60, 100, "jonin"),
-    (80, 500, "elite jonin"),
-    (95, 1000, "village elder"),
+    (RANK_LEVEL_CAPS["chunin"], 50, "special jonin"),
+    (RANK_LEVEL_CAPS["special jonin"], 100, "jonin"),
+    (RANK_LEVEL_CAPS["jonin"], 500, "elite jonin"),
+    (RANK_LEVEL_CAPS["elite jonin"], 1000, "village elder"),
 ]
 
 RANK_ORDER = ["academy student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
