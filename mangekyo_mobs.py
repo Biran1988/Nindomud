@@ -6,6 +6,7 @@ import time
 import combat
 import data_jutsu
 import data_mangekyo
+import damage_messages
 import jutsu_colors
 import mangekyo
 import mangekyo_discovery
@@ -69,7 +70,18 @@ def resolve(session, key, mob):
         if room:
             room.amaterasu_fire_caster = player.name
             room.amaterasu_fire_expires_at = time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
-        jutsu_colors.send(session, f"&RAmaterasu's black flames engulf {mob.name}!&x")
+        # The flame lands immediately when the hand signs finish; the
+        # separate target burn and lingering room fire tick afterward.
+        damage = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
+        damage = status_effects.reduce_incoming_damage(mob.active_status_effects, damage)
+        mob.health = max(0, mob.health - damage)
+        jutsu_colors.send(
+            session,
+            f"&RAmaterasu's black flames engulf {mob.name} for "
+            f"{damage_messages.describe_damage(damage)} damage on impact!&x",
+        )
+        if mob.health <= 0:
+            combat.handle_mob_defeat(session, mob)
     elif key == "kamui limb removal":
         damage = random.randint(*data_mangekyo.KAMUI_LIMB_REMOVAL_DAMAGE)
         mob.health -= status_effects.reduce_incoming_damage(mob.active_status_effects, damage)
