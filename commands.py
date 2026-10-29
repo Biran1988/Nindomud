@@ -760,9 +760,16 @@ def cmd_finish_downed_yes(session, args: List[str]) -> None:
     downed_player.experience = max(0, downed_player.experience - xp_loss)
     ryo_loss = downed_player.ryo // 2
     downed_player.ryo -= ryo_loss
-    for skill_name in list(downed_player.skill_proficiencies.keys()):
-        current = downed_player.skill_proficiencies[skill_name]
-        downed_player.skill_proficiencies[skill_name] = int(current * 0.75)
+    practiced = set(getattr(downed_player, "practiced_skills", ()))
+    for skill_name, current in list(downed_player.skill_proficiencies.items()):
+        reduced = int(current * 0.75)
+        # Mangekyo's sacrifice reduces proficiency but never erases an
+        # earned skill. Include legacy/special-grant skills with positive
+        # proficiency as well as explicitly teacher-practiced skills.
+        # Unpracticed zero-percent skills must remain at zero.
+        if current > 0 or skill_name in practiced:
+            reduced = max(1, reduced)
+        downed_player.skill_proficiencies[skill_name] = reduced
 
     downed_player.downed_by = None
     downed_player.frozen_until = time.time() + 24 * 60 * 60
