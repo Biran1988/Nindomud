@@ -47,8 +47,9 @@ design conversation:
   out (or an early-end command triggers), both players return, and
   the target is left with very little HP and no stamina.
 
-- Amaterasu: casting inflicts a persistent burn on the target
-  (40-60 dmg/tick, ends on defeat) AND simultaneously
+- Amaterasu: mobs take 40-60 impact damage when the cast lands,
+  followed by a persistent burn on the target (40-60 dmg/tick,
+  ends on defeat). The spell ALSO simultaneously
   sets the room they're standing in on fire too, burning everyone in
   it except the caster (25-40 dmg/tick). If the burned target
   leaves, their own burn travels with them; the room's fire stays
