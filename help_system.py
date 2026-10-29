@@ -4467,7 +4467,7 @@ def cmd_help(session, args: List[str]) -> None:
         _show_help_index(session)
         return
     entry = find_by_keyword(" ".join(args))
-    if not entry or not mangekyo_discovery.can_read(session, entry) or not lightsabers.can_read(session, entry):
+    if not entry or not lightsabers.can_read(session, entry):
         session.send("This helpfile doesn't exist, contact an admin to create it.")
         return
     lines = [f"&Y{entry['title']}&x", "", entry["body"]]
