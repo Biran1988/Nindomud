@@ -506,6 +506,7 @@ class Player:
     # Saved so an interrupted level-25 choice resumes in the Kage room and
     # returns the player to their previous room after choosing.
     element_choice_return_room_vnum: Optional[int] = None
+    element_choice_paper_used: bool = False
     # Elemental Kekkei Genkai and three-nature Kekkei Tota derive from
     # chakra natures; inherited clan bloodlines exclude them.
     chakra_nature_tertiary: Optional[str] = None
