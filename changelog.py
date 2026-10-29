@@ -511,4 +511,5 @@ CHANGELOG = [
     ("15.363", "All successful in-game room, mob and item builder edits, including room links and scripts, now silently queue background world saves. World snapshots are atomic with a prior-generation backup; spawn-bound prototypes refresh too. Reboot drains writes and checkpoints the entire world before restarting, aborting safely if a save fails."),
     ("15.364", "Amaterasu now strikes both players and mobs for 250 initial damage before defenses, then permanently burns targets for 40-60 damage per pulse, continuing after defeat and hospital recovery. Target flames cannot be extinguished; the independent room fire still lasts five minutes."),
     ("15.365", "Fixed immortal IP lookup failing when displaying connections by sending properly formatted pager text. IP and player-name filters work, connection totals are included and staff may view connections while sleeping."),
+    ("15.366", "Mangekyo sacrifice now keeps all practiced skills and any earned proficiency at a minimum of 1% after its 25% mastery penalty. Skills that were never practiced and still have 0% stay at 0%; all other sacrifice penalties are unchanged."),
 ]
