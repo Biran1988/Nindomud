@@ -103,4 +103,4 @@ def disconnect(target):
             if _staff(watcher):
                 _audit(watcher, getattr(getattr(target, "player", None), "name", "unknown"),
                        "stopped observation (disconnect)")
-                watcher.send("&D[SPY]&x Target disconnected; observation stopped.")
+                watcher.send("&D[SPY]&x Target disconnected. Observation stopped.")
