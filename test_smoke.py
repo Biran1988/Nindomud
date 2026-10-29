@@ -3167,6 +3167,9 @@ def test_elemental_jutsu_affinity():
         "tier": 1, "element": "wind",
     }
     s.player.learned_skills.append("Test Wind Jutsu")
+    # This test isolates biome affinity; the teacher first-practice gate
+    # is covered separately and would prevent the temporary spell firing.
+    s.player.practiced_skills.append("Test Wind Jutsu")
     s.player.chakra_nature = "wind"  # the new elemental hard gate (Section 85) requires a real matching nature to cast at all
     try:
         random.seed(1)
