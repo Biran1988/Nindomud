@@ -107,11 +107,10 @@ class KamuiCommandTests(unittest.TestCase):
 
     def test_amaterasu_mob_takes_immediate_damage_and_continues_burning(self):
         import mangekyo_mobs
-        mob = combat.Mob(9003, 9003, "bandit", 10, 300, 300, 1, 0, 0)
+        mob = combat.Mob(9003, 9003, "bandit", 10, 600, 600, 1, 0, 0)
         with patch.dict(combat.MOBS_BY_ROOM, {1: [mob]}, clear=True):
-            with patch("mangekyo_mobs.random.randint", return_value=50):
-                mangekyo_mobs.resolve(self.caster, "amaterasu", mob)
-            self.assertEqual(mob.health, 250)
+            mangekyo_mobs.resolve(self.caster, "amaterasu", mob)
+            self.assertEqual(mob.health, 350)
             self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
             self.assertIn("damage on impact", "".join(self.output))
             # The directly ignited mob continues burning even after moving
@@ -121,20 +120,19 @@ class KamuiCommandTests(unittest.TestCase):
             mob.room_vnum = 2
             with patch("combat.random.randint", return_value=45):
                 combat.tick_all_mob_effects([self.caster])
-            self.assertEqual(mob.health, 205)
+            self.assertEqual(mob.health, 305)
 
     def test_amaterasu_immediate_mob_defeat_uses_normal_kill_handler(self):
         import mangekyo_mobs
         mob = combat.Mob(9004, 9004, "bandit", 10, 30, 30, 1, 0, 0)
         with patch.dict(combat.MOBS_BY_ROOM, {1: [mob]}, clear=True):
-            with patch("mangekyo_mobs.random.randint", return_value=50):
-                with patch.object(combat, "handle_mob_defeat") as defeat:
-                    mangekyo_mobs.resolve(self.caster, "amaterasu", mob)
+            with patch.object(combat, "handle_mob_defeat") as defeat:
+                mangekyo_mobs.resolve(self.caster, "amaterasu", mob)
             self.assertEqual(mob.health, 0)
             defeat.assert_called_once_with(self.caster, mob)
 
     def test_amaterasu_burn_on_mob_can_be_extinguished(self):
-        mob = combat.Mob(9002, 9002, "bandit", 10, 100, 100, 1, 0, 0)
+        mob = combat.Mob(9002, 9002, "bandit", 10, 500, 500, 1, 0, 0)
         self.caster.player.mangekyo_eye_1 = "amaterasu"
         with patch.dict(combat.MOBS_BY_ROOM, {1: [mob]}, clear=True):
             self.caster.handle_line("perform amaterasu bandit")
