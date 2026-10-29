@@ -193,7 +193,8 @@ def process_tailed_beasts(combat_module, world_module, session_module) -> None:
 
             # Unprompted attack on any real player genuinely in this room right now.
             for s in session_module.ACTIVE_SESSIONS:
-                if (s.player and s.player.room_vnum == mob.room_vnum
+                if (s.player and s.state == session_module.State.PLAYING
+                        and s.player.room_vnum == mob.room_vnum
                         and s.player.health > 0 and s.combat_target is not mob):
                     s.combat_target = mob
                     s.player.recently_defeated_timer = 0.0
@@ -304,7 +305,8 @@ def process_rampages(combat_module, session_module) -> None:
     now = time.time()
     for s in list(session_module.ACTIVE_SESSIONS):
         player = s.player
-        if not player or not player.rampage_until:
+        if (not player or s.state != session_module.State.PLAYING
+                or not player.rampage_until):
             continue
         if now >= player.rampage_until:
             player.rampage_until = 0.0
@@ -328,7 +330,9 @@ def process_rampages(combat_module, session_module) -> None:
                     combat_module.handle_mob_defeat(s, mob)
 
         for other in list(session_module.ACTIVE_SESSIONS):
-            if (other is not s and other.player and other.player.room_vnum == player.room_vnum
+            if (other is not s and other.player
+                    and other.state == session_module.State.PLAYING
+                    and other.player.room_vnum == player.room_vnum
                     and other.player.health > 0):
                 combat_module._player_attack_target_once(s, player, other, other.player)
                 if other.player.health <= 0:
