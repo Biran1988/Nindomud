@@ -260,6 +260,7 @@ def _register_mob(vnum, name, level, hp, damage, xp, ryo, *, shop=None, stock=No
         t.update({"act_flags": ["Npc", "Sentinel", "Immortal"],
                   "description": "The pumpkin-headed Mayor invites you to type 'trickortreat' once each day."})
     if vnum == BOSS_VNUM:
+        t["auto_balance"] = False  # Preserve the scripted Pumpkin King encounter.
         t["description"] = "The ancient Pumpkin King reigns over the cursed town. His mask holds terrifying power."
     combat.MOB_TEMPLATES[vnum] = t
     return True
