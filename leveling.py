@@ -183,16 +183,24 @@ def migrate_experience_curve(player: Player) -> bool:
     return True
 
 
+def rank_level_cap(player: Player) -> int:
+    """Return the maximum level permitted by this character's ninja rank."""
+    import kage
+    return min(MAX_LEVEL, kage.RANK_LEVEL_CAPS.get(player.village_rank, MAX_LEVEL))
+
+
 def grant_experience(player: Player, amount: int) -> List[str]:
-    """Apply experience, handle any level-ups, return messages to show the player."""
-    if player.level >= MAX_LEVEL:
+    """Apply combat, skill or job experience without passing the rank cap."""
+    cap = rank_level_cap(player)
+    if player.level >= MAX_LEVEL or player.level >= cap:
         return []
 
     lines = []
     reached_levels = []
-    player.experience += amount
+    # Do not bank enough XP to skip levels after promotion.
+    player.experience = min(player.experience + amount, xp_for_next_level(cap) - 1)
 
-    while player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
+    while player.level < cap and player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
         player.level += 1
         reached_levels.append(player.level)
         health_gain = HEALTH_PER_LEVEL + _constitution_health_bonus(player.constitution)
@@ -277,6 +285,8 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         # the player the level they just earned.
         storage.save_player(player)
 
+    if reached_levels and player.level == cap and cap < MAX_LEVEL:
+        lines.append(f"&YRank cap reached: level {cap}. Earn the next ninja rank to continue leveling.&x")
     for reached_level in reached_levels:
         shinobi_notices.announce_level(player, reached_level)
     return lines
