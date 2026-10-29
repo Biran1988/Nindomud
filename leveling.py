@@ -276,7 +276,7 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         if player.level == 10 and not player.chakra_nature_revealed:
             lines.append("&CYour first chakra nature can now be revealed with 'channel chakra paper'.&x")
         if player.level == 25 and not player.chakra_nature_secondary_revealed:
-            lines.append("&CYou must now choose your second chakra nature in your village Kage chamber.&x")
+            lines.append("&CYour second chakra nature is available. Channel another Sheet of Chakra Paper before choosing in your village Kage chamber.&x")
 
         unlocked = data_jutsu.jutsu_for_class_at_level(player.primary_class, player.level)
         for key in unlocked:
