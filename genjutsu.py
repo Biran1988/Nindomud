@@ -261,13 +261,17 @@ def resolve_cast(session, key, payload):
                     continue
                 chance = max(25, min(85, 70 + (player.level - other.player.level) * 2))
                 if random.randint(1, 100) <= chance:
+                    if status_effects.willpower_resists(other.player):
+                        other.send("&CYour Willpower repels Nehan Shōja before sleep takes hold!&x")
+                        continue
                     duration = status_effects.genjutsu_duration("asleep")
                     if data_kekkei_genkai.sharingan_genjutsu_resistant(other.player):
                         duration = data_kekkei_genkai.reduced_genjutsu_duration(duration)
                     import general_skills
                     duration = general_skills.focused_duration(other.player, duration)
                     duration = signature_moves.duration(player, jutsu, duration)
-                    status_effects.apply_effect(other.player.active_status_effects, "asleep", source=key, duration_override=duration)
+                    status_effects.apply_effect(other.player.active_status_effects, "asleep",
+                                                source=key, duration_override=duration, genjutsu=True)
                     other.send("Illusory feathers drift down; you fall asleep and cannot act!")
                     affected += 1
         jutsu_colors.send(session, f"Nehan Shōja sends {affected} target(s) to sleep; others resist the illusion.")
