@@ -65,6 +65,12 @@ from models import Player
 
 _id_counter = itertools.count(1)
 
+# Universal level limit for killable, holiday/event-spawned enemies. Events
+# explicitly mark their killable prototypes with EVENT_KILLABLE_TAG, allowing
+# ordinary world mobs and noncombat holiday vendors to retain their levels.
+MAX_KILLABLE_EVENT_MOB_LEVEL = 50
+EVENT_KILLABLE_TAG = "_event_killable"
+
 # Sensible SMAUG-ish defaults for any prototype field not explicitly set.
 DEFAULT_MOB_FIELDS = {
     "keywords": [], "short_desc": "", "long_desc": "", "description": "",
@@ -321,7 +327,9 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     if not t.get("enabled", True):
         return None
     max_hp = max(1, dice.roll(t["hit_dice"]))
-    level = t["level"]
+    # A runtime safeguard even if a holiday template gets edited above 50.
+    level = (min(t["level"], MAX_KILLABLE_EVENT_MOB_LEVEL)
+             if t.get(EVENT_KILLABLE_TAG) else t["level"])
     max_chakra = mob_chakra_for_level(level)
     max_stamina = mob_stamina_for_level(level)
     import data_classes
