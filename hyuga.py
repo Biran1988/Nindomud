@@ -24,18 +24,18 @@ STRIKES = (
     ("Eight Trigrams Mountain Crusher", 90, 84, 40, (245, 330), 36, 35, .68, 0),
     ("Eight Trigrams Three Hundred Sixty-One Palms", 95, 118, 65, (345, 470), 55, 65, .82, 80),
     ("Eight Trigrams Twin Lions Crumbling Attack", 95, 94, 48, (285, 405), 42, 45, .80, 75),
-    ("Celestial Eight Trigrams Judgment", 100, 145, 60, (455, 630), 55, 60, .90, 90),
-    ("Silver Wheel Reincarnation Explosion", 100, 185, 45, (550, 745), 30, 45, 1.0, 98),
-    ("Golden Wheel Reincarnation Explosion", 100, 260, 80, (760, 1080), 60, 65, 1.0, 98),
+    ("Celestial Eight Trigrams Judgment", 100, 145, 60, (455, 630), 55, 60, .90, 95),
+    ("Silver Wheel Reincarnation Explosion", 100, 185, 45, (550, 745), 30, 45, 1.0, 100),
+    ("Golden Wheel Reincarnation Explosion", 100, 260, 80, (760, 1080), 60, 65, 1.0, 100),
 )
 # name, level, chakra cast, stamina cast, cooldown, mastery, potential, effect
 MODES = (
     ("Byakugan", 50, 8, 0, 2, 0, 0, "byakugan"),
     ("Eight Trigrams Palms Revolving Heaven", 70, 42, 26, 30, .30, 0, "rotation"),
     ("Protecting Eight Trigrams Sixty-Four Palms", 75, 55, 30, 40, .48, 0, "protecting"),
-    ("Celestial Byakugan", 100, 95, 20, 30, .90, 90, "celestial"),
-    ("Fate Sight", 100, 75, 20, 55, .90, 90, "fate"),
-    ("Tenseigan Chakra Mode", 100, 180, 30, 90, 1.0, 98, "tenseigan"),
+    ("Celestial Byakugan", 100, 95, 20, 30, .90, 95, "celestial"),
+    ("Fate Sight", 100, 75, 20, 55, .90, 95, "fate"),
+    ("Tenseigan Chakra Mode", 100, 180, 30, 90, 1.0, 100, "tenseigan"),
 )
 # Passive vision only applies while a real toggled eye is active.
 MASTER_GAIN_PER_TALENT_POINT = .00020
@@ -135,7 +135,7 @@ def accuracy(player):
 def dodge(player):
     if not eligible(player) or not player.byakugan_active:
         return 0
-    return 3 + int(_ratio(player)*7) + (9 if player.celestial_byakugan_active else 0)
+    return 3 + int(_ratio(player)*7) + (9 if player.celestial_byakugan_active else 0) + (10 if player.tenseigan_active else 0) + (12 if "hyuga_fate" in player.active_status_effects else 0)
 
 
 def tick_upkeep(session):
@@ -145,6 +145,8 @@ def tick_upkeep(session):
     if not eligible(player):
         player.byakugan_active = player.celestial_byakugan_active = player.tenseigan_active = False
         return
+    if player.tenseigan_active and "hyuga_tenseigan" not in player.active_status_effects:
+        player.tenseigan_active = False
     cost = 2 + (7 if player.celestial_byakugan_active else 0) + (12 if player.tenseigan_active else 0)
     if player.chakra < cost:
         player.byakugan_active = player.celestial_byakugan_active = player.tenseigan_active = False
@@ -237,6 +239,9 @@ def cast(session, key, args):
     if not eligible(player):
         session.send("You haven't learned that skill or jutsu.")
         return
+    if not unlocked(player, key):
+        session.send("You haven\'t unlocked that technique.")
+        return
     sync(player)
     if effect == "byakugan":
         if args and args[0].lower() == "scan":
@@ -276,7 +281,7 @@ def cast(session, key, args):
             player.tenseigan_active = False
             session.send("&CYour Tenseigan chakra cloak fades.&x")
             return
-    if skill_training.needs_first_practice(player, spec["display_name"]) and not combat._staff_testing_mangekyo(player):
+    if effect != "byakugan" and skill_training.needs_first_practice(player, spec["display_name"]) and not combat._staff_testing_mangekyo(player):
         session.send(f"Practice {spec['display_name']} with a teacher at least once before using it.")
         return
     if combat._is_action_blocked(player) or status_effects.has_effect(player.active_status_effects, "silenced"):
