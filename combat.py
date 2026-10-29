@@ -883,6 +883,12 @@ def resolve_illusion_walk_cast(session, target_session, grow_handsigns: bool = T
         session.send("&DYour target is no longer there!&x")
         return
     import data_kekkei_genkai
+    if status_effects.willpower_resists(target_session.player):
+        session.send(f"&C{target_session.player.name}'s Willpower rejects Illusion Walk!&x")
+        target_session.send("&CYour trained Willpower sees through the false path!&x")
+        if grow_handsigns:
+            grow_skill_from_usage(player, "Handsigns", session=session)
+        return
     if data_kekkei_genkai.sharingan_genjutsu_resistant(target_session.player):
         session.send(f"&Y{target_session.player.name}'s eyes see through your illusion completely!&x")
         target_session.send(f"&Y{player.name} tries to trap you in a genjutsu, but your Sharingan sees through it!&x")
@@ -1228,6 +1234,13 @@ def tick_effects_pulse(session) -> None:
         loss = min(player.stamina, status_effects.off_balance_stamina_loss())
         player.stamina -= loss
         session.send(f"&YBeing off balance saps {loss} stamina!&x")
+
+    # A trained mind can break an ordinary Genjutsu after it lands,
+    # including sleep/paralysis that would otherwise prevent acting.
+    # Run before decrementing duration; physical status effects and
+    # Mangekyo special states are not eligible.
+    for name in status_effects.break_genjutsu_effects(player.active_status_effects, player):
+        session.send(f"&CYour Willpower tears through the {status_effects.EFFECT_DEFS[name]['display_name']} illusion!&x")
 
     expired = status_effects.tick_effects(player.active_status_effects)
     for name in expired:
@@ -3028,18 +3041,25 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
 
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
         import data_kekkei_genkai
-        effect_duration = (status_effects.genjutsu_duration(jutsu["effect"])
-                           if jutsu["class_requirement"] == "genjutsu"
-                           else status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"])
-        if jutsu["class_requirement"] == "genjutsu" and data_kekkei_genkai.sharingan_genjutsu_resistant(target):
-            effect_duration = data_kekkei_genkai.reduced_genjutsu_duration(effect_duration)
-        if jutsu["class_requirement"] == "genjutsu":
-            import general_skills
-            effect_duration = general_skills.focused_duration(target, effect_duration)
-        effect_duration = signature_moves.duration(player, jutsu, effect_duration)
-        status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key, duration_override=effect_duration)
-        jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
-        jutsu_colors.send(session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
+        resisted_by_will = (jutsu["class_requirement"] == "genjutsu"
+                            and status_effects.willpower_resists(target))
+        if resisted_by_will:
+            jutsu_colors.send(target_session, "&CYour Willpower fights off the incoming Genjutsu!&x")
+            jutsu_colors.send(session, f"&C{target.name} resists your Genjutsu through sheer Willpower.&x")
+        else:
+            effect_duration = (status_effects.genjutsu_duration(jutsu["effect"])
+                               if jutsu["class_requirement"] == "genjutsu"
+                               else status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"])
+            if jutsu["class_requirement"] == "genjutsu" and data_kekkei_genkai.sharingan_genjutsu_resistant(target):
+                effect_duration = data_kekkei_genkai.reduced_genjutsu_duration(effect_duration)
+            if jutsu["class_requirement"] == "genjutsu":
+                import general_skills
+                effect_duration = general_skills.focused_duration(target, effect_duration)
+            effect_duration = signature_moves.duration(player, jutsu, effect_duration)
+            status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key,
+                                             duration_override=effect_duration, genjutsu=jutsu["class_requirement"] == "genjutsu")
+            jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
+            jutsu_colors.send(session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
     for effect in sevenfold_effects:
         duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"])
         status_effects.apply_effect(target.active_status_effects, effect, source=jutsu_key,
