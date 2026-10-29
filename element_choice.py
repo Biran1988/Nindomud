@@ -34,7 +34,9 @@ def begin(session, show_prompt=True) -> bool:
     player = session.player
     if session.account and session.account.staff_level != "player":
         return False
-    if not pending(player):
+    if not pending(player) or not player.chakra_nature_revealed:
+        return False
+    if not (player.element_choice_paper_used or player.element_choice_return_room_vnum is not None):
         return False
     kage_vnum = content._VILLAGE_ROOMS.get(player.village, {}).get("kage")
     room = world.WORLD.get(kage_vnum) if kage_vnum is not None else None
@@ -58,7 +60,8 @@ def begin(session, show_prompt=True) -> bool:
     if first_time or moved:
         storage.save_player(player)
         session.send(f"&CYou are brought to {room.name} to choose your second chakra nature. You are protected here.&x")
-        prompt(session)
+        if show_prompt:
+            prompt(session)
     return True
 
 
