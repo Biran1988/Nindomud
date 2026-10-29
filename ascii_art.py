@@ -58,7 +58,7 @@ def _color_glyph_line(village: str, line: str) -> str:
 
 
 def five_villages_banner() -> str:
-    lines = ["&[223]               THE FIVE GREAT SHINOBI VILLAGES&x", ""]
+    lines = ["&[223]" + "THE FIVE GREAT SHINOBI VILLAGES".center(5 * GLYPH_WIDTH + 4 * len(COLUMN_GAP)) + "&x", ""]
     for row in range(4):
         parts = [
             _color_glyph_line(village, GLYPHS[village][row].center(GLYPH_WIDTH))
