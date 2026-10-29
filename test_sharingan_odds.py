@@ -50,17 +50,30 @@ class SharinganOddsTests(unittest.TestCase):
             self.assertFalse(kkg.attempt_automatic_awakening(p)["awakened_this_call"])
         self.assertFalse(p.bloodline_awakened)
 
-    def test_other_bloodlines_keep_level_50_and_one_in_300_chance(self):
-        p = Player("Byaku", "Byaku", level=25)
+    def test_hyuga_awakens_from_25_at_one_in_300_per_combat_round(self):
+        p = Player("Byaku", "Byaku", level=24)
         p.bloodline_id = "byakugan"
         with patch.object(kkg.random, "random", return_value=0):
             self.assertFalse(kkg.attempt_automatic_awakening(p)["rolled"])
-        p.level = 50
+        p.level = 25
         with patch.object(kkg.random, "random", return_value=0.005):
             self.assertFalse(kkg.attempt_automatic_awakening(p)["awakened_this_call"])
         with patch.object(kkg.random, "random", return_value=0.003):
             self.assertTrue(kkg.attempt_automatic_awakening(p)["awakened_this_call"])
         self.assertEqual(p.bloodline_tomoe, 0)
+        self.assertFalse(kkg.attempt_automatic_awakening(p)["rolled"])
+
+    def test_other_non_eye_bloodline_still_requires_level_50(self):
+        p = Player("Kimimaro", "Kimimaro", level=25)
+        p.bloodline_id = "shikotsumyaku"
+        with patch.object(kkg.random, "random", return_value=0):
+            self.assertFalse(kkg.attempt_automatic_awakening(p)["rolled"])
+        p.level = 49
+        with patch.object(kkg.random, "random", return_value=0):
+            self.assertFalse(kkg.attempt_automatic_awakening(p)["rolled"])
+        p.level = 50
+        with patch.object(kkg.random, "random", return_value=0.003):
+            self.assertTrue(kkg.attempt_automatic_awakening(p)["awakened_this_call"])
 
     def test_high_potential_unlock_rules_are_unchanged(self):
         self.assertEqual(kkg.max_tomoe_for_potential(79), 5)
