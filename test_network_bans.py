@@ -143,13 +143,37 @@ class NetworkBanTests(unittest.TestCase):
         login.player = None
         with patch.object(session_module, "ACTIVE_SESSIONS", [target, login]):
             bans.cmd_ip(self.actor, [])
-            rows = "\n".join(self.actor.send_paginated.call_args.args[0])
+            rows = self.actor.send_paginated.call_args.args[0]
+            self.assertIsInstance(rows, str)
             self.assertIn("Naruto", rows)
             self.assertIn("[logging in]", rows)
             self.assertIn("1.0.0.1", rows)
             self.assertIn("Nigeria (NG)", rows)
             bans.cmd_ip(self.actor, ["naruto"])
-            self.assertEqual(len(self.actor.send_paginated.call_args.args[0]), 1)
+            filtered = self.actor.send_paginated.call_args.args[0].splitlines()
+            self.assertEqual(len(filtered), 3)  # header, one connection, footer
+            self.assertIn("Naruto", filtered[1])
+
+    def test_ip_dispatch_through_real_session_with_pager(self):
+        from models import Account, Player
+        output = []
+        actor = session_module.Session(
+            output.append, lambda: None, connection_ip="198.51.100.10",
+            connection_port=4512, connection_country="US",
+        )
+        actor.player = Player("Administrator", "Administrator")
+        actor.account = Account("Administrator", "", "", staff_level="implementor")
+        actor.state = session_module.State.PLAYING
+        other = fake("Naruto", ip="1.0.0.1", country="AU")
+        with patch.object(session_module, "ACTIVE_SESSIONS", [actor, other]):
+            commands.dispatch_line(actor, "IP")
+        result = "".join(output)
+        self.assertIn("Administrator", result)
+        self.assertIn("Naruto", result)
+        self.assertIn("198.51.100.10", result)
+        self.assertIn("1.0.0.1", result)
+        self.assertIn("2 connection(s)", result)
+        self.assertNotIn("Something went wrong", result)
 
     def test_bad_policy_never_becomes_an_empty_ban_list(self):
         bans._path().write_text("{broken")
