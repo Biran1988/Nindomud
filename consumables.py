@@ -198,7 +198,12 @@ def consume(session, verb: str, query: str) -> None:
         session.send(f"You can't {verb} {match}.")
         return
 
-    expected_category = VERB_CATEGORY[verb]
+    # Medicine may be consumed through either 'eat' or 'use'. Both
+    # verbs must reach the SAME medical path so healing remains timed,
+    # antidotes keep their poison requirement, and one item is used.
+    # Food remains eat-only; drinks remain drink-only.
+    expected_category = ("medical" if verb == "eat" and data["category"] == "medical"
+                         else VERB_CATEGORY[verb])
     if data["category"] != expected_category:
         right_verb = next(v for v, cat in VERB_CATEGORY.items() if cat == data["category"])
         session.send(f"You can't {verb} that. Try '{right_verb}' instead.")
