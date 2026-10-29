@@ -3498,8 +3498,8 @@ def test_login_ascii_art():
     out.clear()
     text = re.sub(r"\x1b\[[0-9;]*m", "", raw_text)
     assert "KONOHA" in text and "KUMO" in text
-    assert "By what name shall we call you?" in text
-    assert text.index("Owner:") < text.index("By what name")  # banner/footer come before the prompt
+    assert "Enter your shinobi name:" in text
+    assert text.index("Owner:") < text.index("Enter your shinobi name:")  # banner/footer come before the prompt
 
     print("LOGIN ASCII ART TEST PASSED")
 
