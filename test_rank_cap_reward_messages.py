@@ -15,7 +15,7 @@ class RankCappedRewardMessageTests(unittest.TestCase):
     def setUp(self):
         self.player = Player(
             "NoXpTester", "NoXpTester", village="leaf", village_rank="genin",
-            level=15, experience=leveling.cumulative_xp_for_level(15),
+            level=35, experience=leveling.cumulative_xp_for_level(35),
         )
         self.starting_xp = self.player.experience
 
