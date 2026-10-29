@@ -1,4 +1,4 @@
-"""Students are unranked; the first official ninja rank is earned at the Genin Exam."""
+"""Student is the starting rank, granted immediately; Genin is earned by exam."""
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
@@ -12,11 +12,11 @@ from models import Player
 
 
 class StudentStatusTests(unittest.TestCase):
-    def test_genin_is_first_official_rank_and_student_is_unranked(self):
-        self.assertEqual(kage.RANK_ORDER[0], "genin")
-        self.assertNotIn("student", kage.RANK_ORDER)
-        self.assertNotIn("student", kage.RANK_LEVEL_CAPS)
-        self.assertEqual(data_headbands.RANK_ORDER[0], "genin")
+    def test_student_is_assigned_as_first_rank_at_creation(self):
+        self.assertEqual(kage.RANK_ORDER[0], "student")
+        self.assertIn("student", kage.RANK_ORDER)
+        self.assertEqual(kage.RANK_LEVEL_CAPS["student"], 10)
+        self.assertEqual(data_headbands.RANK_ORDER[0], "student")
         student = Player("Aspirant", "Aspirant")
         self.assertEqual(student.village_rank, "student")
         self.assertEqual(leveling.rank_level_cap(student), 10)

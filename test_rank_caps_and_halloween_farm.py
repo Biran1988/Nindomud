@@ -15,17 +15,17 @@ from models import Player
 class RankCapTests(unittest.TestCase):
     def test_rank_caps_cover_every_ninja_rank(self):
         self.assertEqual(kage.RANK_LEVEL_CAPS, {
-            "genin": 15, "chunin": 80,
+            "student": 10, "genin": 15, "chunin": 80,
             "special jonin": 135, "jonin": 200, "elite jonin": 250,
             "village elder": 250, "kage": 250,
         })
         self.assertEqual([level for level, _, _ in kage.PROMOTION_LADDER],
                          [80, 135, 200])
 
-    def test_student_is_a_trainee_not_a_ninja_rank(self):
-        self.assertEqual(kage.RANK_ORDER[0], "genin")
-        self.assertNotIn("student", kage.RANK_ORDER)
-        self.assertNotIn("student", kage.RANK_LEVEL_CAPS)
+    def test_student_is_first_rank_at_creation(self):
+        self.assertEqual(kage.RANK_ORDER[0], "student")
+        self.assertIn("student", kage.RANK_ORDER)
+        self.assertIn("student", kage.RANK_LEVEL_CAPS)
         player = Player("Beginner", "Beginner")
         self.assertEqual(player.village_rank, "student")
         self.assertEqual(leveling.rank_level_cap(player), 10)
