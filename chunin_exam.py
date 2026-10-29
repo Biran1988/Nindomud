@@ -11,11 +11,10 @@ exam and taking theirs. Reaching the tower with both scrolls completes
 the exam and promotes the player to Chunin on the spot.
 
 The entry gate itself is UNCHANGED from the old Genin -> Chunin
-requirement (level 10, 25 completed missions) -- this doesn't add a
+requirement (level 15, 25 completed missions) -- this doesn't add a
 new, separate gate, it changes what happens once you're qualified.
-Deliberately NOT level-capped beyond that minimum: a genin who
-qualified a while ago and is now higher level can still take the exam
-at any time, same as canon doesn't retroactively disqualify anyone.
+Genin are capped at 15 while awaiting promotion; older characters
+who were already above that cap can still take the exam.
 
 Every other rank (Special Jonin through Village Elder) is untouched --
 still handled by kage.handle_promotion_request exactly as before; only
@@ -47,7 +46,7 @@ EARTH_GUARDIAN_VNUM = 6901
 # (level, min_completed_missions) -- kept here as the single source of
 # truth now that kage.py's own ladder no longer has a Chunin entry, so
 # a future balance change only has to touch one place.
-MIN_LEVEL = 10
+MIN_LEVEL = 15  # Genin cap: reach it before attempting the Chunin exam.
 MIN_COMPLETED_MISSIONS = 25
 
 
