@@ -4,8 +4,8 @@
     "train"
   ],
   "title": "Train",
-  "body": "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n\nDescription: Spends a training point to raise one attribute by one point, up to the cap of 75. See 'help attributes' for what each attribute does.\n\nDate: 2026-08-17",
+  "body": "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n\nDescription: Spends one training point to raise any of the nine attributes by one, to a maximum of 75. Perception (train per), Willpower (train wil), and Chakra Control (train cc or train chakra control) are all trainable; Willpower now protects against ordinary Genjutsu, Perception extends Scan, and Chakra Control increases maximum Chakra and efficiency. See 'help attributes' for the details.\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
