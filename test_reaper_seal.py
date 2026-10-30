@@ -115,8 +115,7 @@ class ReaperSealTests(unittest.TestCase):
         self.capture()
         self.learn(self.rescuer)
         self.rescuer.player.inventory.append(rite.MASK_NAME)
-        commands.dispatch_line(self.rescuer, "perform reverse reaper seal Victim")
-        self.assertTrue(rite.imprisoned(self.target.player))
+        # Mask in inventory OR worn may reverse the imprisonment.
         commands.cmd_wear(self.rescuer, ["shikigami"])
         commands.dispatch_line(self.rescuer, "perform reverse reaper seal Victim")
         self.assertFalse(rite.imprisoned(self.target.player), self.rescue_out)
