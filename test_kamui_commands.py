@@ -287,7 +287,7 @@ class KamuiCommandTests(unittest.TestCase):
             self.assertAlmostEqual(expires - __import__("time").time(), 300, delta=3)
             self.assertEqual(Player.from_dict(self.target.player.to_dict()).mangekyo_amaterasu_expires_at, expires)
             with patch.object(session_module, "ACTIVE_SESSIONS", [self.caster, self.target]):
-                with patch("mangekyo.time.time", return_value=expires - 1), patch("mangekyo.random.randint", return_value=40):
+                with patch("mangekyo.time.time", return_value=expires - 1), patch("random.randint", return_value=40):
                     mangekyo.process_amaterasu_player_burns(combat, session_module)
                 self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
                 with patch("mangekyo.time.time", return_value=expires + 1):
