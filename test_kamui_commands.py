@@ -46,6 +46,72 @@ class KamuiCommandTests(unittest.TestCase):
         output.clear()
         return session, output
 
+    def test_caster_closes_from_outside_and_releases_player_immediately(self):
+        import storage
+        self.caster.handle_line("perform kamui Target")
+        vnum = self.target.player.room_vnum
+        self.assertNotEqual(vnum, self.caster.player.room_vnum)
+        self.assertFalse(self.caster.player.kamui_pocket_dimension_active)
+        before_chakra = self.caster.player.chakra
+
+        self.caster.handle_line("perform kamui close")
+
+        self.assertEqual(self.caster.player.room_vnum, 1)
+        self.assertEqual(self.target.player.room_vnum, 1)
+        self.assertEqual(self.caster.player.chakra, before_chakra)
+        self.assertNotIn(vnum, world.WORLD.rooms)
+        self.assertIsNone(self.caster.player.kamui_pocket_dimension_vnum)
+        self.assertIsNone(self.caster.player.kamui_return_room_vnum)
+        self.assertIsNone(self.target.player.kamui_return_room_vnum)
+        self.assertIn("1 occupant(s) return", "".join(self.output))
+        self.assertIn("return to reality", "".join(self.target_output))
+        self.assertEqual(storage.load_player("Target").room_vnum, 1)
+        self.assertIsNone(storage.load_player("Caster").kamui_pocket_dimension_vnum)
+
+    def test_collapse_alias_releases_mob_from_outside(self):
+        mob = combat.Mob(9005, 9005, "bandit", 10, 100, 100, 1, 0, 0)
+        with patch.dict(combat.MOBS_BY_ROOM, {1: [mob]}, clear=True):
+            self.caster.handle_line("perform kamui bandit")
+            vnum = mob.room_vnum
+            self.assertNotEqual(vnum, 1)
+            self.caster.handle_line("perform kamui pocket dimension collapse")
+            self.assertEqual(mob.room_vnum, 1)
+            self.assertIsNone(mob.kamui_return_room_vnum)
+            self.assertIn(mob, combat.MOBS_BY_ROOM[1])
+            self.assertNotIn(vnum, world.WORLD.rooms)
+
+    def test_close_from_inside_and_second_close_fails_safely(self):
+        self.caster.handle_line("perform kamui self")
+        vnum = self.caster.player.room_vnum
+        self.caster.handle_line("kpocket dismiss")
+        self.assertEqual(self.caster.player.room_vnum, 1)
+        self.assertNotIn(vnum, world.WORLD.rooms)
+        self.output.clear()
+        self.caster.handle_line("perform kamui close")
+        self.assertIn("do not have an open", "".join(self.output))
+
+    def test_other_player_cannot_close_someone_elses_dimension(self):
+        self.caster.handle_line("perform kamui Target")
+        vnum = self.target.player.room_vnum
+        outsider, out = self.make_session("Outsider", 1, eye=True)
+        outsider.handle_line("perform kamui close")
+        self.assertIn("do not have an open", "".join(out))
+        self.assertIn(vnum, world.WORLD.rooms)
+        self.assertEqual(self.target.player.room_vnum, vnum)
+
+    def test_close_one_dimension_does_not_affect_other_caster(self):
+        other, _ = self.make_session("OtherCaster", 2, eye=True)
+        other.handle_line("perform kamui self")
+        other_room = other.player.room_vnum
+        self.caster.handle_line("perform kamui Target")
+        mine = self.target.player.room_vnum
+        self.caster.handle_line("perform kamui close")
+        self.assertNotIn(mine, world.WORLD.rooms)
+        self.assertEqual(self.target.player.room_vnum, 1)
+        self.assertEqual(other.player.room_vnum, other_room)
+        self.assertIn(other_room, world.WORLD.rooms)
+        self.assertEqual(other.player.kamui_pocket_dimension_vnum, other_room)
+
     def test_all_three_casts_accept_displayed_name(self):
         self.caster.handle_line("perform kamui: intangibility")
         self.assertEqual(self.caster.player.kamui_intangibility_rounds_left, 3)
