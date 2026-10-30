@@ -23,6 +23,9 @@ class Account:
     forced_reset: bool = False           # e.g. after staff setpassword
     failed_attempts: int = 0
     locked_until: float = 0.0
+    # Separate from wrong-password lockout: persists the one-week
+    # Mangekyo same-IP abuse suspension across reconnects/reboots.
+    mangekyo_lock_until: float = 0.0
     previous_hash: Optional[List[str]] = None  # [salt_hex, hash_hex] of prior pw
 
     def to_dict(self) -> dict:
