@@ -2385,7 +2385,7 @@ def resolve_pulse(session) -> None:
     for this pulse (server.py's pulse_loop does this before calling here;
     tests simulating pulses should do the same)."""
     player = session.player
-    if player.reaper_seal_id:
+    if player.reaper_seal_id or player.izanami_trapped:
         session.combat_target = None
         return
     import element_choice
@@ -3704,6 +3704,12 @@ def resolve_pvp_pulse(session) -> None:
     player = session.player
     target_session = session.pvp_target
     if target_session is None:
+        return
+    if player.izanami_trapped or (getattr(target_session, "player", None)
+                                   and target_session.player.izanami_trapped):
+        session.pvp_target = None
+        if target_session.pvp_target is session:
+            target_session.pvp_target = None
         return
     if _is_linkdead(session) or _is_linkdead(target_session):
         session.pvp_target = None
