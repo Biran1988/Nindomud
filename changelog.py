@@ -523,4 +523,5 @@ CHANGELOG = [
     ("15.375", "Amaterasu on ordinary players now ends on death or after five real-time minutes, including offline time. Immortals are immune to attached and room flames, while separate room fire lasts five minutes. Mobs continue burning until defeated."),
     ("15.376", "Whirlpool Uzumaki level-120 Black Flame Suppression Seal can extinguish Amaterasu on one player, the current room, or all burning players in the room. Available to authenticated immortals for testing regardless of clan or village."),
     ("15.377", "Every Byakugan art is now general-use across all four character classes for eligible Hyuuga. Immortals may test Sharingan, Byakugan, Whirlpool seal arts and both Six Paths bloodlines without permanently changing their inheritance."),
+    ("15.378", "Tsukuyomi torture attacks now deal five times their previous Health damage: stab 150-250, impale 300-450, burn 100-200, crush 400-600. Burn drains 70-110 Stamina and Unmake drains 100-150 Chakra and Stamina; the ordeal length and Crush early-end chance are unchanged."),
 ]
