@@ -28,6 +28,8 @@ def break_camouflage(session):
         upkeep_reports.stop_maintaining(session.player, "Camouflage")
         session.player._camouflage_next_upkeep_at = 0.0
         session.send("&YCombat reveals you, breaking your camouflage.&x")
+        import room_actions
+        room_actions.emit(session, f"{session.player.name} is revealed as their camouflage breaks!")
 
 
 def activate(session, key, words):
@@ -41,12 +43,16 @@ def activate(session, key, words):
         return
     mode = words[0].lower() if words else "toggle"
     if mode == "off" or mode == "toggle" and active(player, effect):
+        was_active = active(player, effect)
         player.active_status_effects.pop(effect, None)
         import upkeep_reports
         upkeep_reports.stop_maintaining(player, info["display_name"])
         if key == "camouflage":
             player._camouflage_next_upkeep_at = 0.0
         session.send(f"{info['display_name']} is off.")
+        if key == "camouflage" and was_active:
+            import room_actions
+            room_actions.emit(session, f"{player.name} emerges from camouflage.")
         return
     if active(player, effect):
         session.send(f"{info['display_name']} is already active. Use '{key} off' to release it.")
@@ -83,6 +89,10 @@ def activate(session, key, words):
     upkeep_reports.maintain_skill(player, info["display_name"], session=session)
     if key == "camouflage":
         player._camouflage_next_upkeep_at = now + CAMOUFLAGE_UPKEEP_SECONDS
+        # Witnesses see the initial fading; subsequent actions stay hidden
+        # unless they actively have Sensory Detect.
+        import room_actions
+        room_actions.emit(session, f"{player.name} blends into the surroundings and vanishes from view.", reveal_transition=True)
     descriptions = {
         "camouflage": "You blend into your surroundings. Upkeep: 1 Chakra every 5 seconds. Combat reveals you.",
         "silent movement": "You move without ordinary travel messages; each step costs 2 extra Stamina.",
@@ -108,6 +118,8 @@ def upkeep(session):
                 upkeep_reports.stop_maintaining(player, "Camouflage")
                 player._camouflage_next_upkeep_at = 0.0
                 session.send("Your Chakra runs out; Camouflage ends and you become visible.")
+                import room_actions
+                room_actions.emit(session, f"{player.name} emerges from camouflage as their chakra fades.")
             else:
                 player.chakra -= CAMOUFLAGE_UPKEEP_CHAKRA
                 player._camouflage_next_upkeep_at = now + CAMOUFLAGE_UPKEEP_SECONDS
