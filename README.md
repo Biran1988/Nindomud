@@ -50,6 +50,17 @@ publishes a downloadable `Nindo_mud` ZIP artifact when its run succeeds.
 Use a freshly built archive instead of any older archive checked into the
 repository. Never overwrite the live server's `data/` directory.
 
+## Room-level player interactions
+
+Nearby players can now witness successful actions by other ninja: eating,
+drinking, resting, sleeping, waking, dropping/picking up items and Ryo,
+using medicine, giving objects, equipping gear, practicing, training, and
+fighting (including melee damage and visible offensive jutsu). `look`
+also shows when visible players are sleeping, resting, or actively fighting.
+Camouflage visibly fades into place, but hides subsequent actions from
+normal observers; Sensory Detect can spot them. Immortal `wizinvis` never
+leaks through action announcements. See `docs/ROOM_INTERACTIONS.md`.
+
 ## Current release
 
 Version 15.331 includes **two new gameplay changes**: each real 1%
