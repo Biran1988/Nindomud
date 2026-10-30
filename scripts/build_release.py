@@ -10,6 +10,23 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def assert_data_safe(archive: Path) -> None:
+    """HARD RELEASE RULE: a drag-and-drop ZIP must never contain /data.
+
+    Also reject absolute/traversal paths and Windows separators, so no ZIP
+    member can escape the installation directory and touch runtime saves.
+    The rule applies even when future packaging code changes.
+    """
+    with zipfile.ZipFile(archive) as package:
+        for entry in package.infolist():
+            name = entry.filename
+            parts = name.rstrip("/").split("/")
+            if (not name or name.startswith(("/", "\\"))
+                    or "\\" in name or any(part in ("", ".", "..") for part in parts)
+                    or ":" in parts[0] or any(part.casefold() == "data" for part in parts)):
+                raise ValueError(f"Unsafe release ZIP entry (would risk saved data): {name!r}")
+
+
 def build(output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
     source_files = sorted(ROOT.glob("*.py"))
@@ -47,7 +64,7 @@ def build(output: Path) -> None:
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(ROOT.rglob("*")):
             relative = path.relative_to(ROOT)
-            if not path.is_file() or any(part in {".git", "data", "__pycache__", ".pytest_cache"} or part.startswith("data_test") for part in relative.parts):
+            if not path.is_file() or any(part.casefold() in {".git", "data", "__pycache__", ".pytest_cache"} or part.casefold().startswith("data_test") for part in relative.parts):
                 continue
             if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"} and relative.as_posix() != "geoip/country.csv.gz":
                 continue
@@ -62,6 +79,8 @@ def build(output: Path) -> None:
             name = help_system._slug(entry["primary_keyword"]) + ".json"
             zf.writestr("helpfiles/" + name, json.dumps(entry, indent=2) + "\n")
 
+    # Never publish an archive capable of overwriting the live data/ tree.
+    assert_data_safe(archive)
 
 
 if __name__ == "__main__":
