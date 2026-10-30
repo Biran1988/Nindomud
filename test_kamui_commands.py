@@ -227,7 +227,7 @@ class KamuiCommandTests(unittest.TestCase):
                 self.assertFalse(self.target.player.izanami_trapped)
                 self.target.player.room_vnum = 1
 
-    def test_amaterasu_player_takes_250_immediately_and_stays_burning_after_defeat(self):
+    def test_amaterasu_player_takes_250_immediately_and_flames_end_on_defeat(self):
         self.caster.player.mangekyo_eye_1 = "amaterasu"
         self.target.player.maximum_health = 800
         self.target.player.health = 800
@@ -242,18 +242,33 @@ class KamuiCommandTests(unittest.TestCase):
             self.assertAlmostEqual(room.amaterasu_fire_expires_at - time.time(), 5 * 60, delta=2)
             self.target.player.health = 0
             combat.handle_player_defeat(self.target)
-            self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
-            self.assertEqual(self.target.player.mangekyo_amaterasu_caster, "Caster")
+            self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
+            self.assertIsNone(self.target.player.mangekyo_amaterasu_caster)
             before = self.target.player.health
             import session as session_module
             with patch("random.randint", return_value=50):
                 mangekyo.process_amaterasu_player_burns(combat, session_module)
-            self.assertEqual(self.target.player.health, before - 50)
+            self.assertEqual(self.target.player.health, before)
         self.assertTrue(room.amaterasu_fire_caster)
         with patch("mangekyo.time.time", return_value=room.amaterasu_fire_expires_at + 1):
             mangekyo.process_amaterasu_room_fires(combat, world)
         self.assertIsNone(room.amaterasu_fire_caster)
-        self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
+        self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
+
+    def test_amaterasu_mob_flaming_stops_after_death(self):
+        import mangekyo_mobs
+        mob = combat.Mob(9005, 9005, "bandit", 10, 600, 600, 1, 0, 0)
+        with patch.dict(combat.MOBS_BY_ROOM, {1: [mob]}, clear=True):
+            mangekyo_mobs.resolve(self.caster, "amaterasu", mob)
+            self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
+            mob.health = 0
+            with patch.object(combat, "handle_mob_defeat", wraps=combat.handle_mob_defeat):
+                combat.handle_mob_defeat(self.caster, mob)
+            self.assertIsNone(mob.mangekyo_amaterasu_caster)
+            health = mob.health
+            with patch("combat.random.randint", return_value=50):
+                combat.tick_all_mob_effects([self.caster])
+            self.assertEqual(mob.health, health)
 
     def test_amaterasu_initial_pvp_hit_uses_defenses(self):
         self.target.player.maximum_health = 800
