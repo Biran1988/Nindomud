@@ -80,8 +80,13 @@ def imprisoned(player):
     return bool(getattr(player, "reaper_seal_id", ""))
 
 
+def _immortal(session):
+    import combat
+    return combat.is_immortal_immune_to_defeat(session)
+
+
 def blocks_command(session, verb):
-    if session.player and imprisoned(session.player) and verb.lower() not in SAFE_COMMANDS:
+    if session.player and imprisoned(session.player) and not _immortal(session) and verb.lower() not in SAFE_COMMANDS and verb.lower() != "perform":
         session.send("The Reaper's seal binds your soul. You cannot act or leave this place.")
         return True
     return False
@@ -174,6 +179,9 @@ def _capture(session, target_session):
     import storage
     import world
     player = session.player
+    if _immortal(session) or _immortal(target_session):
+        session.send("Immortals are immune to the Reaper Death Seal.")
+        return
     origin = player.room_vnum
     records = _load()
     vnum = ROOM_BASE
@@ -246,8 +254,11 @@ def cast(session, key, words):
     if not eligible(player) or info["display_name"] not in player.learned_skills:
         session.send("You haven't learned that skill or jutsu.")
         return
-    if (imprisoned(player) or player.health <= 0 or combat._is_action_blocked(player)
-            or "silenced" in player.active_status_effects or session.pending_cast):
+    inside_reverse = key == REVERSE_KEY and imprisoned(player)
+    if ((imprisoned(player) and not inside_reverse and not _immortal(session))
+            or player.health <= 0 or (combat._is_action_blocked(player) and not inside_reverse)
+            or ("silenced" in player.active_status_effects and not inside_reverse)
+            or session.pending_cast):
         session.send("You cannot perform the rite right now.")
         return
     if player.chakra < info["chakra_cost"] or time.time() < player.cooldowns.get(key, 0):
@@ -267,7 +278,7 @@ def cast(session, key, words):
     if not target:
         session.send("Reaper Death Seal can bind only another player, never an NPC.")
         return
-    if (target.player.health <= 0 or imprisoned(target.player)
+    if (_immortal(target) or target.player.health <= 0 or imprisoned(target.player)
             or combat._staff_testing_mangekyo(target.player)
             or target.player.illusion_walk_caster or target.player.tsukuyomi_frozen
             or general_skills.concealed_from(player, target.player)
