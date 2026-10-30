@@ -2001,13 +2001,13 @@ def cmd_sharingan(session, args: List[str]) -> None:
     request -- it no longer says "one tomoe" regardless of how far the
     player has actually progressed."""
     player = session.player
-    if player.bloodline_id != "sharingan" or player.bloodline_tomoe < 1:
+    if (player.bloodline_id != "sharingan" or player.bloodline_tomoe < 1) and not combat._staff_testing_mangekyo(player):
         session.send("You haven't learned that skill or jutsu.")
         return
 
     player.sharingan_active = not player.sharingan_active
     if player.sharingan_active:
-        eye_description = _sharingan_eye_description(player.bloodline_tomoe)
+        eye_description = _sharingan_eye_description(player.bloodline_tomoe or 1)
         session.send(
             f"&RYour eyes bleed to red -- {eye_description}. You can read your "
             "opponent's every movement.&x"
@@ -3289,7 +3289,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not six_paths.eligible(player, jutsu_data["kkg_gate"].removeprefix("six_paths_")):
             session.send("That Six Paths form does not match your level and inherited soul.")
             return
-        six_paths.command(session, target_words)
+        six_paths.command(session, target_words, soul=jutsu_data["kkg_gate"].removeprefix("six_paths_"))
         return
     if jutsu_data.get("jutsu_type") in ("dual_wield", "chokkan", "instant_kill"):
         import legacy_techniques
