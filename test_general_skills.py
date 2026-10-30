@@ -150,6 +150,8 @@ class GeneralSkillTests(unittest.TestCase):
 
     def test_hidden_from_room_look_named_look_scan_and_direct_target(self):
         self.cast(self.actor, "camouflage")
+        self.assertIn("vanishes from view", "".join(self.view_output))
+        self.view_output.clear()
         commands.cmd_look(self.viewer, [])
         self.assertNotIn("StealthNinja", "".join(self.view_output))
         self.view_output.clear()
@@ -235,6 +237,8 @@ class GeneralSkillTests(unittest.TestCase):
         destination, destination_output = self.make_session("AtDestination")
         destination.player.room_vnum = self.next_room.vnum
         self.cast(self.actor, "camouflage")
+        self.assertIn("vanishes from view", "".join(self.view_output))
+        self.view_output.clear()
         commands.cmd_move(self.actor, "north")
         self.assertNotIn("StealthNinja", "".join(self.view_output))
         self.assertNotIn("StealthNinja", "".join(destination_output))
