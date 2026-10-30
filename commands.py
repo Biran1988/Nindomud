@@ -143,6 +143,9 @@ def dispatch_line(session, line: str) -> None:
             and lower_words[:4] == ["perform", "reverse", "reaper", "seal"]):
         reaper_seal.cast(session, reaper_seal.REVERSE_KEY, words[4:])
         return
+    import izanami_loops
+    if izanami_loops.blocks_command(session, lower_words[0]):
+        return
     if reaper_seal.blocks_command(session, lower_words[0]):
         return
     if _blocked_while_sleeping(session, lower_words[0]):
@@ -186,6 +189,9 @@ def dispatch(session, verb: str, args: List[str]) -> None:
         return
     verb = verb.lower()
     import reaper_seal
+    import izanami_loops
+    if izanami_loops.blocks_command(session, verb):
+        return
     if reaper_seal.blocks_command(session, verb):
         return
 
@@ -277,6 +283,9 @@ def _fire_enter_triggers(session) -> None:
 
 def cmd_move(session, direction: str) -> None:
     player = session.player
+    import izanami_loops
+    if izanami_loops.blocks_command(session, direction):
+        return
 
     if player.illusion_walk_caster is not None:
         # Willpower can break this ordinary illusion before the victim
@@ -2110,28 +2119,9 @@ def cmd_unmake(session, args: List[str]) -> None:
 
 
 def cmd_guess(session, args: List[str]) -> None:
-    """'guess <number>' -- per direct confirmation (Section 140), the
-    real command a target trapped in Izanami uses to try escaping.
-    One real guess per round: a correct guess ends the loop
-    immediately; a wrong one does nothing but let the loop continue.
-    Genuinely a no-op (falls through to a plain refusal) for anyone
-    not currently trapped, matching the game's own established
-    convention for context-specific commands (e.g. 'yes' outside a
-    real defeat prompt)."""
-    player = session.player
-    if not player.izanami_trapped:
-        session.send("Guess what?")
-        return
-    if not args or not args[0].lstrip("-").isdigit():
-        session.send("Guess a number.")
-        return
-    guess = int(args[0])
-    if guess == player.izanami_target_number:
-        player.izanami_trapped = False
-        player.izanami_target_number = None
-        session.send("&RThe loop shatters -- you guessed correctly, and reality snaps back into place!&x")
-    else:
-        session.send("&RWrong. The moment resets, and you're trapped again...&x")
+    """One guess per 15-second Izanami cycle; failures injure the victim."""
+    import izanami_loops
+    izanami_loops.guess(session, args)
 
 
 def cmd_izanagi(session, args: List[str]) -> None:
