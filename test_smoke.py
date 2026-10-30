@@ -4155,31 +4155,33 @@ def test_scoresheet_reference_helpfiles():
         s.handle_line(line)
         out.clear()
 
-    # Attributes: active vs not-yet-implemented, matching the real code.
+    # All nine attributes are now active and trainable, including the
+    # newer Perception and Willpower mechanics.
     s.handle_line("help attributes")
     text = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
     for active_stat in ("Strength", "Dexterity", "Intelligence", "Wisdom", "Luck", "Constitution", "Chakra Control"):
         idx = text.index(active_stat)
         assert "[Active]" in text[idx:idx + 250]
-    for inactive_stat in ("Perception", "Willpower"):
-        idx = text.index(inactive_stat)
-        assert "[Not Yet Implemented" in text[idx:idx + 250]
+    for active_stat in ("Perception", "Willpower"):
+        idx = text.index(active_stat)
+        assert "[Active" in text[idx:idx + 250]
 
     # Combat stats: Dodge/Critical Chance were always real; Armor Class
     # and Hit Roll are now real too (wired into to-hit resolution);
-    # Damage Roll and Initiative remain cosmetic.
+    # Damage Roll also affects damage, while Initiative is cosmetic.
     s.handle_line("help combatstats")
     text2 = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
     for active_stat in ("Dodge Chance", "Critical Chance", "Armor Class", "Hit Roll"):
         idx = text2.index(active_stat)
         assert "[Active]" in text2[idx:idx + 350]
-    for cosmetic_stat in ("Damage Roll", "Initiative"):
-        idx = text2.index(cosmetic_stat)
-        assert "[Not Yet Implemented" in text2[idx:idx + 350]
+    damage_idx = text2.index("Damage Roll")
+    assert "[Active]" in text2[damage_idx:damage_idx + 350]
+    initiative_idx = text2.index("Initiative")
+    assert "[Not Yet Implemented" in text2[initiative_idx:initiative_idx + 350]
 
-    # Score sheet overview: alt keyword works, and Clan is honestly cosmetic-only.
+    # Score sheet overview: alt keyword works, and Clan now powers bloodlines.
     # ("score" bare now correctly routes to its own command helpfile
     # instead -- "scoresheet"/"score sheet" reach this reference page.)
     s.handle_line("help score sheet")
@@ -4187,7 +4189,7 @@ def test_scoresheet_reference_helpfiles():
     out.clear()
     assert "Score Sheet" in text3
     clan_idx = text3.index("Clan")
-    assert "[Not Yet Implemented" in text3[clan_idx:clan_idx + 200]
+    assert "[Active]" in text3[clan_idx:clan_idx + 350]
     assert "[Active]" in text3  # e.g. Rank, Ryo, Jobs, etc.
 
     # Restore the real, original paths for every later test in the suite.
