@@ -7,8 +7,10 @@ import math
 import random
 import time
 
-LOOP_SECONDS = 15.0
-WRONG_DAMAGE_PERCENT = (8, 12)
+import data_mangekyo
+
+LOOP_SECONDS = data_mangekyo.IZANAMI_LOOP_SECONDS
+WRONG_DAMAGE_PERCENT = data_mangekyo.IZANAMI_WRONG_GUESS_HEALTH_DAMAGE_PCT
 # A victim must remain alive to solve the loop. Further failures at 1 HP
 # cannot defeat them without an opportunity to make the correct guess.
 ALLOWED_COMMANDS = frozenset({
