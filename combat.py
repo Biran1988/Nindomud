@@ -956,6 +956,11 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     import data_mangekyo
     target_session.player.mangekyo_amaterasu_burning = True
     target_session.player.mangekyo_amaterasu_caster = player.name
+    # Repeated casts refresh the five-minute timer only on immortal targets.
+    target_session.player.mangekyo_amaterasu_expires_at = (
+        time.time() + data_mangekyo.AMATERASU_IMMORTAL_BURN_DURATION_SECONDS
+        if is_immortal_immune_to_defeat(target_session) else 0.0
+    )
     import mangekyo_discovery
     mangekyo_discovery.record_use(player, "amaterasu")
     room = world.WORLD.get(target_session.player.room_vnum)
@@ -980,6 +985,11 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
             clamp_immortal_health(target_session)
         else:
             handle_pvp_defeat(winner_session=session, loser_session=target_session)
+    # Persist the immortal's deadline immediately, so logging out cannot
+    # reset the five-minute clock. Ordinary target saves are unchanged.
+    if is_immortal_immune_to_defeat(target_session):
+        import storage
+        storage.save_player(target_session.player)
 
 
 def resolve_kamui_limb_removal_cast(session, target_session) -> None:
