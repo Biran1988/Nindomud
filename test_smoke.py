@@ -4164,8 +4164,10 @@ def test_scoresheet_reference_helpfiles():
         idx = text.index(active_stat)
         assert "[Active]" in text[idx:idx + 250]
     for active_stat in ("Perception", "Willpower"):
-        idx = text.index(active_stat)
-        assert "[Active" in text[idx:idx + 250]
+        # Match the actual section heading, not its earlier mention in
+        # the overview paragraph. Each is an active trainable stat now.
+        idx = text.index(active_stat + " -")
+        assert "[Active" in text[idx:idx + 600]
 
     # Combat stats: Dodge/Critical Chance were always real; Armor Class
     # and Hit Roll are now real too (wired into to-hit resolution);
