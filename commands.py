@@ -25,6 +25,7 @@ import corpses
 import data_crafting
 import fishing
 import groups
+import staff_invisibility
 import teams
 import inventory
 import jobs
@@ -105,7 +106,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"setallprac", "ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"wizinvis", "setallprac", "ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -145,12 +146,12 @@ def dispatch_line(session, line: str) -> None:
     # frozen. Check before bare-name jutsu and direction matching so
     # staff commands and every combat entry point follow the same rule.
     if (session.player and session.player.tsukuyomi_frozen
-            and lower_words[0] not in {"look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "inventory",
+            and lower_words[0] not in {"wizinvis", "look", "l", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "jutsu", "inventory",
                                        "inv", "skills", "prac", "setallprac", "ip", "imms", "immortal",
                                        "immortals", "changes", "say", "ooc", "quit", "save"}):
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
-    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("setallprac", "ip", "look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
+    if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("wizinvis", "setallprac", "ip", "look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
@@ -1267,7 +1268,9 @@ def _is_invisible_player(player) -> bool:
 def _player_hidden_from(viewer, target) -> bool:
     import general_skills
     import hidden_mist
-    return (_is_invisible_player(target) or hidden_mist.conceals_from_view(viewer, target)
+    return (staff_invisibility.hidden_player(viewer, target)
+            or _is_invisible_player(target)
+            or hidden_mist.conceals_from_view(viewer, target)
             or general_skills.concealed_from(viewer, target))
 
 
@@ -1761,9 +1764,14 @@ def _who_tags(p) -> str:
 
 def cmd_imms(session, args: List[str]) -> None:
     """List staff accounts with rank and online status, without secrets."""
+    # An invisible immortal is absent even from the staff roster;
+    # keeping an "offline" entry would leak the hidden connection.
+    hidden_names = {s.account.name.lower() for s in session.active_sessions()
+                    if staff_invisibility.is_hidden(s)}
     online = {s.account.name.lower(): s.account for s in session.active_sessions()
-              if s.player and s.account}
-    accounts = {account.name.lower(): account for account in storage.all_staff_accounts()}
+              if s.player and s.account and not staff_invisibility.is_hidden(s)}
+    accounts = {account.name.lower(): account for account in storage.all_staff_accounts()
+                if account.name.lower() not in hidden_names}
     accounts.update(online)
     staff = sorted((account for account in accounts.values() if account.staff_level != "player"),
                    key=lambda a: (-config.STAFF_LEVELS.index(a.staff_level)
@@ -1779,7 +1787,8 @@ def cmd_imms(session, args: List[str]) -> None:
 
 
 def cmd_who(session, args: List[str]) -> None:
-    online = [s for s in session.active_sessions() if s.player]
+    online = [s for s in session.active_sessions()
+              if s.player and staff_invisibility.visible_to(session, s)]
 
     lines = [_who_banner("=", "&Y", "SHINOBI ONLINE", label_color="&C")]
 
@@ -1806,7 +1815,8 @@ def cmd_who(session, args: List[str]) -> None:
     # but not connected, attackable, or counted as currently online.
     import session as session_module
     linkdead = [s for s in session_module.ACTIVE_SESSIONS
-                if s.state == session_module.State.LINKDEAD and s.player]
+                if s.state == session_module.State.LINKDEAD and s.player
+                and staff_invisibility.visible_to(session, s)]
     for s in linkdead:
         remaining = max(0, int((s.linkdead_until - time.time() + 59) // 60))
         lines.append(f"&D[LINKDEAD] {s.player.name} - protected ({remaining}m until logout)&x")
@@ -1828,7 +1838,9 @@ def cmd_whois(session, args: List[str]) -> None:
         return
     query = " ".join(args).lower()
     match = next(
-        (s for s in session.active_sessions() if s.player and query in s.player.name.lower()),
+        (s for s in session.active_sessions()
+         if s.player and query in s.player.name.lower()
+         and staff_invisibility.visible_to(session, s)),
         None,
     )
     if match is None:
@@ -9508,6 +9520,7 @@ COMMANDS = {
     "level": cmd_level,
     "uptime": cmd_uptime,
     "jobs": cmd_jobs,
+    "wizinvis": staff_invisibility.command,
     "group": cmd_group,
     "follow": cmd_follow,
     "unfollow": lambda session, args: cmd_follow(session, ["off"]),
