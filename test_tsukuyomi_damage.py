@@ -58,8 +58,16 @@ class TsukuyomiDamageTests(unittest.TestCase):
                 self.target.player.stamina = 3000
                 self.target.player.chakra = 3000
                 self.caster.player.tsukuyomi_actions_remaining = 10
-                # A maximum roll for Crush exceeds the 1-100 early-end roll.
-                with patch("random.randint", return_value=maximum or 150):
+                # Roll HP, stamina and chakra independently. Crush's
+                # second roll must exceed its 25% early-end threshold.
+                rolls = {
+                    "stab": [250],
+                    "impale": [450],
+                    "burn": [200, 110],
+                    "crush": [600, 100],
+                    "unmake": [150, 150],
+                }
+                with patch("random.randint", side_effect=rolls[action]):
                     commands._tsukuyomi_torture_action(self.caster, action)
                 self.assertEqual(self.target.player.health, 20000 - maximum)
                 self.assertEqual(self.target.player.stamina, 3000 - stamina)
