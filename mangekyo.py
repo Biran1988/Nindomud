@@ -380,6 +380,8 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
                 continue
             if s.player.name == room.amaterasu_fire_caster:
                 continue
+            if combat_module.is_immortal_immune_to_defeat(s):
+                continue  # Staff are unaffected by Amaterasu's room flames.
             dmg = random.randint(*data_mangekyo.AMATERASU_ROOM_BURN_PER_TICK)
             dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
             s.player.health -= dmg
@@ -439,7 +441,7 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
         if not expires_at:
             # Old saves with perpetual burns receive their final five-minute
             # window instead of staying permanently on fire.
-            expires_at = now + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
+            expires_at = now + data_mangekyo.AMATERASU_PLAYER_BURN_DURATION_SECONDS
             player.mangekyo_amaterasu_expires_at = expires_at
             storage.save_player(player)
         if now >= expires_at:
