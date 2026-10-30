@@ -321,11 +321,24 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "follow",
+        "keywords": ["follow", "unfollow", "auto follow", "group follow"],
+        "title": "Follow Group Leader",
+        "body": (
+            "Syntax: follow leader | follow <leader name> | follow off | unfollow | group follow on | group follow off\\n"
+            "\\n"
+            "Join a group with 'group invite <player>' and 'group accept'. Stand in the same room as its leader, then type 'follow leader' or 'follow <name>' to automatically walk through the same exits when the leader moves. The follower pays normal Stamina costs, can be stopped by closed doors, fighting, status effects, seals and restrictions, and is never teleported to catch up. Following stays enabled if you lag behind; manually catch up and it resumes. Only the group leader can be followed. 'follow off' stops tracking without leaving the party; leaving, being kicked or disbanding turns it off. Reconnecting within the normal link-dead grace period preserves your choice.\\n"
+            "\\n"
+            "For shared XP and group leadership commands, see 'help group'."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "group",
         "keywords": ["group", "grouping", "party", "shared xp", "shared experience"],
         "title": "Grouping",
         "body": (
-            "Syntax: group invite <player>  |  group accept  |  group  |  group leave  |  group kick <player>  |  group disband\n"
+            "Syntax: group invite <player> | group accept | group follow [on|off] | group | group leave | group kick <player> | group disband\n"
             "\n"
             "Description: A group shares experience from mob kills -- form one with a party of up to 6 to level up together, rather than every kill only benefiting whoever lands the final blow. Groups are temporary: they aren't saved, and only exist while members are actually online.\n"
             "\n"
@@ -333,6 +346,12 @@ DEFAULT_HELP_ENTRIES = [
             "  &G[Active]&x\n"
             "\n"
             "&Cgroup accept&x - Joins the group that just invited you.\n"
+            "  &G[Active]&x\n"
+            "\n"
+            "&Cfollow leader&x / &Cfollow <leader name>&x - Automatically follow the group leader through normal exits. Each step costs your own Stamina and respects doors, combat, seals and area restrictions. If separated, catch up to resume.\n"
+            "  &G[Active]&x\n"
+            "\n"
+            "&Cfollow off&x / &Cunfollow&x / &Cgroup follow off&x - Stop automatic following without leaving the group. Use 'follow' to check status.\n"
             "  &G[Active]&x\n"
             "\n"
             "&Cgroup&x (no arguments) - Shows your group's roster and everyone's current HP.\n"
