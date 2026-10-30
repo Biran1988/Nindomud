@@ -1042,6 +1042,9 @@ def resolve_izanami_cast(session, target_session, grow_handsigns: bool = True) -
     ):
         jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
+    if target_session.player.izanami_trapped:
+        jutsu_colors.send(session, "&RThat player is already trapped in Izanami.&x")
+        return
     import data_mangekyo
     import random
     import izanami_loops
