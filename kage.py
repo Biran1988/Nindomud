@@ -109,6 +109,39 @@ def announce_rank_up(player_name: str, new_rank: str) -> None:
 GENIN_PROMOTION_MISSION_POINTS = 50
 
 
+def grandfather_legacy_rank(player: Player) -> tuple[str, str] | None:
+    """One-time upgrade for pre-rank-cap characters already ABOVE their cap.
+
+    Give the first ordinary earned ninja rank whose cap covers the
+    character's existing level. This is intentionally *strictly greater*
+    than a rank's cap: reaching the cap normally still requires its exam
+    or promotion. Do not require retroactive exam completions or missions,
+    and never appoint Village Elder or Kage. The caller handles migration
+    versioning, persistence, and a deferred login announcement.
+    """
+    ordinary = ("student", "genin", "chunin", "special jonin",
+                "jonin", "elite jonin")
+    original = player.village_rank
+    if original not in ordinary:
+        return None
+    index = ordinary.index(original)
+    while (index < len(ordinary) - 1
+           and player.level > RANK_LEVEL_CAPS[ordinary[index]]):
+        index += 1
+    chosen = ordinary[index]
+    if chosen == original:
+        return None
+
+    # Crossing Student -> Genin must grant the same 50 mission points
+    # as Iruka's exam, exactly once during the old-save migration.
+    if original == "student":
+        player.mission_points += GENIN_PROMOTION_MISSION_POINTS
+        player.mission_points_earned_total += GENIN_PROMOTION_MISSION_POINTS
+    player.village_rank = chosen
+    data_headbands.apply_rank_headband(player, chosen)
+    return original, chosen
+
+
 def award_genin_mission_points_if_applicable(session, player, new_rank: str) -> None:
     """Per direct request/confirmation (Section 157): "when soemone
     becomes a genin have it award 50 mission points ontop of the
