@@ -210,13 +210,14 @@ def _reverse(session, words):
     import olc
     worn = session.player.equipment.get("head", "")
     proto = commands._find_object_prototype_by_name(worn) if worn else None
-    if not proto or proto is not olc.OBJECT_TEMPLATES.get(MASK_VNUM):
+    if not _immortal(session) and (not proto or proto is not olc.OBJECT_TEMPLATES.get(MASK_VNUM)):
         session.send("The reverse rite requires the Shikigami mask to be worn.")
         return
     query = " ".join(words).lower()
     records = _load()
     matches = [(key, record) for key, record in records.items() if record["active"]
-               and query and any(query in name.lower() for name in (record["caster"], record["target"]))]
+               and ((query and any(query in name.lower() for name in (record["caster"], record["target"])))
+                    or (not query and session.player.name in record["players"]))]
     if len(matches) != 1:
         session.send("Name one sealed soul unambiguously: perform reverse reaper seal <name>.")
         return
@@ -224,15 +225,17 @@ def _reverse(session, words):
     record["active"] = False
     _save(records)  # offline saves reconcile against this durable release
     for name in record["players"]:
-        live = next((s for s in sessions.ACTIVE_SESSIONS if s.player and s.player.name == name), None)
+        live = (session if session.player.name == name else next(
+            (s for s in sessions.ACTIVE_SESSIONS if s.player and s.player.name == name), None))
         player = live.player if live else storage.load_player(name)
         if player:
             if reconcile_player(player):
                 storage.save_player(player)
             if live:
                 live.send("&[141]The Reaper's binding tears open. Your soul returns to the living world!&x")
-    _pay(session, REVERSE_KEY)
-    session.send("&[141]The Shikigami mask opens the Reaper's belly. Both bound souls are released!&x")
+    if not _immortal(session):
+        _pay(session, REVERSE_KEY)
+    session.send("&[141]The Reaper's belly opens. Both bound souls are released!&x")
 
 
 def _pay(session, key):
@@ -251,17 +254,18 @@ def cast(session, key, words):
     import world
     player = session.player
     info = data_jutsu.JUTSU[key]
-    if not eligible(player) or info["display_name"] not in player.learned_skills:
+    staff_reverse = key == REVERSE_KEY and _immortal(session)
+    if not staff_reverse and (not eligible(player) or info["display_name"] not in player.learned_skills):
         session.send("You haven't learned that skill or jutsu.")
         return
     inside_reverse = key == REVERSE_KEY and imprisoned(player)
-    if ((imprisoned(player) and not inside_reverse and not _immortal(session))
+    if (not staff_reverse and ((imprisoned(player) and not inside_reverse and not _immortal(session))
             or player.health <= 0 or (combat._is_action_blocked(player) and not inside_reverse)
             or ("silenced" in player.active_status_effects and not inside_reverse)
-            or session.pending_cast):
+            or session.pending_cast)):
         session.send("You cannot perform the rite right now.")
         return
-    if player.chakra < info["chakra_cost"] or time.time() < player.cooldowns.get(key, 0):
+    if not staff_reverse and (player.chakra < info["chakra_cost"] or time.time() < player.cooldowns.get(key, 0)):
         session.send("You lack the Chakra or the rite is still recovering.")
         return
     if key == REVERSE_KEY:
@@ -269,6 +273,9 @@ def cast(session, key, words):
         storage.save_player(player)
         return
     room = world.WORLD.get(player.room_vnum)
+    if _immortal(session):
+        session.send("Immortals cannot cast Reaper Death Seal.")
+        return
     if not words or not room or room.safe or room.reaper_prison:
         session.send("The rite requires a target here, outside a safe room.")
         return
