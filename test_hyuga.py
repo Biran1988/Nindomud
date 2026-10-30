@@ -104,6 +104,39 @@ class HyugaTests(unittest.TestCase):
         session.account.staff_level = "administrator"
         self.assertTrue(mangekyo_discovery.can_read(session, page))
 
+    def test_byakugan_available_to_all_four_classes_if_inherited(self):
+        import combat
+        for cls in ("ninjutsu", "taijutsu", "genjutsu", "bukijutsu"):
+            player = hyuga_player(potential=100, mastery=100)
+            player.primary_class = cls
+            for move in ("byakugan", "gentle step twin lion fists", "tenseigan chakra mode"):
+                with self.subTest(cls=cls, move=move):
+                    self.assertEqual(hyuga.REGISTRY[move]["class_requirement"], "general")
+                    self.assertTrue(hyuga.unlocked(player, move))
+            self.assertTrue(combat._can_use_jutsu(player, data_jutsu.JUTSU["byakugan"], "byakugan") or
+                            hyuga.unlocked(player, "byakugan"))
+        outsider = hyuga_player()
+        outsider.primary_class = "ninjutsu"
+        outsider.bloodline_id = None
+        self.assertFalse(hyuga.unlocked(outsider, "byakugan"))
+
+    def test_immortal_can_use_byakugan_without_hyuga_clan_or_bloodline(self):
+        from types import SimpleNamespace as NS
+        import session as sessions
+        p = Player("Staff", "Staff", village="sand", clan="nara",
+                   primary_class="genjutsu", level=1, chakra=500, maximum_chakra=500)
+        p.bloodline_id = None
+        messages = []
+        staff = NS(player=p, account=NS(staff_level="immortal"), send=messages.append)
+        with patch.object(sessions, "ACTIVE_SESSIONS", [staff]):
+            self.assertTrue(hyuga.unlocked(p, "tenseigan chakra mode"))
+            self.assertTrue(hyuga.can_use(p, "golden wheel reincarnation explosion"))
+            hyuga.cmd_byakugan(staff, ["on"])
+            self.assertTrue(p.byakugan_active)
+            self.assertEqual(p.bloodline_id, None)
+            hyuga.cmd_byakugan(staff, ["off"])
+            self.assertFalse(p.byakugan_active)
+
     def test_registry_shortcuts_and_guard_definitions(self):
         import status_effects
         import jutsu_shortcuts
