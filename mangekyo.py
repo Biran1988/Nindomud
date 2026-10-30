@@ -405,28 +405,50 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
                     combat_module.remove_mob(mob)
 
 
-def process_amaterasu_player_burns(combat_module, session_module) -> None:
-    """Called once per real pulse -- ticks every player's own,
-    direct Amaterasu burn. It has no countdown but ends immediately on
-    the target's real death. The separate room fire follows its own
-    five-minute timer and does not travel with the player."""
-    import random
+def clear_amaterasu_target_burn(player):
+    """Remove the attached flames and their optional immortal deadline."""
+    player.mangekyo_amaterasu_burning = False
+    player.mangekyo_amaterasu_caster = None
+    player.mangekyo_amaterasu_expires_at = 0.0
 
+
+def process_amaterasu_player_burns(combat_module, session_module) -> None:
+    """Tick attached flames; immortal targets burn for at most five minutes.
+
+    A wall-clock expiration timestamp keeps staff from restarting the timer
+    through logout, reconnect or reboot. Non-staff still burn until death.
+    Separate five-minute ROOM fires use their existing timer unchanged.
+    """
+    import random
+    import storage
+
+    now = time.time()
     for s in session_module.ACTIVE_SESSIONS:
         if (not s.player or s.state != session_module.State.PLAYING
                 or not s.player.mangekyo_amaterasu_burning):
             continue
-        if s.player.health <= 0:
-            # An already-dead target must not keep burning or respawn
-            # into a repeated lethal loop, even with an older save.
-            s.player.mangekyo_amaterasu_burning = False
-            s.player.mangekyo_amaterasu_caster = None
+        player = s.player
+        if player.health <= 0:
+            clear_amaterasu_target_burn(player)
             continue
+        if combat_module.is_immortal_immune_to_defeat(s):
+            expires_at = getattr(player, "mangekyo_amaterasu_expires_at", 0.0)
+            if not expires_at:
+                # Legacy immortal saves might already be burning without a
+                # deadline. Give them one final five-minute window.
+                expires_at = now + data_mangekyo.AMATERASU_IMMORTAL_BURN_DURATION_SECONDS
+                player.mangekyo_amaterasu_expires_at = expires_at
+                storage.save_player(player)
+            if now >= expires_at:
+                clear_amaterasu_target_burn(player)
+                storage.save_player(player)
+                s.send("&DThe black flames of Amaterasu finally fade from your body.&x")
+                continue
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
-        dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
-        s.player.health -= dmg
+        dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
+        player.health -= dmg
         s.send(f"&RAmaterasu's black flame burns you for {damage_messages.describe_damage(dmg)} damage!&x")
-        if s.player.health <= 0:
+        if player.health <= 0:
             if combat_module.try_trigger_izanagi(s):
                 pass
             elif combat_module.is_immortal_immune_to_defeat(s):
