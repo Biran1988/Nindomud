@@ -524,4 +524,5 @@ CHANGELOG = [
     ("15.376", "Whirlpool Uzumaki level-120 Black Flame Suppression Seal can extinguish Amaterasu on one player, the current room, or all burning players in the room. Available to authenticated immortals for testing regardless of clan or village."),
     ("15.377", "Every Byakugan art is now general-use across all four character classes for eligible Hyuuga. Immortals may test Sharingan, Byakugan, Whirlpool seal arts and both Six Paths bloodlines without permanently changing their inheritance."),
     ("15.378", "Tsukuyomi torture attacks now deal five times their previous Health damage: stab 150-250, impale 300-450, burn 100-200, crush 400-600. Burn drains 70-110 Stamina and Unmake drains 100-150 Chakra and Stamina; the ordeal length and Crush early-end chance are unchanged."),
+    ("15.379", "Izanami now locks the target in 15-second reality loops: only one number guess per loop, wrong guesses cost 8-12% maximum Health without killing the victim, and both incorrect and correct guesses privately notify the caster. Victims cannot move, fight or cast, loops do not expire automatically, and cooldown state survives reconnects."),
 ]
