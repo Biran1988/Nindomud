@@ -4,8 +4,8 @@
     "stab"
   ],
   "title": "Stab (Tsukuyomi)",
-  "body": "Syntax: stab\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. A steady attack dealing 30-50 Health damage and advancing the ordeal by one action. The ordeal ends when its hidden action limit is reached.\n\nDate: 2026-09-27",
+  "body": "Syntax: stab\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. A much stronger attack dealing 150-250 Health damage and advancing the ordeal by one action. The ordeal ends when its hidden action limit is reached.\n\nUpdated: 2026-10-29",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
