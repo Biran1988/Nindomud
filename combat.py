@@ -960,7 +960,7 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     target_session.player.mangekyo_amaterasu_burning = not immortal_target
     target_session.player.mangekyo_amaterasu_caster = None if immortal_target else player.name
     target_session.player.mangekyo_amaterasu_expires_at = (
-        0.0 if immortal_target else time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
+        0.0 if immortal_target else time.time() + data_mangekyo.AMATERASU_PLAYER_BURN_DURATION_SECONDS
     )
     import mangekyo_discovery
     mangekyo_discovery.record_use(player, "amaterasu")
