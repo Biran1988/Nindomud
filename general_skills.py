@@ -135,6 +135,9 @@ def before_move(session):
 
 def broadcast_movement(session, text):
     """Filter each observer separately; no name leak via travel messages."""
+    import staff_invisibility
+    if staff_invisibility.is_hidden(session):
+        return  # Even immortal observers cannot see wizard-invisible travel.
     player = session.player
     if not active(player, "camouflage") and not active(player, "silent_movement"):
         session.broadcast_room(text, exclude_self=True)
