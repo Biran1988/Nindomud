@@ -236,6 +236,8 @@ def _wake_and_stand(session) -> None:
         previous = player.position
         player.position = "standing"
         session.send(f"You stop {previous} and stand up.")
+        import room_actions
+        room_actions.emit(session, f"{player.name} wakes and stands up." if previous == "sleeping" else f"{player.name} stands up.")
 
 
 def _broadcast_globally(message: str) -> None:
@@ -926,6 +928,8 @@ def cmd_rest(session, args: List[str]) -> None:
         return
     player.position = "resting"
     session.send("You sit down and rest, recovering a bit faster than usual.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} sits down to rest.")
 
 
 CHAKRA_CHARGE_STEP_SECONDS = 4
@@ -1033,6 +1037,8 @@ def cmd_sleep(session, args: List[str]) -> None:
         return
     player.position = "sleeping"
     session.send("You lie down and drift off to sleep, recovering much faster than usual.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} lies down and falls asleep.")
 
 
 def cmd_stand(session, args: List[str]) -> None:
@@ -2975,6 +2981,8 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
     else:
         session.send(f"You wear {rarity_colored_name(match)}.")
     _fire_item_trigger(session, match, "wear")
+    import room_actions
+    room_actions.emit(session, f"{player.name} {'wields' if wear_loc == 'wielded' else 'puts on'} {match}.")
 
 
 
@@ -3038,6 +3046,8 @@ def cmd_remove(session, args: List[str]) -> None:
     del player.equipment[match_slot]
     _apply_equipment_stat_bonuses(player, item, sign=-1)
     session.send(f"You remove {item}.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} removes {item}.")
     if match_slot == "wielded" and player.equipment.get("offhand"):
         player.equipment["wielded"] = player.equipment.pop("offhand")
         session.send("Your off-hand weapon becomes your main weapon.")
@@ -3126,6 +3136,8 @@ def cmd_attack(session, args: List[str]) -> None:
         _wake_and_stand(session)
         combat.start_attack(session, mob)
         session.send(f"You attack {mob.name}!")
+        import room_actions
+        room_actions.emit(session, f"&R{player.name} attacks {mob.name}!&x")
         return
 
     query = " ".join(args).lower()
@@ -3167,6 +3179,8 @@ def cmd_attack(session, args: List[str]) -> None:
     combat.start_pvp_attack(session, target_session)
     session.send(f"You attack {target_session.player.name}!")
     target_session.send(f"&R{player.name} attacks you!&x")
+    import room_actions
+    room_actions.emit(session, f"&R{player.name} attacks {target_session.player.name}!&x", exclude=(target_session,))
 
 
 def _current_jutsu_opponent(session) -> List[str]:
@@ -4750,6 +4764,8 @@ def cmd_train(session, args: List[str]) -> None:
         return
     setattr(player, attr, current + 1)
     player.training_points -= 1
+    import room_actions
+    room_actions.emit(session, f"{player.name} trains {attr.replace('_', ' ')}.")
     session.send(f"You train your {attr.replace('_', ' ')}. It is now {getattr(player, attr)}.")
     if attr == "chakra_control":
         # Per direct request/confirmation (Section 131): a real, immediate
@@ -4908,6 +4924,8 @@ def cmd_practice(session, args: List[str]) -> None:
     earned_xp = max(0, player.experience - experience_before)
     player.practice_points -= 1
     player.practice_sessions_used += 1
+    import room_actions
+    room_actions.emit(session, f"{player.name} practices {match} with a teacher.")
     session.send(
         f"You practice {match} (+{new_pct - current}% from your Intelligence). "
         f"Proficiency is now {new_pct}% ({proficiency_level_name(new_pct)})."
@@ -7204,6 +7222,8 @@ def cmd_give(session, args: List[str]) -> None:
     player.inventory.remove(match)
     session.send(f"You give {rarity_colored_name(match)} to {target_session.player.name}.")
     target_session.send(f"{player.name} gives you {rarity_colored_name(match)}.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} gives {match} to {target_session.player.name}.", exclude=(target_session,))
 
 
 def cmd_price(session, args: List[str]) -> None:
@@ -7350,6 +7370,8 @@ def cmd_drop(session, args: List[str]) -> None:
             f"{name} (x{count})" if count > 1 else name for name, count in counts.items()
         )
         session.send(f"You drop everything you were carrying: {summary}.")
+        import room_actions
+        room_actions.bulk_items(session, len(dropped), "drops", dropped[0] if len(dropped) == 1 else None)
         return
 
     query = " ".join(args).lower()
@@ -7364,6 +7386,8 @@ def cmd_drop(session, args: List[str]) -> None:
     player.inventory.remove(match)
     room.ground_items.append(match)
     session.send(f"You drop {rarity_colored_name(match)}.")
+    import room_actions
+    room_actions.bulk_items(session, 1, "drops", match)
 
 
 def cmd_get(session, args: List[str]) -> None:
@@ -7423,6 +7447,8 @@ def cmd_get(session, args: List[str]) -> None:
                 for name, count in counts.items()
             )
             session.send(f"You pick up {len(picked)} item(s): {details}.")
+            import room_actions
+            room_actions.bulk_items(session, len(picked), "picks up", picked[0] if len(picked) == 1 else None)
         if has_ryo:
             currency_piles.pickup(session, "all ryo")
         if not picked and not has_ryo:
@@ -7454,6 +7480,8 @@ def cmd_get(session, args: List[str]) -> None:
         return
     room.ground_items.remove(match)
     session.send(f"You pick up {rarity_colored_name(match)}.")
+    import room_actions
+    room_actions.bulk_items(session, 1, "picks up", match)
 
 
 def _find_backpack_position(player, backpack_query: str):
@@ -8009,19 +8037,28 @@ def cmd_read(session, args: List[str]) -> None:
 
 
 def cmd_eat(session, args: List[str]) -> None:
+    # Take an inventory snapshot: a failed eat is never a room action.
+    before = list(session.player.inventory)
+    query = " ".join(args)
     import halloween_event
-    if halloween_event.consume_candy(session, " ".join(args)):
-        return
     import seasonal_events
-    if seasonal_events.eat_july_fourth_food(session, " ".join(args)):
-        return
-    if seasonal_events.eat_turkey(session, " ".join(args)):
-        return
-    consumables.consume(session, "eat", " ".join(args))
+    if halloween_event.consume_candy(session, query):
+        pass
+    elif seasonal_events.eat_july_fourth_food(session, query):
+        pass
+    elif seasonal_events.eat_turkey(session, query):
+        pass
+    else:
+        consumables.consume(session, "eat", query)
+    import room_actions
+    room_actions.consumed(session, before, "eats")
 
 
 def cmd_drink(session, args: List[str]) -> None:
+    before = list(session.player.inventory)
     consumables.consume(session, "drink", " ".join(args))
+    import room_actions
+    room_actions.consumed(session, before, "drinks")
 
 
 def cmd_use(session, args: List[str]) -> None:
