@@ -3,6 +3,7 @@
 import argparse
 import base64
 import json
+import stat
 from pathlib import Path
 import sys
 import zipfile
@@ -21,7 +22,8 @@ def assert_data_safe(archive: Path) -> None:
         for entry in package.infolist():
             name = entry.filename
             parts = name.rstrip("/").split("/")
-            if (not name or name.startswith(("/", "\\"))
+            if ((entry.external_attr >> 16) & 0o170000 == stat.S_IFLNK
+                    or not name or name.startswith(("/", "\\"))
                     or "\\" in name or any(part in ("", ".", "..") for part in parts)
                     or ":" in parts[0] or any(part.casefold() == "data" for part in parts)):
                 raise ValueError(f"Unsafe release ZIP entry (would risk saved data): {name!r}")
@@ -29,7 +31,7 @@ def assert_data_safe(archive: Path) -> None:
 
 def build(output: Path) -> None:
     output.mkdir(parents=True, exist_ok=True)
-    source_files = sorted(ROOT.glob("*.py"))
+    source_files = sorted(path for path in ROOT.glob("*.py") if not path.is_symlink())
     sys.path.insert(0, str(ROOT))
     import help_system
     standalone = output / "Nindo_mud"
@@ -64,7 +66,7 @@ def build(output: Path) -> None:
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(ROOT.rglob("*")):
             relative = path.relative_to(ROOT)
-            if not path.is_file() or any(part.casefold() in {".git", "data", "__pycache__", ".pytest_cache"} or part.casefold().startswith("data_test") for part in relative.parts):
+            if not path.is_file() or path.is_symlink() or any(part.casefold() in {".git", "data", "__pycache__", ".pytest_cache"} or part.casefold().startswith("data_test") for part in relative.parts):
                 continue
             if relative.suffix not in {".py", ".md", ".yml", ".yaml", ".txt", ".html"} and relative.name not in {".gitignore"} and relative.as_posix() != "geoip/country.csv.gz":
                 continue
