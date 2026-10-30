@@ -50,6 +50,25 @@ publishes a downloadable `Nindo_mud` ZIP artifact when its run succeeds.
 Use a freshly built archive instead of any older archive checked into the
 repository. Never overwrite the live server's `data/` directory.
 
+## Amaterasu and bloodline access (October 29, 2026)
+
+Attached Amaterasu flames are immediately negated for immortals. Normal
+players burn for at most five real-time minutes, including offline time, or
+until defeated; mobs continue burning until defeated. Room fire lasts five
+minutes unless sealed/dismissed. Whirlpool Uzumaki level-120 **Black Flame
+Suppression Seal** costs 95 Chakra, has a 90-second cooldown, and accepts
+`perform black flame suppression seal <self|player|room|all>`. `all`
+extinguishes both room fire and attached flames on present players.
+
+All eligible Hyuuga classes (Ninjutsu/Taijutsu/Genjutsu/Bukijutsu) can use
+Byakugan abilities. Authenticated immortals may test every Kekkei Genkai,
+including Byakugan, Sharingan, elemental bloodline releases, and the Indra
+or Ashura Six Paths branches, regardless of character inheritance. Staff
+test-only selection does not modify a character's stored inheritance.
+
+**Update safely:** release archives still exclude the server's entire `data/`
+tree so program files can be drag-and-dropped over the current installation.
+
 ## Room-level player interactions
 
 Nearby players can now witness successful actions by other ninja: eating,
