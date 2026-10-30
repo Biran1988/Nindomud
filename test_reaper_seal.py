@@ -150,6 +150,23 @@ class ReaperSealTests(unittest.TestCase):
         self.assertFalse(rite.imprisoned(self.target.player))
         self.assertFalse(rite.imprisoned(self.caster.player))
 
+    def test_trapped_immortal_can_reverse_legacy_seal_without_mask(self):
+        self.capture()
+        self.caster.account.staff_level = "immortal"  # previously trapped staff account
+        commands.dispatch_line(self.caster, "perform reverse reaper seal")
+        self.assertFalse(rite.imprisoned(self.caster.player), self.out)
+        self.assertFalse(rite.imprisoned(self.target.player), self.out)
+        self.assertEqual(self.caster.player.room_vnum, 1)
+
+    def test_staff_can_reverse_without_clan_scroll_or_mask(self):
+        self.capture()
+        self.rescuer.account.staff_level = "immortal"
+        self.rescuer.player.village = "leaf"
+        self.rescuer.player.clan = "nara"
+        commands.dispatch_line(self.rescuer, "perform reverse reaper seal Victim")
+        self.assertFalse(rite.imprisoned(self.caster.player), self.rescue_out)
+        self.assertFalse(rite.imprisoned(self.target.player), self.rescue_out)
+
     def test_reboot_and_offline_release_use_authoritative_pair_journal(self):
         self.capture()
         room = self.target.player.room_vnum
