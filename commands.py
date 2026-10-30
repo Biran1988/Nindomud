@@ -2016,7 +2016,7 @@ def cmd_sharingan(session, args: List[str]) -> None:
         import upkeep_reports
         for message in upkeep_reports.flush(player, "Sharingan"):
             session.send(message)
-        session.send(f"&RYour {player.bloodline_tomoe}-tomoe Sharingan fades back to black.&x")
+        session.send(f"&RYour {max(1, player.bloodline_tomoe)}-tomoe Sharingan fades back to black.&x")
 
 
 def _tsukuyomi_torture_action(session, command_name: str) -> None:
