@@ -1,5 +1,15 @@
 # Nindo_mud release contents
 
+## Permanent drag-and-drop update guarantee
+
+Stop the MUD, unpack the complete release into the existing game program
+directory, and overwrite program files. **Never replace, remove, package or
+overwrite the live `data/` directory.** It holds saved players, accounts,
+world edits, seal records, and staff-created content. Every release build
+rejects archives containing `data/` entries; the overlay regression test
+checks existing saves remain byte-for-byte intact. Keep the existing directory
+and always make a backup before updating.
+
 This is a complete source release. Extract the archive into a copy of your
 existing server installation, keeping the server's `data/` directory intact.
 
