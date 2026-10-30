@@ -312,6 +312,9 @@ class Player:
     # leave.
     mangekyo_amaterasu_burning: bool = False
     mangekyo_amaterasu_caster: Optional[str] = None
+    # Real-world epoch deadline for staff targets only; persists over relogs.
+    # Ordinary players and mobs keep their existing death-ended burn.
+    mangekyo_amaterasu_expires_at: float = 0.0
     # Kamui's own real pocket dimension (Section 140, if rolled) -- a
     # genuinely unique, per-caster room (never shared between
     # different Mangekyo users). Opening on a target creates the room
