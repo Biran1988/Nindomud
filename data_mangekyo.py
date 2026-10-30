@@ -132,12 +132,14 @@ TECHNIQUE_ROSTER = {
 
 # The real, confirmed 5 torture commands available during a Tsukuyomi
 # cast, each its own distinct real effect (see docstring above).
+# Fivefold stronger Tsukuyomi strikes. Keep impale's two-action tradeoff,
+# crush's 25% early end, and unmake as the resource-draining alternative.
 TSUKUYOMI_COMMANDS = {
-    "stab": {"countdown_cost": 1, "hp_damage": (30, 50)},
-    "impale": {"countdown_cost": 2, "hp_damage": (60, 90)},
-    "burn": {"countdown_cost": 1, "hp_damage": (20, 40), "stamina_drain": (30, 50)},
-    "crush": {"countdown_cost": 1, "hp_damage": (80, 120), "early_end_chance_pct": 25},
-    "unmake": {"countdown_cost": 1, "hp_damage": (0, 0), "stamina_drain": (40, 60), "chakra_drain": (40, 60)},
+    "stab": {"countdown_cost": 1, "hp_damage": (150, 250)},
+    "impale": {"countdown_cost": 2, "hp_damage": (300, 450)},
+    "burn": {"countdown_cost": 1, "hp_damage": (100, 200), "stamina_drain": (70, 110)},
+    "crush": {"countdown_cost": 1, "hp_damage": (400, 600), "early_end_chance_pct": 25},
+    "unmake": {"countdown_cost": 1, "hp_damage": (0, 0), "stamina_drain": (100, 150), "chakra_drain": (100, 150)},
 }
 
 # Confirmed real numbers (Section 140 design conversation).
