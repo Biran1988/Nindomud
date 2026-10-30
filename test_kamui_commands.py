@@ -255,6 +255,46 @@ class KamuiCommandTests(unittest.TestCase):
         self.assertIsNone(room.amaterasu_fire_caster)
         self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
 
+    def test_amaterasu_immortal_has_no_attached_flames_or_room_damage(self):
+        import session as session_module
+        self.target.account.staff_level = "immortal"
+        self.target.player.maximum_health = 900
+        self.target.player.health = 900
+        with patch("storage.save_player"):
+            combat.resolve_amaterasu_cast(self.caster, self.target)
+            self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
+            self.assertIsNone(self.target.player.mangekyo_amaterasu_caster)
+            self.assertEqual(self.target.player.mangekyo_amaterasu_expires_at, 0)
+            before = self.target.player.health
+            with patch.object(session_module, "ACTIVE_SESSIONS", [self.caster, self.target]):
+                mangekyo.process_amaterasu_player_burns(combat, session_module)
+                mangekyo.process_amaterasu_room_fires(combat, world)
+            self.assertEqual(self.target.player.health, before)
+            # Older saved immortals must also be unburned at the next pulse.
+            self.target.player.mangekyo_amaterasu_burning = True
+            self.target.player.mangekyo_amaterasu_expires_at = 0
+            with patch.object(session_module, "ACTIVE_SESSIONS", [self.caster, self.target]):
+                mangekyo.process_amaterasu_player_burns(combat, session_module)
+            self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
+
+    def test_amaterasu_player_burn_expires_after_five_real_minutes(self):
+        import session as session_module
+        self.target.player.maximum_health = 1500
+        self.target.player.health = 1500
+        with patch("storage.save_player"):
+            combat.resolve_amaterasu_cast(self.caster, self.target)
+            expires = self.target.player.mangekyo_amaterasu_expires_at
+            self.assertAlmostEqual(expires - __import__("time").time(), 300, delta=3)
+            with patch.object(session_module, "ACTIVE_SESSIONS", [self.caster, self.target]):
+                with patch("mangekyo.time.time", return_value=expires - 1), patch("mangekyo.random.randint", return_value=40):
+                    mangekyo.process_amaterasu_player_burns(combat, session_module)
+                self.assertTrue(self.target.player.mangekyo_amaterasu_burning)
+                with patch("mangekyo.time.time", return_value=expires + 1):
+                    mangekyo.process_amaterasu_player_burns(combat, session_module)
+            self.assertFalse(self.target.player.mangekyo_amaterasu_burning)
+            self.assertEqual(self.target.player.mangekyo_amaterasu_expires_at, 0)
+            self.assertIsNone(self.target.player.mangekyo_amaterasu_caster)
+
     def test_amaterasu_mob_flaming_stops_after_death(self):
         import mangekyo_mobs
         mob = combat.Mob(9005, 9005, "bandit", 10, 600, 600, 1, 0, 0)
