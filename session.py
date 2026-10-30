@@ -622,6 +622,12 @@ class Session:
             self.request_close()
             return
 
+        if getattr(account, "mangekyo_lock_until", 0.0) > time.time():
+            remaining = max(1, int((account.mangekyo_lock_until - time.time() + 3599) // 3600))
+            self.send(f"This account is suspended from the Mangekyo same-IP rule for another {remaining} hour(s).")
+            self.request_close()
+            return
+
         if account.locked_until and time.time() < account.locked_until:
             self.send("This account is temporarily locked due to failed login attempts.")
             self.request_close()
