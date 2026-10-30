@@ -429,7 +429,7 @@ def cmd_move(session, direction: str) -> None:
     # Only an actual completed walk by the group leader is copied.
     # Room enter scripts may transfer or disband the leader; never
     # teleport followers after such special moves.
-    if player.room_vnum == destination_vnum and session.group:
+    if player.room_vnum == destination_vnum and getattr(session, "group", None):
         groups.follow_leader_step(session, direction, room.vnum, destination_vnum)
 
 
