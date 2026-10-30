@@ -36,6 +36,7 @@ SEALS = {
     "binding formula seal": (55, 34, 30, 10),
     "chakra lock seal": (95, 55, 45, 20),
     "seal release": (120, 40, 10, 0),
+    "black flame suppression seal": (120, 95, 90, 0),
     "teleportation anchor seal": (155, 72, 50, 35),
     "summoning contract seal": (200, 85, 50, 45),
 }
@@ -215,14 +216,19 @@ def _target(session, words):
 def _ready(session, key, *, amount=None):
     player = session.player
     info = jutsu_entries()[key]
-    if not eligible(player):
+    # Staff are authenticated by their active account, never by mutable
+    # player stats. This extends the standard KKG testing privilege to
+    # Whirlpool seals dispatched through their own casting engine.
+    import combat
+    staff = combat.is_immortal_immune_to_defeat(session)
+    if not staff and not eligible(player):
         session.send("Only ninja of the Whirlpool village's Uzumaki clan can use these fuinjutsu.")
         return False
-    if player.level < info["level_requirement"] or info["display_name"] not in player.learned_skills:
+    if not staff and (player.level < info["level_requirement"] or info["display_name"] not in player.learned_skills):
         session.send("You have not learned this Whirlpool sealing art yet.")
         return False
     import skill_training
-    if skill_training.needs_first_practice(player, info["display_name"]):
+    if not staff and skill_training.needs_first_practice(player, info["display_name"]):
         session.send(f"Practice {info['display_name']} with a teacher once before using it.")
         return False
     now = time.time()
@@ -533,6 +539,67 @@ def _release(session, words):
         storage.save_player(target)
 
 
+def _suppress_black_flames(session, words):
+    """Uzumaki sealing array: target player, room, or both without damage.
+
+    perform black flame suppression seal <self|player|room|all>
+    Only successful suppression spends resources. Do not clear any other
+    fire, illness, chakra status, or area effect.
+    """
+    import mangekyo
+    import storage
+    import world
+    player = session.player
+    query = " ".join(words).strip().casefold()
+    if not query:
+        session.send("Usage: perform black flame suppression seal <self|player|room|all>")
+        return
+    room = world.WORLD.get(player.room_vnum)
+    if not room:
+        session.send("There is no room here to inscribe the sealing formula.")
+        return
+    target_session = None
+    if query in {"self", "me"}:
+        target_session = session
+    elif query not in {"room", "all"}:
+        target_session = _target(session, words)
+        if target_session is None:
+            session.send("That player must be present in your room.")
+            return
+    affected = []
+    if query == "all":
+        affected = [s for s in session.active_sessions()
+                    if getattr(s, "player", None)
+                    and s.player.room_vnum == room.vnum
+                    and s.player.mangekyo_amaterasu_burning]
+    elif target_session is not None and target_session.player.mangekyo_amaterasu_burning:
+        affected = [target_session]
+    room_burning = query in {"room", "all"} and bool(room.amaterasu_fire_caster)
+    if not affected and not room_burning:
+        session.send("There are no Amaterasu flames on that target to suppress.")
+        return
+    if not _ready(session, "black flame suppression seal"):
+        return
+    _pay(session, "black flame suppression seal")
+    if room_burning:
+        room.amaterasu_fire_caster = None
+        room.amaterasu_fire_expires_at = 0.0
+    for target_session in affected:
+        mangekyo.clear_amaterasu_target_burn(target_session.player)
+        storage.save_player(target_session.player)
+        if target_session is not session:
+            target_session.send("&CWhirlpool sealing marks smother the Amaterasu flames on your body!&x")
+    storage.save_player(player)
+    if affected and room_burning:
+        session.send(f"&CYour Black Flame Suppression Seal extinguishes the room fire and flames on {len(affected)} player(s)!&x")
+    elif affected:
+        session.send(f"&CYour Black Flame Suppression Seal extinguishes the flames on {len(affected)} player(s)!&x")
+    else:
+        session.send("&CYour Black Flame Suppression Seal extinguishes the Amaterasu room fire!&x")
+    import room_actions
+    room_actions.emit(session, f"&CA Whirlpool sealing array smothers the black flames around {player.name}!&x")
+
+
 def cast(session, key, words):
     """Command dispatcher; all validation happens before charging chakra."""
     import status_effects
@@ -545,6 +612,9 @@ def cast(session, key, words):
         return
     if key == "seal release":
         _release(session, words)
+        return
+    if key == "black flame suppression seal":
+        _suppress_black_flames(session, words)
         return
     target_session = _target(session, words)
     room = world.WORLD.get(session.player.room_vnum)
