@@ -1044,16 +1044,18 @@ def resolve_izanami_cast(session, target_session, grow_handsigns: bool = True) -
         return
     import data_mangekyo
     import random
-    target_session.player.izanami_trapped = True
-    import mangekyo_discovery
-    mangekyo_discovery.record_use(player, "izanami")
-    target_session.player.izanami_target_number = random.randint(
+    import izanami_loops
+    secret_number = random.randint(
         data_mangekyo.IZANAMI_NUMBER_MIN, data_mangekyo.IZANAMI_NUMBER_MAX
     )
+    izanami_loops.start(session, target_session, secret_number)
+    import mangekyo_discovery
+    mangekyo_discovery.record_use(player, "izanami")
     jutsu_colors.send(session, f"&R{target_session.player.name} is pulled into a recursive loop of your own making.&x")
     jutsu_colors.send(target_session,
         f"&RTime folds in on itself -- you're trapped, reliving the same moment over and over. "
-        f"Guess the number ({data_mangekyo.IZANAMI_NUMBER_MIN}-{data_mangekyo.IZANAMI_NUMBER_MAX}) to break free: 'guess <number>'&x"
+        f"Guess the number ({data_mangekyo.IZANAMI_NUMBER_MIN}-{data_mangekyo.IZANAMI_NUMBER_MAX}) to break free: 'guess <number>'. "
+        "You get ONE guess per 15-second loop. Wrong answers deal Health damage!&x"
     )
     if grow_handsigns:
         grow_skill_from_usage(player, "Handsigns", session=session)
