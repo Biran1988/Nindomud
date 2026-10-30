@@ -66,7 +66,7 @@ class GroupFollowTests(unittest.TestCase):
         self.assertTrue(self.follower.follow_group_leader)
         self.assertFalse(self.second.follow_group_leader)
         commands.cmd_group(self.follower, [])
-        self.assertIn("(Following)", self.follower.send.call_args.args[0])
+        self.assertIn("(Following)", self.follower.send_raw.call_args.args[0])
 
     def test_followers_walk_same_exit_at_own_stamina_cost(self):
         commands.cmd_follow(self.follower, ["Leader"])
@@ -91,7 +91,7 @@ class GroupFollowTests(unittest.TestCase):
         self.assertEqual(self.follower.player.room_vnum, 75001)
         self.assertTrue(self.follower.follow_group_leader)
         self.assertTrue(any("exhausted" in call.args[0]
-                            for call in self.follower.send.call_args_list))
+                            for call in self.follower.send_raw.call_args_list))
         self.follower.player.stamina = 10
         commands.cmd_move(self.follower, "north")
         commands.cmd_move(self.leader, "south")
