@@ -1214,7 +1214,23 @@ def cmd_look(session, args: List[str]) -> None:
     for other in session.active_sessions():
         if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _player_hidden_from(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
-            lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{afk_tag}")
+            activity = ""
+            if other.player.position == "sleeping":
+                activity = " &D[Sleeping]&x"
+            elif other.player.position == "resting":
+                activity = " &D[Resting]&x"
+            elif (other.combat_target is not None
+                  and getattr(other.combat_target, "health", 0) > 0
+                  and getattr(other.combat_target, "room_vnum", None) == room.vnum
+                  and not _is_invisible_mob(other.combat_target)):
+                activity = f" &R[Fighting {other.combat_target.name}]&x"
+            elif (other.pvp_target is not None
+                  and getattr(other.pvp_target, "player", None) is not None
+                  and other.pvp_target.player.room_vnum == room.vnum
+                  and not _player_hidden_from(player, other.pvp_target.player)):
+                opponent_name = genjutsu.apparent_name(other.pvp_target.player)
+                activity = f" &R[Fighting {opponent_name}]&x"
+            lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{activity}{afk_tag}")
     # Linkdead characters remain physically present but are untargetable.
     import session as session_module
     for other in session_module.ACTIVE_SESSIONS:
