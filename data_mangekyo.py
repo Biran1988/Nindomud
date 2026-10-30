@@ -48,15 +48,14 @@ design conversation:
   the target is left with very little HP and no stamina.
 
 - Amaterasu: both mobs and players take 250 initial impact damage
-  when the cast lands, followed by permanent black flames (40-60
-  damage per tick). The flames never extinguish, even on defeat,
-  after hospital recovery, or after a protective save. The spell ALSO
-  sets the room they're standing in on fire too, burning everyone in
-  it except the caster (25-40 dmg/tick). If the burned target
-  leaves, their own burn travels with them; the room's fire stays
-  behind (confirmed directly) and would burn anyone else who walks
-  in. The separate room-fire lasts five minutes from the cast; target
-  flames have no timer or cure, even at the caster's command.
+  when the cast lands, followed by black flames (40-60 damage per tick).
+  Player-attached flames last at most five real-time minutes, end on
+  death, or can be removed early with the Whirlpool Black Flame
+  Suppression Seal. Immortals do not acquire attached flames and are
+  immune to damage from the separate room fire. Mob-attached flames
+  continue to burn until the mob is defeated. Casting also ignites the
+  room for five minutes (25-40 damage per tick for non-immortals);
+  the room fire does not follow the target.
 
 - Kamui: 3 SEPARATE real jutsu (confirmed directly), not one combined
   ability:
@@ -146,7 +145,7 @@ AMATERASU_INITIAL_DAMAGE = 250
 AMATERASU_PLAYER_BURN_PER_TICK = (40, 60)
 AMATERASU_ROOM_BURN_PER_TICK = (25, 40)
 AMATERASU_ROOM_FIRE_DURATION_SECONDS = 5 * 60
-AMATERASU_IMMORTAL_BURN_DURATION_SECONDS = 5 * 60
+AMATERASU_PLAYER_BURN_DURATION_SECONDS = 5 * 60
 
 KAMUI_UPKEEP_ALONE_PER_TICK = 15
 KAMUI_UPKEEP_WITH_TARGET_PER_TICK = 35
