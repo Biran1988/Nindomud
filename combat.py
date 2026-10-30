@@ -627,6 +627,7 @@ def find_mob(room_vnum: int, query: str) -> Optional[Mob]:
 
 
 def remove_mob(mob: Mob) -> None:
+    mob.mangekyo_amaterasu_caster = None
     if is_shadow_clone(mob):
         import clone_control
         clone_control.notify_clone_removed(mob, "disperses")
@@ -965,15 +966,15 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     if room is not None:
         room.amaterasu_fire_caster = player.name
         room.amaterasu_fire_expires_at = time.time() + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
-    # Same immediate strike as the mob casting path. Existing defensive
-    # damage reduction still applies, but the direct flames never expire.
+    # Same immediate strike as the mob casting path. Defenses reduce
+    # the initial impact; attached flames last until the target dies.
     import sage_mode
     damage = status_effects.reduce_incoming_damage(
         target_session.player.active_status_effects, data_mangekyo.AMATERASU_INITIAL_DAMAGE)
     damage = sage_mode.incoming(target_session.player, damage)
     target_session.player.health -= damage
-    jutsu_colors.send(session, f"&RAmaterasu engulfs {target_session.player.name} for {damage_messages.describe_damage(damage)} initial damage! The black flames will never fade.&x")
-    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you for {damage_messages.describe_damage(damage)} initial damage! The black flames will never fade.&x")
+    jutsu_colors.send(session, f"&RAmaterasu engulfs {target_session.player.name} for {damage_messages.describe_damage(damage)} initial damage! The black flames burn until death.&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you for {damage_messages.describe_damage(damage)} initial damage! The black flames burn until death.&x")
     if grow_handsigns:
         grow_skill_from_usage(player, "Handsigns", session=session)
     if target_session.player.health <= 0:
@@ -1312,9 +1313,13 @@ def tick_all_mob_effects(sessions=None) -> None:
             # dead-mob cleanup must not erase it on the next pulse.
             if mob.tailed_beast_key and mob.tailed_beast_downed_until:
                 continue
-            if mob.mangekyo_amaterasu_caster:
+            if mob.health <= 0 and mob.mangekyo_amaterasu_caster:
+                mob.mangekyo_amaterasu_caster = None
+            if mob.health > 0 and mob.mangekyo_amaterasu_caster:
                 import data_mangekyo
                 mob.health = max(0, mob.health - random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK))
+                if mob.health <= 0:
+                    mob.mangekyo_amaterasu_caster = None
             if "burning" in mob.active_status_effects:
                 mob.health = max(0, mob.health - status_effects.burning_damage())
             if "poisoned" in mob.active_status_effects:
@@ -3205,6 +3210,9 @@ def _experience_reward(player: Player, mob: Mob) -> int:
 
 def handle_mob_defeat(session, mob: Mob) -> None:
     player = session.player
+    # Target-bound Amaterasu dies with its mob. This also prevents
+    # lingering damage from restarting a Tailed Beast's sealing window.
+    mob.mangekyo_amaterasu_caster = None
     if is_shadow_clone(mob):
         # A defeated shadow clone bypasses XP/ryo/bounty/corpse/mob-
         # program logic entirely -- genuinely zero reward through
@@ -3444,8 +3452,15 @@ def handle_player_defeat(session) -> None:
             dismiss_summon(player)
             return
 
-    # Amaterasu is permanent on a character, including after defeat
-    # and hospital respawn. Never clear its burning flag here.
+    # The attached black flames burn only while the target is alive.
+    # On an actual defeat they go out before hospital recovery; the
+    # independent room fire still runs out its own five-minute timer.
+    if player.mangekyo_amaterasu_burning:
+        player.mangekyo_amaterasu_burning = False
+        player.mangekyo_amaterasu_caster = None
+        session.send("&DAmaterasu's black flames fade as you fall.&x")
+        import storage
+        storage.save_player(player)
     session.send("&RYour vision darkens as you collapse.&x")
 
     import leveling
