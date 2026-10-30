@@ -64,7 +64,7 @@ for name, level, chakra, stamina, damage, drain, lock, mastery, potential in STR
     key = name.lower()
     REGISTRY[key] = {
         "jutsu_id": "hyuga_" + key.replace(" ", "_").replace(":", ""),
-        "display_name": name, "class_requirement": "taijutsu",
+        "display_name": name, "class_requirement": "general",
         "level_requirement": level, "chakra_cost": chakra, "stamina_cost": stamina,
         "cooldown": min(35.0, 7.0 + max(0, level-65)/5), "damage": damage, "damage_type": "physical",
         "effect": None, "tier": 5 if level >= 200 else 4 if level >= 100 else 3,
@@ -76,7 +76,7 @@ for name, level, chakra, stamina, cooldown, mastery, potential, effect in MODES:
     key = name.lower()
     REGISTRY[key] = {
         "jutsu_id": "hyuga_" + key.replace(" ", "_"),
-        "display_name": name, "class_requirement": "taijutsu",
+        "display_name": name, "class_requirement": "general",
         "level_requirement": level, "chakra_cost": chakra, "stamina_cost": stamina,
         "cooldown": cooldown, "damage": None, "damage_type": None, "effect": None,
         "tier": 5 if level >= 215 else 3, "element": "none",
@@ -86,9 +86,18 @@ for name, level, chakra, stamina, cooldown, mastery, potential, effect in MODES:
     }
 
 
+def _staff_can_test(player):
+    import combat
+    return combat._staff_testing_mangekyo(player)
+
+
 def unlocked(player, key):
     spec = REGISTRY.get(key)
-    if spec is None or not eligible(player):
+    if spec is None:
+        return False
+    if _staff_can_test(player):
+        return True
+    if not eligible(player):
         return False
     if player.level < spec["level_requirement"]:
         return False
@@ -98,6 +107,8 @@ def unlocked(player, key):
 
 
 def can_use(player, key):
+    if _staff_can_test(player):
+        return key in REGISTRY
     if not unlocked(player, key):
         return False
     if key not in {"byakugan", "celestial byakugan", "tenseigan chakra mode"}:
@@ -113,6 +124,8 @@ def can_use(player, key):
 def sync(player):
     """Bring old/returning players up to date without rerolling bloodlines."""
     if not eligible(player):
+        if _staff_can_test(player):
+            return []  # Testing rights do not permanently grant a bloodline.
         player.byakugan_active = False
         player.celestial_byakugan_active = False
         player.tenseigan_active = False
@@ -127,13 +140,13 @@ def sync(player):
 
 
 def accuracy(player):
-    if not eligible(player) or not player.byakugan_active:
+    if not (eligible(player) or _staff_can_test(player)) or not player.byakugan_active:
         return 0
     return 3 + int(_ratio(player)*8) + (8 if player.celestial_byakugan_active else 0)
 
 
 def dodge(player):
-    if not eligible(player) or not player.byakugan_active:
+    if not (eligible(player) or _staff_can_test(player)) or not player.byakugan_active:
         return 0
     return 3 + int(_ratio(player)*7) + (9 if player.celestial_byakugan_active else 0) + (10 if player.tenseigan_active else 0) + (12 if "hyuga_fate" in player.active_status_effects else 0)
 
@@ -142,7 +155,7 @@ def tick_upkeep(session):
     player = session.player
     if not player.byakugan_active:
         return
-    if not eligible(player):
+    if not eligible(player) and not _staff_can_test(player):
         player.byakugan_active = player.celestial_byakugan_active = player.tenseigan_active = False
         return
     if player.tenseigan_active and "hyuga_tenseigan" not in player.active_status_effects:
@@ -236,7 +249,7 @@ def cast(session, key, args):
     player = session.player
     spec = REGISTRY[key]
     effect = spec["hyuga_effect"]
-    if not eligible(player):
+    if not eligible(player) and not _staff_can_test(player):
         session.send("You haven't learned that skill or jutsu.")
         return
     if not unlocked(player, key):
@@ -326,7 +339,7 @@ def cmd_byakugan(session, args):
 
 def cmd_hyuga(session, args):
     player = session.player
-    if not eligible(player):
+    if not eligible(player) and not _staff_can_test(player):
         session.send("You have not awakened the Byakugan.")
         return
     newly = sync(player)
@@ -336,7 +349,7 @@ def cmd_hyuga(session, args):
         for key, spec in sorted(REGISTRY.items(), key=lambda pair: (pair[1]["level_requirement"], pair[0])):
             if spec.get("hyuga_potential", 0) >= 95 and not unlocked(player, key):
                 continue  # never expose secret celestial art names prematurely
-            if player.bloodline_potential >= spec.get("hyuga_potential", 0):
+            if _staff_can_test(player) or player.bloodline_potential >= spec.get("hyuga_potential", 0):
                 state = "learned" if unlocked(player, key) else f"requires mastery {spec.get('hyuga_mastery', 0):.0%}"
                 lines.append(f" Lv {spec['level_requirement']:3} {spec['display_name']} - {state}")
         session.send("\n".join(lines))
