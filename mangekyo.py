@@ -357,11 +357,10 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
        that room right now, EXCEPT the original caster (confirmed
        directly they're exempt from their own room's fire).
 
-    Deliberately does NOT touch a player's own separate, direct
-    Amaterasu burn (player.mangekyo_amaterasu_burn_until) -- that's a
-    genuinely separate, permanent effect that travels with the player
-    wherever they go, handled by its own real tick elsewhere. This
-    function only concerns the ROOM itself, which stays behind if the
+    Deliberately does NOT touch a player's separate target-bound
+    Amaterasu burn -- that effect travels with its living target until
+    death and is handled by its own real tick elsewhere. This function
+    concerns the ROOM itself, which stays behind if the
     original target leaves, exactly as confirmed."""
     import random
     import session as session_module
@@ -408,14 +407,20 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
 
 def process_amaterasu_player_burns(combat_module, session_module) -> None:
     """Called once per real pulse -- ticks every player's own,
-    direct Amaterasu burn. It has no timer and even defeat cannot clear it.
-    Separate from the room-fire tick above, since this travels with
-    the player wherever they go."""
+    direct Amaterasu burn. It has no countdown but ends immediately on
+    the target's real death. The separate room fire follows its own
+    five-minute timer and does not travel with the player."""
     import random
 
     for s in session_module.ACTIVE_SESSIONS:
         if (not s.player or s.state != session_module.State.PLAYING
                 or not s.player.mangekyo_amaterasu_burning):
+            continue
+        if s.player.health <= 0:
+            # An already-dead target must not keep burning or respawn
+            # into a repeated lethal loop, even with an older save.
+            s.player.mangekyo_amaterasu_burning = False
+            s.player.mangekyo_amaterasu_caster = None
             continue
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
         dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
