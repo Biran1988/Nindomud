@@ -130,6 +130,7 @@ class Session:
         # like pvp_target/combat_target above, since a group only makes
         # sense while its members are online.
         self.group = None                    # groups.Group this session belongs to, if any
+        self.follow_group_leader = False       # opt-in group leader tracking, never saved to disk
         self.trade = None                    # trade.Trade this session is currently negotiating, if any
         self.duel = None                     # duel.Duel this session is currently in (proposed or active), if any
         self.pending_cast = None             # combat.PendingCast in progress (hand-sign casting delay), if any
