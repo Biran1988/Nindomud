@@ -615,9 +615,20 @@ def load_player(name: str) -> Optional[Player]:
         player.experience_curve_version = 1
     import leveling
     experience_migrated = leveling.migrate_experience_curve(player)
+    # Older characters were created before hard ninja-rank level caps.
+    # Migrate ONLY saves without the version field, exactly once, so
+    # later staff level/rank edits and new characters cannot bypass exams.
+    legacy_rank_migrated = raw.get("rank_cap_migration_version", 0) < 1
+    if legacy_rank_migrated:
+        import kage
+        promoted = kage.grandfather_legacy_rank(player)
+        player.rank_cap_migration_version = 1
+        if promoted:
+            player.rank_grandfathered_from, player.rank_grandfathered_to = promoted
     if (chisei_orphaned or renamed_technique or vital_surge_migrated or summon_contracts_migrated or sage_training_migrated
             or experience_migrated or removed_bloodline_migrated
-            or elemental_release_migrated or hyuga_migrated or legacy_first_practice):
+            or elemental_release_migrated or hyuga_migrated or legacy_first_practice
+            or legacy_rank_migrated):
         save_player(player)
     import reaper_seal
     if reaper_seal.reconcile_player(player):
