@@ -4,8 +4,8 @@
     "impale"
   ],
   "title": "Impale (Tsukuyomi)",
-  "body": "Syntax: impale\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. A heavier 60-90 Health damage attack that advances the ordeal by two actions. The ordeal ends when its hidden action limit is reached.\n\nDate: 2026-09-27",
+  "body": "Syntax: impale\n\nDescription: Tsukuyomi caster action, usable only while you and your target are inside its shared illusion. A heavier 300-450 Health damage attack that advances the ordeal by two actions. The ordeal ends when its hidden action limit is reached.\n\nUpdated: 2026-10-29",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
