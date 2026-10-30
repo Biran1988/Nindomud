@@ -15,6 +15,50 @@ from scripts import build_release
 
 
 class ReleaseArchiveTests(unittest.TestCase):
+    def test_drag_and_drop_overlay_never_touches_existing_data(self):
+        # This must remain true for EVERY release. Existing player saves, staff
+        # helpfiles, world state, and the active Reaper seal ledger are untouchable.
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            install = root / "existing_server"
+            fixtures = {
+                "data/players/ExistingNinja.json": b'{"health": 99}\\n',
+                "data/world_state.json": b'{"rooms": ["custom"]}\\n',
+                "data/reaper_seals.json": b'{"seal": {"active": true}}\\n',
+                "data/help/custom_help.json": b'{"staff_written": true}\\n',
+                "data/network_bans.json": b'{"banned": []}\\n',
+            }
+            for name, payload in fixtures.items():
+                path = install / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(payload)
+            build_release.build(root / "dist")
+            archive = root / "dist" / "Nindo_mud.zip"
+            build_release.assert_data_safe(archive)
+            with ZipFile(archive) as package:
+                package.extractall(install)
+            for name, payload in fixtures.items():
+                self.assertEqual((install / name).read_bytes(), payload, name)
+            self.assertTrue((install / "main.py").is_file())
+            self.assertTrue((install / "Nindo_mud").is_file())
+
+    def test_release_validator_refuses_saved_data_or_traversal(self):
+        with tempfile.TemporaryDirectory() as folder:
+            archive = Path(folder) / "unsafe.zip"
+            for filename in (
+                "data/players/Someone.json",
+                "DATA/world_state.json",
+                "docs/data/help/custom.json",
+                "../data/players/Someone.json",
+                "/data/world_state.json",
+                "data\\\\players\\\\Someone.json",
+            ):
+                with self.subTest(filename=filename):
+                    with ZipFile(archive, "w") as package:
+                        package.writestr(filename, "DO NOT SHIP")
+                    with self.assertRaises(ValueError):
+                        build_release.assert_data_safe(archive)
+
     def test_normal_zip_contains_current_source_executable_and_no_saved_data(self):
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder)
