@@ -28,8 +28,8 @@ class MangekyoSacrificeFloorTests(unittest.TestCase):
             "Previously Practiced At Zero", "Practiced At 80",
             "Maxed Signature",
         ]
-        caster_session = SimpleNamespace(player=attacker, send=Mock())
-        victim_session = SimpleNamespace(player=victim, send=Mock(), send_prompt=Mock())
+        caster_session = SimpleNamespace(player=attacker, send=Mock(), connection_ip='192.0.2.1')
+        victim_session = SimpleNamespace(player=victim, send=Mock(), send_prompt=Mock(), connection_ip='192.0.2.2')
 
         with patch("session.ACTIVE_SESSIONS", [caster_session, victim_session]), \
              patch("data_mangekyo.roll_two_eye_techniques",
