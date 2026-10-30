@@ -413,11 +413,10 @@ def clear_amaterasu_target_burn(player):
 
 
 def process_amaterasu_player_burns(combat_module, session_module) -> None:
-    """Tick attached flames; immortal targets burn for at most five minutes.
+    """Tick attached burns: staff are immune, players have a five-minute limit.
 
-    A wall-clock expiration timestamp keeps staff from restarting the timer
-    through logout, reconnect or reboot. Non-staff still burn until death.
-    Separate five-minute ROOM fires use their existing timer unchanged.
+    Wall-clock timestamps survive logout/reboot. Death and a successful
+    Whirlpool black flame suppression also remove the targeted burn.
     """
     import random
     import storage
@@ -432,18 +431,22 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
             clear_amaterasu_target_burn(player)
             continue
         if combat_module.is_immortal_immune_to_defeat(s):
-            expires_at = getattr(player, "mangekyo_amaterasu_expires_at", 0.0)
-            if not expires_at:
-                # Legacy immortal saves might already be burning without a
-                # deadline. Give them one final five-minute window.
-                expires_at = now + data_mangekyo.AMATERASU_IMMORTAL_BURN_DURATION_SECONDS
-                player.mangekyo_amaterasu_expires_at = expires_at
-                storage.save_player(player)
-            if now >= expires_at:
-                clear_amaterasu_target_burn(player)
-                storage.save_player(player)
-                s.send("&DThe black flames of Amaterasu finally fade from your body.&x")
-                continue
+            clear_amaterasu_target_burn(player)
+            storage.save_player(player)
+            s.send("&DThe Amaterasu flames vanish immediately from your immortal body.&x")
+            continue
+        expires_at = getattr(player, "mangekyo_amaterasu_expires_at", 0.0)
+        if not expires_at:
+            # Old saves with perpetual burns receive their final five-minute
+            # window instead of staying permanently on fire.
+            expires_at = now + data_mangekyo.AMATERASU_ROOM_FIRE_DURATION_SECONDS
+            player.mangekyo_amaterasu_expires_at = expires_at
+            storage.save_player(player)
+        if now >= expires_at:
+            clear_amaterasu_target_burn(player)
+            storage.save_player(player)
+            s.send("&DThe black flames of Amaterasu fade after five minutes.&x")
+            continue
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
         dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
         player.health -= dmg
