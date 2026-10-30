@@ -3215,6 +3215,24 @@ def _current_jutsu_opponent(session) -> List[str]:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+
+    # Kamui owners can dismiss an existing pocket from OUTSIDE without
+    # entering it, paying upkeep, or needing the target to be in this room.
+    # Closing is an emergency release of a previously owned dimension;
+    # it doesn't recast Kamui or confer access to anyone else's pocket.
+    if (jutsu_key == "kamui pocket dimension"
+            and [w.casefold() for w in target_words] in
+            (["close"], ["collapse"], ["dismiss"])):
+        import mangekyo
+        import world as world_module
+        try:
+            returned = mangekyo.close_pocket_dimension(session, world_module)
+        except ValueError as exc:
+            jutsu_colors.send(session, str(exc))
+            return
+        jutsu_colors.send(session, f"&CYou close your Kamui pocket dimension from reality. {returned} occupant(s) return to the real world.&x")
+        return
+
     opponent_types = {"instant_kill", "ambush", "attack", "track", "sealing",
                       "beast_release", "beast_bomb", "illusion_walk", "thrown", "trap",
                       "fan_art", "blade_strike", "mangekyo_tsukuyomi", "mangekyo_amaterasu",
