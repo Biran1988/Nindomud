@@ -39,6 +39,7 @@ class RoomActionTests(unittest.TestCase):
         s.account = Account(name, "salt", "hash")
         s.state = State.PLAYING
         sessions.ACTIVE_SESSIONS.append(s)
+        out.clear()  # Session creation sends banners; exclude from action assertions.
         return s, out
 
     def test_pickup_and_drop_report_success_once_to_same_room(self):
