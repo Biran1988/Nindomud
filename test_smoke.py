@@ -4089,7 +4089,8 @@ def test_color_escape_and_help_seeding():
     assert entries2["colors"]["body"] == "STAFF EDITED THIS", "seeding must never overwrite an existing entry"
 
     # The unedited seeded body itself reads as clean literal text once rendered.
-    original_body = help_system.DEFAULT_HELP_ENTRIES[0]["body"]
+    original_body = next(entry["body"] for entry in help_system.DEFAULT_HELP_ENTRIES
+                         if entry["primary_keyword"] == "colors")
     rendered = colors.render(original_body, False)
     assert "&R red" in rendered
     assert "&x reset" in rendered
