@@ -3421,7 +3421,7 @@ def is_immortal_immune_to_defeat(session) -> bool:
     to 1 and skip calling handle_player_defeat entirely, rather than
     letting a real defeat (hospital respawn, XP/ryo loss, bounty
     claims, etc.) ever actually happen to a staff member."""
-    return session.account is not None and session.account.staff_level != "player"
+    return getattr(getattr(session, "account", None), "staff_level", "player") != "player"
 
 
 def clamp_immortal_health(session) -> None:
