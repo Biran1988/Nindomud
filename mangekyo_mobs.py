@@ -110,7 +110,7 @@ def extinguish(session, args):
         jutsu_colors.send(session, "Usage: perform amaterasu extinguish <room|all>")
         return
     if query not in ("room", "all"):
-        jutsu_colors.send(session, "&RAmaterasu's black flames on a target can never be extinguished.&x")
+        jutsu_colors.send(session, "&RAmaterasu's flames on a living target burn until that target dies; they cannot be manually extinguished.&x")
         return
 
     removed = 0
