@@ -3460,8 +3460,8 @@ def handle_player_defeat(session) -> None:
         import duel as duel_module
         # A real duel defeat also puts out any attached Amaterasu.
         if player.mangekyo_amaterasu_burning:
-            player.mangekyo_amaterasu_burning = False
-            player.mangekyo_amaterasu_caster = None
+            import mangekyo
+            mangekyo.clear_amaterasu_target_burn(player)
             session.send("&DAmaterasu's black flames fade as you fall.&x")
         duel_module.end_duel(session.duel, session)
         return
@@ -3486,8 +3486,8 @@ def handle_player_defeat(session) -> None:
     # independent room fire still runs out its own five-minute timer.
     flames_extinguished = player.mangekyo_amaterasu_burning
     if flames_extinguished:
-        player.mangekyo_amaterasu_burning = False
-        player.mangekyo_amaterasu_caster = None
+        import mangekyo
+        mangekyo.clear_amaterasu_target_burn(player)
         session.send("&DAmaterasu's black flames fade as you fall.&x")
     session.send("&RYour vision darkens as you collapse.&x")
 
