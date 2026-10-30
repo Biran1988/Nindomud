@@ -325,10 +325,10 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["follow", "unfollow", "auto follow", "group follow"],
         "title": "Follow Group Leader",
         "body": (
-            "Syntax: follow leader | follow <leader name> | follow off | unfollow | group follow on | group follow off\\n"
-            "\\n"
-            "Join a group with 'group invite <player>' and 'group accept'. Stand in the same room as its leader, then type 'follow leader' or 'follow <name>' to automatically walk through the same exits when the leader moves. The follower pays normal Stamina costs, can be stopped by closed doors, fighting, status effects, seals and restrictions, and is never teleported to catch up. Following stays enabled if you lag behind; manually catch up and it resumes. Only the group leader can be followed. 'follow off' stops tracking without leaving the party; leaving, being kicked or disbanding turns it off. Reconnecting within the normal link-dead grace period preserves your choice.\\n"
-            "\\n"
+            "Syntax: follow leader | follow <leader name> | follow off | unfollow | group follow on | group follow off\n"
+            "\n"
+            "Join a group with 'group invite <player>' and 'group accept'. Stand in the same room as its leader, then type 'follow leader' or 'follow <name>' to automatically walk through the same exits when the leader moves. The follower pays normal Stamina costs, can be stopped by closed doors, fighting, status effects, seals and restrictions, and is never teleported to catch up. Following stays enabled if you lag behind; manually catch up and it resumes. Only the group leader can be followed. 'follow off' stops tracking without leaving the party; leaving, being kicked or disbanding turns it off. Reconnecting within the normal link-dead grace period preserves your choice.\n"
+            "\n"
             "For shared XP and group leadership commands, see 'help group'."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
