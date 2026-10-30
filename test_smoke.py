@@ -4799,10 +4799,13 @@ def test_login_broadcast():
     import re
     text = re.sub(r"\x1b\[[0-9;]*m", "", raw_text)
     assert "Loginbroadcasttwox" in text
-    assert "Konohagakure" in text, "the announcement should name the joining player's village"
-    assert "Taijutsu" not in text, "the announcement should NOT name the joining player's class (removed per follow-up feedback)"
-    assert f"has joined {config.MUD_NAME}" in text
-    assert "has joined" not in "".join(out2), "the joining player shouldn't see their own join message"
+    # The modern themed connection notice deliberately avoids exposing
+    # village or class data and no longer uses the old "has joined" copy.
+    assert "[SHINOBI ARRIVAL]" in text
+    assert "enters the shinobi world." in text
+    assert "Konohagakure" not in text
+    assert "Taijutsu" not in text
+    assert "[SHINOBI ARRIVAL]" not in "".join(out2), "the joining player shouldn't see their own join message"
 
     # A real, clearly visible color -- not dim gray (\x1b[90m), which
     # reads as barely-colored-at-all on many terminals and was a real
