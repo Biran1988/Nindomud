@@ -31,6 +31,27 @@ class SixPathsTests(unittest.TestCase):
         return NS(player=p, send=Mock(), broadcast_room=Mock(), pending_cast=None,
                   combat_target=None, pvp_target=None)
 
+    def test_staff_can_test_indra_and_ashura_without_reincarnation(self):
+        import session as session_module
+        p = self.player("", level=1, primary_class="genjutsu")
+        staff = self.session(p)
+        staff.account = NS(staff_level="immortal")
+        with patch.object(session_module, "ACTIVE_SESSIONS", [staff]), patch.object(storage, "save_player"):
+            self.assertTrue(six_paths.eligible(p, "indra"))
+            self.assertTrue(six_paths.eligible(p, "ashura"))
+            self.assertTrue(combat._can_use_jutsu(p, data_jutsu.JUTSU["truth-seeking orb barrage"],
+                                                  "truth-seeking orb barrage"))
+            six_paths.command(staff, ["on"], soul="ashura")
+            self.assertTrue(six_paths.active(p))
+            self.assertEqual(six_paths._soul(p), "ashura")
+            self.assertEqual(p.reincarnation, "")
+            six_paths.stop(staff)
+            six_paths.command(staff, ["on"], soul="indra")
+            self.assertTrue(six_paths.active(p))
+            self.assertEqual(six_paths._soul(p), "indra")
+            self.assertEqual(p.reincarnation, "")
+        self.assertFalse(six_paths.eligible(p))
+
     def test_unlock_at_75_for_both_lineages_and_all_classes_only_once(self):
         for soul in six_paths.MODE_SKILLS:
             for cls in ("ninjutsu", "genjutsu", "taijutsu", "bukijutsu"):
