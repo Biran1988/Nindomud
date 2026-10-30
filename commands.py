@@ -138,6 +138,11 @@ def dispatch_line(session, line: str) -> None:
             whirlpool_fuinjutsu.contract_consent(session, lower_words)
             return
     import reaper_seal
+    # Staff may use emergency reversal even while afflicted by another spell.
+    if (session.player and combat.is_immortal_immune_to_defeat(session)
+            and lower_words[:4] == ["perform", "reverse", "reaper", "seal"]):
+        reaper_seal.cast(session, reaper_seal.REVERSE_KEY, words[4:])
+        return
     if reaper_seal.blocks_command(session, lower_words[0]):
         return
     if _blocked_while_sleeping(session, lower_words[0]):
