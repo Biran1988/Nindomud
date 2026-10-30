@@ -24,9 +24,12 @@ def render_prompt(player: Player, mob=None, is_staff: bool = False) -> str:
     next_level_xp = leveling.xp_for_next_level(player.level)
     enemy_pct = ""
     enemy_name = ""
-    if mob is not None and mob.max_health:
-        enemy_pct = str(int(mob.health / mob.max_health * 100))
-        enemy_name = mob.name
+    # During sealing, scripted tests and some transition states the
+    # combat target may be a placeholder rather than a live Mob.
+    # Don't crash prompt rendering when it has no health fields.
+    if mob is not None and getattr(mob, "max_health", 0):
+        enemy_pct = str(int(getattr(mob, "health", 0) / mob.max_health * 100))
+        enemy_name = getattr(mob, "name", "")
 
     tokens = {
         "%h": str(player.health), "%H": str(player.maximum_health),
