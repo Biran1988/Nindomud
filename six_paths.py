@@ -49,7 +49,26 @@ def jutsu_entries():
     return entries
 
 
+def _staff_can_test(player):
+    import combat
+    return combat._staff_testing_mangekyo(player)
+
+
+def _soul(player):
+    if _staff_can_test(player):
+        selected = getattr(player, "_staff_six_paths_soul", "")
+        if selected in MODE_SKILLS:
+            return selected
+        if getattr(player, "reincarnation", "") in MODE_SKILLS:
+            return player.reincarnation
+        return "indra"
+    return getattr(player, "reincarnation", "")
+
+
 def eligible(player, soul=None):
+    # Staff can test either mode without altering permanent reincarnation.
+    if _staff_can_test(player):
+        return soul is None or soul in MODE_SKILLS
     inherited = getattr(player, "reincarnation", "")
     return (inherited in MODE_SKILLS and getattr(player, "level", 0) >= MIN_LEVEL
             and (soul is None or soul == inherited))
@@ -64,7 +83,7 @@ def sync_skills(player):
     messages = []
     if migrate_vital_surge(player):
         messages.append("Your Six Paths Rasenshuriken has become Six Paths Vital Surge; your mastery is preserved.")
-    if not eligible(player):
+    if _staff_can_test(player) or not eligible(player):
         return messages
     import leveling
     soul = player.reincarnation
@@ -146,7 +165,7 @@ def vital_surge(session, target_words):
 
 
 def mastery(player):
-    return max(0, min(100, player.skill_proficiencies.get(MODE_SKILLS.get(player.reincarnation, ""), 0)))
+    return max(0, min(100, player.skill_proficiencies.get(MODE_SKILLS.get(_soul(player), ""), 0)))
 
 
 def bonuses(player):
@@ -174,7 +193,7 @@ def stop(session, message="Your Six Paths power fades."):
     if not player.six_paths_active:
         return False
     player.six_paths_active = False
-    skill = MODE_SKILLS.get(player.reincarnation, "Six Paths")
+    skill = MODE_SKILLS.get(_soul(player), "Six Paths")
     upkeep_reports.stop_maintaining(player, skill)
     for line in upkeep_reports.flush(player, skill):
         session.send(line)
@@ -192,7 +211,7 @@ def _pay_upkeep(session, chakra, stamina):
         return stop(session, "Your Six Paths power fades: you can no longer sustain it.")
     player.chakra -= chakra
     player.stamina -= stamina
-    skill = MODE_SKILLS[player.reincarnation]
+    skill = MODE_SKILLS[_soul(player)]
     lines = upkeep_reports.record(player, skill, chakra, stamina)
     upkeep_reports.maintain_skill(player, skill)
     for line in lines:
@@ -208,7 +227,7 @@ def idle_upkeep(session):
     return _pay_upkeep(session, IDLE_CHAKRA, 0)
 
 
-def command(session, args):
+def command(session, args, soul=None):
     import combat
     import storage
     player = session.player
@@ -218,10 +237,10 @@ def command(session, args):
             session.send("Six Paths powers awaken at level 75, only for Indra or Ashura reincarnations.")
             return
         offense, defense, hit = bonuses(player)
-        session.send(f"{MODE_SKILLS[player.reincarnation]}: {'active' if active(player) else 'inactive'}, "
+        session.send(f"{MODE_SKILLS[_soul(player)]}: {'active' if active(player) else 'inactive'}, "
                      f"mastery {mastery(player)}%. Current bonuses: +{offense}% damage, "
                      f"{defense}% incoming damage reduction, +{hit} accuracy. "
-                     f"Techniques: {', '.join(TECHNIQUES[player.reincarnation])}.")
+                     f"Techniques: {', '.join(TECHNIQUES[_soul(player)])}.")
         return
     if action == "off" or (action == "toggle" and player.six_paths_active):
         if not stop(session):
@@ -245,9 +264,12 @@ def command(session, args):
     if player.chakra < ACTIVATION_CHAKRA:
         session.send(f"You need {ACTIVATION_CHAKRA} Chakra to activate Six Paths power.")
         return
-    sync_skills(player)
+    if _staff_can_test(player):
+        player._staff_six_paths_soul = soul if soul in MODE_SKILLS else _soul(player)
+    else:
+        sync_skills(player)
     player.chakra -= ACTIVATION_CHAKRA
     player.six_paths_active = True
     storage.save_player(player)
-    session.send(f"&[213]You awaken {MODE_SKILLS[player.reincarnation]}! Use sixpaths off to release it.&x")
+    session.send(f"&[213]You awaken {MODE_SKILLS[_soul(player)]}! Use sixpaths off to release it.&x")
     session.broadcast_room(f"&[213]{player.name} awakens an overwhelming Six Paths chakra!&x", exclude_self=True)
