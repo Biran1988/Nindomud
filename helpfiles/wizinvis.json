@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "wizinvis",
+  "keywords": [
+    "wizinvis",
+    "wizard invisibility"
+  ],
+  "title": "Wizard Invisibility (Immortals)",
+  "body": "Syntax: wizinvis [on|off|status]\n\nImmortals may hide themselves from WHO, WHOIS, IMMS, room look, scan, visible movement and automatic arrival/departure announcements. No player, including another immortal, sees your hidden character on those lists. Your choice is saved across reboots. Turning it OFF restores visibility. Invisibility does not anonymize messages you choose to send or suppress every scripted interaction; administrative IP auditing still functions. Regular players cannot use this command.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
