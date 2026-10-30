@@ -2812,6 +2812,12 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         player.copied_jutsu_key = None
         player.copied_jutsu_cost = 0
     player.cooldowns[jutsu_key] = now + jutsu["cooldown"]
+    # Techniques that are deliberately silent do not reveal the user.
+    if not (jutsu["class_requirement"] == "genjutsu"
+            and commands_module.has_silent_genjutsu(player)
+            and player.skill_proficiencies.get("Silent Genjutsu", 0) >= 100):
+        import room_actions
+        room_actions.emit(session, f"&C{player.name} performs {colored_name} against {mob.name}!&x")
 
     if jutsu.get("requires_item"):
         for held_item in held_items[:jutsu.get("requires_item_count", 1)]:
@@ -3024,6 +3030,11 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         player.copied_jutsu_key = None
         player.copied_jutsu_cost = 0
     player.cooldowns[jutsu_key] = now + jutsu["cooldown"]
+    # Silent Genjutsu must never broadcast its caster's technique.
+    if not silent_to_target:
+        import room_actions
+        room_actions.emit(session, f"&C{player.name} performs {colored_name} against {target.name}!&x",
+                          exclude=(target_session,))
 
     if jutsu.get("requires_item"):
         for held_item in held_items[:jutsu.get("requires_item_count", 1)]:
