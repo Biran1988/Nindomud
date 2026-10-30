@@ -6,6 +6,8 @@ from types import SimpleNamespace
 import combat
 import commands
 import groups
+import general_skills
+import reaper_seal
 import session as session_module
 from models import Player
 from world import Room
@@ -35,10 +37,10 @@ class GroupFollowTests(unittest.TestCase):
             (commands.olc, "_require_assigned_vnum", lambda *a: True),
             (commands, "cmd_look", lambda *a: None),
             (commands, "_fire_enter_triggers", lambda *a: None),
-            (commands.general_skills, "before_move", lambda *a: None),
-            (commands.general_skills, "broadcast_movement", lambda *a: None),
+            (general_skills, "before_move", lambda *a: None),
+            (general_skills, "broadcast_movement", lambda *a: None),
             (commands.random, "randint", lambda *a: 1),
-            (commands.reaper_seal, "blocks_command", lambda *a: False),
+            (reaper_seal, "blocks_command", lambda *a: False),
         ):
             p = patch.object(obj, name, value)
             p.start()
