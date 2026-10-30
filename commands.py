@@ -3016,6 +3016,8 @@ def _wear_all(session) -> None:
         equipped_count += 1
     if equipped_count:
         session.send(f"You put on {equipped_count} item(s).")
+        import room_actions
+        room_actions.emit(session, f"{player.name} equips {equipped_count} items.")
     else:
         session.send("You have nothing new to wear.")
 
@@ -3073,6 +3075,8 @@ def _remove_all(session) -> None:
         removed_count += 1
     if removed_count:
         session.send(f"You remove {removed_count} item(s).")
+        import room_actions
+        room_actions.emit(session, f"{player.name} removes {removed_count} equipped items.")
     else:
         session.send("You aren't wearing or wielding anything.")
 
@@ -8072,7 +8076,10 @@ def cmd_use(session, args: List[str]) -> None:
         return
     if seasonal_events.use_holiday_item(session, " ".join(args)):
         return
+    before = list(session.player.inventory)
     consumables.consume(session, "use", " ".join(args))
+    import room_actions
+    room_actions.consumed(session, before, "uses")
 
 
 # --- Corpses / looting ---------------------------------------------------
