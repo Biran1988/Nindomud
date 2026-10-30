@@ -325,8 +325,10 @@ class Session:
             import mangekyo
             mangekyo.end_tsukuyomi_on_departure(self, world)
             mangekyo.end_kamui_on_departure(self, world)
+        import staff_invisibility
         if (self.state in (State.PLAYING, State.LINKDEAD) and self.player
-                and not self._suppress_departure_announcement):
+                and not self._suppress_departure_announcement
+                and not staff_invisibility.is_hidden(self)):
             self.broadcast_all(shinobi_notices.departure(self.player.name),
                                exclude_self=True)
         self.state = State.CLOSED
@@ -1146,6 +1148,11 @@ class Session:
         self.player = player
         self.state = State.PLAYING
         self.color_enabled = player.color_enabled
+        # The privilege belongs to the authenticated immortal account,
+        # never solely to a saved character flag after a demotion.
+        if (not self.account or self.account.staff_level == "player") and player.wizinvis:
+            player.wizinvis = False
+            storage.save_player(player)
         player._immortal_skill_mastery = bool(self.account and self.account.staff_level != "player")
 
         # Staff receive every skill and jutsu, including scroll and
@@ -1219,10 +1226,14 @@ class Session:
                 )
                 if former_rank == "student":
                     self.send("&GYou also received 50 Genin graduation mission points.&x")
-                kage.announce_rank_up(player.name, granted_rank)
+                import staff_invisibility
+                if not staff_invisibility.is_hidden(self):
+                    kage.announce_rank_up(player.name, granted_rank)
         if resumed_from_linkdead:
             self.send("&GYour connection is restored. Your shinobi returns from the 15-minute grace period.&x")
-        self.broadcast_all(shinobi_notices.arrival(player.name), exclude_self=True)
+        import staff_invisibility
+        if not staff_invisibility.is_hidden(self):
+            self.broadcast_all(shinobi_notices.arrival(player.name), exclude_self=True)
         # Per direct confirmation (Section 143): a genuine, safe
         # fallback for any existing character whose own saved
         # room_vnum points at a room that no longer exists (e.g. one
