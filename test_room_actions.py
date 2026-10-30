@@ -41,7 +41,8 @@ class RoomActionTests(unittest.TestCase):
                           stamina=10, chakra=10)
         s.account = Account(name, "salt", "hash")
         s.state = State.PLAYING
-        sessions.ACTIVE_SESSIONS.append(s)
+        # Session.__init__ already registers with ACTIVE_SESSIONS; avoid
+        # duplicate observers and duplicate room-action broadcasts.
         out.clear()  # Session creation sends banners; exclude from action assertions.
         return s, out
 
