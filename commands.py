@@ -3207,7 +3207,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             # through the older generic casting path below.
             session.combat_target = session.pvp_target = None
     import reaper_seal
-    if reaper_seal.imprisoned(player):
+    if (reaper_seal.imprisoned(player) and jutsu_key != reaper_seal.REVERSE_KEY and not combat.is_immortal_immune_to_defeat(session)):
         session.send("The Reaper's seal binds your soul; you cannot perform jutsu.")
         return
     import whirlpool_fuinjutsu
