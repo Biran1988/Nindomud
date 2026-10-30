@@ -82,5 +82,9 @@ def remove_member(group: "Group", member) -> None:
         return
     if group.leader is member:
         group.leader = group.members[0]
+        group.leader.follow_group_leader = False
+        for survivor in group.members:
+            if survivor is not group.leader:
+                survivor.send(f"&G{group.leader.player.name} is now the group leader.&x")
     if len(group.members) == 1:
         disband(group)
