@@ -2212,6 +2212,8 @@ def _player_attack_mob_once(session, player, mob) -> None:
         grow_skill_from_usage(player, weapon_skill, session=session)
     if random.randint(1, 100) > to_hit:
         session.send(f"You {attack_verb} at {mob.name} but miss!")
+        import room_actions
+        room_actions.emit(session, f"{player.name} {attack_verb}s at {mob.name} but misses.")
         return
     dmg = _player_attack_damage(player)
     dmg = _weapon_expert_damage(player, dmg)
@@ -2226,6 +2228,8 @@ def _player_attack_mob_once(session, player, mob) -> None:
         session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
         session.send(f"You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
+    import room_actions
+    room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(player.equipment.get('wielded', ''))} {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
     if "bleeding" in mob.active_status_effects:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
@@ -3607,6 +3611,8 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     else:
         session.send(f"You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg)} damage.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} {target.name} for {damage_messages.describe_damage(dmg)} damage.", exclude=(target_session,))
 
 
 def _clone_attack_target_once(session, player, target_session, target, clone) -> None:
