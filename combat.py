@@ -3434,6 +3434,11 @@ def handle_player_defeat(session) -> None:
         # combatants; nothing below this branch should ever run for
         # a duel loss.
         import duel as duel_module
+        # A real duel defeat also puts out any attached Amaterasu.
+        if player.mangekyo_amaterasu_burning:
+            player.mangekyo_amaterasu_burning = False
+            player.mangekyo_amaterasu_caster = None
+            session.send("&DAmaterasu's black flames fade as you fall.&x")
         duel_module.end_duel(session.duel, session)
         return
 
@@ -3455,12 +3460,11 @@ def handle_player_defeat(session) -> None:
     # The attached black flames burn only while the target is alive.
     # On an actual defeat they go out before hospital recovery; the
     # independent room fire still runs out its own five-minute timer.
-    if player.mangekyo_amaterasu_burning:
+    flames_extinguished = player.mangekyo_amaterasu_burning
+    if flames_extinguished:
         player.mangekyo_amaterasu_burning = False
         player.mangekyo_amaterasu_caster = None
         session.send("&DAmaterasu's black flames fade as you fall.&x")
-        import storage
-        storage.save_player(player)
     session.send("&RYour vision darkens as you collapse.&x")
 
     import leveling
@@ -3490,6 +3494,9 @@ def handle_player_defeat(session) -> None:
     session.combat_target = None
     reset_summon_round_state(player)
     session.send(f"Village medics recover you and transport you to the {village['village_short_name']} Village Hospital.")
+    if flames_extinguished:
+        import storage
+        storage.save_player(player)  # persist post-respawn state and cleared flames together
 
 
 # --- PvP combat -------------------------------------------------------
