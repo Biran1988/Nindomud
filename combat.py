@@ -776,12 +776,8 @@ def begin_pending_cast(session, jutsu_key: str, target, is_pvp: bool, start_comb
 
     session.pending_cast = PendingCast(jutsu_key, target, is_pvp, delay, start_combat_on_resolve)
     session.send(f"&WYou begin forming hand signs: {' -> '.join(signs)}...&x")
-    room = world.WORLD.get(player.room_vnum)
-    if room:
-        from session import ACTIVE_SESSIONS
-        for other in ACTIVE_SESSIONS:
-            if other is not session and other.state.name == "PLAYING" and other.player and other.player.room_vnum == player.room_vnum:
-                other.send(f"&W{player.name} forms hand signs: {' -> '.join(signs)}...&x")
+    import room_actions
+    room_actions.emit(session, f"&W{player.name} forms hand signs: {' -> '.join(signs)}...&x")
 
 
 def _check_jutsu_collisions() -> None:
@@ -2213,7 +2209,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
     if random.randint(1, 100) > to_hit:
         session.send(f"You {attack_verb} at {mob.name} but miss!")
         import room_actions
-        room_actions.emit(session, f"{player.name} {attack_verb}s at {mob.name} but misses.")
+        room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(player.equipment.get('wielded', ''))} at {mob.name} but misses.")
         return
     dmg = _player_attack_damage(player)
     dmg = _weapon_expert_damage(player, dmg)
@@ -2484,6 +2480,8 @@ def resolve_pulse(session) -> None:
     mob_to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, mob_to_hit))
     if random.randint(1, 100) > mob_to_hit:
         session.send(f"&C{mob.name} attacks you but misses!&x")
+        import room_actions
+        room_actions.emit(session, f"{mob.name} attacks {player.name} but misses.")
         return
 
     if player.kamui_intangibility_rounds_left > 0:
@@ -2512,6 +2510,8 @@ def resolve_pulse(session) -> None:
         dmg = sage_mode.incoming(player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg))
         player.health -= dmg
         session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
+        import room_actions
+        room_actions.emit(session, f"{mob.name} strikes {player.name} for {damage_messages.describe_damage(dmg)} damage.")
 
     if player.health <= 0:
         if try_trigger_izanagi(session):
