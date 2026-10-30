@@ -161,6 +161,37 @@ def leave_pocket_dimension(caster_session, world_module) -> None:
         del world_module.WORLD.rooms[vnum]
 
 
+def close_pocket_dimension(caster_session, world_module) -> int:
+    """Owner-controlled collapse, including when the owner is OUTSIDE.
+
+    Uses the same return/cleanup path as upkeep or disconnect collapse.
+    Saved state is updated before the next reboot, so occupants cannot be
+    stranded in a removed temporary room by stale character files.
+    Returns the number of occupants brought back (including NPCs).
+    """
+    import combat
+    import session as session_module
+    import storage
+
+    owner = caster_session.player
+    vnum = owner.kamui_pocket_dimension_vnum
+    if not vnum or world_module.WORLD.get(vnum) is None:
+        raise ValueError("You do not have an open Kamui pocket dimension to close.")
+
+    trapped = [
+        s for s in list(session_module.ACTIVE_SESSIONS)
+        if s.player and s.player.room_vnum == vnum
+    ]
+    mob_count = len(combat.MOBS_BY_ROOM.get(vnum, ()))
+    leave_pocket_dimension(caster_session, world_module)
+    # The owner may be outside, so they are not necessarily in trapped.
+    for participant in trapped:
+        storage.save_player(participant.player)
+    if caster_session not in trapped:
+        storage.save_player(owner)
+    return len(trapped) + mob_count
+
+
 def end_kamui_on_departure(leaving_session, world_module) -> None:
     """Close a temporary dimension when its caster or captive leaves."""
     import session as session_module
