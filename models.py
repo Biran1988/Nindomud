@@ -305,7 +305,7 @@ class Player:
     # is set (a real, once-per-real-day cooldown, confirmed directly).
     izanagi_active: bool = False
     izanagi_cooldown_until: float = 0.0
-    # Amaterasu: a permanent burn that survives defeat, sealing and logout.
+    # Amaterasu: a five-minute player burn, extinguished immediately on staff.
     # Travels with the player wherever
     # they go, genuinely separate from the room's own fire (see
     # world.Room.amaterasu_fire_caster), which stays behind if they
