@@ -4,8 +4,8 @@
     "guess"
   ],
   "title": "Guess (Izanami)",
-  "body": "Syntax: guess <number>\n\nDescription: If trapped in Izanami, guess the hidden number from 1 to 25. A correct guess breaks the loop immediately; a wrong guess leaves you trapped. This command has no effect outside Izanami.\n\nDate: 2026-09-27",
+  "body": "Syntax: guess <number>\n\nDescription: If trapped in Izanami, guess the hidden number from 1 to 25. You may guess immediately after the illusion begins and only once in each 15-second loop thereafter. A correct guess breaks the loop and notifies the caster. A wrong guess inflicts 8-12% of your maximum Health (cannot reduce below 1 HP) and informs the caster of your mistake and the damage. Wait for the next loop before another attempt. This command has no effect outside Izanami.\n\nUpdated: 2026-10-29",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
