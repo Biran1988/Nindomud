@@ -3896,7 +3896,13 @@ def test_appraisal_and_examine():
     assert "Examine" in s.player.learned_skills
     assert not data_passives.is_passive("Examine")
 
-    # Untrained: name and rarity only.
+    # Current practice rules require a first teacher lesson before
+    # a learned utility skill is usable. Record that lesson separately
+    # from proficiency so we can still test the 0%-mastery view.
+    import skill_training
+    skill_training.mark_practiced(s.player, "Examine")
+
+    # Untrained proficiency (0%): name and rarity only.
     s.handle_line("examine sword")
     text = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
