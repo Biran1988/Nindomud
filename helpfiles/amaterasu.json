@@ -4,8 +4,8 @@
     "amaterasu"
   ],
   "title": "Amaterasu",
-  "body": "Syntax: perform amaterasu <target>\n\nDescription: Mangekyo black flames hit mobs and players for an initial 250 damage before defenses, then burn for 40-60 damage every pulse. The target flames never extinguish, even upon defeat or respawn, and cannot be dismissed by their caster. The separate room fire lasts five minutes (25-40 damage per pulse) and can be dismissed by the caster. Izanagi, immortal safeguards, summons and sealing do not erase the target burn. Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock. The target must be in your room; moving away before a delayed cast resolves makes it fizzle. Costs 60 Chakra and 0 Stamina; 30 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: perform amaterasu <target>\n\nDescription: Mangekyo black flames hit mobs and players for an initial 250 damage before defenses, then burn for 40-60 damage every pulse. Attached flames expire after five real-time minutes for ordinary players (including time spent offline), or sooner upon death or when an Uzumaki Black Flame Suppression Seal removes them. Immortals cannot acquire attached flames. Mob-attached flames persist until the mob is defeated. The separate room fire lasts five minutes (25-40 damage per pulse) and can be dismissed by the caster. Immortals are unaffected by the separate room fire. The Black Flame Suppression Seal can extinguish both an attached player burn and the room's black flames. Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock. The target must be in your room; moving away before a delayed cast resolves makes it fizzle. Costs 60 Chakra and 0 Stamina; 30 second cooldown.\n\nDate: 2026-09-27",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
