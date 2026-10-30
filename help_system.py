@@ -129,7 +129,7 @@ DEFAULT_HELP_ENTRIES = [
     {
         "primary_keyword": "wizinvis", "keywords": ["wizinvis", "wizard invisibility"],
         "title": "Wizard Invisibility (immortals)",
-        "body": "Syntax: wizinvis [on|off|status]\\nImmortal-only invisibility. When on, your character is absent from WHO, WHOIS, IMMS, room look and scan, and movement and automatic login/logout notices do not reveal you. Even other immortals cannot see you in these lists. Toggle status is saved across reconnects/reboots; the authenticated account must still have staff privileges. Sending chat or performing visible actions may still reveal your identity. Staff moderation and administrative IP tools remain available.",
+        "body": "Syntax: wizinvis [on|off|status]\nImmortal-only invisibility. When on, your character is absent from WHO, WHOIS, IMMS, room look and scan, and movement and automatic login/logout notices do not reveal you. Even other immortals cannot see you in these lists. Toggle status is saved across reconnects/reboots; the authenticated account must still have staff privileges. Sending chat or performing visible actions may still reveal your identity. Staff moderation and administrative IP tools remain available.",
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
