@@ -340,6 +340,10 @@ class Player:
     izanami_target_number: Optional[int] = None
     izanami_return_room_vnum: Optional[int] = None
     izanami_trapped: bool = False
+    # Real-time Izanami cycles survive saving and reconnecting.
+    izanami_caster_name: Optional[str] = None
+    izanami_loop_ends_at: float = 0.0
+    izanami_guessed_this_loop: bool = False
     # Tsukuyomi (Section 140, if rolled) -- a real, shared torture
     # room. tsukuyomi_actions_remaining is the real, hidden countdown
     # (5-10, rolled once at the start, confirmed directly never
