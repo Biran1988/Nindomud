@@ -1092,6 +1092,7 @@ class Session:
                 resumed_from_linkdead = True
                 if other.group is not None:
                     self.group = other.group
+                    self.follow_group_leader = other.follow_group_leader
                     self.group.members = [self if member is other else member
                                           for member in self.group.members]
                     if self.group.leader is other:
