@@ -1193,6 +1193,25 @@ class Session:
         from data_villages import VILLAGES as _VILLAGES
         village_name = _VILLAGES[player.village]["village_name"]
         self.send(shinobi_notices.welcome(player, village_name))
+        # Existing players whose old save predates rank level caps are
+        # promoted once during load. Present the award at their first
+        # login and announce it globally, then clear the saved notice.
+        if player.rank_grandfathered_to:
+            former_rank = player.rank_grandfathered_from
+            granted_rank = player.rank_grandfathered_to
+            player.rank_grandfathered_from = ""
+            player.rank_grandfathered_to = ""
+            storage.save_player(player)
+            if player.village_rank == granted_rank:
+                import kage
+                self.send(
+                    f"&GYour existing level qualifies you for {granted_rank.title()}! "
+                    f"You have been automatically promoted from "
+                    f"{former_rank.title()} without repeating earlier exams.&x"
+                )
+                if former_rank == "student":
+                    self.send("&GYou also received 50 Genin graduation mission points.&x")
+                kage.announce_rank_up(player.name, granted_rank)
         if resumed_from_linkdead:
             self.send("&GYour connection is restored. Your shinobi returns from the 15-minute grace period.&x")
         self.broadcast_all(shinobi_notices.arrival(player.name), exclude_self=True)
