@@ -137,7 +137,7 @@ def process(sessions=None, *, now=None):
 
 def blocks_command(session, verb):
     player = getattr(session, "player", None)
-    if player and player.izanami_trapped and verb.lower() not in ALLOWED_COMMANDS:
+    if player and getattr(player, "izanami_trapped", False) and verb.lower() not in ALLOWED_COMMANDS:
         session.send("&RYou are trapped in Izanami! You cannot move, fight, or use jutsu. Wait for the next cycle and guess 1-25.&x")
         return True
     return False
