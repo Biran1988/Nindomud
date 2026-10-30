@@ -14,24 +14,34 @@ python3 main.py
 python3 -m unittest discover -p "test_*.py"
 ```
 
-## Deployment safety
+## Permanent deployment rule: NEVER overwrite `data/`
 
-The normal release is a **direct source-code ZIP**, not a bundled or
-standalone server. Extract the updated Python files into the folder
-where you already run `python3 main.py`, then restart that server.
-It contains no standalone `Nindo_mud` executable and no nested ZIP.
-Back up `data/` but never replace it.
+**Every official `Nindo_mud.zip` is a drag-and-drop update.** Stop the
+running game, extract the ZIP *directly into the existing Nindo_mud program
+folder* and allow replacement of the program files. Then restart the MUD.
+The archive contains current Python source plus a freshly rebuilt `Nindo_mud`
+launcher, but **never contains a `data/` directory, any file inside it,
+or a command that deletes/replaces it**. The live `data/` tree stays on the
+server completely untouched by extraction. This protects characters, accounts,
+player inventories, persistent seals, custom rooms, world/areas, shops,
+staff help, event data, and every other saved record.
 
-Deploy source code over the existing server installation. Never replace the
-server's `data/` directory: it contains authoritative player, area, world,
-spawn-point, shop, and builder-created state.
+**Hard build invariant:** `scripts/build_release.py` excludes `data/`
+(case-insensitively) and refuses to publish unsafe ZIP members (including
+path-traversal entries). Tests overlay the ZIP onto an installation containing
+existing saved data and verify it remains byte-for-byte unchanged. Every future
+release must retain this invariant; if a release fails this test, fix the
+packaging rather than overriding this policy.
 
-Every release is distributed as `Nindo_mud.zip`. The archive includes source,
-tests, and individual reference pages under `helpfiles/`; runtime save data is
-excluded. Restart the server with `python3 main.py` after extracting the new
-source files. Startup copies missing reference pages into `data/help/` and
-refreshes system-owned pages, while preserving staff-written help. The
-`helpfiles/` directory is for inspection and does not replace saved data.
+The ZIP is laid out at the program folder root (not nested inside an extra
+project directory). Drag and drop the extracted contents into your existing
+server folder and overwrite program files only. Never delete the old folder
+and replace it wholesale, because the old folder contains your saved
+`data/` tree. You should still back up `data/` before deploying.
+
+The archive includes the source, rebuilt launcher, tests, and reference
+help pages under `helpfiles/`. On startup the game seeds system-owned help
+pages in the existing `data/help/` folder but preserves staff-written help.
 
 To build the current code into the required `Nindo_mud.zip` release locally, run
 `python3 scripts/build_release.py dist`. The GitHub Actions workflow
