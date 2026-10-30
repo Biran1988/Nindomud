@@ -71,6 +71,17 @@ class RoomActionTests(unittest.TestCase):
         commands.cmd_rest(self.actor, [])
         self.assertIn("sits down to rest", self.witness_out[-1])
 
+    def test_room_look_shows_current_sleeping_and_fighting_state(self):
+        commands.cmd_sleep(self.actor, [])
+        commands.cmd_look(self.witness, [])
+        self.assertIn("[Sleeping]", self.witness_out[-1])
+        commands.cmd_stand(self.actor, [])
+        combat.register_template(99184, "training student", 2, 100, 2, 4, 0, 0)
+        combat.spawn_mob(99184, 1)
+        commands.cmd_attack(self.actor, ["student"])
+        commands.cmd_look(self.witness, [])
+        self.assertIn("[Fighting training student]", self.witness_out[-1])
+
     def test_eat_and_drink_only_broadcast_consumed_items(self):
         self.actor.player.inventory.extend(["a rice ball", "a canteen of water"])
         commands.cmd_eat(self.actor, ["rice", "ball"])
