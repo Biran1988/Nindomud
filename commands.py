@@ -750,7 +750,37 @@ def cmd_finish_downed_yes(session, args: List[str]) -> None:
         session.send("Yes what?")
         return
 
-    import data_kekkei_genkai
+    # Check *both* actual socket IP addresses before granting any eye
+    # techniques or applying the sacrifice penalties. A confirmed match
+    # suspends the attacker's login for seven real days, not the shared
+    # IP (other household players should not be automatically banned).
+    import mangekyo_ip_guard
+    comparison = mangekyo_ip_guard.ip_comparison(session, downed_session)
+    if comparison is not False:
+        if comparison is True:
+            try:
+                mangekyo_ip_guard.suspend_awakener(session)
+            except (OSError, ValueError) as error:
+                # Fail closed: no awakening if the suspension cannot be saved.
+                session.send(f"&RThe awakening was denied; account suspension could not be saved: {error}&x")
+                return
+            session.send("&RYour Mangekyo awakening is denied: both participants share an IP address. Your account is locked for seven days.&x")
+            downed_session.send("&YThe Mangekyo ritual was rejected. You are released from the sacrifice.&x")
+        else:
+            session.send("&RThe awakening was denied because both players' connection IP addresses could not be verified.&x")
+            downed_session.send("&YThe Mangekyo ritual was cancelled because connection validation was unavailable.&x")
+
+        # Resolve the downed partner's ordinary PvP defeat instead of
+        # inflicting the special 25% XP/mastery and 24-hour penalties.
+        downed_player.downed_by = None
+        import combat as combat_module
+        combat_module.handle_pvp_defeat(
+            winner_session=session, loser_session=downed_session,
+            skip_mangekyo_check=True)
+        if comparison is True:
+            session.request_close()  # enforce the seven-day suspension now
+        return
+
     import data_mangekyo
     player.bloodline_mangekyo = True
     player.mangekyo_eye_1, player.mangekyo_eye_2 = data_mangekyo.roll_two_eye_techniques()
