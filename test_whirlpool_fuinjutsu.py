@@ -63,7 +63,7 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
         commands.dispatch_line(s, f'perform {words}')
 
     def test_roster_not_granted_to_non_whirlpool(self):
-        self.assertEqual(len(seals.jutsu_entries()), 14)
+        self.assertEqual(len(seals.jutsu_entries()), 15)
         player = self.enemy.player
         learned = set(player.learned_skills)
         leveling.sync_universal_skills(player)
@@ -92,10 +92,60 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
         novice.player.level = 135
         changes = seals.sync_skills(novice.player)
         self.assertIn('Imbued Barrier Seal', changes)
-        self.assertEqual(len(names & set(novice.player.learned_skills)), 10)
+        self.assertEqual(len(names & set(novice.player.learned_skills)), 11)
         novice.player.level = 230
         seals.sync_skills(novice.player)
-        self.assertEqual(len(names & set(novice.player.learned_skills)), 14)
+        self.assertEqual(len(names & set(novice.player.learned_skills)), 15)
+
+    def test_black_flame_seal_extinguishes_player_without_erasing_room(self):
+        self.enemy.player.mangekyo_amaterasu_burning = True
+        self.enemy.player.mangekyo_amaterasu_caster = 'Other'
+        self.enemy.player.mangekyo_amaterasu_expires_at = time.time() + 300
+        room = world.WORLD.get(1)
+        room.amaterasu_fire_caster = 'Other'
+        room.amaterasu_fire_expires_at = time.time() + 300
+        original_chakra = self.caster.player.chakra
+        self.run_jutsu(self.caster, 'black flame suppression seal Opponent')
+        self.assertFalse(self.enemy.player.mangekyo_amaterasu_burning)
+        self.assertIsNone(self.enemy.player.mangekyo_amaterasu_caster)
+        self.assertEqual(self.enemy.player.mangekyo_amaterasu_expires_at, 0)
+        self.assertEqual(room.amaterasu_fire_caster, 'Other')
+        self.assertEqual(self.caster.player.chakra, original_chakra - 95)
+        self.assertFalse(storage.load_player('Opponent').mangekyo_amaterasu_burning)
+
+    def test_black_flame_seal_room_and_all_targets(self):
+        room = world.WORLD.get(1)
+        room.amaterasu_fire_caster = 'Other'
+        room.amaterasu_fire_expires_at = time.time() + 300
+        self.enemy.player.mangekyo_amaterasu_burning = True
+        self.caster.player.mangekyo_amaterasu_burning = True
+        self.run_jutsu(self.caster, 'black flame suppression seal all')
+        self.assertIsNone(room.amaterasu_fire_caster)
+        self.assertEqual(room.amaterasu_fire_expires_at, 0)
+        self.assertFalse(self.enemy.player.mangekyo_amaterasu_burning)
+        self.assertFalse(self.caster.player.mangekyo_amaterasu_burning)
+
+    def test_black_flame_seal_room_only_and_no_flame_no_cost(self):
+        room = world.WORLD.get(1)
+        room.amaterasu_fire_caster = 'Other'
+        room.amaterasu_fire_expires_at = time.time() + 300
+        self.enemy.player.mangekyo_amaterasu_burning = True
+        self.run_jutsu(self.caster, 'black flame suppression seal room')
+        self.assertIsNone(room.amaterasu_fire_caster)
+        self.assertTrue(self.enemy.player.mangekyo_amaterasu_burning)
+        before = self.caster.player.chakra
+        self.run_jutsu(self.caster, 'black flame suppression seal room')
+        self.assertEqual(self.caster.player.chakra, before)
+
+    def test_staff_bypasses_whirlpool_clan_and_level_for_black_flame_seal(self):
+        self.enemy.account.staff_level = 'immortal'
+        self.enemy.player.level = 1
+        self.enemy.player.chakra = 500
+        world.WORLD.get(1).amaterasu_fire_caster = 'Other'
+        world.WORLD.get(1).amaterasu_fire_expires_at = time.time() + 300
+        self.run_jutsu(self.enemy, 'black flame suppression seal room')
+        self.assertIsNone(world.WORLD.get(1).amaterasu_fire_caster)
+        self.assertEqual(self.enemy.player.chakra, 405)
 
     def test_ninjutsu_and_genjutsu_sealed_independently(self):
         target = self.enemy.player
