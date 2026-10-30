@@ -150,6 +150,13 @@ class ReaperSealTests(unittest.TestCase):
         self.assertFalse(rite.imprisoned(self.target.player))
         self.assertFalse(rite.imprisoned(self.caster.player))
 
+    def test_trapped_player_can_reverse_with_carried_mask(self):
+        self.capture()
+        self.caster.player.inventory.append(rite.MASK_NAME)
+        commands.dispatch_line(self.caster, "perform reverse reaper seal")
+        self.assertFalse(rite.imprisoned(self.caster.player), self.out)
+        self.assertEqual(self.caster.player.room_vnum, 1)
+
     def test_trapped_immortal_can_reverse_legacy_seal_without_mask(self):
         self.capture()
         self.caster.account.staff_level = "immortal"  # previously trapped staff account
