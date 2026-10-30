@@ -9,15 +9,17 @@ from collections import Counter
 def emit(session, text, *, reveal_transition=False, exclude=()):
     """Send to observers in the actor's perceived room, never the actor."""
     player = getattr(session, "player", None)
-    if player is None:
+    if player is None or not getattr(player, "name", None):
         return
     import clone_control
     import general_skills
     import staff_invisibility
-    if staff_invisibility.is_hidden(session):
+    if (getattr(getattr(session, "account", None), "staff_level", "player") != "player"
+            and getattr(player, "wizinvis", False)):
         return
     room = clone_control.view_room(session)
-    for observer in session.active_sessions():
+    from session import ACTIVE_SESSIONS
+    for observer in list(ACTIVE_SESSIONS):
         if observer is session or any(observer is ignored for ignored in exclude):
             continue
         viewer = getattr(observer, "player", None)
@@ -38,13 +40,16 @@ def consumed(session, earlier_inventory, verb):
     if not removed:
         return
     name = next(iter(removed))
-    emit(session, f"{session.player.name} {verb} {name}.")
+    if getattr(session.player, "name", None):
+        emit(session, f"{session.player.name} {verb} {name}.")
 
 
 def bulk_items(session, count, action, one_item=None):
     if count == 0:
         return
-    name = session.player.name
+    name = getattr(session.player, "name", None)
+    if not name:
+        return
     if count == 1 and one_item:
         emit(session, f"{name} {action} {one_item}.")
     else:
