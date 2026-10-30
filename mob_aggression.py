@@ -70,7 +70,8 @@ def process_aggression(now=None):
         player = getattr(session, "player", None)
         if (not player or getattr(getattr(session, "state", None), "name", "") != "PLAYING" or
                 getattr(getattr(session, "account", None), "staff_level", "player") != "player" or
-                player.health <= 0 or getattr(player, "downed_by", None)):
+                player.health <= 0 or getattr(player, "downed_by", None)
+                or getattr(player, "izanami_trapped", False)):
             continue
         if session.combat_target or session.pvp_target:
             continue
