@@ -7589,6 +7589,8 @@ def _get_from_backpack(session, item_query: str, backpack_query: str) -> None:
         return
     del contents[contents_position]
     session.send(f"You get {rarity_colored_name(match)} from {rarity_colored_name(backpack_name)}.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} takes {match} from {backpack_name}.")
 
 
 def _item_matches(query: str, item_name: str) -> bool:
