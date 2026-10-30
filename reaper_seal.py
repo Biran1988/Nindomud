@@ -209,9 +209,12 @@ def _reverse(session, words):
     import session as sessions
     import olc
     worn = session.player.equipment.get("head", "")
-    proto = commands._find_object_prototype_by_name(worn) if worn else None
-    if not _immortal(session) and (not proto or proto is not olc.OBJECT_TEMPLATES.get(MASK_VNUM)):
-        session.send("The reverse rite requires the Shikigami mask to be worn.")
+    mask = olc.OBJECT_TEMPLATES.get(MASK_VNUM)
+    carried = any(commands._find_object_prototype_by_name(item) is mask
+                  for item in session.player.inventory)
+    wearing = bool(worn and commands._find_object_prototype_by_name(worn) is mask)
+    if not _immortal(session) and not (carried or wearing):
+        session.send("You need the Shikigami Mask in your inventory or equipped to reverse the seal.")
         return
     query = " ".join(words).lower()
     records = _load()
