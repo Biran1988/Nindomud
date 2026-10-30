@@ -4190,8 +4190,8 @@ def test_scoresheet_reference_helpfiles():
     text3 = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
     assert "Score Sheet" in text3
-    clan_idx = text3.index("Clan")
-    assert "[Active]" in text3[clan_idx:clan_idx + 350]
+    clan_idx = text3.index("Clan / Bloodline -")
+    assert "[Active]" in text3[clan_idx:clan_idx + 700]
     assert "[Active]" in text3  # e.g. Rank, Ryo, Jobs, etc.
 
     # Restore the real, original paths for every later test in the suite.
