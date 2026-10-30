@@ -18,6 +18,9 @@ are **same-room messages**, never global announcements.
 | Start a fight, land or miss an ordinary melee attack | Player-versus-mob and player-versus-player room messages |
 | Mob strikes player | Room observers see resulting attacks |
 | Hand signs | Nearby players see casting signs when they can see the caster |
+| Offensive jutsu | Room observers see the technique used on an opponent (Silent Genjutsu stays secret) |
+| Medical supplies | Using an item is visible when it is successfully consumed |
+| Wear all/remove all | One aggregate equipment message for the room |
 | Enter Camouflage | Nearby witnesses see the ninja fade from sight |
 | Leave/break Camouflage | Nearby witnesses see the ninja reappear |
 
