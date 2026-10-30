@@ -142,7 +142,7 @@ class KamuiCommandTests(unittest.TestCase):
             self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
             self.caster.handle_line("perform amaterasu extinguish bandit")
             self.assertEqual(mob.mangekyo_amaterasu_caster, "Caster")
-            self.assertIn("can never be extinguished", "".join(self.output))
+            self.assertIn("they cannot be manually extinguished", "".join(self.output))
             # The caster can still dismiss the separately timed room fire.
             self.caster.handle_line("perform amaterasu extinguish all")
             self.assertIsNone(world.WORLD.get(1).amaterasu_fire_caster)
