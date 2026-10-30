@@ -46,7 +46,7 @@ DESCRIPTIONS = {
     "kamui pocket dimension": "Cast on yourself to open and enter your own pocket dimension immediately. Or cast on a same-room target to send them there first, then cast on yourself to join them. Upkeep begins while the caster is inside and joins the six-minute summary. Only one dimension can be open per caster, and a player already inside another pocket dimension cannot be moved into a new one. Collapse or disconnect returns its occupants to their original rooms. Paid maintenance can improve mastery even outside combat.",
     "kamui intangibility": "Kamui phases the caster through incoming attacks for three rounds.",
     "kamui limb removal": "An interruptible 6-8 second Kamui cast that deals a major single burst if it completes.",
-    "izanami": "Traps a target in a recursive loop. The target guesses one fixed hidden number, one guess per round, to escape; others cannot attack the trapped target.",
+    "izanami": "Traps a player in repeating 15-second loops. One guess (1-25) is allowed per loop, including immediately after the cast. A wrong guess deals 8-12% of maximum Health (nonlethal, minimum 1 HP), blocks any further guesses until the next loop, and privately informs the caster of the failure and damage. A correct guess ends Izanami and privately notifies the caster. The target cannot walk, follow, attack, cast jutsu or use other physical actions until the correct guess. No automatic expiration, and guess timing survives save/reconnect. Other players and mobs cannot attack the trapped player.",
     "kekkei no me": "Transforms the current room for 90 seconds. Matching-element jutsu from the caster gain 50% damage; others in the room lose Chakra and Stamina over time.",
 }
 
