@@ -5323,7 +5323,7 @@ def test_per_shorthand_for_perform():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Pershorthandtest", "y", "PerShorthandPass1", "leaf", "ninjutsu", "none",
+    for line in ["Pershorthandtest", "y", "PerShorthandPass1", "leaf", "ninjutsu", "nara",
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
@@ -5338,6 +5338,10 @@ def test_per_shorthand_for_perform():
         area = areas.find_area_for_vnum(s.player.room_vnum)
         if area:
             areas.perform_area_reset(area)
+    # The newer first-practice rule applies to this starter jutsu;
+    # mark the first lesson so the smoke can isolate the "per" alias.
+    import skill_training
+    skill_training.mark_practiced(s.player, "Shadow Shuriken Technique")
     before_chakra = s.player.chakra
     s.handle_line("per shadow shuriken technique bandit")
     out.clear()
