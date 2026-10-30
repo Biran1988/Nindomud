@@ -992,6 +992,8 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Genin -> Chunin is earned by passing the Chunin Exam ('help exam') at level 15, not by asking the Kage.\n\nRank level caps: Student 10, Genin 15, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin 250, Village Elder 250, Kage 250.\n"
             "\n"
+            "One-time legacy exception: Characters created before rank-level caps who already EXCEED their current rank's cap are automatically promoted to the first normal rank that permits their existing level when their old save is loaded. For example, a level-60 Genin becomes Chunin. Their level, XP, skill proficiency and mission history remain; appropriate headbands are awarded. This is not an exam bypass for new characters: those exactly AT a rank cap still must pass their next exam/promotion, and Village Elder and Kage always require staff appointment.\n"
+            "\n"
             "Special Jonin, Jonin and Elite Jonin promotions currently use your village Kage's chamber and check the following level and mission requirements:\n"
             "\n"
             "  Special Jonin: level 80, 50 completed missions\n"
@@ -1868,7 +1870,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: level\n"
             "\n"
-            "Description: Displays your current ninja level, total experience, the cumulative experience needed to reach the next level (the same Next Level value shown by 'score'), and the exact additional XP still needed. The maximum level is 250; levels 226-250 have progressively steeper XP requirements. At maximum level, XP Needed is 0.\n"
+            "Description: Displays your current ninja level, total experience, the next-level threshold and XP still needed. The maximum level is 250, and levels 226-250 have progressively higher XP costs. Current rank caps: Student 10, Genin 15, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin/Village Elder/Kage 250. Reaching a rank cap stops further experience gains until you earn your promotion. Existing characters from before these limits who were already ABOVE a cap receive a one-time automatic rank adjustment on their next save load; new characters still take all required exams.\n"
             "\n"
             "Date: 2026-10-21"
         ),
