@@ -87,7 +87,8 @@ def drop(session, args):
     storage.save_player(player)
     save_piles()
     session.send(f"You drop a pile of {amount:,} Ryo.")
-    session.broadcast_room(f"{player.name} drops a pile of Ryo.", exclude_self=True)
+    import room_actions
+    room_actions.emit(session, f"{player.name} drops a pile of Ryo.")
 
 
 def is_get_command(query):
@@ -127,7 +128,8 @@ def pickup(session, query):
     session.player.ryo += total
     storage.save_player(session.player)
     session.send(f"You pick up {total:,} Ryo.")
-    session.broadcast_room(f"{session.player.name} picks up some Ryo.", exclude_self=True)
+    import room_actions
+    room_actions.emit(session, f"{session.player.name} picks up some Ryo.")
 
 
 def is_give_command(args):
@@ -167,7 +169,5 @@ def give(session, args):
     storage.save_player(target.player)
     session.send(f"You give {amount:,} Ryo to {target.player.name}.")
     target.send(f"{player.name} gives you {amount:,} Ryo.")
-    for observer in session.active_sessions():
-        if (observer is not session and observer is not target and observer.player
-                and observer.player.room_vnum == player.room_vnum):
-            observer.send(f"{player.name} gives {target.player.name} some Ryo.")
+    import room_actions
+    room_actions.emit(session, f"{player.name} gives {target.player.name} some Ryo.", exclude=(target,))
