@@ -4,8 +4,8 @@
     "izanami"
   ],
   "title": "Izanami",
-  "body": "Syntax: perform izanami <target>\n\nDescription: Traps a target in a recursive loop. The target guesses one fixed hidden number, one guess per round, to escape; others cannot attack the trapped target. Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock. The target must be in your room; moving away before a delayed cast resolves makes it fizzle. Costs 70 Chakra and 0 Stamina; 60 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: perform izanami <target>\n\nDescription: Traps a target in a recursive loop. The target must guess one fixed hidden number (1-25) to escape. One guess is permitted immediately and then once per 15-second loop; no guess-spamming. Wrong guesses inflict 8-12% of maximum Health, leaving at least 1 HP, and prevent another guess until the next loop. The caster privately sees both wrong guesses (with the damage) and correct guesses. Victims cannot move, follow, attack, cast or otherwise act while trapped, but may look, chat, consult help and attempt their next guess. They cannot be attacked while looped. The technique has no automatic expiration, even if the caster leaves. Guess timing persists over saving and reconnecting. Requires an active Sharingan and this Mangekyo eye technique assigned; authenticated immortals can test every Mangekyo technique without those gates. It is not a normal level unlock. The target must be in your room; moving away before a delayed cast resolves makes it fizzle. Costs 70 Chakra and 0 Stamina; 60 second cooldown.\n\nUpdated: 2026-10-29",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
