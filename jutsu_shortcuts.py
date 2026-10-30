@@ -18,6 +18,7 @@ JUTSU_SHORTCUTS = {
     'summoning contract break': 'wbreak',
     '1000 years of death': '1000',
     'almighty push': 'alm',
+    'black flame suppression seal': 'bfs',
     'amaterasu': 'ama',
     'atomic dissolution': 'ato',
     'barrier': 'bar',
