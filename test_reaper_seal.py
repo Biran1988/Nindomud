@@ -125,6 +125,31 @@ class ReaperSealTests(unittest.TestCase):
         self.assertEqual(self.target.player.room_vnum, 1)
         self.assertEqual(self.rescuer.player.equipment["head"], rite.MASK_NAME)
 
+    def test_wearing_mask_allows_reverse_from_inside_stomach(self):
+        self.capture()
+        self.caster.player.equipment["head"] = rite.MASK_NAME
+        commands.dispatch_line(self.caster, "perform reverse reaper seal Victim")
+        self.assertFalse(rite.imprisoned(self.caster.player), self.out)
+        self.assertFalse(rite.imprisoned(self.target.player), self.out)
+        self.assertEqual(self.caster.player.room_vnum, 1)
+        self.assertEqual(self.target.player.room_vnum, 1)
+
+    def test_immortal_target_cannot_be_sealed(self):
+        self.learn(self.caster)
+        self.target.account.staff_level = "immortal"
+        before = self.caster.player.chakra
+        commands.dispatch_line(self.caster, "perform reaper death seal Victim")
+        self.assertFalse(rite.imprisoned(self.target.player))
+        self.assertFalse(rite.imprisoned(self.caster.player))
+        self.assertEqual(self.caster.player.chakra, before)
+
+    def test_immortal_caster_cannot_be_sealed(self):
+        self.learn(self.caster)
+        self.caster.account.staff_level = "immortal"
+        commands.dispatch_line(self.caster, "perform reaper death seal Victim")
+        self.assertFalse(rite.imprisoned(self.target.player))
+        self.assertFalse(rite.imprisoned(self.caster.player))
+
     def test_reboot_and_offline_release_use_authoritative_pair_journal(self):
         self.capture()
         room = self.target.player.room_vnum
