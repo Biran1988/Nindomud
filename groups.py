@@ -33,6 +33,40 @@ def disband(group: "Group") -> None:
     up and there's no one left to lead)."""
     for member in list(group.members):
         member.group = None
+        member.follow_group_leader = False
+
+
+def follow_leader_step(leader, direction: str, previous_room: int, new_room: int) -> None:
+    """Walk consenting group members after a successful leader movement.
+
+    This uses normal player command dispatch, not a teleport or direct
+    room assignment: the follower must personally meet every door,
+    jail, combat, status, movement cost and room-entry restriction.
+    Followers who are separated stay behind until they catch up.
+    """
+    group = leader.group
+    if group is None or group.leader is not leader:
+        return
+    import commands
+    for member in list(group.members):
+        if (member is leader or member.group is not group
+                or not getattr(member, "follow_group_leader", False)
+                or not member.player or not getattr(member, "state", None)
+                or member.state.name != "PLAYING"
+                or member.player.room_vnum != previous_room):
+            continue
+        # A follower still fighting somebody must not get dragged away.
+        if member.combat_target is not None or member.pvp_target is not None:
+            member.send("&YYou cannot follow while fighting!&x")
+            continue
+        if member.pending_cast is not None:
+            member.send("&YYou cannot follow while preparing a jutsu!&x")
+            continue
+        member.send(f"&CYou follow {leader.player.name} {direction}.&x")
+        commands.dispatch(member, direction, [])
+        if member.player.room_vnum != new_room:
+            member.send("&YYou could not keep up with your group leader. "
+                        "Catch up to continue following.&x")
 
 
 def remove_member(group: "Group", member) -> None:
@@ -41,6 +75,7 @@ def remove_member(group: "Group", member) -> None:
     last member. Does NOT clear member.group itself -- the caller
     (cmd_group) does that for the member who's actually leaving, since
     this function only touches the group's OWN bookkeeping."""
+    member.follow_group_leader = False
     if member in group.members:
         group.members.remove(member)
     if not group.members:
