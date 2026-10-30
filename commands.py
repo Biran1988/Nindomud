@@ -237,7 +237,7 @@ def _wake_and_stand(session) -> None:
         player.position = "standing"
         session.send(f"You stop {previous} and stand up.")
         import room_actions
-        room_actions.emit(session, f"{player.name} wakes and stands up." if previous == "sleeping" else f"{player.name} stands up.")
+        room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} wakes and stands up." if previous == "sleeping" else f"{player.name} stands up.")
 
 
 def _broadcast_globally(message: str) -> None:
@@ -929,7 +929,7 @@ def cmd_rest(session, args: List[str]) -> None:
     player.position = "resting"
     session.send("You sit down and rest, recovering a bit faster than usual.")
     import room_actions
-    room_actions.emit(session, f"{player.name} sits down to rest.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} sits down to rest.")
 
 
 CHAKRA_CHARGE_STEP_SECONDS = 4
@@ -1038,7 +1038,7 @@ def cmd_sleep(session, args: List[str]) -> None:
     player.position = "sleeping"
     session.send("You lie down and drift off to sleep, recovering much faster than usual.")
     import room_actions
-    room_actions.emit(session, f"{player.name} lies down and falls asleep.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} lies down and falls asleep.")
 
 
 def cmd_stand(session, args: List[str]) -> None:
@@ -1219,12 +1219,12 @@ def cmd_look(session, args: List[str]) -> None:
                 activity = " &D[Sleeping]&x"
             elif other.player.position == "resting":
                 activity = " &D[Resting]&x"
-            elif (other.combat_target is not None
+            elif (getattr(other, "combat_target", None) is not None
                   and getattr(other.combat_target, "health", 0) > 0
                   and getattr(other.combat_target, "room_vnum", None) == room.vnum
                   and not _is_invisible_mob(other.combat_target)):
                 activity = f" &R[Fighting {other.combat_target.name}]&x"
-            elif (other.pvp_target is not None
+            elif (getattr(other, "pvp_target", None) is not None
                   and getattr(other.pvp_target, "player", None) is not None
                   and other.pvp_target.player.room_vnum == room.vnum
                   and not _player_hidden_from(player, other.pvp_target.player)):
@@ -2998,7 +2998,7 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
         session.send(f"You wear {rarity_colored_name(match)}.")
     _fire_item_trigger(session, match, "wear")
     import room_actions
-    room_actions.emit(session, f"{player.name} {'wields' if wear_loc == 'wielded' else 'puts on'} {match}.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} {'wields' if wear_loc == 'wielded' else 'puts on'} {match}.")
 
 
 
@@ -3033,7 +3033,7 @@ def _wear_all(session) -> None:
     if equipped_count:
         session.send(f"You put on {equipped_count} item(s).")
         import room_actions
-        room_actions.emit(session, f"{player.name} equips {equipped_count} items.")
+        room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} equips {equipped_count} items.")
     else:
         session.send("You have nothing new to wear.")
 
@@ -3065,7 +3065,7 @@ def cmd_remove(session, args: List[str]) -> None:
     _apply_equipment_stat_bonuses(player, item, sign=-1)
     session.send(f"You remove {item}.")
     import room_actions
-    room_actions.emit(session, f"{player.name} removes {item}.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} removes {item}.")
     if match_slot == "wielded" and player.equipment.get("offhand"):
         player.equipment["wielded"] = player.equipment.pop("offhand")
         session.send("Your off-hand weapon becomes your main weapon.")
@@ -3092,7 +3092,7 @@ def _remove_all(session) -> None:
     if removed_count:
         session.send(f"You remove {removed_count} item(s).")
         import room_actions
-        room_actions.emit(session, f"{player.name} removes {removed_count} equipped items.")
+        room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} removes {removed_count} equipped items.")
     else:
         session.send("You aren't wearing or wielding anything.")
 
@@ -4785,7 +4785,7 @@ def cmd_train(session, args: List[str]) -> None:
     setattr(player, attr, current + 1)
     player.training_points -= 1
     import room_actions
-    room_actions.emit(session, f"{player.name} trains {attr.replace('_', ' ')}.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} trains {attr.replace('_', ' ')}.")
     session.send(f"You train your {attr.replace('_', ' ')}. It is now {getattr(player, attr)}.")
     if attr == "chakra_control":
         # Per direct request/confirmation (Section 131): a real, immediate
@@ -4945,7 +4945,7 @@ def cmd_practice(session, args: List[str]) -> None:
     player.practice_points -= 1
     player.practice_sessions_used += 1
     import room_actions
-    room_actions.emit(session, f"{player.name} practices {match} with a teacher.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} practices {match} with a teacher.")
     session.send(
         f"You practice {match} (+{new_pct - current}% from your Intelligence). "
         f"Proficiency is now {new_pct}% ({proficiency_level_name(new_pct)})."
@@ -7243,7 +7243,7 @@ def cmd_give(session, args: List[str]) -> None:
     session.send(f"You give {rarity_colored_name(match)} to {target_session.player.name}.")
     target_session.send(f"{player.name} gives you {rarity_colored_name(match)}.")
     import room_actions
-    room_actions.emit(session, f"{player.name} gives {match} to {target_session.player.name}.", exclude=(target_session,))
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} gives {match} to {target_session.player.name}.", exclude=(target_session,))
 
 
 def cmd_price(session, args: List[str]) -> None:
@@ -7610,7 +7610,7 @@ def _get_from_backpack(session, item_query: str, backpack_query: str) -> None:
     del contents[contents_position]
     session.send(f"You get {rarity_colored_name(match)} from {rarity_colored_name(backpack_name)}.")
     import room_actions
-    room_actions.emit(session, f"{player.name} takes {match} from {backpack_name}.")
+    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} takes {match} from {backpack_name}.")
 
 
 def _item_matches(query: str, item_name: str) -> bool:
