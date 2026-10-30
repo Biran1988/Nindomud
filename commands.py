@@ -426,6 +426,12 @@ def cmd_move(session, direction: str) -> None:
     cmd_look(session, [])
     _fire_enter_triggers(session)
 
+    # Only an actual completed walk by the group leader is copied.
+    # Room enter scripts may transfer or disband the leader; never
+    # teleport followers after such special moves.
+    if player.room_vnum == destination_vnum and session.group:
+        groups.follow_leader_step(session, direction, room.vnum, destination_vnum)
+
 
 def cmd_open(session, args: List[str]) -> None:
     player = session.player
@@ -3961,6 +3967,50 @@ def cmd_deliver(session, args: List[str]) -> None:
         session.send(message)
 
 
+def cmd_follow(session, args: List[str]) -> None:
+    """Follow your active group leader using normal walking rules."""
+    group = session.group
+    leader = group.leader if group else None
+    if not args:
+        if group and leader is not session and session.follow_group_leader:
+            session.send(f"&GYou are following {leader.player.name}. Type 'follow off' to stop.&x")
+        elif group and leader is not session:
+            session.send(f"You aren't following anyone. Type 'follow {leader.player.name}' to follow your group leader.")
+        else:
+            session.send("You aren't following anyone. Join a group and type 'follow leader'.")
+        return
+
+    choice = " ".join(args).strip().casefold()
+    if choice in ("off", "stop", "none", "no"):
+        if session.follow_group_leader:
+            session.follow_group_leader = False
+            session.send("&YYou stop following your group leader.&x")
+        else:
+            session.send("You aren't following anyone.")
+        return
+
+    if group is None or leader is None or leader is session or leader not in group.members:
+        session.send("Join a group with another player before using 'follow leader'.")
+        return
+    if not leader.player or getattr(getattr(leader, "state", None), "name", "") != "PLAYING":
+        session.send("Your group leader isn't available to follow.")
+        return
+    if choice not in ("on", "leader", leader.player.name.casefold()) and not (
+            len(choice) >= 2 and leader.player.name.casefold().startswith(choice)):
+        session.send("You can only follow your group's leader. "
+                     f"Type 'follow {leader.player.name}'.")
+        return
+    if session.player.room_vnum != leader.player.room_vnum:
+        session.send("You must be in the same room as your group leader to begin following.")
+        return
+    if session.follow_group_leader:
+        session.send(f"You are already following {leader.player.name}.")
+        return
+    session.follow_group_leader = True
+    session.send(f"&GYou begin following {leader.player.name}.&x")
+    leader.send(f"&G{session.player.name} begins following you.&x")
+
+
 def cmd_group(session, args: List[str]) -> None:
     """Player grouping (groups.py) -- 'group' alone shows the roster;
     'group invite <player>' (same room required) + 'group accept'
@@ -3980,14 +4030,20 @@ def cmd_group(session, args: List[str]) -> None:
                 continue
             leader_tag = " &Y(Leader)&x" if member is session.group.leader else ""
             elsewhere = "" if member.player.room_vnum == player.room_vnum else " &D(elsewhere)&x"
+            following = (" &C(Following)&x" if member is not session.group.leader
+                         and getattr(member, "follow_group_leader", False) else "")
             lines.append(
                 f"  {member.player.name}{leader_tag} - "
-                f"HP: {member.player.health}/{member.player.maximum_health}{elsewhere}"
+                f"HP: {member.player.health}/{member.player.maximum_health}{elsewhere}{following}"
             )
         session.send("\n".join(lines))
         return
 
     sub = args[0].lower()
+
+    if sub == "follow":
+        cmd_follow(session, args[1:] or ["leader"])
+        return
 
     if sub == "invite":
         if len(args) < 2:
@@ -4034,8 +4090,10 @@ def cmd_group(session, args: List[str]) -> None:
             return
         group.members.append(session)
         session.group = group
+        session.follow_group_leader = False
         for member in group.members:
             member.send(f"&G{player.name} has joined the group.&x")
+        session.send(f"&CTip: type 'follow {group.leader.player.name}' to move with the leader.&x")
         return
 
     if sub == "leave":
@@ -4083,7 +4141,7 @@ def cmd_group(session, args: List[str]) -> None:
         groups.disband(group)
         return
 
-    session.send("Usage: group [invite <player>|accept|leave|kick <player>|disband]")
+    session.send("Usage: group [invite <player>|accept|follow [on|off]|leave|kick <player>|disband]")
 
 
 def cmd_team(session, args: List[str]) -> None:
@@ -9421,6 +9479,8 @@ COMMANDS = {
     "uptime": cmd_uptime,
     "jobs": cmd_jobs,
     "group": cmd_group,
+    "follow": cmd_follow,
+    "unfollow": lambda session, args: cmd_follow(session, ["off"]),
     "team": cmd_team,
     "trade": cmd_trade,
     "duel": cmd_duel,
