@@ -29,6 +29,9 @@ class RoomActionTests(unittest.TestCase):
         self.actor, self.actor_out = self.make_session("Aki", 1)
         self.witness, self.witness_out = self.make_session("Mina", 1)
         self.remote, self.remote_out = self.make_session("Taro", 2)
+        # Other characters entering the test world may produce join notices.
+        for output in (self.actor_out, self.witness_out, self.remote_out):
+            output.clear()
 
     def make_session(self, name, vnum):
         out = []
