@@ -60,6 +60,11 @@ class Player:
     village: Optional[str] = None
     village_rank: str = "student"  # starting designation; Genin is the first obtainable rank (via exam)
     primary_class: Optional[str] = None
+    # Fresh characters default to migrated; saved characters missing this
+    # field are eligible for one-time, over-cap rank grandfathering.
+    rank_cap_migration_version: int = 1
+    rank_grandfathered_from: str = ""
+    rank_grandfathered_to: str = ""
 
     level: int = 1
     experience: int = 0
