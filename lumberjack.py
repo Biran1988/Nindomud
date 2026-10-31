@@ -1,23 +1,8 @@
-"""
-Lumberjack (Section 63b) -- a gathering job on jobs.py's framework.
+"""Lumberjack profession with overlapping four-tier axe progression.
 
-REDESIGNED per explicit request (same "Minecraft-style" crafting
-revamp as mining.py): ONE tool (a copper axe), every material is a
-single, non-tiered item -- no more "Common Pine Log" vs. "Uncommon
-Pine Log" variants. Progression comes from Lumberjack LEVEL directly
-unlocking access to better wood (FIND_TABLE), not a tool tier shifting
-a rarity roll.
-
-Requires an axe (bought) and standing in a forest biome.
-
-The actual gather-attempt/fail-chance/tool-lookup logic is shared
-with fishing.py/mining.py/farming.py -- see gathering_job.py, factored
-out since all four modules had it as an identical copy-paste with
-only names/data swapped. Public function names here are kept exactly
-as they were before that refactor (can_chop_here, tool_required_level,
-attempt_chop) -- commands.py calls these by name directly, so the
-public surface intentionally didn't change, only the implementation
-behind it.
+Copper gathers through Sturdy Oak; Ironbound Oak through Ironwood;
+Steel Ironwood through Ancient Heartwood; the finest Heartwood Axe
+also unlocks the rare Yew Log at Lumberjack level 95.
 """
 
 import gathering_job
@@ -25,7 +10,10 @@ import gathering_job
 CHOPPABLE_BIOMES = {"forest"}
 
 AXES = {
-    "a copper axe": {"required_level": 1},
+    "a copper axe": {"required_level": 1, "max_resource_level": 15, "tier": 0},
+    "an ironbound oak axe": {"required_level": 15, "max_resource_level": 35, "tier": 1},
+    "a steel ironwood axe": {"required_level": 35, "max_resource_level": 85, "tier": 2},
+    "a chakra steel heartwood axe": {"required_level": 75, "max_resource_level": 95, "tier": 3},
 }
 
 FIND_TABLE = [
@@ -35,6 +23,7 @@ FIND_TABLE = [
     ("an ironwood log", 35, 15, 60),
     ("a masterwork oak log", 60, 6, 150),
     ("an ancient heartwood log", 85, 2, 400),
+    ("a yew log", 95, 1, 500),
 ]
 
 FAIL_CHANCE_BASE = 20
@@ -50,4 +39,8 @@ def tool_required_level(tool_name: str):
 
 
 def attempt_chop(job_level: int, tool_name: str) -> dict:
-    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE)
+    tool = AXES.get(tool_name.lower())
+    if tool is None:
+        raise ValueError("Unknown lumber axe")
+    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
+                                        max_resource_level=tool["max_resource_level"], tier=tool["tier"])

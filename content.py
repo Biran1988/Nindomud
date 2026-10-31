@@ -29,6 +29,7 @@ import territory
 import farming
 import gemcutter
 import fishing
+import data_crafting
 import lumberjack
 import mining
 import cooking
@@ -147,8 +148,25 @@ def _register_shared_items() -> None:
     if _ITEM_VNUMS["death_scroll"] not in olc.OBJECT_TEMPLATES:
         make(_ITEM_VNUMS["death_scroll"], "A Scroll of 1000 Years of Death", "scroll", 0)
         olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "1000 years of death"
+    # Backfill persistent tiered tool prototypes on existing servers as well:
+    # this must run BEFORE the legacy early-return for old shared items.
+    for _kind, _vnumprefix in (("rod", "rod"), ("pickaxe", "pickaxe"), ("axe", "axe")):
+        for _tier, _vnumkey in (("iron", "oak" if _kind == "rod" else "iron"),
+                               ("steel", "ironwood" if _kind == "rod" else "steel"),
+                               ("chakra", "heartwood" if _kind == "rod" else "chakra_steel")):
+            _id = _ITEM_VNUMS[f"{_vnumprefix}_{_vnumkey}"]
+            _name = data_crafting.job_tool_name(_kind, _tier)
+            make(_id, _name, "tool", data_crafting.TOOL_RECIPES[_tier]["price"])
+            # Dedicated fixed IDs are reserved for these new crafted tools.
+            _proto = olc.OBJECT_TEMPLATES[_id]
+            _proto["short_desc"] = _name
+            _proto["keywords"] = _name.lower().split()
+            _proto["long_desc"] = f"{_name} lies here."
+            _proto["wear_loc"] = "tool"
+            _proto["item_type"] = "tool"
+            _proto["max_uses"] = data_crafting.TOOL_RECIPES[_tier]["uses"]
     if had_shared_items:
-        return  # old templates are registered; only backfill the new Art stock
+        return  # old templates are registered; preserve other builder edits
     make(_ITEM_VNUMS["war_club"], "A Wooden War Club", "weapon", 35, weapon_type="blunt")
     make(_ITEM_VNUMS["spear"], "A Bamboo Spear", "weapon", 45, weapon_type="polearm")
     make(_ITEM_VNUMS["chain_sickle"], "A Chain Sickle", "weapon", 60, weapon_type="exotic")
@@ -211,7 +229,7 @@ def _register_shared_items() -> None:
                 olc.OBJECT_TEMPLATES[_headband_vnum]["stat_bonuses"]["armor_class"] = _ac_bonus
             _headband_vnum += 1
 
-    # Fishing tools -- just one rod for now (crafting revamp).
+    # Kindling base rod, upgraded tiers registered above.
     make(_ITEM_VNUMS["rod_kindling"], "A Kindling Fishing Rod", "tool", 50)
 
     # Every fish (fishing.FIND_TABLE -- 8 species, single non-tiered
@@ -265,21 +283,18 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["ironwood_log"], "An Ironwood Log", "material", 600, rarity="rare")
     make(_ITEM_VNUMS["heartwood_log"], "An Ancient Heartwood Log", "material", 40000, rarity="legendary")
 
-    # Mining tools -- deliberately just Copper for now (Section 79
-    # crafting revamp, per explicit request): no tiered pickaxes,
-    # Mining level itself now gates which materials are reachable
-    # (see mining.FIND_TABLE) rather than the tool.
+    # Copper base pickaxe, upgraded tiers registered above.
     make(_ITEM_VNUMS["pickaxe_copper"], "A Copper Pickaxe", "tool", 50)
 
     # Lumberjack tools
-    # Lumberjack tools -- just one axe for now (crafting revamp).
+    # Crafted iron, steel and chakra-steel axes registered above.
     make(_ITEM_VNUMS["axe_copper"], "A Copper Axe", "tool", 50)
 
     # Lumberjack finds (lumberjack.FIND_TABLE) -- single, non-tiered
     # items registered directly from that table.
-    _WOOD_COST = [1, 2, 300, 600, 3000, 40000]
+    _WOOD_COST = [1, 2, 300, 600, 3000, 40000, 40000]
     for _wood_index, (_wood_name, _req, _weight, _xp) in enumerate(lumberjack.FIND_TABLE):
-        _wood_vnum = 20206 + _wood_index
+        _wood_vnum = (_ITEM_VNUMS["yew_log"] if "yew log" in _wood_name else 20206 + _wood_index)
         _wood_display = " ".join(word.capitalize() for word in _wood_name.split())
         make(_wood_vnum, _wood_display, "material", _WOOD_COST[_wood_index])
 

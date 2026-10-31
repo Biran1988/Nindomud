@@ -58,7 +58,9 @@ def fail_chance(job_level: int, base: int, floor: int, level_divisor: int = 2) -
     return max(floor, result + weather.gathering_fail_chance_modifier())
 
 
-def attempt_gather(job_level: int, base: int, floor: int, find_table: list, level_divisor: int = 2) -> dict:
+def attempt_gather(job_level: int, base: int, floor: int, find_table: list,
+                   level_divisor: int = 2, *, max_resource_level=None,
+                   tier: int = 0) -> dict:
     """Shared body of every job's own attempt_catch/attempt_mine/
     attempt_chop/attempt_farm. A real chance to come up with nothing,
     decreasing with job level but never reaching zero (fail_chance
@@ -70,6 +72,11 @@ def attempt_gather(job_level: int, base: int, floor: int, find_table: list, leve
     {"failed": False, "name", "xp"} on a find."""
     if random.randint(1, 100) <= fail_chance(job_level, base, floor, level_divisor):
         return {"failed": True}
-    available = [(name, weight, xp) for name, required, weight, xp in find_table if job_level >= required]
+    # Tool cap and job level BOTH gate each find. Lower tiers still appear
+    # when an upgraded tool is held, providing overlapping catch/loot tables.
+    available = [(name, weight * (1 + 0.18 * tier * min(1, required / 40)), xp)
+                 for name, required, weight, xp in find_table
+                 if job_level >= required and
+                 (max_resource_level is None or required <= max_resource_level)]
     name, _, xp = random.choices(available, weights=[w for _, w, _ in available], k=1)[0]
     return {"failed": False, "name": name, "xp": xp}

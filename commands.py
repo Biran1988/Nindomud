@@ -6982,6 +6982,65 @@ def _allocate_crafted_item_vnum() -> int:
     return vnum
 
 
+def _craft_gathering_tool(session, args: List[str]) -> None:
+    """Blacksmith Bukijutsu crafts one job tool from exactly two materials.
+
+    Syntax: craft tool <rod|axe|pickaxe> <iron|steel|chakra>.
+    Materials are only spent after the delayed action succeeds, and a
+    failed inventory-add returns both consumed resources to the player.
+    """
+    import data_crafting
+    player = session.player
+    if player.primary_class != "bukijutsu" or player.level < 25:
+        session.send("Crafted job tools require a Bukijutsu blacksmith of ninja level 25+.")
+        return
+    if len(args) != 2 or (args[0], args[1]) not in data_crafting.TOOL_NAMES:
+        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra>")
+        return
+    kind, tier = args
+    recipe = data_crafting.TOOL_RECIPES[tier]
+    result = data_crafting.job_tool_name(kind, tier)
+    materials = (recipe["wood"], recipe["ingot"])
+    if session.is_busy():
+        session.send("You're already busy with something.")
+        return
+
+    def have_materials():
+        return all(any(item.casefold() == expected.casefold() for item in player.inventory)
+                   for expected in materials)
+
+    if not have_materials():
+        session.send(f"You need {materials[0]} and {materials[1]} to craft {result}.")
+        return
+    if not jobs.try_deduct_action_stamina(player):
+        session.send("You don't have enough stamina.")
+        return
+
+    def resolve():
+        if player.primary_class != "bukijutsu" or player.level < 25:
+            session.send("You no longer meet the Bukijutsu blacksmith requirement.")
+            return
+        if not have_materials():
+            session.send("The two materials are no longer in your inventory. Crafting fails.")
+            return
+        taken = []
+        for expected in materials:
+            item = next(x for x in player.inventory if x.casefold() == expected.casefold())
+            player.inventory.remove(item)
+            taken.append(item)
+        ok, reason = inventory.add_item(player.inventory, result)
+        if not ok:
+            player.inventory.extend(taken)
+            session.send(inventory.full_message(reason, result))
+            return
+        session.send(f"&GYou forge {result} from {materials[0]} and {materials[1]}! "
+                     f"({recipe['uses']} uses.)&x")
+        storage.save_player(player)
+
+    session.send(f"You begin forging {result} from {materials[0]} and {materials[1]}...")
+    session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, resolve)
+
+
 def cmd_craft(session, args: List[str]) -> None:
     """'craft weapon <type> <name>' / 'craft armor <slot> <name>' --
     the real Bukijutsu crafting skill (Section 133), per direct
@@ -6999,6 +7058,12 @@ def cmd_craft(session, args: List[str]) -> None:
     import data_crafting
 
     player = session.player
+    if args and args[0].lower() in ("tool", "rod", "axe", "pickaxe"):
+        kind = args[0].lower()
+        selection = ([w.lower() for w in args[1:]] if kind == "tool" else
+                     [kind] + [w.lower() for w in args[1:]])
+        _craft_gathering_tool(session, selection)
+        return
     if args and args[0].lower() == "pill":
         import pill_crafting
         if player.primary_class != "bukijutsu" or player.level < pill_crafting.MIN_CRAFTER_LEVEL:
@@ -7052,7 +7117,7 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft weapon <type> <name>  |  craft armor <slot> <name>  |  craft pill <antidote|medicine> <level>")
+        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra>  |  craft weapon <type> <name>  |  craft armor <slot> <name>  |  craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()

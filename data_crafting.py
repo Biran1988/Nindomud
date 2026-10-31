@@ -97,3 +97,31 @@ def combined_stat_value(material_a: str, material_b: str) -> int:
     confirmed directly ("iron=5, yew=20 -> combined=25", the exact
     real shape this mirrors)."""
     return MATERIALS[material_a]["stat_value"] + MATERIALS[material_b]["stat_value"]
+
+
+# Standardized Bukijutsu-blacksmith gathering tools. Each tool uses exactly
+# one named lumber material and one smelted metal ingot (no raw ore).
+# The same three recipe tiers apply to fishing rods, axes and pickaxes.
+TOOL_RECIPES = {
+    "iron": {"wood": "A Sturdy Oak Log", "ingot": "An Iron Ingot", "uses": 400,
+             "price": 1100},
+    "steel": {"wood": "An Ironwood Log", "ingot": "A Steel Ingot", "uses": 650,
+              "price": 6500},
+    "chakra": {"wood": "An Ancient Heartwood Log", "ingot": "A Chakra Steel Ingot", "uses": 1000,
+               "price": 90000},
+}
+TOOL_KINDS = {"rod": "Fishing Rod", "axe": "Axe", "pickaxe": "Pickaxe"}
+TOOL_NAMES = {
+    ("rod", "iron"): "An Ironbound Oak Fishing Rod",
+    ("rod", "steel"): "A Steel Ironwood Fishing Rod",
+    ("rod", "chakra"): "A Chakra Steel Heartwood Fishing Rod",
+    ("axe", "iron"): "An Ironbound Oak Axe",
+    ("axe", "steel"): "A Steel Ironwood Axe",
+    ("axe", "chakra"): "A Chakra Steel Heartwood Axe",
+    ("pickaxe", "iron"): "An Ironbound Oak Pickaxe",
+    ("pickaxe", "steel"): "A Steel Ironwood Pickaxe",
+    ("pickaxe", "chakra"): "A Chakra Steel Heartwood Pickaxe",
+}
+
+def job_tool_name(kind: str, tier: str) -> str:
+    return TOOL_NAMES[(kind, tier)]

@@ -25,7 +25,10 @@ import gathering_job
 WATER_BIOMES = {"ocean", "river", "lake", "swamp"}
 
 RODS = {
-    "a kindling fishing rod": {"required_level": 1},
+    "a kindling fishing rod": {"required_level": 1, "max_resource_level": 15, "tier": 0},
+    "an ironbound oak fishing rod": {"required_level": 15, "max_resource_level": 40, "tier": 1},
+    "a steel ironwood fishing rod": {"required_level": 40, "max_resource_level": 75, "tier": 2},
+    "a chakra steel heartwood fishing rod": {"required_level": 75, "max_resource_level": 90, "tier": 3},
 }
 
 FIND_TABLE = [
@@ -52,4 +55,8 @@ def rod_required_level(rod_name: str):
 
 
 def attempt_catch(job_level: int, rod_name: str) -> dict:
-    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE)
+    tool = RODS.get(rod_name.lower())
+    if tool is None:
+        raise ValueError("Unknown fishing rod")
+    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
+                                        max_resource_level=tool["max_resource_level"], tier=tool["tier"])

@@ -1,41 +1,7 @@
-"""
-Mining (Section 63a) -- the second job on jobs.py's generic leveling
-framework.
+"""Mining with overlapping copper, iron, steel and chakra-steel pickaxe tiers.
 
-REDESIGNED per explicit request ("going in a different direction with
-crafting ... remove the rarity in jobs items ... 1 item per type ...
-make rarity of getting the item based on player level ... for now a
-single copper pickaxe/tool is enough to mine and level determines
-what you get ... more of a minecraft system"). Previously: 6 tiered
-pickaxes and 24 ore/gem species each with their own Common-through-
-Legendary rarity ladder (a "which rarity did I roll" system). Now:
-ONE tool (a copper pickaxe, no tier progression for now), and every
-material is a single, non-tiered item -- no more "Common Iron Ore"
-vs. "Uncommon Iron Ore" variants of the same thing, just "An Iron
-Ore". Progression instead comes from your Mining LEVEL directly
-unlocking access to better materials (FIND_TABLE below), Minecraft-
-style, rather than a tool tier shifting the odds of a random rarity
-roll on a fixed set of materials.
-
-Requires a pickaxe (bought) and standing in a mountain biome (see
-MINEABLE_BIOMES).
-
-Smelting (an iron ore -> an iron ingot, etc.) is unchanged in shape --
-still gated by Mining level -- since the ore/ingot naming already
-matched the "1 item per type" principle this whole redesign is
-built around. Smelting is genuinely mining-specific (no equivalent in
-fishing/lumberjack/farming), so it stays in this file rather than
-moving into the shared gathering_job.py module below.
-
-The actual gather-attempt/fail-chance/tool-lookup logic (everything
-BELOW the smelting section) is shared with fishing.py/lumberjack.py/
-farming.py -- see gathering_job.py, factored out since all four
-modules had it as an identical copy-paste with only names/data
-swapped. Public function names here are kept exactly as they were
-before that refactor (can_mine_here, tool_required_level,
-attempt_mine) -- commands.py calls these by name directly, so the
-public surface intentionally didn't change, only the implementation
-behind it.
+The job level still gates each ore or gem, and upgraded pickaxes widen
+rather than replace the set of obtainable minerals.
 """
 
 import gathering_job
@@ -46,7 +12,10 @@ MINEABLE_BIOMES = {"mountain"}
 # tiers may return once the broader crafting revamp this is part of
 # is further along.
 PICKAXES = {
-    "a copper pickaxe": {"required_level": 1},
+    "a copper pickaxe": {"required_level": 1, "max_resource_level": 1, "tier": 0},
+    "an ironbound oak pickaxe": {"required_level": 15, "max_resource_level": 25, "tier": 1},
+    "a steel ironwood pickaxe": {"required_level": 35, "max_resource_level": 55, "tier": 2},
+    "a chakra steel heartwood pickaxe": {"required_level": 75, "max_resource_level": 80, "tier": 3},
 }
 
 # Every material Mining can find, each a single, non-tiered item.
@@ -85,7 +54,11 @@ def attempt_mine(job_level: int, tool_name: str) -> dict:
     anymore, since each material is just one item now. Returns
     {"failed": True} on a failed attempt, or {"failed": False, "name",
     "xp"} on a find."""
-    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE)
+    tool = PICKAXES.get(tool_name.lower())
+    if tool is None:
+        raise ValueError("Unknown pickaxe")
+    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
+                                        max_resource_level=tool["max_resource_level"], tier=tool["tier"])
 
 
 # Smelting -- converts a raw ore found while mining into the ingot

@@ -5134,3 +5134,54 @@ for _entry in DEFAULT_HELP_ENTRIES:
 # Attach the live level, type and base damage after ALL techniques are loaded.
 import help_annotations as _help_annotations
 _TECHNIQUE_METADATA_HELP_TOPICS = _help_annotations.enrich(DEFAULT_HELP_ENTRIES, data_jutsu.JUTSU)
+
+
+# Replace obsolete pre-revamp tier and rarity descriptions with live rules.
+_GATHERING_TIER_HELP = {
+    "fish": (
+        "Syntax: fish (hold a fishing rod near water)\n\n"
+        "Kindling Fishing Rod (level 1): Minnow, Sardine, Trout. "
+        "Ironbound Oak Fishing Rod (Fishing 15+): adds Bass and Salmon. "
+        "Steel Ironwood Fishing Rod (Fishing 40+): adds Swordfish and Koi. "
+        "Chakra Steel Heartwood Fishing Rod (Fishing 75+): adds Leviathan (Fishing 90). "
+        "Every upgraded rod can still catch lower fish. Job level must also unlock a species. "
+        "Craft each upgrade with CRAFT TOOL ROD <iron|steel|chakra> by Bukijutsu level 25+. "
+        "Tools have limited uses and require HOLD."
+    ),
+    "mine": (
+        "Syntax: mine (hold a pickaxe in mountains)\n\n"
+        "Copper Pickaxe: Iron Ore and Rough Quartz. "
+        "Ironbound Oak Pickaxe (Mining 15+): adds Steel Ore and Raw Sapphire. "
+        "Steel Ironwood Pickaxe (Mining 35+): adds Chakra Steel Ore and Raw Ruby. "
+        "Chakra Steel Heartwood Pickaxe (Mining 75+): adds Raw Diamond. "
+        "Each pickaxe retains all lower materials, subject to Mining level. "
+        "Smelt iron, steel and chakra steel ores into ingots to make upgraded tools. "
+        "Craft them with CRAFT TOOL PICKAXE <iron|steel|chakra> by Bukijutsu level 25+."
+    ),
+    "chop": (
+        "Syntax: chop (hold an axe in forests)\n\n"
+        "Copper Axe: Kindling, Birch Branch, Sturdy Oak Log (Lumberjack 15). "
+        "Ironbound Oak Axe (Lumberjack 15+): adds Ironwood Log (level 35). "
+        "Steel Ironwood Axe (Lumberjack 35+): adds Masterwork Oak (level 60) "
+        "and Ancient Heartwood (level 85). "
+        "Chakra Steel Heartwood Axe (Lumberjack 75+): adds rare Yew Log (level 95). "
+        "Each axe can also collect all earlier wood types as job level allows. "
+        "CRAFT TOOL AXE <iron|steel|chakra> uses the two-material blacksmith recipes."
+    ),
+    "craft": (
+        "Syntax: craft tool <rod|axe|pickaxe> <iron|steel|chakra>\n"
+        "Also: craft rod iron, craft axe steel, craft pickaxe chakra.\n\n"
+        "Job-tool smithing is for Bukijutsu ninja level 25+ ONLY. Every job "
+        "tool uses exactly two materials: Iron = Sturdy Oak Log + Iron Ingot (400 uses), "
+        "Steel = Ironwood Log + Steel Ingot (650 uses), Chakra = Ancient Heartwood "
+        "Log + Chakra Steel Ingot (1000 uses). Crafting takes 20 seconds. "
+        "A completed tool can be traded, held and used for Fishing, Mining or Lumberjack "
+        "as appropriate, with overlapping resource pools and profession-level gates.\n\n"
+        "Other crafting: craft weapon <type> <name> / craft armor <slot> <name> "
+        "(Bukijutsu level 25+ or any class level 70+), then select two materials "
+        "at the prompt. Craft pill <antidote|medicine> <level> is Bukijutsu-only."
+    ),
+}
+for _entry in DEFAULT_HELP_ENTRIES:
+    if _entry["primary_keyword"] in _GATHERING_TIER_HELP:
+        _entry["body"] = _GATHERING_TIER_HELP[_entry["primary_keyword"]]
