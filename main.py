@@ -24,8 +24,7 @@ def main():
     # Money piles have their own automatic ledger; never replace world/area saves.
     import currency_piles
     currency_piles.restore_piles()
-    import commands
-    commands.force_all_player_configs_on()
+    # Player preferences are persistent: never reset saved config choices on boot.
     import help_system
     help_system.seed_default_help()
     if not storage.account_exists(ADMIN_NAME):

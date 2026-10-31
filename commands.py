@@ -8334,8 +8334,7 @@ def cmd_config(session, args: List[str]) -> None:
 
     key = args[0].lower()
     value = args[1].lower() == "on"
-    setattr(player, key, value)
-    session.send(f"{key} is now {'on' if value else 'off'}.")
+    _save_personal_config(session, key, value)
 
 
 STAFF_CONFIG_OPTIONS = {
@@ -8345,31 +8344,22 @@ STAFF_CONFIG_OPTIONS = {
 }
 
 
-def force_all_player_configs_on() -> int:
-    """Called once from main.py at every server start, per direct user
-    request ("yes every player config should be on at start"). Forces
-    every regular player CONFIG_OPTIONS field on for every saved
-    character (not just online ones -- this reads every save file, an
-    acceptable one-time startup cost, same as world.
-    reconcile_apartment_ownership already does). A player can still
-    turn any of them back off during their session with 'config
-    <name> off' -- this only resets the starting state each time the
-    server (re)starts, it doesn't lock them on. Deliberately leaves
-    STAFF_CONFIG_OPTIONS untouched -- that's a separate set staff
-    manage themselves, not part of what was asked to be forced.
-    Returns how many player files were actually changed (0 if
-    everyone was already fully on)."""
-    changed = 0
-    for player in storage.all_players():
-        needs_save = False
-        for key in CONFIG_OPTIONS:
-            if not getattr(player, key):
-                setattr(player, key, True)
-                needs_save = True
-        if needs_save:
-            storage.save_player(player)
-            changed += 1
-    return changed
+def _save_personal_config(session, key: str, value: bool) -> None:
+    """Commit an allowed config toggle immediately, including before logout.
+
+    If the save fails, don't pretend the new preference will survive a
+    reconnect. Revert the live setting and show the reason instead.
+    """
+    player = session.player
+    previous = getattr(player, key)
+    setattr(player, key, value)
+    try:
+        storage.save_player(player)
+    except OSError as exc:
+        setattr(player, key, previous)
+        session.send(f"&RUnable to save {key}; its previous value was kept: {exc}&x")
+        return
+    session.send(f"{key} is now {'on' if value else 'off'} (saved).")
 
 
 def cmd_colorscheme(session, args: List[str]) -> None:
@@ -8476,8 +8466,7 @@ def cmd_staffconfig(session, args: List[str]) -> None:
 
     key = args[0].lower()
     value = args[1].lower() == "on"
-    setattr(player, key, value)
-    session.send(f"{key} is now {'on' if value else 'off'}.")
+    _save_personal_config(session, key, value)
 
 
 def _resource_row(label1, color1, cur1, max1, label2="", color2="", cur2=0, max2=0, width=40):

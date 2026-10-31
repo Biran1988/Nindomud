@@ -2059,7 +2059,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: config [setting] [on|off]\n"
             "\n"
-            "Description: Shows or changes your personal settings, such as auto-looting ryo/gear from corpses, auto-sacrificing them, or the periodic tip-of-the-day broadcast. Run 'config' alone to see every available setting and its current state. Every setting defaults on for a brand-new character, and is reset back on for every character at the start of every server session -- you can still turn any of them off yourself any time, it just isn't remembered as your starting state across a restart.\n"
+            "Description: Shows or changes your personal settings, such as auto-looting ryo/gear from corpses, auto-sacrificing them, or the periodic tip-of-the-day broadcast. Run 'config' alone to see every available setting and its current state. Every setting defaults on for a brand-new character. Your on/off choices are saved immediately and remain unchanged after quit/login, disconnects and server reboots.\n"
             "\n"
             "Staff have their own, separate set -- see 'help staffconfig'.\n"
             "\n"
@@ -2076,7 +2076,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: staffconfig [setting] [on|off]\n"
             "\n"
-            "Description: Staff's own, separate set of personal settings -- distinct from the regular 'config' every player has. Covers staff-specific display/notification preferences: whether you get a live ping when a player submits a bug report, and whether you see vnums -- room headers, and any mob or item wherever it's listed (a room, your own inventory). Both default on. Run 'staffconfig' alone to see every setting and its current state.\n"
+            "Description: Staff's own, separate set of personal settings -- distinct from the regular 'config' every player has. Covers staff-specific display/notification preferences: whether you get a live ping when a player submits a bug report, and whether you see vnums -- room headers, and any mob or item wherever it's listed (a room, your own inventory). All three default on for new characters. Staff choices are saved immediately and remain unchanged after quit/login, disconnects and server reboots. Run 'staffconfig' alone to see every setting and its current state.\n"
             "\n"
             "&D(Staff only.)&x\n"
             "\n"

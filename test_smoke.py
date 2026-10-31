@@ -8097,12 +8097,7 @@ def test_configs_default_on_and_staff_configs():
     genuinely controls the room-header vnum display (turning it off
     actually removes it, not just cosmetic); staff_notify_reports
     genuinely pings an online staff member live when a player submits
-    'report'; and force_all_player_configs_on -- the part that runs at
-    every real server start -- actually flips an existing player who'd
-    turned something off back on, while leaving that player's staff
-    configs (if any) completely untouched, since those are a separate
-    set staff manage themselves and weren't part of what was asked to
-    be forced."""
+    'report'; and both player and staff preferences stay saved instead of reverting when the server restarts."""
     import re
     import commands
 
@@ -8157,18 +8152,12 @@ def test_configs_default_on_and_staff_configs():
     assert "bug report from" in text_report.lower()
     assert "something is broken here" in text_report.lower()
 
-    # force_all_player_configs_on flips an existing off player back on,
-    # without touching that player's own staff configs.
-    staff.player.auto_loot_ryo = False
-    staff.player.staff_show_vnums = False  # a staff member's OWN config choice -- must survive the forced player-config reset
-    storage.save_player(staff.player)
-
-    changed = commands.force_all_player_configs_on()
-    assert changed >= 1
-
+    # Saved player and staff toggles must survive shutdown and login.
+    staff.handle_line("config auto_loot_ryo off")
+    staff.handle_line("staffconfig staff_show_vnums off")
     reloaded = storage.load_player("Staffconfigdefault")
-    assert reloaded.auto_loot_ryo is True, "force_all_player_configs_on must flip a player config back on"
-    assert reloaded.staff_show_vnums is False, "force_all_player_configs_on must NOT touch staff configs"
+    assert reloaded.auto_loot_ryo is False, "config must preserve saved OFF choices"
+    assert reloaded.staff_show_vnums is False, "staffconfig must preserve saved OFF choices"
 
     print("CONFIGS DEFAULT ON AND STAFF CONFIGS TEST PASSED")
 

@@ -506,11 +506,28 @@ def delete_character(player_name: str, account_name: str) -> None:
 
 
 def save_player(player: Player) -> None:
+    """Atomically save the character including CONFIG and STAFFCONFIG flags.
+
+    Build a complete JSON snapshot before replacing the previous save, so a
+    crash or interrupted write never truncates the last good character file.
+    The new data is saved in the existing data/players directory, which is
+    always excluded from distributed program ZIPs.
+    """
     import data_kekkei_genkai
     data_kekkei_genkai.sync_elemental_release(player)
     ensure_dirs()
-    with open(player_path(player.name), "w", encoding="utf-8") as f:
-        json.dump(player.to_dict(), f, indent=2)
+    path = player_path(player.name)
+    payload = json.dumps(player.to_dict(), indent=2)
+    fd, temp_path = tempfile.mkstemp(prefix=".player-", suffix=".tmp", dir=PLAYERS_DIR)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(payload)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, path)
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 
 # Legacy (pre-color) prompt presets, mapped to their current colored
