@@ -439,6 +439,7 @@ def cmd_move(session, direction: str) -> None:
     general_skills.before_move(session)
     general_skills.broadcast_movement(session, f"{player.name} leaves {direction}.")
     player.room_vnum = room.exits[direction]
+    combat.follow_owner_summon(player, room.vnum, player.room_vnum)
     general_skills.broadcast_movement(session, f"{player.name} arrives from the {world.OPPOSITE_DIRECTION.get(direction, direction)}.")
 
     if session.trade is not None:
@@ -747,7 +748,9 @@ def cmd_flee(session, args: List[str]) -> None:
     session.combat_target = None
     combat.reset_summon_round_state(player)
 
+    old_room_vnum = player.room_vnum
     player.room_vnum = destination_vnum
+    combat.follow_owner_summon(player, old_room_vnum, destination_vnum)
     session.send(f"&YYou use the Body Replacement Technique, substituting yourself with a nearby log, and flee {direction}!&x")
     cmd_look(session, [])
 
@@ -2666,7 +2669,9 @@ def cmd_recall(session, args: List[str]) -> None:
     if not room or not room.apartment or room.owner != player.name:
         session.send("Something's wrong with your apartment's deed -- contact a builder.")
         return
+    old_room_vnum = player.room_vnum
     player.room_vnum = room.vnum
+    combat.follow_owner_summon(player, old_room_vnum, room.vnum)
     session.send(f"&CYou recall home to {room.name}.&x")
     cmd_look(session, [])
     _fire_enter_triggers(session)
@@ -2717,7 +2722,9 @@ def cmd_anki(session, args: List[str]) -> None:
         session.send("Something's wrong with your village's Kage room -- contact a builder.")
         return
     player.cooldowns["anki"] = now + ANKI_COOLDOWN_SECONDS
+    old_room_vnum = player.room_vnum
     player.room_vnum = room.vnum
+    combat.follow_owner_summon(player, old_room_vnum, room.vnum)
     session.send(f"&CYou focus your chakra and recall the way home -- you arrive in {room.name}.&x")
     cmd_look(session, [])
     _fire_enter_triggers(session)
@@ -9485,6 +9492,7 @@ COMMANDS = {
     "imms": cmd_imms, "immortal": cmd_imms, "immortals": cmd_imms,
     "sage": sage_mode.command,
     "summon": sage_mode.summon_command,
+    "order": sage_mode.order_command,
     "sealconsent": __import__("whirlpool_fuinjutsu").contract_consent,
     "restore": cmd_restore, "respawn": cmd_respawn,
     "vperk": cmd_vperk, "villageperk": cmd_vperk,
