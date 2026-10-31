@@ -80,6 +80,11 @@ CONTRACTS = {
         "hideout_name": "the Monkey Sanctuary",
         "unlock_level": 20,
     },
+    "salamander": {
+        "display_name": "Salamander",
+        "hideout_name": "the Hidden Rain Salamander Marsh",
+        "unlock_level": 20,
+    },
 }
 
 
@@ -142,12 +147,49 @@ MONKEY_TIERS = [
      "base_modifier": 2.0, "mechanic": "weapon_buff"},
 ]
 
+# The level cap is 250. Every existing contract now has a complete
+# progression toward that cap; previous lower-tier keys stay stable.
+TOAD_TIERS.extend([
+    {"key": "toad_5", "display_name": "Gamahiro the Toad Swordsman", "unlock_level": 135, "base_modifier": 3.8, "mechanic": "fighter"},
+    {"key": "toad_6", "display_name": "Gamaken the Stalwart", "unlock_level": 195, "base_modifier": 4.6, "mechanic": "fighter"},
+    {"key": "toad_7", "display_name": "the Great Toad Stomach", "unlock_level": 250, "base_modifier": 5.8, "mechanic": "trap"},
+])
+SNAKE_TIERS.extend([
+    {"key": "snake_4", "display_name": "a Giant War Serpent", "unlock_level": 135, "base_modifier": 3.9, "mechanic": "fighter", "poison": True},
+    {"key": "snake_5", "display_name": "Aoda", "unlock_level": 190, "base_modifier": 4.8, "mechanic": "fighter", "poison": True},
+    {"key": "snake_6", "display_name": "the Elder White Snake", "unlock_level": 250, "base_modifier": 6.0, "mechanic": "bind", "poison": True},
+])
+SLUG_TIERS.extend([
+    {"key": "slug_4", "display_name": "a Great Healing Slug", "unlock_level": 135, "base_modifier": 2.7, "mechanic": "healer", "heal_percent": 25},
+    {"key": "slug_5", "display_name": "Katsuyu's Grand Division", "unlock_level": 195, "base_modifier": 3.8, "mechanic": "healer", "heal_percent": 32},
+    {"key": "slug_6", "display_name": "Katsuyu's Supreme Guardian", "unlock_level": 250, "base_modifier": 5.0, "mechanic": "safety_net", "heal_percent": 45},
+])
+NINKEN_TIERS.extend([
+    {"key": "ninken_4", "display_name": "a Battle-Hardened Wolf", "unlock_level": 135, "base_modifier": 3.4, "mechanic": "fighter", "extra_attack": True},
+    {"key": "ninken_5", "display_name": "an Elite Tracking Hound", "unlock_level": 195, "base_modifier": 4.4, "mechanic": "fighter", "extra_attack": True},
+    {"key": "ninken_6", "display_name": "the Seven Ninja Hounds", "unlock_level": 250, "base_modifier": 6.2, "mechanic": "flee_lock", "extra_attack": True},
+])
+MONKEY_TIERS.extend([
+    {"key": "monkey_4", "display_name": "the Adamantine Staff Sentinel", "unlock_level": 135, "base_modifier": 3.1, "mechanic": "fighter"},
+    {"key": "monkey_5", "display_name": "Enma the Monkey King", "unlock_level": 195, "base_modifier": 4.6, "mechanic": "weapon_buff"},
+    {"key": "monkey_6", "display_name": "the Adamantine Monkey King", "unlock_level": 250, "base_modifier": 5.8, "mechanic": "weapon_buff"},
+])
+SALAMANDER_TIERS = [
+    {"key": "salamander_1", "display_name": "a Tiny Marsh Salamander", "unlock_level": 20, "base_modifier": 0.9, "mechanic": "fighter", "poison": True},
+    {"key": "salamander_2", "display_name": "a Venom-Spitting Salamander", "unlock_level": 55, "base_modifier": 1.5, "mechanic": "fighter", "poison": True},
+    {"key": "salamander_3", "display_name": "a Hardened Swamp Salamander", "unlock_level": 100, "base_modifier": 2.5, "mechanic": "fighter", "poison": True},
+    {"key": "salamander_4", "display_name": "a Giant Marsh Guardian", "unlock_level": 155, "base_modifier": 3.6, "mechanic": "fighter", "poison": True},
+    {"key": "salamander_5", "display_name": "Ibuse the Giant Salamander", "unlock_level": 210, "base_modifier": 4.8, "mechanic": "poison_cloud", "poison": True},
+    {"key": "salamander_6", "display_name": "the Ancient Salamander", "unlock_level": 250, "base_modifier": 6.0, "mechanic": "poison_cloud", "poison": True},
+]
+
 CONTRACT_TIERS = {
     "toad": TOAD_TIERS,
     "snake": SNAKE_TIERS,
     "slug": SLUG_TIERS,
     "ninken": NINKEN_TIERS,
     "monkey": MONKEY_TIERS,
+    "salamander": SALAMANDER_TIERS,
 }
 
 
