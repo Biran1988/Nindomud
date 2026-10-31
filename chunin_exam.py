@@ -93,3 +93,84 @@ def steal_scroll_on_pvp_defeat(winner, loser) -> Optional[str]:
     loser.inventory.remove(match)
     winner.inventory.append(match)
     return match
+
+# Final stage: completing the scroll trial starts a real 1v1 against a
+# stronger copy with a DIFFERENT ninja class. Passing scrolls alone never
+# grants Chunin rank.
+def final_opponent(session):
+    import combat
+    p = session.player
+    if not p.in_chunin_exam:
+        return None
+    return next((mob for mob in combat.mobs_in_room(TOWER_VNUM)
+                 if getattr(mob, "chunin_exam_owner", "") == p.name
+                 and mob.health > 0), None)
+
+
+def begin_final_match(session):
+    import combat
+    import data_classes
+    p = session.player
+    current = final_opponent(session)
+    if current:
+        session.combat_target = current
+        return current
+    classes = [name for name in data_classes.CLASSES if name != p.primary_class]
+    different_class = classes[(sum(map(ord, p.name)) + p.level) % len(classes)]
+    vnum = -4_100_000 - (sum((i + 1) * ord(c) for i, c in enumerate(p.name)) % 100_000)
+    level = min(250, p.level + max(5, p.level // 5))
+    hp = max(125, int(p.maximum_health * 1.6))
+    damage = max(5, int(p.level * 0.55 + 6))
+    name = f"the {different_class} shadow of {p.name}"
+    combat.register_template(vnum, name, level=level, max_health=hp,
+                             min_damage=damage, max_damage=damage + max(3, p.level // 5),
+                             experience_reward=0, ryo_reward=0)
+    t = combat.MOB_TEMPLATES[vnum]
+    t["auto_balance"] = False
+    t["primary_class"] = different_class
+    t["respawns"] = False
+    t["act_flags"] = ["Npc", "Sentinel"]
+    mob = combat.spawn_mob(vnum, TOWER_VNUM)
+    mob.chunin_exam_owner = p.name
+    mob.respawns = False
+    mob.attacks = 2
+    session.combat_target = mob
+    session.send(
+        f"&RThe proctor seals the exits! Your final trial begins: "
+        f"{name}, a stronger version of yourself, stands before you. "
+        "Defeat this opponent to become Chunin!&x"
+    )
+    return mob
+
+
+def reset_exam(player):
+    """Forfeiture/death: remove BOTH scroll types and only owned exam mob."""
+    import combat
+    player.in_chunin_exam = False
+    player.inventory = [item for item in player.inventory
+                        if not (isinstance(item, str) and
+                                item.lower() in {scroll.lower() for scroll in SCROLLS})]
+    for mob in list(combat.mobs_in_room(TOWER_VNUM)):
+        if getattr(mob, "chunin_exam_owner", "") == player.name:
+            combat.remove_mob(mob)
+
+
+def finish_final_match(session, mob):
+    if not session.player.in_chunin_exam or getattr(mob, "chunin_exam_owner", "") != session.player.name:
+        return False
+    import combat
+    import data_headbands
+    import kage
+    import storage
+    from data_villages import VILLAGES
+    player = session.player
+    reset_exam(player)
+    combat.reset_summon_round_state(player)
+    session.combat_target = None
+    player.village_rank = "chunin"
+    data_headbands.apply_rank_headband(player, "chunin")
+    player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
+    kage.announce_rank_up(player.name, "chunin")
+    storage.save_player(player)
+    session.send("&GYou defeat your stronger shadow in the final 1v1! The proctor names you a Chunin.&x")
+    return True
