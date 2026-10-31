@@ -339,6 +339,10 @@ def cmd_move(session, direction: str) -> None:
 
     room = WORLD.get(player.room_vnum)
 
+    if player.in_chunin_exam and player.room_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM):
+        session.send("&RYou have stepped outside the Exam arena. Leave confirm forfeits the attempt.&x")
+        return
+
     if player.jailed_until:
         if time.time() >= player.jailed_until:
             import jail as jail_module
@@ -404,6 +408,10 @@ def cmd_move(session, direction: str) -> None:
             session._mudprog_direction = previous_direction
 
     destination_vnum = room.exits[direction]
+    if (player.in_chunin_exam
+            and destination_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM)):
+        session.send("&RThe exam proctor bars this exit. Leaving means failing and repeating the entire Chunin Exam. Use 'leave confirm' to forfeit.&x")
+        return
     if not olc._require_assigned_vnum(session, destination_vnum):
         return
     destination = WORLD.get(destination_vnum)
@@ -703,6 +711,9 @@ def cmd_flee(session, args: List[str]) -> None:
     player = session.player
     if session.combat_target is None and session.pvp_target is None:
         session.send("You aren't fighting anyone.")
+        return
+    if player.in_chunin_exam and chunin_exam.final_opponent(session):
+        session.send("&RThe final Chunin 1v1 has sealed the exits! Leaving would forfeit your exam; use 'leave confirm' to surrender.&x")
         return
     if player.summon_flee_locked:
         session.send("&RYou're bound tight and can't get away!&x")
@@ -2638,6 +2649,9 @@ def cmd_spawnpoint(session, args: List[str]) -> None:
 
 def cmd_recall(session, args: List[str]) -> None:
     player = session.player
+    if player.in_chunin_exam:
+        session.send("&RRecall is denied during the Chunin Exam. Leaving means failing and restarting; 'leave confirm' forfeits your attempt.&x")
+        return
     import whirlpool_fuinjutsu
     if whirlpool_fuinjutsu.blocks_teleport(player):
         session.send("A teleportation anchor prevents your recall.")
@@ -2678,6 +2692,9 @@ def cmd_anki(session, args: List[str]) -> None:
     1000), the same real room used elsewhere for the Hokage's own
     chamber."""
     player = session.player
+    if player.in_chunin_exam:
+        session.send("&RAnki cannot remove you from the Chunin Exam. Leaving means failure and a full restart. Use 'leave confirm' to forfeit.&x")
+        return
     import whirlpool_fuinjutsu
     if whirlpool_fuinjutsu.blocks_teleport(player):
         session.send("A teleportation anchor prevents Anki.")
@@ -4630,8 +4647,10 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
         return
 
     if player.in_chunin_exam:
-        session.send("You're already in the middle of the exam -- head deeper into the forest.")
-        player.room_vnum = chunin_exam.ENTRANCE_VNUM
+        if chunin_exam.final_opponent(session):
+            session.send("&RYour final Chunin 1v1 is already underway. Defeat your shadow!&x")
+            return
+        session.send("You're already inside the Forest of Death -- finish the trial without leaving.")
         return
 
     player.in_chunin_exam = True
@@ -4648,31 +4667,26 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
 
 
 def cmd_leave_exam(session, args: List[str]) -> None:
-    """Voluntarily exits the Forest of Death back to the player's
-    village, without finishing or forfeiting the exam -- per polish
-    pass, since previously the only ways out were completing it or
-    dying (and 'recall' only works for apartment owners, which most
-    players taking this exam won't have yet). Keeps scrolls and
-    in_chunin_exam intact, so 'exam' picks back up exactly where they
-    left off rather than re-rolling anything -- this is a breather,
-    not a forfeit."""
+    """No free exam exit: explicit confirmation forfeits every scroll."""
     player = session.player
     if not player.in_chunin_exam:
         session.send("You aren't currently taking the Chunin Exam.")
         return
+    if not args or args[0].lower() not in {"confirm", "forfeit"}:
+        session.send(
+            "&RLeaving the Forest of Death means FAILING the Chunin Exam. "
+            "You must repeat it from the beginning. To surrender, type 'leave confirm'.&x"
+        )
+        return
+    chunin_exam.reset_exam(player)
+    session.combat_target = None
     player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
-    session.send(
-        "&YYou slip out of the Forest of Death and head back to the village. "
-        "Your exam progress is safe -- 'exam' will take you right back in when you're ready.&x"
-    )
+    storage.save_player(player)
+    session.send("&RYou forfeit the Chunin Exam, surrender both scrolls and return to your village. Your next attempt starts fresh.&x")
 
 
 def cmd_submit_scrolls(session, args: List[str]) -> None:
-    """Completes the Chunin Exam, if the player is standing in the
-    tower with both scrolls. Consumes both scrolls and promotes
-    directly -- reuses the same headband-swap helper a Kage promotion
-    uses, so this is a real promotion in every respect, not a
-    separate, parallel one."""
+    """Heaven + Earth at the tower unlock a DIFFERENT-class mirror 1v1."""
     player = session.player
     if player.room_vnum != chunin_exam.TOWER_VNUM:
         session.send("You need to be at the tower to submit your scrolls.")
@@ -4680,23 +4694,17 @@ def cmd_submit_scrolls(session, args: List[str]) -> None:
     if not player.in_chunin_exam:
         session.send("You aren't currently taking the Chunin Exam.")
         return
-    if not chunin_exam.has_both_scrolls(player):
-        missing = chunin_exam.missing_scroll(player)
-        session.send(f"You still need {rarity_colored_name(missing)} to pass.")
+    if chunin_exam.final_opponent(session):
+        session.send("Your final 1v1 is already in progress. Defeat your opponent to pass.")
         return
-
+    if not chunin_exam.has_both_scrolls(player):
+        session.send(f"You still need {rarity_colored_name(chunin_exam.missing_scroll(player))} to pass.")
+        return
     for scroll in chunin_exam.SCROLLS:
         match = next(item for item in player.inventory if item.lower() == scroll.lower())
         player.inventory.remove(match)
-
-    player.village_rank = "chunin"
-    player.in_chunin_exam = False
-    data_headbands.apply_rank_headband(player, "chunin")
-    player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
-    kage.announce_rank_up(player.name, "chunin")
-    session.send(
-        "&GYou present both scrolls to the proctor. Well done -- you are promoted to Chunin!&x"
-    )
+    chunin_exam.begin_final_match(session)
+    storage.save_player(player)
 
 
 def cmd_missions(session, args: List[str]) -> None:
