@@ -3242,6 +3242,14 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     # Target-bound Amaterasu dies with its mob. This also prevents
     # lingering damage from restarting a Tailed Beast's sealing window.
     mob.mangekyo_amaterasu_caster = None
+    # Chunin mirror opponents are exam encounters, never farmable mobs.
+    if getattr(mob, "chunin_exam_owner", ""):
+        import chunin_exam
+        if chunin_exam.finish_final_match(session, mob):
+            return
+        remove_mob(mob)
+        session.combat_target = None
+        return
     if is_shadow_clone(mob):
         # A defeated shadow clone bypasses XP/ryo/bounty/corpse/mob-
         # program logic entirely -- genuinely zero reward through
@@ -3485,6 +3493,12 @@ def handle_player_defeat(session) -> None:
             )
             dismiss_summon(player)
             return
+
+    # Losing the final exam resets scrolls and the opponent before hospital.
+    if player.in_chunin_exam:
+        import chunin_exam
+        chunin_exam.reset_exam(player)
+        session.send("&RYou have failed the Chunin Exam. Your Heaven/Earth scrolls are forfeited. You must begin again.&x")
 
     # The attached black flames burn only while the target is alive.
     # On an actual defeat they go out before hospital recovery; the
