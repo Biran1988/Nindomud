@@ -258,6 +258,9 @@ async def pulse_loop() -> None:
                 if session.state == State.PLAYING and session.pvp_target is not None:
                     combat.resolve_pvp_pulse(session)
                     session.send_prompt()
+                if session.state == State.PLAYING:
+                    combat.tick_summon_upkeep(session)
+                    combat.tick_ordered_summon(session)
 
         for session in list(ACTIVE_SESSIONS):
             if session.state == State.PLAYING and session.chakra_charge is not None:
