@@ -257,6 +257,24 @@ PAGES += [
     },
 ]
 
+
+PAGES.extend([
+    {
+        "primary_keyword": "order", "keywords": ["order", "order summon", "summon orders"],
+        "title": "Summon Orders",
+        "body": "Syntax: order summon <follow me|stay|guard|sleep|wake|assist|stop|status|attack enemy>\n\nDescription: Direct your own currently active summon. Follow travels with the owner; stay, guard, sleep and stop hold position or cease action. Attack orders a legal hostile mob; status reports its current order. Your summon must be in the same room to attack. Only one summoned companion may be active at once.\n\nDate: 2026-10-30",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "bijuu", "keywords": ["bijuu", "bijuu chakra", "jinchuriki chakra", "bijuu mind"],
+        "title": "Tailed Beast Chakra and Mindscape",
+        "body": "Syntax: bijuu [status|mind|commune|train|draw <amount>|leak|cloak|tails <1-9>|link|avatar|release|share <player> <amount>]\n\nDescription: A Jinchuriki draws from an independent sealed chakra reserve. BIJUU MIND visits the inner seal for beast-specific dialogue. COMMUNE increases bond every three minutes; TRAIN increases control every two minutes and costs 40 sealed chakra. DRAW transfers to ordinary Chakra. Forms progress from unstable leakage through controlled cloaks and cooperative chakra modes at higher levels; every active form pays sealed-chakra upkeep, so exhaustion releases the transformation. Cooperative hosts can share chakra with grouped nearby players. Use PERFORM TAILED BEAST BOMB for the existing offensive technique.\n\nDate: 2026-10-30",
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+])
+
+
+
 _SAGE_FAMILIES = {
     "toad": ("Mount Myoboku", "Adds 5 accuracy beyond Sage Mode's shared bonus, for +15 total."),
     "snake": ("Ryuchi Cave", "Adds 10% damage to jutsu beyond Sage Mode's shared 20% damage bonus."),
