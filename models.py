@@ -484,6 +484,15 @@ class Player:
     # scales by the specific beast's own tail count (25% at 1-tail up
     # to 55% at 9-tails), with no downside at all while toggled on.
     tailed_beast_mode_active: bool = False
+    # Separate sealed chakra, cooperation and cloak progression (level 250).
+    # These are ordinary optional player-save fields: old saves load at zero.
+    bijuu_chakra_reserve: int = 0
+    bijuu_bond: int = 0
+    bijuu_control: int = 0
+    bijuu_form: int = 0
+    bijuu_tails: int = 0
+    bijuu_last_commune: float = 0.0
+    bijuu_last_train: float = 0.0
     # Manda's own "bind" mechanic (Section 118) -- True for the rest
     # of a fight once its poison/bind effect has applied at least
     # once; checked directly by cmd_flee to hard-refuse a flee
