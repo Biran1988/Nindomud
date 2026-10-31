@@ -240,7 +240,7 @@ def summon_command(session, args):
         sign_command(session, args[1:])
         return
     if not args or args[0].lower() not in data_summons.CONTRACTS:
-        session.send("Usage: summon <toad|snake|slug|ninken|monkey> | summon sign [family] | summon dismiss")
+        session.send("Usage: summon <toad|snake|slug|ninken|monkey|salamander> [stomach <enemy>] | summon sign [family] | summon dismiss")
         return
     contract = args[0].lower()
     chosen = chosen_contract(player)
@@ -252,13 +252,75 @@ def summon_command(session, args):
         session.send("You cannot change summons while fighting.")
         return
     tier = data_summons.best_available_tier(contract, player.level)
+    stomach_target = None
+    if contract == "toad" and len(args) > 1 and args[1].lower() == "stomach":
+        if player.level < 90:
+            session.send("You need level 90 to manifest the Toad Stomach barrier.")
+            return
+        tier = data_summons.tier_by_key("toad_4")
+        if len(args) > 2:
+            stomach_target = combat.find_mob(player.room_vnum, " ".join(args[2:]))
+            if stomach_target is None or stomach_target.health <= 0 or any((combat.is_shopkeeper(stomach_target), combat.is_gambler(stomach_target), combat.is_teacher(stomach_target), combat.is_immortal_mob(stomach_target))):
+                session.send("Choose a hostile mob in this room for the Toad Stomach.")
+                return
     if tier is None or player.chakra < SUMMON_COST:
         session.send(f"You need level 20 and {SUMMON_COST} chakra to summon this family.")
         return
     player.chakra -= SUMMON_COST
     combat.dismiss_summon(player)
     summon = combat.spawn_summon(player, tier)
-    session.send(f"You summon {summon.name} to fight beside you.")
+    if summon is None:
+        session.send("The summoning seal fails to form.")
+        return
+    if stomach_target is not None:
+        summon.stomach_target_instance_id = stomach_target.instance_id
+    session.send(f"You summon {summon.name} to fight beside you." +
+                 (" A chakra-fed barrier forms around your target!" if stomach_target is not None else ""))
+
+
+def order_command(session, args):
+    """Direct one summoned partner; the command never affects other mobs."""
+    if not args or args[0].lower() != "summon":
+        session.send("Usage: order summon <follow me|stay|guard|sleep|wake|attack enemy|assist|stop|status>")
+        return
+    summon = combat.active_summon(session.player)
+    if summon is None:
+        session.send("You have no active summon to command.")
+        return
+    words = [a.lower() for a in args[1:]]
+    if not words or words == ["status"]:
+        session.send(f"{summon.name}: {summon.health}/{summon.max_health} HP, "
+                     f"order '{summon.summon_order}', room {summon.room_vnum}.")
+        return
+    if words[0] == "attack":
+        if summon.room_vnum != session.player.room_vnum:
+            session.send("Your summon must be in this room to attack.")
+            return
+        target = combat.find_mob(session.player.room_vnum, " ".join(args[2:]))
+        if (not target or target is summon or target.health <= 0
+                or combat.is_shopkeeper(target) or combat.is_gambler(target)
+                or combat.is_teacher(target) or combat.is_immortal_mob(target)):
+            session.send("Order your summon to attack a valid hostile mob in this room.")
+            return
+        summon.summon_order = "attack"
+        summon.summon_attack_target_id = target.instance_id
+        session.send(f"You order {summon.name} to attack {target.name}!")
+        return
+    if words[0] == "follow":
+        summon.summon_order = "follow"
+        summon.summon_attack_target_id = 0
+        session.send(f"{summon.name} will follow you between rooms.")
+        return
+    if words[0] in {"stay", "guard", "sleep", "assist", "stop"}:
+        summon.summon_order = words[0]
+        summon.summon_attack_target_id = 0
+        session.send(f"{summon.name} obeys your {words[0]} order.")
+        return
+    if words[0] == "wake":
+        summon.summon_order = "follow"
+        session.send(f"{summon.name} wakes and follows you.")
+        return
+    session.send("Usage: order summon <follow me|stay|guard|sleep|wake|attack enemy|assist|stop|status>")
 
 
 def sign_command(session, args=None):
