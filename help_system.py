@@ -5185,3 +5185,17 @@ _GATHERING_TIER_HELP = {
 for _entry in DEFAULT_HELP_ENTRIES:
     if _entry["primary_keyword"] in _GATHERING_TIER_HELP:
         _entry["body"] = _GATHERING_TIER_HELP[_entry["primary_keyword"]]
+
+# Reconcile the legacy 'help food shop' link used by the SELL help topic.
+# Its absence was caught by the full end-to-end help-reference audit.
+if not any(e['primary_keyword'].casefold() == 'food shop' for e in DEFAULT_HELP_ENTRIES):
+    DEFAULT_HELP_ENTRIES.append({
+        'primary_keyword': 'food shop',
+        'keywords': ['food shop', 'food shops', 'specialty food shop'],
+        'title': 'Food Shops',
+        'body': ('Food specialty shops buy raw fish, cooked fish and crops for '
+                 'their full specialty prices. General shops pay the usual '
+                 'reduced resale price. Use LIST at the shopkeeper to see '
+                 'stock, BUY <item> to purchase, and SELL <item> to sell.'),
+        'created_by': 'System', 'updated_by': 'System', 'updated_at': 0.0,
+    })
