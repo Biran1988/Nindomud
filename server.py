@@ -236,6 +236,8 @@ async def pulse_loop() -> None:
                 import element_choice
                 element_choice.begin(session)
                 combat.tick_effects_pulse(session)
+                import bijuu_chakra
+                bijuu_chakra.tick(session)
                 # Shadow Clone upkeep, per direct follow-up request
                 # ("Clones can be summoned before combat and persist
                 # until unsigned or chakra runs out") -- same
