@@ -156,7 +156,7 @@ def command(session, args):
     if action == "train":
         families = elder_families(player)
         contract = args[1].lower() if len(args) > 1 else (next(iter(families)) if len(families) == 1 else None)
-        if contract not in families and families:
+        if contract not in families:
             session.send("Choose an elder here: sage train <" + "|".join(sorted(families)) + ">")
             return
         if contract is None:
@@ -248,21 +248,28 @@ def summon_command(session, args):
         session.send(f"Your {chosen.title()} contract is permanent; you cannot summon another family." if chosen
                      else "You have not signed that summoning contract.")
         return
-    if session.combat_target or session.pvp_target:
-        session.send("You cannot change summons while fighting.")
-        return
     tier = data_summons.best_available_tier(contract, player.level)
+    if (session.combat_target or session.pvp_target) and (
+            not tier or tier.get("mechanic") != "trap"):
+        session.send("You cannot change living summons while fighting.")
+        return
     stomach_target = None
     if contract == "toad" and len(args) > 1 and args[1].lower() == "stomach":
         if player.level < 90:
             session.send("You need level 90 to manifest the Toad Stomach barrier.")
             return
         tier = data_summons.tier_by_key("toad_4")
-        if len(args) > 2:
-            stomach_target = combat.find_mob(player.room_vnum, " ".join(args[2:]))
-            if stomach_target is None or stomach_target.health <= 0 or any((combat.is_shopkeeper(stomach_target), combat.is_gambler(stomach_target), combat.is_teacher(stomach_target), combat.is_immortal_mob(stomach_target))):
-                session.send("Choose a hostile mob in this room for the Toad Stomach.")
-                return
+    if tier and tier.get("mechanic") == "trap":
+        target_words = args[2:] if len(args) > 1 and args[1].lower() == "stomach" else args[1:]
+        stomach_target = (combat.find_mob(player.room_vnum, " ".join(target_words))
+                          if target_words else session.combat_target)
+        if (stomach_target is None or stomach_target.health <= 0 or
+                stomach_target.room_vnum != player.room_vnum or
+                any((combat.is_shopkeeper(stomach_target), combat.is_gambler(stomach_target),
+                     combat.is_teacher(stomach_target), combat.is_immortal_mob(stomach_target)))):
+            session.send("Choose an active hostile enemy here: summon toad stomach <enemy> (level 90+) "
+                         "or summon toad <enemy> (level 250 Great Stomach).")
+            return
     if tier is None or player.chakra < SUMMON_COST:
         session.send(f"You need level 20 and {SUMMON_COST} chakra to summon this family.")
         return
@@ -274,23 +281,36 @@ def summon_command(session, args):
         return
     if stomach_target is not None:
         summon.stomach_target_instance_id = stomach_target.instance_id
-    session.send(f"You summon {summon.name} to fight beside you." +
-                 (" A chakra-fed barrier forms around your target!" if stomach_target is not None else ""))
+    if getattr(summon, "is_toad_stomach_barrier", False):
+        session.send(f"&RYou manifest {summon.name} as a living barrier around {stomach_target.name}! "
+                     "Every exit is sealed and the stomach begins devouring its prisoner. "
+                     "Chakra upkeep maintains the seal; summon dismiss releases it.&x")
+    else:
+        session.send(f"You summon {summon.name} to fight beside you.")
 
 
 def order_command(session, args):
     """Direct one summoned partner; the command never affects other mobs."""
     if not args or args[0].lower() != "summon":
-        session.send("Usage: order summon <follow me|stay|guard|sleep|wake|attack enemy|assist|stop|status>")
+        session.send("Usage: order summon <follow me|stay|guard|sleep|wake|rest|sit|stand|attack enemy|assist|stop|status|help>")
         return
     summon = combat.active_summon(session.player)
     if summon is None:
         session.send("You have no active summon to command.")
         return
     words = [a.lower() for a in args[1:]]
+    if words == ["help"]:
+        session.send("Orders: follow me, stay, guard, sleep, wake, rest, sit, stand, "
+                     "attack <enemy>, assist, stop, status. A Toad Stomach is a barrier, "
+                     "not a movable animal; use summon dismiss to release it.")
+        return
     if not words or words == ["status"]:
         session.send(f"{summon.name}: {summon.health}/{summon.max_health} HP, "
                      f"order '{summon.summon_order}', room {summon.room_vnum}.")
+        return
+    if getattr(summon, "is_toad_stomach_barrier", False):
+        session.send("The Toad Stomach is a fixed chakra barrier, not an animal that follows orders. "
+                     "Use 'summon dismiss' to release it.")
         return
     if words[0] == "attack":
         if summon.room_vnum != session.player.room_vnum:
@@ -311,8 +331,8 @@ def order_command(session, args):
         summon.summon_attack_target_id = 0
         session.send(f"{summon.name} will follow you between rooms.")
         return
-    if words[0] in {"stay", "guard", "sleep", "assist", "stop"}:
-        summon.summon_order = words[0]
+    if words[0] in {"stay", "guard", "sleep", "assist", "stop", "rest", "sit", "stand"}:
+        summon.summon_order = {"rest": "sleep", "sit": "sleep", "stand": "follow"}.get(words[0], words[0])
         summon.summon_attack_target_id = 0
         session.send(f"{summon.name} obeys your {words[0]} order.")
         return
@@ -320,7 +340,7 @@ def order_command(session, args):
         summon.summon_order = "follow"
         session.send(f"{summon.name} wakes and follows you.")
         return
-    session.send("Usage: order summon <follow me|stay|guard|sleep|wake|attack enemy|assist|stop|status>")
+    session.send("Usage: order summon <follow me|stay|guard|sleep|wake|rest|sit|stand|attack enemy|assist|stop|status|help>")
 
 
 def sign_command(session, args=None):
@@ -334,7 +354,7 @@ def sign_command(session, args=None):
         return
     families = elder_families(player)
     contract = args[0].lower() if args else (next(iter(families)) if len(families) == 1 else None)
-    if contract not in families and families:
+    if contract not in families:
         session.send("Choose an elder here: summon sign <" + "|".join(sorted(families)) + ">")
         return
     if contract is None:

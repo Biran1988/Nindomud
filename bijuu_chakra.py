@@ -57,7 +57,7 @@ def _status(session):
         f"Mastery: {p.jinchuriki_mastery}%\n"
         f"Form: {FORMS[max(0, min(5, p.bijuu_form))]}"
         + (f" ({p.bijuu_tails} tails)" if p.bijuu_form == 3 else "") +
-        "\nBIJUU MIND, COMMUNE, TRAIN, DRAW <amount>, LEAK, CLOAK, "
+        "\nBIJUU MIND, COMMUNE, TRAIN, DRAW <amount>, HEAL <hp>, LEAK, CLOAK, "
         "TAILS <n>, LINK, AVATAR, RELEASE, SHARE <player> <amount>."
     )
 
@@ -165,6 +165,33 @@ def command(session, args):
             p.stamina = max(0, p.stamina - max(1, amount // 10))
             session.send("&RThe borrowed chakra strains your body!&x")
         session.send(f"&BYou draw {amount} chakra from {b['display_name']}'s reserve.&x")
+        return
+    if action == "heal":
+        if p.bijuu_control < 35 or p.jinchuriki_mastery < 15:
+            session.send("Healing with tailed-beast chakra requires 35% control and 15% mastery.")
+            return
+        if p.health <= 0:
+            session.send("You cannot heal while defeated.")
+            return
+        now = time.time()
+        ready_at = p.cooldowns.get("bijuu_heal", 0)
+        if now < ready_at:
+            session.send(f"Bijuu healing is recovering for {int(ready_at - now) + 1} seconds.")
+            return
+        try:
+            requested = int(args[1])
+        except (IndexError, ValueError):
+            session.send("Usage: bijuu heal <hit points> (2 sealed chakra per HP; 30s cooldown).")
+            return
+        amount = min(max(0, requested), max(1, p.maximum_health // 4),
+                     p.maximum_health - p.health, p.bijuu_chakra_reserve // 2)
+        if amount <= 0:
+            session.send("You need missing health and at least 2 sealed chakra to heal.")
+            return
+        p.bijuu_chakra_reserve -= amount * 2
+        p.health += amount
+        p.cooldowns["bijuu_heal"] = now + 30
+        session.send(f"&GYour tailed beast lends restorative chakra: +{amount} health for {amount * 2} sealed chakra.&x")
         return
     if action in {"leak", "cloak", "link", "cooperate", "avatar"}:
         _activate(session, {"leak": 1, "cloak": 2, "link": 4,

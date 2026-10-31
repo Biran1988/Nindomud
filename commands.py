@@ -4707,9 +4707,9 @@ def cmd_submit_scrolls(session, args: List[str]) -> None:
     if not chunin_exam.has_both_scrolls(player):
         session.send(f"You still need {rarity_colored_name(chunin_exam.missing_scroll(player))} to pass.")
         return
-    for scroll in chunin_exam.SCROLLS:
-        match = next(item for item in player.inventory if item.lower() == scroll.lower())
-        player.inventory.remove(match)
+    if not chunin_exam.consume_both_scrolls(player):
+        session.send("You must carry both Heaven and Earth Scrolls, including those in backpacks.")
+        return
     chunin_exam.begin_final_match(session)
     storage.save_player(player)
 
@@ -9493,6 +9493,7 @@ COMMANDS = {
     "sage": sage_mode.command,
     "summon": sage_mode.summon_command,
     "order": sage_mode.order_command,
+    "teach": __import__("player_teaching").command,
     "sealconsent": __import__("whirlpool_fuinjutsu").contract_consent,
     "restore": cmd_restore, "respawn": cmd_respawn,
     "vperk": cmd_vperk, "villageperk": cmd_vperk,

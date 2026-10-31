@@ -5087,6 +5087,50 @@ for _hyuga_key, _hyuga_spec in _hyuga_help.REGISTRY.items():
     })
 
 
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "teach", "keywords": ["teach", "player teaching", "player lesson"],
+    "title": "Teach a Fellow Ninja",
+    "body": "Syntax: teach <player> <skill or jutsu>\n\n"
+            "Two players of the SAME primary combat class must be together and out of combat. "
+            "The teacher must know the skill at 100% or better. The student must have "
+            "already unlocked that skill and know it at 0-5%. The lesson grants 45% "
+            "proficiency immediately, uses NO practice points, and satisfies the "
+            "normal first-teacher-practice requirement. Only unlocked, level-eligible "
+            "techniques can be taught. You cannot teach another class's techniques.",
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+# Keep system-owned summon help in sync with the implemented six contracts.
+for _entry in DEFAULT_HELP_ENTRIES:
+    if _entry["primary_keyword"] == "order":
+        _entry["body"] = (
+            "Syntax: order summon <follow me|stay|guard|sleep|wake|rest|sit|stand|attack enemy|assist|stop|status|help>\n\n"
+            "Orders apply to your living summon. A Toad Stomach is a barrier, not a movable animal; "
+            "use summon dismiss to collapse it."
+        )
+    if _entry["primary_keyword"] == "bijuu":
+        _entry["body"] = (
+            "Syntax: bijuu [status|mind|commune|train|draw <amount>|heal <hp>|leak|cloak|tails <n>|link|avatar|release|share <player> <amount>]\n\n"
+            "A sealed Beast has an independent replenishing chakra reserve. Bond, control and mastery "
+            "unlock chakra cloaks, tails, cooperation, chakra sharing and full avatar form. "
+            "Bijuu Heal (35% control, 15% mastery) converts 2 sealed chakra into 1 HP "
+            "up to one-quarter max HP per use, with a 30-second cooldown. "
+            "Forms require continual upkeep. Use PERFORM TAILED BEAST BOMB to attack."
+        )
+    if _entry["primary_keyword"] == "summon":
+        _entry["body"] = (
+            "Syntax: summon sign <family> (beside that family\'s elder); summon <family> [target]; "
+            "summon toad stomach <enemy>; summon dismiss.\n\n"
+            "Six contracts: Toad, Snake, Slug, Ninken, Monkey, Salamander. A player may sign "
+            "exactly one permanent family at a living Summon Elder, from level 20 onward. "
+            "Each family progresses toward level 250; the Seven Ninja Hounds are the highest Ninken tier. "
+            "Only one summon is active. Summons cost 40 chakra and support ORDER SUMMON. "
+            "The level-90 Toad Stomach (and level-250 Great Toad Stomach) is a CHAKRA-MAINTAINED "
+            "living barrier, not an attackable NPC; cast it on a hostile mob. The barrier seals its "
+            "target\'s exits and devours it each combat pulse until its owner dismisses it, the "
+            "target dies or runs away, or chakra upkeep fails. Use summon dismiss to release it."
+        )
+
 # Attach the live level, type and base damage after ALL techniques are loaded.
 import help_annotations as _help_annotations
 _TECHNIQUE_METADATA_HELP_TOPICS = _help_annotations.enrich(DEFAULT_HELP_ENTRIES, data_jutsu.JUTSU)

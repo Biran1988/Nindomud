@@ -559,7 +559,7 @@ def process_wander() -> None:
             _schedule_next_wander(mob, now, retry=True)
             continue
 
-        if _mob_is_being_fought(mob):
+        if _mob_is_being_fought(mob) or toad_stomach_target(mob):
             _schedule_next_wander(mob, now)
             continue
         room = world.WORLD.get(mob.room_vnum)
@@ -1642,6 +1642,26 @@ def stat_for_summon_tier(summoner_level: int, tier: dict, per_level: float) -> i
     return max(1, round(summoner_level * per_level * tier["base_modifier"]))
 
 
+# Runtime manifestations of the Toad Stomach are barriers, not mobs.
+# Keep separate from MOBS_BY_ROOM: they do not show up as creatures, cannot
+# be killed or ordered as fighters, and cease immediately without chakra.
+_TOAD_STOMACH_BARRIERS = {}
+
+
+def toad_stomach_target(mob):
+    """Whether a living mob is currently trapped inside an active stomach."""
+    return next((barrier for barrier in _TOAD_STOMACH_BARRIERS.values()
+                 if barrier.room_vnum == mob.room_vnum
+                 and barrier.stomach_target_instance_id == mob.instance_id), None)
+
+
+def _clear_toad_stomach_effects(barrier):
+    for mob in mobs_in_room(barrier.room_vnum):
+        if mob.instance_id == barrier.stomach_target_instance_id:
+            mob.summon_trap_applied = False
+            mob.summon_trap_to_hit_penalty = 0
+
+
 def dismiss_summon(player) -> int:
     """Removes this player's own currently-active summon (there is
     ever only ONE, per direct confirmation: "A real, single summon at
@@ -1651,6 +1671,10 @@ def dismiss_summon(player) -> int:
     with dismiss_shadow_clones' own return shape, even though only
     one can ever exist). Safe to call with no active summon at all."""
     removed = 0
+    barrier = _TOAD_STOMACH_BARRIERS.pop(player.name, None)
+    if barrier is not None:
+        _clear_toad_stomach_effects(barrier)
+        removed += 1
     for room_vnum, room_mobs in list(MOBS_BY_ROOM.items()):
         still_here = []
         removed_here = 0
@@ -1669,7 +1693,8 @@ def follow_owner_summon(player, from_room: int, to_room: int) -> None:
     """Summons ordered to follow move with their owner, not by teleporting
     to unrelated locations or ignoring a stay/guard/sleep command."""
     summon = active_summon(player)
-    if (summon is None or summon.room_vnum != from_room
+    if (summon is None or getattr(summon, "is_toad_stomach_barrier", False)
+            or summon.room_vnum != from_room
             or getattr(summon, "summon_order", "follow") != "follow"):
         return
     room_mobs = MOBS_BY_ROOM.get(from_room, [])
@@ -1714,6 +1739,23 @@ def tick_summon_upkeep(session) -> None:
         session.send("&RYour Toad Stomach barrier collapses as its chakra upkeep runs out!&x")
         return
     player.chakra -= upkeep
+    if summon.stomach_target_instance_id:
+        target = next((mob for mob in mobs_in_room(summon.room_vnum)
+                       if mob.instance_id == summon.stomach_target_instance_id and mob.health > 0), None)
+        if target is None:
+            dismiss_summon(player)
+            session.send("&YThe Toad Stomach releases its vanished target and folds away.&x")
+            return
+        if not target.summon_trap_applied:
+            target.summon_trap_applied = True
+            target.summon_trap_to_hit_penalty = TOAD_STOMACH_MOB_TO_HIT_PENALTY
+            session.send(f"&RThe Toad Stomach seals every exit around {target.name}!&x")
+        damage = max(2, target.max_health // 25)
+        target.health -= damage
+        session.send(f"&RThe living stomach devours {target.name} for {damage} damage!&x")
+        if target.health <= 0:
+            handle_mob_defeat(session, target)
+            dismiss_summon(player)
 
 
 def reset_summon_round_state(player) -> None:
@@ -1736,6 +1778,8 @@ def active_summon(player):
     """This player's own currently-active summon Mob, or None. There
     is ever only one (see dismiss_summon's own docstring), so this
     returns a single Mob (or None), not a list."""
+    if player.name in _TOAD_STOMACH_BARRIERS:
+        return _TOAD_STOMACH_BARRIERS[player.name]
     for room_mobs in MOBS_BY_ROOM.values():
         for mob in room_mobs:
             if mob.summon_owner == player.name:
@@ -1754,8 +1798,18 @@ def spawn_summon(player, tier: dict) -> "Mob":
     summon time (not tied to the summoner's own level changing
     afterward, matching the same "set once" precedent shadow clones
     already established)."""
-    vnum = _register_summon_template(tier)
     hp = stat_for_summon_tier(player.level, tier, SUMMON_HP_PER_LEVEL)
+    if tier.get("mechanic") == "trap":
+        from types import SimpleNamespace
+        barrier = SimpleNamespace(name=tier["display_name"], health=hp, max_health=hp,
+                                  room_vnum=player.room_vnum, summon_owner=player.name,
+                                  summon_tier_key=tier["key"], summon_order="guard",
+                                  stomach_target_instance_id=0,
+                                  summon_attack_target_id=0,
+                                  is_toad_stomach_barrier=True)
+        _TOAD_STOMACH_BARRIERS[player.name] = barrier
+        return barrier
+    vnum = _register_summon_template(tier)
     mob = spawn_mob(vnum, player.room_vnum)
     if mob is None:
         return None
@@ -2426,9 +2480,8 @@ def _resolve_summon_round(session, player, mob) -> None:
                 mob.summon_trap_applied = True
                 mob.summon_trap_to_hit_penalty = TOAD_STOMACH_MOB_TO_HIT_PENALTY
                 session.send(f"&R{summon.name} seals every exit around {mob.name}; the stomach begins to devour its victim!&x")
-            digestion = max(2, mob.max_health // 25)
-            mob.health -= digestion
-            session.send(f"&RThe Toad Stomach devours {mob.name} for {digestion} damage!&x")
+            # Digestion is applied once by tick_summon_upkeep even when
+            # the summoner is not in combat; never double-charge this round.
     elif mechanic == "bind":
         player.summon_flee_locked = True
         if "bleeding" not in mob.active_status_effects:

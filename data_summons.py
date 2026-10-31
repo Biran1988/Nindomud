@@ -31,9 +31,9 @@ Confirmed mechanics, locked in directly:
 - Every contract's own TOP tier has a genuinely unique mechanic, not
   just bigger numbers than the tier below it -- confirmed one by one,
   each a real, different battle role:
-    Toad:   a battlefield TRAP (Summoning: Crushing Toad Stomach, real
-            canon) -- restrains the target for several rounds, no
-            ongoing damage of its own at all.
+    Toad:   a chakra-maintained living room BARRIER, not a visible
+            summon Mob. Seals the target's exits and devours them each
+            combat pulse until dismissed or the caster runs out of chakra.
     Snake:  a BIND that hard-counters the target's own 'flee' attempts
             for its duration, plus real poison damage-over-time.
     Slug:   a genuine, one-time SAFETY NET -- if the summoner would

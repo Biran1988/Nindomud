@@ -58,11 +58,37 @@ def qualifies_for_exam(player) -> bool:
     )
 
 
+def scroll_containers(player):
+    """The carried inventory and every backpack's separate saved contents."""
+    yield player.inventory
+    for contents in getattr(player, "backpack_contents", {}).values():
+        if isinstance(contents, list):
+            yield contents
+
+
+def remove_one_scroll(player, scroll):
+    """Consume a scroll from loose inventory OR a backpack, exactly once."""
+    for container in scroll_containers(player):
+        for item in list(container):
+            if isinstance(item, str) and item.casefold() == scroll.casefold():
+                container.remove(item)
+                return True
+    return False
+
+
+def consume_both_scrolls(player):
+    """Requires both Heaven and Earth; does not consume on failure."""
+    if not has_both_scrolls(player):
+        return False
+    return all(remove_one_scroll(player, scroll) for scroll in SCROLLS)
+
+
 def missing_scroll(player) -> Optional[str]:
     """Which scroll type the player still needs, or None if they
     already have both (or the given item name is neither scroll)."""
     for scroll in SCROLLS:
-        if not any(item.lower() == scroll.lower() for item in player.inventory):
+        if not any(isinstance(item, str) and item.casefold() == scroll.casefold()
+                   for container in scroll_containers(player) for item in container):
             return scroll
     return None
 
@@ -87,12 +113,10 @@ def steal_scroll_on_pvp_defeat(winner, loser) -> Optional[str]:
     needed = missing_scroll(winner)
     if needed is None:
         return None  # winner already has both, nothing to gain
-    match = next((item for item in loser.inventory if item.lower() == needed.lower()), None)
-    if match is None:
+    if not remove_one_scroll(loser, needed):
         return None
-    loser.inventory.remove(match)
-    winner.inventory.append(match)
-    return match
+    winner.inventory.append(needed)
+    return needed
 
 # Final stage: completing the scroll trial starts a real 1v1 against a
 # stronger copy with a DIFFERENT ninja class. Passing scrolls alone never
@@ -147,9 +171,10 @@ def reset_exam(player):
     """Forfeiture/death: remove BOTH scroll types and only owned exam mob."""
     import combat
     player.in_chunin_exam = False
-    player.inventory = [item for item in player.inventory
+    for container in scroll_containers(player):
+        container[:] = [item for item in container
                         if not (isinstance(item, str) and
-                                item.lower() in {scroll.lower() for scroll in SCROLLS})]
+                                item.casefold() in {scroll.casefold() for scroll in SCROLLS})]
     for mob in list(combat.mobs_in_room(TOWER_VNUM)):
         if getattr(mob, "chunin_exam_owner", "") == player.name:
             combat.remove_mob(mob)
