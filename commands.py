@@ -9510,6 +9510,7 @@ COMMANDS = {
     "byakugan": hyuga.cmd_byakugan, "hyuga": hyuga.cmd_hyuga,
     "jinchuriki": cmd_jinchuriki, "mastery": cmd_jinchuriki,
     "beastmode": cmd_tailed_beast_mode,
+    "bijuu": __import__("bijuu_chakra").command,
     "izanagi": cmd_izanagi,
     "guess": cmd_guess,
     "stab": cmd_stab,
