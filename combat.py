@@ -220,6 +220,9 @@ class Mob:
     # was actually summoned.
     summon_owner: Optional[str] = None
     summon_tier_key: Optional[str] = None
+    summon_order: str = "follow"
+    summon_attack_target_id: int = 0
+    stomach_target_instance_id: int = 0
     # The Toad Stomach's own trap mechanic (Section 118, "trap"
     # tier mechanic) -- once applied to a mob, a real, meaningfully
     # large to-hit penalty against the player for the rest of that
@@ -1662,6 +1665,57 @@ def dismiss_summon(player) -> int:
     return removed
 
 
+def follow_owner_summon(player, from_room: int, to_room: int) -> None:
+    """Summons ordered to follow move with their owner, not by teleporting
+    to unrelated locations or ignoring a stay/guard/sleep command."""
+    summon = active_summon(player)
+    if (summon is None or summon.room_vnum != from_room
+            or getattr(summon, "summon_order", "follow") != "follow"):
+        return
+    room_mobs = MOBS_BY_ROOM.get(from_room, [])
+    if summon in room_mobs:
+        room_mobs.remove(summon)
+    summon.room_vnum = to_room
+    MOBS_BY_ROOM.setdefault(to_room, []).append(summon)
+
+
+def tick_ordered_summon(session) -> None:
+    """An ATTACK order works even while its summoner is not attacking."""
+    player = session.player
+    summon = active_summon(player)
+    if (not summon or summon.health <= 0 or summon.room_vnum != player.room_vnum
+            or summon.summon_order != "attack" or session.combat_target):
+        return
+    target = next((m for m in mobs_in_room(summon.room_vnum)
+                   if m.instance_id == summon.summon_attack_target_id
+                   and m.health > 0), None)
+    if target is None:
+        summon.summon_order = "guard"
+        summon.summon_attack_target_id = 0
+        return
+    _summon_attack_mob_once(session, player, summon, target)
+    if target.health <= 0:
+        handle_mob_defeat(session, target)
+
+
+def tick_summon_upkeep(session) -> None:
+    """Toad stomach barriers persist for paid chakra, never a timer."""
+    player = session.player
+    summon = active_summon(player)
+    if not summon:
+        return
+    import data_summons
+    tier = data_summons.tier_by_key(summon.summon_tier_key)
+    if not tier or tier.get("mechanic") != "trap":
+        return
+    upkeep = max(6, player.level // 12)
+    if player.chakra < upkeep:
+        dismiss_summon(player)
+        session.send("&RYour Toad Stomach barrier collapses as its chakra upkeep runs out!&x")
+        return
+    player.chakra -= upkeep
+
+
 def reset_summon_round_state(player) -> None:
     """Clears the per-fight summon flags (Section 118) -- Manda's own
     flee-lock and Enma's own weapon buff -- the instant a real PvE
@@ -2345,7 +2399,8 @@ def _resolve_summon_round(session, player, mob) -> None:
     attempt), so they're checked directly at THOSE call sites
     instead, not on this per-round PvE tick."""
     summon = active_summon(player)
-    if summon is None or summon.health <= 0:
+    if (summon is None or summon.health <= 0 or summon.room_vnum != player.room_vnum
+            or summon.summon_order in {"sleep", "stop"}):
         return
     import data_summons
     tier = data_summons.tier_by_key(summon.summon_tier_key)
@@ -2364,10 +2419,16 @@ def _resolve_summon_round(session, player, mob) -> None:
             player.health += healed
             session.send(f"{summon.name} tends to your wounds, healing you for {healed} HP.")
     elif mechanic == "trap":
-        if not getattr(mob, "summon_trap_applied", False):
-            mob.summon_trap_applied = True
-            mob.summon_trap_to_hit_penalty = TOAD_STOMACH_MOB_TO_HIT_PENALTY
-            session.send(f"&Y{summon.name} closes around {mob.name}, trapping it in a crushing stomach!&x")
+        if not summon.stomach_target_instance_id:
+            summon.stomach_target_instance_id = mob.instance_id
+        if summon.stomach_target_instance_id == mob.instance_id:
+            if not getattr(mob, "summon_trap_applied", False):
+                mob.summon_trap_applied = True
+                mob.summon_trap_to_hit_penalty = TOAD_STOMACH_MOB_TO_HIT_PENALTY
+                session.send(f"&R{summon.name} seals every exit around {mob.name}; the stomach begins to devour its victim!&x")
+            digestion = max(2, mob.max_health // 25)
+            mob.health -= digestion
+            session.send(f"&RThe Toad Stomach devours {mob.name} for {digestion} damage!&x")
     elif mechanic == "bind":
         player.summon_flee_locked = True
         if "bleeding" not in mob.active_status_effects:
@@ -2375,6 +2436,12 @@ def _resolve_summon_round(session, player, mob) -> None:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
         session.send(f"{summon.name} coils tight, poison seeping into {mob.name} for {damage_messages.describe_damage(bleed)} damage!")
+    elif mechanic == "poison_cloud":
+        poison = max(3, player.level // 6 + int(tier["base_modifier"] * 5))
+        mob.health -= poison
+        if "bleeding" not in mob.active_status_effects:
+            status_effects.apply_effect(mob.active_status_effects, "bleeding", source="salamander_venom")
+        session.send(f"&g{summon.name} surrounds {mob.name} with toxic mist, inflicting {poison} poison damage!&x")
     elif mechanic == "weapon_buff":
         player.summon_weapon_buff_active = True
 
