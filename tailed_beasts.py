@@ -371,12 +371,15 @@ def mode_bonus_percent(player) -> int:
     see commands.cmd_tailed_beast_mode -- but this checks the live
     toggle state directly, not mastery again, since the toggle itself
     is the real, single source of truth once already on)."""
-    if not player.tailed_beast_mode_active or not player.jinchuriki_beast_key:
+    if not (player.tailed_beast_mode_active or getattr(player, "bijuu_form", 0)) or not player.jinchuriki_beast_key:
         return 0
     beast = data_tailed_beasts.TAILED_BEASTS_BY_KEY.get(player.jinchuriki_beast_key)
     if not beast:
         return 0
-    return round(MODE_BASE_BONUS_PCT + (beast["tails"] - 1) * MODE_BONUS_PER_TAIL_PCT)
+    baseline = round(MODE_BASE_BONUS_PCT + (beast["tails"] - 1) * MODE_BONUS_PER_TAIL_PCT)
+    # Cooperation and the full Avatar are stronger than a basic cloak,
+    # but toggling legacy Beast Mode must never double-count these buffs.
+    return min(70, baseline + max(0, getattr(player, "bijuu_form", 0) - 1) * 4)
 
 
 BOMB_DAMAGE_MULTIPLIER = 2.5  # a real, meaningful multiple of the beast's own top real per-hit damage, so the Bomb reads as a genuine signature technique, not just another ordinary attack
