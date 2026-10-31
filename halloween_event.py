@@ -399,6 +399,9 @@ def command_teleport(session, args):
         session.send("Usage: teleport halloween | teleport return")
         return
     player = session.player
+    if player.in_chunin_exam:
+        session.send("&RThe Forest of Death's proctor denies this teleport. Leaving forfeits the entire Chunin Exam; use 'leave confirm'.&x")
+        return
     if session.combat_target or session.pvp_target or getattr(player, "jailed_until", 0) > time.time():
         session.send("You cannot teleport during combat or while jailed.")
         return
