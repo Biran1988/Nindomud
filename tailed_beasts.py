@@ -96,6 +96,9 @@ def register_all_beast_templates(combat_module) -> None:
             experience_reward=0,  # a beast is never killed for ordinary XP -- it's either sealed (a real, separate reward) or driven off
             ryo_reward=0,
         )
+        # Bijuu have individual canonical HP and damage ranges; NEVER apply
+        # the ordinary mobscale curve or its fivefold base-HP multiplier.
+        combat_module.MOB_TEMPLATES[_template_vnum_for(beast)]["auto_balance"] = False
 
 
 def is_beast_available(beast_key: str, all_players_iter) -> bool:
