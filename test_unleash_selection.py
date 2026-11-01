@@ -33,6 +33,30 @@ class UnleashSelectionTests(unittest.TestCase):
                 self.assertEqual(mob.tailed_beast_key, beast["key"])
                 self.assertIn(beast["display_name"], commands._broadcast_globally.call_args.args[0])
 
+    def test_all_nine_bijuu_keep_custom_hp_and_damage_under_mobscale(self):
+        """Global 5x ordinary HP or 400% mobscale must never change bijuu."""
+        import mob_balance
+        for beast in data_tailed_beasts.TAILED_BEASTS:
+            with self.subTest(beast=beast["key"]):
+                vnum = tailed_beasts._template_vnum_for(beast)
+                template = combat.MOB_TEMPLATES[vnum]
+                self.assertFalse(template["auto_balance"])
+                # Even an accidental builder override must not affect bijuu.
+                template["auto_balance"] = True
+                try:
+                    for pct in (25, 100, 400):
+                        with patch.object(mob_balance, "settings", return_value={
+                                "hp_percent": pct, "damage_percent": pct}):
+                            mob = tailed_beasts.release_beast(beast, world, combat)
+                        self.assertEqual(mob.max_health, beast["max_health"])
+                        self.assertEqual(mob.health, beast["max_health"])
+                        self.assertEqual(mob.damage_dice,
+                                         f'1d{beast["max_damage"] - beast["min_damage"] + 1}+{beast["min_damage"] - 1}')
+                        self.assertEqual(mob.tailed_beast_key, beast["key"])
+                        combat.remove_mob(mob)
+                finally:
+                    template["auto_balance"] = False
+
     def test_omitted_number_stays_random_and_roaming_cap_still_blocks(self):
         beast = data_tailed_beasts.TAILED_BEASTS[3]
         with patch.object(tailed_beasts, "pick_random_available_beast", return_value=beast) as choose:
