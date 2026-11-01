@@ -4429,7 +4429,7 @@ def seed_default_help() -> None:
             os.replace(legacy_path, path)
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train"}
+        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
                                            | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
@@ -5123,6 +5123,25 @@ for _entry in DEFAULT_HELP_ENTRIES:
         _entry["body"] = _entry["body"].replace(
             "All nine core attributes are trainable one point at a time for one training point per increase,",
             "All nine core attributes require a stat trainer NPC and a 15-second exercise. Success spends one training point and grants +1; failure costs no points. Training can be interrupted. ",
+        )
+
+# Non-destructive documentation updates: saved staff-written pages always win.
+for _entry in DEFAULT_HELP_ENTRIES:
+    if _entry["primary_keyword"] == "prac":
+        _entry["body"] += (
+            "\nBloodline techniques (Sharingan, Mangekyo Sharingan, Byakugan, "
+            "Tenseigan and other kekkei-genkai-gated jutsu) appear exclusively "
+            "under KKGK on PRAC. They keep their original combat class "
+            "and teacher eligibility; the category is organizational.\n"
+        )
+    elif _entry["primary_keyword"] == "levelup":
+        _entry["body"] += (
+            "\nAdministrator+ can also run LEVELUP <player> JOB <job>, "
+            "or LEVELUP <player> <job>, to grant one job level using the "
+            "actual job XP progression and permanent job stat bonuses. "
+            "Existing ninja LEVELUP <player> stays unchanged. "
+            "Valid jobs: fishing, mining, lumberjack, weaponsmith, "
+            "armorsmith, gemcutter, cooking, farming.\n"
         )
 
 # Keep system-owned summon help in sync with the implemented six contracts.

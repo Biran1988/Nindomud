@@ -695,6 +695,17 @@ def populate() -> None:
     # items. This ordering prevents a stale world snapshot from making a
     # registered spawn disappear after reboot.
     spawn_points.restore_custom_templates()
+    # VNUM 6 remains fully builder-editable, and existing /data saves win.
+    # Guarantee an available prototype for installations without one.
+    if 6 not in combat.MOB_TEMPLATES:
+        dummy = combat.default_template(6, "an immortal shinobi training dummy")
+        dummy["level"] = 1
+        dummy["auto_balance"] = False
+        dummy["hit_dice"] = "1d1+999999"
+        dummy["damage_dice"] = "0d1+0"
+        dummy["act_flags"] = ["Npc", "Sentinel"]
+        dummy["description"] = "A motionless training dummy that can withstand endless jutsu practice."
+        combat.MOB_TEMPLATES[6] = dummy
     spawn_points.apply_all()
 
     # Existing installations restore saved general-store templates over

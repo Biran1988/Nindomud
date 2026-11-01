@@ -1918,12 +1918,45 @@ def cmd_levelup(session, args: List[str]) -> None:
     if not _require_admin(session):
         return
     if not args:
-        session.send("Usage: levelup <player name>")
+        session.send("Usage: levelup <player name> [job <job name>] (or levelup <player> <job>)")
         return
-    target_name = " ".join(args)
+    import jobs
+    job = None
+    if len(args) >= 3 and args[-2].lower() == "job":
+        job = args[-1].lower()
+        target_name = " ".join(args[:-2])
+        if job not in jobs.JOB_NAMES:
+            session.send(f"Unknown job '{job}'. Available: {', '.join(jobs.JOB_NAMES)}")
+            return
+    elif len(args) >= 2 and args[-1].lower() in jobs.JOB_NAMES:
+        job = args[-1].lower()
+        target_name = " ".join(args[:-1])
+    else:
+        target_name = " ".join(args)
+    if not target_name:
+        session.send("Usage: levelup <player name> [job <job name>]")
+        return
     target, live_session = _find_target_player(target_name)
     if not target:
         session.send(f"No player named '{target_name}' is online or has a saved character.")
+        return
+
+    if job is not None:
+        current_level = jobs.get_job_level(target, job)
+        if current_level >= jobs.MAX_JOB_LEVEL:
+            session.send(f"{target.name}'s {job} is already at the job level cap ({jobs.MAX_JOB_LEVEL}).")
+            return
+        needed = max(0, jobs.job_xp_for_level(current_level + 1) - jobs.get_job_xp(target, job))
+        messages = jobs.add_job_xp(target, job, needed)
+        after = jobs.get_job_level(target, job)
+        storage.save_player(target)  # both online and offline rewards persist
+        session.send(f"You level up {target.name}'s {job.capitalize()} job from {current_level} to {after}.")
+        _log(session.player.name, "player", 0,
+             f"leveled up {target.name}'s {job} job from {current_level} to {after}")
+        if live_session:
+            for message in messages:
+                live_session.send(message)
+            live_session.send_prompt()
         return
 
     import leveling

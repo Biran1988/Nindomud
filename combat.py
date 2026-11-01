@@ -132,6 +132,12 @@ DEFAULT_MOB_FIELDS = {
 
 @dataclass
 class Mob:
+    def __setattr__(self, name, value):
+        if (name == "health" and self.__dict__.get("template_vnum") == 6
+                and "max_health" in self.__dict__):
+            value = self.__dict__["max_health"]
+        object.__setattr__(self, name, value)
+
     instance_id: int
     template_vnum: int
     name: str
@@ -331,20 +337,31 @@ def derive_mob_combat_attributes(hit_roll: int, damage_dice: str) -> tuple:
     return strength, dexterity
 
 
+TRAINING_DUMMY_VNUM = 6
+TRAINING_DUMMY_HEALTH = 1_000_000
+
+
+def is_training_dummy(mob: Mob) -> bool:
+    return mob.template_vnum == TRAINING_DUMMY_VNUM
+
+
 def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     t = MOB_TEMPLATES[template_vnum]
-    if not t.get("enabled", True):
+    if not t.get("enabled", True) and template_vnum != TRAINING_DUMMY_VNUM:
         return None
     # A runtime safeguard even if a holiday template gets edited above 50.
     level = (min(t["level"], MAX_KILLABLE_EVENT_MOB_LEVEL)
-             if t.get(EVENT_KILLABLE_TAG) else t["level"])
+             if template_vnum != TRAINING_DUMMY_VNUM and t.get(EVENT_KILLABLE_TAG)
+             else t["level"])
     # Preserve deliberately scripted event encounters; ordinary mobs get
     # identical baseline HP and expected damage for the same level.
-    auto_balance = (t.get("auto_balance", True)
+    auto_balance = (template_vnum != TRAINING_DUMMY_VNUM and t.get("auto_balance", True)
                     and not t.get("_custom_boss_balance"))
-    max_hp = (mob_balance.hp_for_level(level) if auto_balance
+    max_hp = (TRAINING_DUMMY_HEALTH if template_vnum == TRAINING_DUMMY_VNUM
+              else mob_balance.hp_for_level(level) if auto_balance
               else max(1, dice.roll(t["hit_dice"])))
-    effective_damage_dice = (mob_balance.damage_dice_for_level(level) if auto_balance
+    effective_damage_dice = ("0d1+0" if template_vnum == TRAINING_DUMMY_VNUM
+                             else mob_balance.damage_dice_for_level(level) if auto_balance
                              else t["damage_dice"])
     max_chakra = mob_chakra_for_level(level)
     max_stamina = mob_stamina_for_level(level)
@@ -355,8 +372,10 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         instance_id=next(_id_counter), template_vnum=template_vnum,
         name=t.get("short_desc") or f"mob {template_vnum}",
         level=level, health=max_hp, max_health=max_hp, room_vnum=room_vnum,
-        experience_reward=t["experience_reward"], ryo_reward=t["ryo_reward"],
-        damage_dice=effective_damage_dice, attacks=max(1, t.get("attacks", 1)),
+        experience_reward=(0 if template_vnum == TRAINING_DUMMY_VNUM else t["experience_reward"]),
+        ryo_reward=(0 if template_vnum == TRAINING_DUMMY_VNUM else t["ryo_reward"]),
+        damage_dice=effective_damage_dice,
+        attacks=(1 if template_vnum == TRAINING_DUMMY_VNUM else max(1, t.get("attacks", 1))),
         armor_class=t.get("armor_class", 0), hit_roll=t.get("hit_roll", 0),
         respawns=t.get("respawns", True), loot_items=list(t.get("loot_items", [])),
         chakra=max_chakra, maximum_chakra=max_chakra,
@@ -364,7 +383,8 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         # Below level 10, preserve the old no-class default; these mobs
         # cannot cast. Combat mobs at 10+ without a builder-assigned class
         # roll one of the four normal ninja classes on spawn.
-        primary_class=(t.get("primary_class") if t.get("primary_class") in data_classes.CLASSES
+        primary_class=(None if template_vnum == TRAINING_DUMMY_VNUM
+                       else t.get("primary_class") if t.get("primary_class") in data_classes.CLASSES
                        else random.choice(tuple(data_classes.CLASSES)) if level >= 10
                        else None),
         chakra_nature=biomes.roll_chakra_nature(),
@@ -390,6 +410,8 @@ def mobs_in_room(room_vnum: int) -> List[Mob]:
 # takes effect immediately on already-placed instances, with no need
 # to respawn them.
 def is_shopkeeper(mob: Mob) -> bool:
+    if is_training_dummy(mob):
+        return False
     t = MOB_TEMPLATES.get(mob.template_vnum)
     return bool(t and t.get("shopkeeper", False))
 
@@ -420,6 +442,8 @@ def mob_shop_buys_categories(mob: Mob) -> List[str]:
 # the shopkeeper fields: a builder's mset edit takes effect immediately
 # on an already-placed mob, no respawn needed.
 def is_gambler(mob: Mob) -> bool:
+    if is_training_dummy(mob):
+        return False
     t = MOB_TEMPLATES.get(mob.template_vnum)
     return bool(t and t.get("gambler", False))
 
@@ -429,6 +453,8 @@ def is_gambler(mob: Mob) -> bool:
 # a future addition). Looked up live from the template for the same
 # reason as shopkeeper/gambler.
 def is_teacher(mob: Mob) -> bool:
+    if is_training_dummy(mob):
+        return False
     t = MOB_TEMPLATES.get(mob.template_vnum)
     return bool(t and t.get("teacher", ""))
 
@@ -458,6 +484,8 @@ def is_immortal_mob(mob: Mob) -> bool:
     teachers. Looked up live from the template, same as every other
     act-flag check here, so a builder's mset edit takes effect
     immediately on an already-placed mob."""
+    if is_training_dummy(mob):
+        return False  # immortal health, not the attack-blocking Immortal flag
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if not t:
         return False
@@ -465,6 +493,8 @@ def is_immortal_mob(mob: Mob) -> bool:
 
 
 def is_wandering(mob: Mob) -> bool:
+    if is_training_dummy(mob):
+        return False
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if not t:
         return False
@@ -696,6 +726,8 @@ def _player_attack_damage(player: Player) -> int:
 
 
 def _mob_attack_damage(mob: Mob) -> int:
+    if is_training_dummy(mob):
+        return 0
     import commands as commands_module
     base = dice.roll(mob.damage_dice)
     strength_bonus = derived_stats.damage_roll(mob)
@@ -2531,7 +2563,8 @@ def resolve_pulse(session) -> None:
     # Existing one-action programs have no fight trigger, so they are
     # unchanged. Recheck placement because a script may teleport.
     template = MOB_TEMPLATES.get(mob.template_vnum)
-    if template and any(p.get("trigger") == "fight" for p in template.get("mob_programs", ())):
+    if (not is_training_dummy(mob) and template
+            and any(p.get("trigger") == "fight" for p in template.get("mob_programs", ()))):
         import programs
         programs.fire_programs(session, template["mob_programs"], "fight",
                                speaker_name=mob.name.capitalize(), mob=mob)
@@ -2592,6 +2625,10 @@ def resolve_pulse(session) -> None:
     
     if mob.health <= 0:
         handle_mob_defeat(session, mob)
+        return
+    if is_training_dummy(mob):
+        # The player still lands genuine hits and gains usage proficiency,
+        # but the practice dummy never retaliates or casts any jutsu.
         return
     if _is_action_blocked(mob):
         session.send(f"{mob.name} is trapped in the illusion and cannot attack this round.")
@@ -3364,6 +3401,9 @@ def _experience_reward(player: Player, mob: Mob) -> int:
 
 
 def handle_mob_defeat(session, mob: Mob) -> None:
+    if is_training_dummy(mob):
+        mob.health = mob.max_health
+        return  # never corpse, drop, XP, bounty, or despawn
     player = session.player
     # Target-bound Amaterasu dies with its mob. This also prevents
     # lingering damage from restarting a Tailed Beast's sealing window.

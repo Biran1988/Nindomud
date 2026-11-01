@@ -5423,14 +5423,16 @@ def cmd_examine(session, args: List[str]) -> None:
 
 # --- prac: categorized skill list (Sections 8-9, 12) --------------------
 
-PRAC_CATEGORY_ORDER = ["Ninjutsu", "Taijutsu", "Genjutsu", "Bukijutsu", "General Skills"]
+PRAC_CATEGORY_ORDER = ["Ninjutsu", "Taijutsu", "Genjutsu", "Bukijutsu", "KKGK", "General Skills"]
 
 
 def _categorize_skill(skill_name: str) -> str:
     lname = skill_name.lower()
     for jutsu in data_jutsu.JUTSU.values():
         if jutsu["display_name"].lower() == lname:
-            return jutsu["class_requirement"].capitalize()
+            return "KKGK" if jutsu.get("kkg_gate") else jutsu["class_requirement"].capitalize()
+    if lname in {"sharingan", "mangekyo sharingan", "izanagi"}:
+        return "KKGK"
     if lname == "punch":
         return "Taijutsu"
     return "General Skills"
@@ -5445,8 +5447,17 @@ def _skill_catalog_for_category(category: str) -> list:
     if category in ("Ninjutsu", "Taijutsu", "Genjutsu", "Bukijutsu"):
         class_key = category.lower()
         for jutsu in data_jutsu.JUTSU.values():
-            if jutsu["class_requirement"] == class_key:
+            if jutsu["class_requirement"] == class_key and not jutsu.get("kkg_gate"):
                 entries.append((jutsu["display_name"], jutsu["level_requirement"]))
+    elif category == "KKGK":
+        # This overrides only PRAC presentation. Jutsu retain their
+        # original combat class, chakra costs, and bloodline unlocks.
+        for jutsu in data_jutsu.JUTSU.values():
+            if jutsu.get("kkg_gate"):
+                entries.append((jutsu["display_name"], jutsu["level_requirement"]))
+        # The Sharingan toggle and Izanagi command are separate from
+        # the JUTSU table, but old characters may track them as skills.
+        entries.extend((("Sharingan", 25), ("Mangekyo Sharingan", 25), ("Izanagi", None)))
     elif category == "General Skills":
         # Weapon skills folded in here per explicit request (previously
         # their own "Weapon Skills" category). Not level-gated --
@@ -5483,7 +5494,7 @@ def _skill_catalog_for_category(category: str) -> list:
         # so a player who'd learned any of them never saw it on 'prac'
         # at all, despite it being real.
         for jutsu in data_jutsu.JUTSU.values():
-            if jutsu["class_requirement"] == "general":
+            if jutsu["class_requirement"] == "general" and not jutsu.get("kkg_gate"):
                 entries.append((jutsu["display_name"], jutsu["level_requirement"]))
     return entries
 
@@ -5510,6 +5521,7 @@ PRAC_CATEGORY_COLOR = {
     "Taijutsu": "&R",
     "Genjutsu": "&M",
     "Bukijutsu": "&Y",
+    "KKGK": "&[135]",  # unique purple for bloodline and ocular powers
     "General Skills": "&C",  # confirmed: a distinct color from the 4 class colors, changed from gray per direct request
     "General Jutsu": "&C",  # same shared-category color in the jutsu catalog
 }
@@ -5612,6 +5624,14 @@ def _find_gambler(room_vnum: int):
     return None
 
 
+def _categorize_underlying_class(skill_name: str) -> str:
+    for jutsu in data_jutsu.JUTSU.values():
+        if jutsu["display_name"].lower() == skill_name.lower():
+            name = jutsu["class_requirement"].capitalize()
+            return "General Skills" if name == "General" else name
+    return "General Skills"
+
+
 def _find_matching_teacher(room_vnum: int, skill_name: str):
     """The first teacher-flagged mob in the room genuinely able to
     teach `skill_name`, or None if no such teacher is present. Per
@@ -5619,7 +5639,10 @@ def _find_matching_teacher(room_vnum: int, skill_name: str):
     their own class (Ninjutsu/Taijutsu/Genjutsu/Bukijutsu); any
     teacher works for a "General Skills" entry, since those aren't
     tied to a class at all."""
-    category = _category_for_skill(skill_name)
+    # KKGK is a list/category only, not a fifth combat class. Keep
+    # existing teacher eligibility based on the jutsu's underlying
+    # class_requirement so this update cannot lock out practiced eyes.
+    category = _categorize_underlying_class(skill_name)
     for mob in combat.mobs_in_room(room_vnum):
         if not combat.is_teacher(mob):
             continue
