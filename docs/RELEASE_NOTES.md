@@ -376,3 +376,12 @@ leveling, mob XP, and the older gameplay smoke checks.
   and the invulnerable training dummy keep their own behavior. Only
   newly spawned mobs receive updated stats. No player saves, world
   areas, or `data/` files are altered or packaged.
+
+- Version 15.391: Tailed beasts (VNUM 95000–95008) are protected from
+  ordinary mob HP scaling and the `mobscale` HP and damage modifiers.
+  All nine beast registrations explicitly disable auto-balance and the spawn
+  path refuses to auto-balance their reserved VNUMs, even if an old saved
+  or builder-edited template flips the option back on. Each beast retains
+  its distinct canonical maximum HP and attack dice as specified in
+  `data_tailed_beasts.py`. Ordinary mobs still gain the 5x base HP.
+  Sealing, capture timers, wandering, and live runtime `data/` are untouched.
