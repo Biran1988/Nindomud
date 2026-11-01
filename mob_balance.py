@@ -12,6 +12,9 @@ import os
 import tempfile
 
 DEFAULT_SETTINGS = {"hp_percent": 100, "damage_percent": 100}
+# Fivefold base health gives players time to use jutsu instead of one-shotting mobs.
+# The adjustable mobscale HP percentage remains relative to this tougher baseline.
+BASE_HP_MULTIPLIER = 5
 _MIN_PERCENT = 25
 _MAX_PERCENT = 400
 _cached_path = None
@@ -70,7 +73,7 @@ def hp_for_level(level, setting=None):
     level = max(1, min(250, int(level)))
     amount = 80 + 20 * level + 2 * level * level
     percent = (setting or settings())["hp_percent"]
-    return max(1, amount * percent // 100)
+    return max(1, amount * BASE_HP_MULTIPLIER * percent // 100)
 
 
 def target_damage_for_level(level, setting=None):
@@ -103,7 +106,7 @@ def cmd_mobscale(session, args):
     if not args:
         values = settings()
         session.send(
-            "Standard mob scaling (applies on next spawn): "
+            "Standard mob scaling (5x base HP; applies on next spawn): "
             f"HP {values['hp_percent']}%, Damage {values['damage_percent']}%.\n"
             "Usage: mobscale preview <level> | mobscale hp <25-400> | "
             "mobscale damage <25-400>\n"
