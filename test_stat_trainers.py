@@ -19,15 +19,15 @@ class TimedStatTrainingTests(unittest.TestCase):
         self.session.start_timed_action = Mock()
 
     def _start(self, stat="cc"):
-        with patch.object(combat, "mobs_in_room", return_value=[self.trainer]), \\
+        with patch.object(combat, "mobs_in_room", return_value=[self.trainer]), \
              patch.object(combat, "is_stat_trainer", return_value=True):
             commands.cmd_train(self.session, [stat])
 
     def _finish(self, roll=1, present=True):
         callback = self.session.start_timed_action.call_args.args[2]
         with patch.object(combat, "mobs_in_room",
-                          return_value=[self.trainer] if present else []), \\
-             patch.object(combat, "is_stat_trainer", return_value=True), \\
+                          return_value=[self.trainer] if present else []), \
+             patch.object(combat, "is_stat_trainer", return_value=True), \
              patch.object(commands.random, "randint", return_value=roll):
             callback()
 
