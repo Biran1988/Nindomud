@@ -3207,7 +3207,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Ordinary mobs automatically receive a fivefold (5x) level-based HEALTH baseline compared with the original formula; attack damage is unchanged. Identical levels use identical base HP and expected attack damage, allowing longer fights with time for techniques. HP and damage multipliers are global percentages (100 by default) applied after the new base curve, saved in data/mob_balance.json. Adjust them in game, then newly spawned mobs use the updated balance. Existing fights are unchanged.\n"
             "\n"
-            "To exempt a scripted encounter: mset <vnum> autobalance off. Then set custom hitdice/damagedice. Re-enable with mset <vnum> autobalance on. Halloween event encounters retain their special HP/damage.\n"
+            "All nine Tailed Beasts always retain their own custom HP and damage; mobscale never affects them. To exempt a different scripted encounter: mset <vnum> autobalance off. Then set custom hitdice/damagedice. Re-enable with mset <vnum> autobalance on. Halloween event encounters retain their special HP/damage.\n"
             "\n"
             "Only administrators and Implementors can use mobscale."
         ),
