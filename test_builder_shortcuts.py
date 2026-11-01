@@ -148,16 +148,26 @@ class BuilderShortcutTests(unittest.TestCase):
 
 class TrainShortcutsTests(unittest.TestCase):
     def test_short_and_full_names_use_same_costs_and_effects(self):
-        player = NS(training_points=5, strength=10, constitution=10,
-                    chakra_control=10, maximum_chakra=100)
-        session = NS(player=player, send=Mock())
-        for typed in ("str", "strength", "con", "cc"):
-            commands.cmd_train(session, [typed])
-        self.assertEqual((player.strength, player.constitution,
-                          player.chakra_control, player.training_points), (12, 11, 11, 1))
-        self.assertEqual(player.maximum_chakra, 110)
-        commands.cmd_train(session, ["invalid"])
-        self.assertEqual(player.training_points, 1)
+        player = Player("Student", "Student", room_vnum=1)
+        player.training_points = 5
+        player.maximum_chakra = 100
+        trainer = NS(template_vnum=6009, health=100, name="a shinobi trainer")
+        session = NS(player=player, send=Mock(), combat_target=None,
+                     pvp_target=None, pending_cast=None, is_busy=lambda: False)
+        # A short/full spelling must start the same timed lesson. Resolve
+        # immediately only in this old alias regression; separate tests
+        # verify the real 15-second delay and interruption handling.
+        session.start_timed_action = lambda label, seconds, fn, flavor_schedule=None: fn()
+        with patch.object(combat, "mobs_in_room", return_value=[trainer]), \
+             patch.object(combat, "is_stat_trainer", return_value=True), \
+             patch.object(commands.random, "randint", return_value=1):
+            for typed in ("str", "strength", "con", "cc"):
+                commands.cmd_train(session, [typed])
+            self.assertEqual((player.strength, player.constitution,
+                              player.chakra_control, player.training_points), (12, 11, 11, 1))
+            self.assertEqual(player.maximum_chakra, 110)
+            commands.cmd_train(session, ["invalid"])
+            self.assertEqual(player.training_points, 1)
 
 
 class SayColorTests(unittest.TestCase):
