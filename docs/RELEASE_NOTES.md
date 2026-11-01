@@ -366,3 +366,13 @@ leveling, mob XP, and the older gameplay smoke checks.
   ensure the executable/source archive contains both features,
   new help text and this version. No data/ folder or saved world,
   player or builder area content is packaged.
+
+- Version 15.390: Standard auto-balanced mobs now spawn with **5x the
+  original level-based HP baseline** at all levels (1-250). This reduces
+  one-hit kills and preserves time for jutsu during longer fights. The
+  adjustable `mobscale hp` percentage still applies on top of the new
+  baseline and persists in existing `data/mob_balance.json`; outgoing
+  mob damage is unchanged. Scripted bosses, manually exempted mobs,
+  and the invulnerable training dummy keep their own behavior. Only
+  newly spawned mobs receive updated stats. No player saves, world
+  areas, or `data/` files are altered or packaged.
