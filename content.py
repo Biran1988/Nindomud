@@ -431,6 +431,20 @@ def populate() -> None:
         kage_room.flags.append("accelerated_healing")
         WORLD.add_room(kage_room)
 
+        # A persistent-build-compatible stat trainer TEMPLATE, not an
+        # automatic spawn. Staff position it with spawnpoint add mob <vnum>
+        # <room>; the saved world and its custom spawn layout remain theirs.
+        trainer_vnum = 6000 + village_index[village] * 10 + 9
+        trainer = combat.default_template(trainer_vnum, f"a {short} shinobi training instructor")
+        trainer["act_flags"] = ["Npc", "Sentinel", "Trainer"]
+        trainer["level"] = 1
+        trainer["hit_dice"] = "1d1+9999"
+        trainer["description"] = (
+            "A veteran shinobi oversees strength drills, chakra-control "
+            "tree walking, meditation, target detection, and other stat exercises."
+        )
+        combat.MOB_TEMPLATES[trainer_vnum] = trainer
+
         attendant_vnum = 6000 + village_index[village] * 10 + 4
         attendant = combat.default_template(attendant_vnum, f"a {short} gambling den attendant")
         attendant["level"] = 1
@@ -781,6 +795,7 @@ def register_default_spawn_points_for_testing() -> None:
         # Gambling den + roulette room attendants.
         spawn_points.add_spawn_point("mob", 6000 + idx * 10 + 4, kage_room)
         spawn_points.add_spawn_point("mob", 6000 + idx * 10 + 8, kage_room)
+        spawn_points.add_spawn_point("mob", 6000 + idx * 10 + 9, kage_room)  # stat trainer
         # 5 mission-target tiers.
         for offset in (0, 100, 200, 300, 400):
             spawn_points.add_spawn_point("mob", rooms["mob_template"] + offset, kage_room)

@@ -433,6 +433,12 @@ def is_teacher(mob: Mob) -> bool:
     return bool(t and t.get("teacher", ""))
 
 
+def is_stat_trainer(mob: Mob) -> bool:
+    """SWR-style attribute instructor. Separate from class skill teachers."""
+    template = MOB_TEMPLATES.get(mob.template_vnum)
+    return bool(template and "Trainer" in template.get("act_flags", []))
+
+
 def teacher_class(mob: Mob) -> str:
     """The class this mob teaches ("ninjutsu"/"taijutsu"/"genjutsu"/
     "bukijutsu"), per direct confirmation (Section 110: a teacher can
@@ -455,7 +461,7 @@ def is_immortal_mob(mob: Mob) -> bool:
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if not t:
         return False
-    return "Immortal" in t.get("act_flags", []) or "SummonElder" in t.get("act_flags", [])
+    return any(flag in t.get("act_flags", []) for flag in ("Immortal", "SummonElder", "Trainer"))
 
 
 def is_wandering(mob: Mob) -> bool:

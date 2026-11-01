@@ -4791,7 +4791,55 @@ def cmd_request(session, args: List[str]) -> None:
 
 # --- Training / practice --------------------------------------------
 
+STAT_TRAIN_SECONDS = 15
+# A failure costs time, not a point. Higher attributes take more patience.
+STAT_TRAIN_BASE_SUCCESS = 85
+
+
+def _stat_training_drill(attribute: str, current: int) -> tuple:
+    """Narrative inspired by practical shinobi training in Naruto."""
+    if attribute == "chakra_control":
+        if current < 40:
+            return ("walk up a tree trunk without using your hands",
+                    "Your chakra holds firm and you climb several steps higher!",
+                    "Your chakra slips from the bark and you slide back down.")
+        if current < 60:
+            return ("balance a steady stream of chakra to walk across water",
+                    "You cross the rippling surface without sinking!",
+                    "Your flow falters and you splash into the water.")
+        return ("shape a spinning stream of chakra inside a water balloon",
+                "You sustain the spinning chakra until the balloon bursts!",
+                "Your concentration slips and the spinning chakra unravels.")
+    return {
+        "strength": ("strike a reinforced wooden training post",
+                     "Your controlled strikes drive deep marks into the wood!",
+                     "Your stance buckles before the final strike."),
+        "dexterity": ("dodge swinging logs while catching thrown kunai",
+                      "You slip through the obstacles and catch the last kunai!",
+                      "A swinging log clips your shoulder and breaks your rhythm."),
+        "constitution": ("complete an exhausting weighted endurance circuit",
+                         "You finish the entire circuit without collapsing!",
+                         "Your breathing gives out before the last lap."),
+        "intelligence": ("memorize and repeat a complex sequence of hand signs",
+                         "You perform every hand sign in the correct sequence!",
+                         "You lose track of a crucial hand sign."),
+        "wisdom": ("hold a leaf steady on your forehead while meditating",
+                   "Your mind settles and the leaf remains perfectly still!",
+                   "A stray thought breaks your concentration and the leaf falls."),
+        "luck": ("navigate a shifting obstacle course with unpredictable traps",
+                 "You improvise perfectly through every changing obstacle!",
+                 "One unexpected trap throws off your timing."),
+        "perception": ("locate hidden targets while blindfolded",
+                       "You sense and identify each hidden target!",
+                       "You mistake a decoy for the real target."),
+        "willpower": ("hold your focus against a trainer's genjutsu distractions",
+                      "You maintain your resolve and break the distraction!",
+                      "The illusion interrupts your concentration."),
+    }[attribute]
+
+
 def cmd_train(session, args: List[str]) -> None:
+    """SWR-style timed stat training: physically attend a live trainer mob."""
     player = session.player
     typed = " ".join(args).strip().lower()
     attr = TRAIN_ATTRIBUTE_NAMES.get(typed, typed.replace(" ", "_"))
@@ -4805,20 +4853,69 @@ def cmd_train(session, args: List[str]) -> None:
     if current >= config.MAX_ATTRIBUTE_VALUE:
         session.send(f"Your {attr.replace('_', ' ')} is already at its maximum ({config.MAX_ATTRIBUTE_VALUE}).")
         return
-    setattr(player, attr, current + 1)
-    player.training_points -= 1
+    if (getattr(session, "combat_target", None) is not None
+            or getattr(session, "pvp_target", None) is not None
+            or getattr(session, "pending_cast", None) is not None):
+        session.send("You cannot train while fighting or casting a jutsu.")
+        return
+    if player.position != "standing":
+        session.send("Stand up before beginning your shinobi training.")
+        return
+    if session.is_busy():
+        session.send("You are already busy with something. Finish it before training.")
+        return
+    trainer = next((mob for mob in combat.mobs_in_room(player.room_vnum)
+                    if mob.health > 0 and combat.is_stat_trainer(mob)), None)
+    if trainer is None:
+        session.send("You must find a shinobi stat trainer mob in the same room. Training cannot be done anywhere else.")
+        return
+
+    start_room = player.room_vnum
+    action, success_text, failure_text = _stat_training_drill(attr, current)
+    label = attr.replace("_", " ")
+    session.send(f"&C{trainer.name.capitalize()} begins your {label} lesson. "
+                 f"You {action}. The exercise takes {STAT_TRAIN_SECONDS} seconds.&x")
     import room_actions
-    room_actions.emit(session, f"{getattr(player, 'name', 'Someone')} trains {attr.replace('_', ' ')}.")
-    session.send(f"You train your {attr.replace('_', ' ')}. It is now {getattr(player, attr)}.")
-    if attr == "chakra_control":
-        # Per direct request/confirmation (Section 131): a real, immediate
-        # +10 max Chakra the instant Chakra Control is trained -- NOT tied
-        # to leveling up at all, genuinely distinct from the per-level
-        # Int/Wis Chakra formula (Section 130). Fires once per point
-        # trained above the baseline of 10 (checked via `current` here,
-        # since that's the value BEFORE this train just added +1).
-        player.maximum_chakra += 10
-        session.send(f"&CYour finer control over your own chakra permanently expands your reserves by 10 -- max Chakra is now {player.maximum_chakra}.&x")
+    room_actions.emit(session, f"{player.name} begins a {label} exercise under {trainer.name}'s supervision.")
+
+    def complete_training():
+        # Resolve only once the actual 15 seconds have passed. A player
+        # cannot leave, enter combat, or lose their trainer to finish remotely.
+        if (session.player is not player or player.room_vnum != start_room
+                or getattr(session, "combat_target", None) is not None
+                or getattr(session, "pvp_target", None) is not None
+                or getattr(session, "pending_cast", None) is not None
+                or trainer not in combat.mobs_in_room(start_room)
+                or trainer.health <= 0 or not combat.is_stat_trainer(trainer)):
+            session.send("&YYour lesson was interrupted. No training point was spent.&x")
+            return
+        if player.training_points <= 0 or getattr(player, attr) >= config.MAX_ATTRIBUTE_VALUE:
+            session.send("&YYou can no longer complete this stat lesson. No training point was spent.&x")
+            return
+        # Stat difficulty rises gradually to the existing 75-point cap.
+        chance = max(50, STAT_TRAIN_BASE_SUCCESS - max(0, getattr(player, attr) - 10) // 2)
+        if random.randint(1, 100) > chance:
+            session.send(f"&Y{failure_text} The trainer tells you to try again. "
+                         "No training point was spent.&x")
+            room_actions.emit(session, f"{player.name} fails a {label} training exercise.")
+            return
+
+        before = getattr(player, attr)
+        setattr(player, attr, before + 1)
+        player.training_points -= 1
+        session.send(f"&G{success_text} Your {label} increases to {before + 1}! "
+                     f"Training points remaining: {player.training_points}.&x")
+        room_actions.emit(session, f"{player.name} completes a {label} training exercise.")
+        if attr == "chakra_control":
+            # Preserve the already-established permanent +10 Chakra bonus.
+            player.maximum_chakra += 10
+            session.send(f"&CYour chakra reserves permanently increase by 10 -- "
+                         f"maximum Chakra is now {player.maximum_chakra}.&x")
+
+    session.start_timed_action(
+        "stat training", STAT_TRAIN_SECONDS, complete_training,
+        flavor_schedule=[(7, f"&DYou continue to {action}, following the trainer's guidance...&x")],
+    )
 
 
 PRACTICE_POINTS_PER_TRAINING_POINT = 5  # confirmed directly: "turn in 5 practice points for 1 training point"

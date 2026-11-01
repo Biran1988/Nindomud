@@ -4,7 +4,7 @@
     "train"
   ],
   "title": "Train",
-  "body": "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n\nDescription: Spends one training point to raise any of the nine attributes by one, to a maximum of 75. Perception (train per), Willpower (train wil), and Chakra Control (train cc or train chakra control) are all trainable; Willpower now protects against ordinary Genjutsu, Perception extends Scan, and Chakra Control increases maximum Chakra and efficiency. See 'help attributes' for the details.\n\nDate: 2026-08-17",
+  "body": "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n\nA living Trainer-flagged mob must be in your current room. Each attempt takes 15 real seconds; success increases the stat by one (maximum 75) and costs one training point, while failure costs no points. Stay with the NPC, standing and out of combat. Higher stat values are harder to train. Chakra Control begins with tree walking and progresses to walking on water and chakra shaping; other stats have matching ninja drills. Success at Chakra Control still permanently grants +10 maximum Chakra. Staff can place a trainer template using spawnpoint add mob <vnum> <room>. Date: 2026-11-01.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0

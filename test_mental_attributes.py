@@ -20,19 +20,28 @@ class MentalAttributeTests(unittest.TestCase):
         self.s = NS(player=self.player, send=Mock(), account=None)
 
     def test_three_trainable_stats_and_chakra_bonus(self):
-        for words, name in ((["per"], "perception"), (["will"], "willpower"),
-                            (["wil"], "willpower"), (["chakra", "control"], "chakra_control"),
-                            (["cc"], "chakra_control")):
-            before = getattr(self.player, name)
-            old_chakra = self.player.maximum_chakra
-            commands.cmd_train(self.s, words)
-            self.assertEqual(getattr(self.player, name), before + 1)
-            if name == "chakra_control":
-                self.assertEqual(self.player.maximum_chakra, old_chakra + 10)
-        self.assertEqual(self.player.training_points, 7)
-        self.player.willpower = 75
-        commands.cmd_train(self.s, ["wil"])
-        self.assertEqual(self.player.willpower, 75)
+        instructor = NS(health=100, name="a trainer", template_vnum=6009)
+        self.s.combat_target = self.s.pvp_target = self.s.pending_cast = None
+        self.s.is_busy = lambda: False
+        # This existing stat-formula regression resolves a lesson immediately
+        # only inside the test; the new timing tests assert the real 15s delay.
+        self.s.start_timed_action = lambda _label, _seconds, fn, flavor_schedule=None: fn()
+        with patch.object(combat, "mobs_in_room", return_value=[instructor]), \\
+             patch.object(combat, "is_stat_trainer", return_value=True), \\
+             patch.object(commands.random, "randint", return_value=1):
+            for words, name in ((["per"], "perception"), (["will"], "willpower"),
+                                (["wil"], "willpower"), (["chakra", "control"], "chakra_control"),
+                                (["cc"], "chakra_control")):
+                before = getattr(self.player, name)
+                old_chakra = self.player.maximum_chakra
+                commands.cmd_train(self.s, words)
+                self.assertEqual(getattr(self.player, name), before + 1)
+                if name == "chakra_control":
+                    self.assertEqual(self.player.maximum_chakra, old_chakra + 10)
+            self.assertEqual(self.player.training_points, 7)
+            self.player.willpower = 75
+            commands.cmd_train(self.s, ["wil"])
+            self.assertEqual(self.player.willpower, 75)
 
     def test_resistance_and_escape_chances(self):
         self.assertEqual(status_effects.willpower_resist_chance(10), 0)

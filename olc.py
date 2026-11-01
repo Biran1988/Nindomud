@@ -458,6 +458,8 @@ def cmd_mstat(session, args: List[str]) -> None:
         lines.append("&WGambler:&x &Gyes&x &D(runs chou-han -- see the 'gamble' command)&x")
     if t.get("teacher", ""):
         lines.append(f"&WTeacher:&x &G{t['teacher'].title()}&x &D(players must find a matching teacher to practice a {t['teacher'].title()} skill)&x")
+    if "Trainer" in t.get("act_flags", []):
+        lines.append("&WStat Trainer:&x &Gyes&x &D(15-second attribute lessons; train <stat>)&x")
     if "SummonElder" in t.get("act_flags", []):
         lines.append(f"&WSummon Elder:&x {t.get('summon_family') or 'unconfigured -- set summonfamily'}")
     wandering = "Wander" in t.get("act_flags", []) and "Sentinel" not in t.get("act_flags", [])
@@ -808,6 +810,7 @@ VALID_MOB_ACT_FLAGS = {
     "aggressive_clan",     # attacks members of configured aggro_clan
     "aggressive_everyone", # attacks all non-staff player characters
     "SummonElder",  # sage_mode.py -- teaches its configured summon_family in the same room
+    "Trainer",      # commands.py -- non-attackable stat trainer needed for 15-second TRAIN lessons
     "Invis",  # commands.py -- hidden from room look and directional scan
     "Banker",       # commands.py -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob
     "BountyOffice", # commands.py -- lets a player claim a bounty in person at this mob

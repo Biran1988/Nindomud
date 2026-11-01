@@ -4429,7 +4429,7 @@ def seed_default_help() -> None:
             os.replace(legacy_path, path)
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery"}
+        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
                                            | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
@@ -5099,6 +5099,31 @@ DEFAULT_HELP_ENTRIES.append({
             "techniques can be taught. You cannot teach another class's techniques.",
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+# Update system-owned training guidance without replacing staff-written help.
+for _entry in DEFAULT_HELP_ENTRIES:
+    if _entry["primary_keyword"] == "train":
+        _entry["body"] = (
+            "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\\n\\n"
+            "Find a stat trainer NPC in the same room first. Attribute training "
+            "takes 15 real seconds and can succeed or fail; failure costs time "
+            "but no training points. Success spends 1 training point and raises "
+            "the selected stat by 1, up to 75. You must remain with the trainer "
+            "and out of combat for the whole exercise. Training while busy, "
+            "casting, or sleeping is not possible. Difficulty increases with "
+            "your attribute level. Chakra Control starts with tree walking, "
+            "then advances to water walking and chakra shaping. Strength uses "
+            "training posts, Wisdom leaf meditation, Perception blindfolded "
+            "target spotting, and other attributes get their own shinobi drills. "
+            "Chakra Control success still grants +10 permanent maximum Chakra. "
+            "Builders: mset <mob vnum> flags Trainer; "
+            "spawnpoint add mob <mob vnum> <room vnum>.\\n"
+        )
+    elif _entry["primary_keyword"] == "attributes":
+        _entry["body"] = _entry["body"].replace(
+            "All nine core attributes are trainable one point at a time for one training point per increase,",
+            "All nine core attributes require a stat trainer NPC and a 15-second exercise. Success spends one training point and grants +1; failure costs no points. Training can be interrupted. ",
+        )
 
 # Keep system-owned summon help in sync with the implemented six contracts.
 for _entry in DEFAULT_HELP_ENTRIES:
