@@ -15,6 +15,16 @@ import status_effects
 import world
 
 PROPERTIES = ("flaming", "frost", "life", "sharp", "vorpal", "shocking", "poison")
+# Permanent *item-bound* chakra imbuements use the same inventory/equipment
+# name persistence as older Ninja Arts, not per-character or prototype state.
+ELEMENTAL_SWORD_JUTSU = {
+    "fire": "fireball jutsu", "water": "water dragon jutsu",
+    "wind": "wind blade jutsu", "lightning": "lightning strike jutsu",
+    "earth": "earth wall crusher",
+}
+ELEMENTAL_SWORD_DAMAGE_PERCENT = 50
+EARTH_SWORD_IMPACT_PERCENT = 25  # Earth Wall Crusher: greater direct damage, no status
+
 TRAPS = {
     "exploding note": (28, 46, None),
     "smoke bomb": (5, 12, "blinded"),
@@ -30,9 +40,31 @@ def property_of(item):
     return None
 
 
+def element_of(item):
+    """Identify a permanent single-element sword enchantment, if any."""
+    if not item:
+        return None
+    for element in ELEMENTAL_SWORD_JUTSU:
+        if item.lower().endswith(f" [element:{element}]"):
+            return element
+    return None
+
+
 def base_item(item):
+    element = element_of(item)
+    if element:
+        return item[:-len(f" [element:{element}]")]
     prop = property_of(item)
     return item[:-(len(prop) + 7)] if prop else item
+
+
+def _known_elements(player):
+    """Only the player's revealed, owned natures may be used for enchanting."""
+    return {nature for nature, revealed in (
+        (getattr(player, "chakra_nature", None), getattr(player, "chakra_nature_revealed", False)),
+        (getattr(player, "chakra_nature_secondary", None), getattr(player, "chakra_nature_secondary_revealed", False)),
+        (getattr(player, "chakra_nature_tertiary", None), getattr(player, "chakra_nature_tertiary_revealed", False)),
+    ) if revealed and nature in ELEMENTAL_SWORD_JUTSU}
 
 
 def _owned_item(player, query):
@@ -87,8 +119,9 @@ def use_weapon_art(session, key, args):
         session.send(f"You glue {item} to yourself; it cannot be dropped or traded.")
         return
     if key == "weapon enchantment":
-        if len(args) < 2 or args[-1].lower() not in PROPERTIES[:-1]:
-            session.send("Usage: weapon enchantment <weapon> <flaming|frost|life|sharp|vorpal|shocking>")
+        available = "flaming|frost|life|sharp|vorpal|shocking|fire|water|wind|lightning|earth"
+        if len(args) < 2 or args[-1].lower() not in (*PROPERTIES[:-1], *ELEMENTAL_SWORD_JUTSU):
+            session.send(f"Usage: weapon enchantment <weapon> <{available}>")
             return
         prop = args[-1].lower()
         query = " ".join(args[:-1])
@@ -105,15 +138,28 @@ def use_weapon_art(session, key, args):
         session.send("Specify a weapon in your inventory.")
         return
     old = property_of(item)
-    if key == "disenchantment" and not old:
+    element = element_of(item)
+    if key == "disenchantment" and not (old or element):
         session.send("That weapon has no Ninja Art property to remove.")
         return
-    if key != "disenchantment" and old:
+    if key != "disenchantment" and (old or element):
         session.send("That weapon is already bound. Disenchant it first.")
         return
+    is_elemental = prop in ELEMENTAL_SWORD_JUTSU
+    if is_elemental:
+        if player.primary_class != "bukijutsu":
+            session.send("Only Bukijutsu users can imbue elemental swords.")
+            return
+        if data_weapons.weapon_type_for_item(base_item(item)) != "sword":
+            session.send("Elemental chakra can only be bound to a sword.")
+            return
+        if prop not in _known_elements(player):
+            session.send("You must first discover and possess that chakra nature to enchant a sword with it.")
+            return
     if not _pay(session, key):
         return
-    updated = base_item(item) + (f" [art:{prop}]" if prop else "")
+    suffix = f" [element:{prop}]" if is_elemental else f" [art:{prop}]" if prop else ""
+    updated = base_item(item) + suffix
     if item in player.inventory:
         player.inventory[player.inventory.index(item)] = updated
     else:
@@ -224,6 +270,25 @@ def weapon_hit(attacker, victim, damage):
     prop = property_of(wielded)
     if damage > 0 and getattr(attacker, "samurai_sabre_active", False) and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword":
         damage = max(1, damage * 120 // 100)
+    element = element_of(wielded)
+    # This buff belongs to the WIELDER, not the sword's original creator.
+    # Both the Bukijutsu class and a matching unlocked chakra nature are
+    # required on every strike. An ordinary character can carry/trade an
+    # enchanted sword without gaining its elemental boost or status effect.
+    if (damage > 0 and element and getattr(attacker, "primary_class", None) == "bukijutsu"
+            and element in _known_elements(attacker)
+            and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword"):
+        damage = max(1, damage * (100 + ELEMENTAL_SWORD_DAMAGE_PERCENT) // 100)
+        jutsu = data_jutsu.JUTSU[ELEMENTAL_SWORD_JUTSU[element]]
+        effect = jutsu.get("effect")
+        if element == "earth":
+            # Earth nature mirrors Earth Wall Crusher's extra upfront force.
+            damage = max(1, damage * (100 + EARTH_SWORD_IMPACT_PERCENT) // 100)
+        elif effect and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 0):
+            status_effects.apply_effect(
+                victim.active_status_effects, effect,
+                source=f"{element} chakra sword")
+        return damage
     if prop is None or damage <= 0:
         return damage
     if prop == "poison" and random.randint(1, 100) <= 30:
