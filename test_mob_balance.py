@@ -39,6 +39,15 @@ class MobBalanceTests(unittest.TestCase):
         else:
             combat.MOBS_BY_ROOM[self.room] = self.original_room
 
+    def test_default_mob_hp_is_five_times_old_curve_without_damage_increase(self):
+        for level in (1, 15, 50, 100, 250):
+            old_hp = 80 + 20 * level + 2 * level * level
+            self.assertEqual(mob_balance.hp_for_level(level), old_hp * 5)
+            self.assertEqual(combat.spawn_mob(self.vnum, self.room).max_health,
+                             mob_balance.hp_for_level(50))
+        self.assertEqual(mob_balance.target_damage_for_level(50),
+                         round(3 + 0.65 * 50 + 0.0075 * 50 * 50))
+
     def test_same_level_means_same_baseline_regardless_of_legacy_dice(self):
         first = combat.spawn_mob(self.vnum, self.room)
         self.template["hit_dice"] = "1d1+999999"
@@ -72,7 +81,7 @@ class MobBalanceTests(unittest.TestCase):
         self.assertEqual(mob_balance.settings()["hp_percent"], 150)
         self.assertTrue(os.path.isfile(os.path.join(self.temp.name, "mob_balance.json")))
         self.assertEqual(combat.spawn_mob(self.vnum, self.room).max_health,
-                         (80 + 20 * 50 + 2 * 50 * 50) * 150 // 100)
+                         (80 + 20 * 50 + 2 * 50 * 50) * 5 * 150 // 100)
         mob_balance.cmd_mobscale(session, ["preview", "50"])
         self.assertIn("Level 50", session.send.call_args.args[0])
 
