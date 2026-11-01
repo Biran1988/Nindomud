@@ -353,9 +353,16 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     level = (min(t["level"], MAX_KILLABLE_EVENT_MOB_LEVEL)
              if template_vnum != TRAINING_DUMMY_VNUM and t.get(EVENT_KILLABLE_TAG)
              else t["level"])
+    # Guard the nine canonical bijuu VNUMs even if a saved or builder-edited
+    # template accidentally re-enables auto_balance. Their hand-tuned health
+    # and attack dice must never be replaced by ordinary mobscale settings.
+    import tailed_beasts
+    is_tailed_beast = (tailed_beasts.BEAST_TEMPLATE_VNUM_BASE <= template_vnum
+                       < tailed_beasts.BEAST_TEMPLATE_VNUM_BASE + 9)
     # Preserve deliberately scripted event encounters; ordinary mobs get
     # identical baseline HP and expected damage for the same level.
-    auto_balance = (template_vnum != TRAINING_DUMMY_VNUM and t.get("auto_balance", True)
+    auto_balance = (template_vnum != TRAINING_DUMMY_VNUM and not is_tailed_beast
+                    and t.get("auto_balance", True)
                     and not t.get("_custom_boss_balance"))
     max_hp = (TRAINING_DUMMY_HEALTH if template_vnum == TRAINING_DUMMY_VNUM
               else mob_balance.hp_for_level(level) if auto_balance
