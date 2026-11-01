@@ -26,8 +26,8 @@ class MentalAttributeTests(unittest.TestCase):
         # This existing stat-formula regression resolves a lesson immediately
         # only inside the test; the new timing tests assert the real 15s delay.
         self.s.start_timed_action = lambda _label, _seconds, fn, flavor_schedule=None: fn()
-        with patch.object(combat, "mobs_in_room", return_value=[instructor]), \\
-             patch.object(combat, "is_stat_trainer", return_value=True), \\
+        with patch.object(combat, "mobs_in_room", return_value=[instructor]), \
+             patch.object(combat, "is_stat_trainer", return_value=True), \
              patch.object(commands.random, "randint", return_value=1):
             for words, name in ((["per"], "perception"), (["will"], "willpower"),
                                 (["wil"], "willpower"), (["chakra", "control"], "chakra_control"),
