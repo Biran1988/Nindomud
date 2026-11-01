@@ -5104,7 +5104,7 @@ DEFAULT_HELP_ENTRIES.append({
 for _entry in DEFAULT_HELP_ENTRIES:
     if _entry["primary_keyword"] == "train":
         _entry["body"] = (
-            "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\\n\\n"
+            "Syntax: train <attribute|str|wis|con|int|dex|luk|per|wil|cc>\n\n"
             "Find a stat trainer NPC in the same room first. Attribute training "
             "takes 15 real seconds and can succeed or fail; failure costs time "
             "but no training points. Success spends 1 training point and raises "
@@ -5117,7 +5117,7 @@ for _entry in DEFAULT_HELP_ENTRIES:
             "target spotting, and other attributes get their own shinobi drills. "
             "Chakra Control success still grants +10 permanent maximum Chakra. "
             "Builders: mset <mob vnum> flags Trainer; "
-            "spawnpoint add mob <mob vnum> <room vnum>.\\n"
+            "spawnpoint add mob <mob vnum> <room vnum>.\n"
         )
     elif _entry["primary_keyword"] == "attributes":
         _entry["body"] = _entry["body"].replace(
