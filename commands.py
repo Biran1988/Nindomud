@@ -163,6 +163,14 @@ def dispatch_line(session, line: str) -> None:
         session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
         return
 
+    # The full phrase is recognized without being published as a jutsu,
+    # listed skill, shortcut, or help topic (an intentionally hidden art).
+    if lower_words == ["reverse", "summoning", "jutsu"]:
+        # Route through normal command safeguards (downed/frozen/etc.),
+        # while keeping the secret phrase out of the public registry.
+        dispatch(session, "perform", words)
+        return
+
     if world.normalize_direction(lower_words[0]):
         dispatch(session, words[0], words[1:])
         return
@@ -4011,6 +4019,10 @@ def cmd_perform(session, args: List[str]) -> None:
         session.send("Perform what?")
         return
     lower_words = [w.lower() for w in args]
+    if lower_words == ["reverse", "summoning", "jutsu"]:
+        import reverse_summoning
+        reverse_summoning.cast(session)
+        return
     jutsu_key, consumed = data_jutsu.match_prefix(lower_words)
     if not jutsu_key:
         session.send("You don't know a jutsu by that name.")
