@@ -1,4 +1,5 @@
 """Regression coverage for the compact level command and score XP parity."""
+import re
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import Mock
@@ -28,8 +29,11 @@ class LevelCommandTests(unittest.TestCase):
             commands._row("Ninja Rank", "Chunin", "Rank Cap", 80),
         )))
         score = commands.build_score_lines(self.player, "Nobody")
-        self.assertIn(commands._row("Level", 25, "Class", self.player.primary_class.capitalize()), score)
-        self.assertIn(commands._row("Experience", 15_500_000, "Next Level", threshold), score)
+        plain = re.sub(r"&(?:\[\d+\]|.)", "", "\n".join(score))
+        self.assertIn("Level: 25", plain)
+        self.assertIn("Class: Taijutsu", plain)
+        self.assertIn("Experience: 15500000", plain)
+        self.assertIn(f"Next Level: {threshold}", plain)
 
     def test_maximum_level_needs_no_further_xp(self):
         self.player.level = leveling.MAX_LEVEL

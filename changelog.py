@@ -533,4 +533,5 @@ CHANGELOG = [
     ("15.386", "Bukijutsu elemental weapon enchantments now require a genuine Chakra Steel-forged weapon of ANY weapon type. Matching chakra natures grant +50% weapon damage and the elemental jutsu's hit effect; sword enchants stack with Samurai Sabre."),
     ("15.387", "Successful fishing, mining, lumbering, farming, cooking and gemcutting now show exactly how much job XP was earned on each action (for example, +35 Fishing XP)."),
     ("15.388", "Anki and apartment Recall are blocked from inside Kamui Pocket Dimensions. Captured players cannot escape the dimension with teleport shortcuts; Kamui's usual owner-controlled release still works."),
+    ("15.389", "SCORE and player MSTAT now use a compact, color-coded shinobi profile: three-column attributes, miniature Health/Chakra/Stamina meters, aligned combat statistics, one-line section dividers, and zero wasted blank lines. All former score details, rank caps, mission info, and ability visibility are preserved."),
 ]

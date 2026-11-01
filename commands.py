@@ -8744,15 +8744,56 @@ def _format_active_effects(effects: dict) -> str:
     return ", ".join(effect_strs)
 
 
+def _score_plain_length(text: str) -> int:
+    """Visible terminal width excluding NindoMUD's colour markup."""
+    return len(re.sub(r"&(?:\[\d+\]|.)", "", str(text)))
+
+
+def _score_fields(*fields, width: int = 78) -> List[str]:
+    """Adaptive 1–3 column score rows; preserve complete long values.
+
+    Every cell pads by its visible rather than escape-coded length. If a
+    value doesn't fit its column, it gets a full-width line of its own.
+    """
+    count = len(fields)
+    col_widths = [width // count] * count
+    for i in range(width % count):
+        col_widths[i] += 1
+    cells = []
+    for field in fields:
+        label, value = field[:2]
+        color = field[2] if len(field) > 2 else "&C"
+        plain = f" {label}: {value}"
+        styled = f" &W{label}:&x {color}{value}&x"
+        cells.append((plain, styled))
+    if any(_score_plain_length(plain) > col_widths[i] for i, (plain, _) in enumerate(cells)):
+        # No truncation of custom clan names, long player names, etc.
+        return [styled for _, styled in cells]
+    return ["".join(styled + " " * (col_widths[i] - _score_plain_length(plain))
+                    for i, (plain, styled) in enumerate(cells)).rstrip()]
+
+
+def _score_section(name: str, width: int = 78) -> str:
+    """One line per section instead of a three-line separator block."""
+    title = f"[ {name} ] "
+    return f"&C{title}&W{'-' * max(0, width - len(title))}&x"
+
+
+def _score_meter(value: int, maximum: int) -> str:
+    """Tiny 5-tick resource bar. Numeric totals always remain visible."""
+    fraction = max(0.0, min(1.0, value / maximum)) if maximum > 0 else 0.0
+    filled = min(5, max(0, round(fraction * 5)))
+    return f"{value}/{maximum} [{'#' * filled}{'.' * (5-filled)}]"
+
+
 def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] = None) -> List[str]:
-    """The full character-score display, built from an arbitrary Player
-    object rather than tied to a live session -- lets both `score`
-    (the player's own session) and `mstat <player name>` (an immortal
-    inspecting anyone, online or offline) share the exact same sheet."""
+    """Compact, colour-coordinated score, shared by SCORE and player MSTAT.
+
+    Keep the original full set of facts, progression and visibility rules;
+    only the presentation changes. Terminal-safe 78-column layout works
+    on classic MUD clients without Unicode box-drawing characters.
+    """
     width = 78
-    hp_color = colors.resource_color(p.health, p.maximum_health)
-    ch_color = colors.resource_color(p.chakra, p.maximum_chakra)
-    st_color = colors.resource_color(p.stamina, p.maximum_stamina)
     rank_cap = leveling.rank_level_cap(p)
     next_xp = leveling.xp_for_next_level(p.level) if p.level < rank_cap else p.experience
     set_bonus = equipped_set_bonus_percent(p)
@@ -8765,77 +8806,78 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
     stats["armor_class"] -= equipped_armor_class_bonus(p)
     village_full_name = VILLAGES[p.village]["village_name"]
 
+    title = f"{config.MUD_NAME.upper()} CHARACTER SCORE"
     lines = [
-        "&W" + "=" * width + "&x",
-        f"&C{f'{config.MUD_NAME.upper()} CHARACTER SCORE'.center(width)}&x",
-        "&W" + "=" * width + "&x",
-        "",
-        _row("Name", p.name, "Village", village_full_name),
-        _row("Rank", p.village_rank.title(), "Clan", data_clans.display_name(p.clan)),
-        _row("Level", p.level, "Class", p.primary_class.capitalize()),
-        _row("Experience", p.experience, "Next Level", next_xp),
-        _row("Rank Level Cap", rank_cap, "Advancement", "Promotion required" if p.level >= rank_cap and rank_cap < leveling.MAX_LEVEL else "Open"),
-        _row("Ryo", p.ryo, "Age", p.age),
-        _row("Sex", data_appearance.sex_display(p.sex), "Skin Tone", data_appearance.skin_tone_display(p.skin_tone)),
-        _row("Hair Color", data_appearance.hair_color_display(p.hair_color), "Eye Color", data_appearance.eye_color_display(p.eye_color)),
-        _row("Build", data_appearance.build_display(p.build), "Personality", data_appearance.personality_trait_display(p.personality_trait)),
-        _row("Total Play Time", _format_playtime(p.total_play_seconds)),
+        f"&W{'=' * width}&x",
+        f"&C{title.center(width)}&x",
+        _score_section("SHINOBI PROFILE", width),
     ]
+    if target_staff_level and target_staff_level != "player":
+        lines.append(f" &M[{target_staff_level.title()}]&x")
+    lines += _score_fields(("Name", p.name), ("Village", village_full_name))
+    lines += _score_fields(("Rank", p.village_rank.title(), "&Y"),
+                           ("Clan", data_clans.display_name(p.clan)),
+                           ("Class", p.primary_class.capitalize()))
+    lines += _score_fields(("Level", p.level), ("Experience", p.experience),
+                           ("Next Level", next_xp))
+    lines += _score_fields(("Rank Level Cap", rank_cap),
+                           ("Advancement", "Promotion required" if p.level >= rank_cap and rank_cap < leveling.MAX_LEVEL else "Open"))
+    lines += _score_fields(("Ryo", p.ryo, "&Y"), ("Age", p.age),
+                           ("Play Time", _format_playtime(p.total_play_seconds)))
+    lines += _score_fields(("Sex", data_appearance.sex_display(p.sex)),
+                           ("Skin Tone", data_appearance.skin_tone_display(p.skin_tone)))
+    lines += _score_fields(("Hair Color", data_appearance.hair_color_display(p.hair_color)),
+                           ("Eye Color", data_appearance.eye_color_display(p.eye_color)))
+    lines += _score_fields(("Build", data_appearance.build_display(p.build)),
+                           ("Personality", data_appearance.personality_trait_display(p.personality_trait)))
     if p.reincarnation:
         import reincarnation
-        lines.append(_row("Reincarnation", reincarnation.display_name(p),
-                          "Birth Lineage", p.reincarnation_birth_clan.title()))
+        lines += _score_fields(("Reincarnation", reincarnation.display_name(p)),
+                               ("Birth Lineage", p.reincarnation_birth_clan.title()))
+    nature_fields = []
     if p.chakra_nature_revealed:
-        if p.chakra_nature_secondary_revealed:
-            lines.append(_row("Chakra Nature", p.chakra_nature.capitalize(), "Secondary Nature", p.chakra_nature_secondary.capitalize()))
-        else:
-            lines.append(_row("Chakra Nature", p.chakra_nature.capitalize()))
+        nature_fields.append(("Chakra Nature", p.chakra_nature.capitalize()))
+    if p.chakra_nature_secondary_revealed:
+        nature_fields.append(("Secondary Nature", p.chakra_nature_secondary.capitalize()))
     if p.chakra_nature_tertiary_revealed:
-        lines.append(_row("Third Nature", p.chakra_nature_tertiary.capitalize()))
+        nature_fields.append(("Third Nature", p.chakra_nature_tertiary.capitalize()))
+    if nature_fields:
+        lines += _score_fields(*nature_fields)
     if p.elemental_release_id:
         import data_kekkei_genkai
-        lines.append(_row("Elemental Release", data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES[p.elemental_release_id]))
-    lines += [
-        "",
-        _section("COMBAT INFORMATION"),
-        "",
-        _resource_row("Health", hp_color, p.health, p.maximum_health, "Chakra", ch_color, p.chakra, p.maximum_chakra),
-        f" {st_color}Stamina: {p.stamina} / {p.maximum_stamina}&x",
-        "",
-        _row("Armor Class", stats["armor_class"], "Hit Roll", f"+{stats['hit_roll']}" if stats["hit_roll"] >= 0 else stats["hit_roll"]),
-        _row("Damage Roll", f"+{stats['damage_roll']}" if stats["damage_roll"] >= 0 else stats["damage_roll"], "Initiative", f"+{stats['initiative']}" if stats["initiative"] >= 0 else stats["initiative"]),
-        _row("Dodge Chance", f"{stats['dodge_chance']}%", "Critical Chance", f"{stats['critical_chance']}%"),
-        "",
-        _row("Position", p.position.title(), "Fighting", fighting_name),
-        _row("Player Kills", p.player_kills, "Player Deaths", p.player_deaths),
-    ]
+        lines += _score_fields(("Elemental Release", data_kekkei_genkai.ELEMENTAL_RELEASE_NAMES[p.elemental_release_id]))
+
+    lines.append(_score_section("COMBAT INFORMATION", width))
+    lines += _score_fields(
+        ("Health", _score_meter(p.health, p.maximum_health), colors.resource_color(p.health, p.maximum_health)),
+        ("Chakra", _score_meter(p.chakra, p.maximum_chakra), colors.resource_color(p.chakra, p.maximum_chakra)),
+        ("Stamina", _score_meter(p.stamina, p.maximum_stamina), colors.resource_color(p.stamina, p.maximum_stamina)))
+    signed = lambda n: f"{n:+d}"
+    lines += _score_fields(("Armor Class", stats["armor_class"]),
+                           ("Hit Roll", signed(stats["hit_roll"])),
+                           ("Damage Roll", signed(stats["damage_roll"])))
+    lines += _score_fields(("Dodge Chance", f"{stats['dodge_chance']}%"),
+                           ("Critical Chance", f"{stats['critical_chance']}%"),
+                           ("Initiative", signed(stats["initiative"])))
+    lines += _score_fields(("Position", p.position.title()), ("Fighting", fighting_name))
+    lines += _score_fields(("Player Kills", p.player_kills), ("Player Deaths", p.player_deaths))
     if set_bonus:
-        lines.append(f" &Y(Armor set bonus active: +{set_bonus}% to the stats above)&x")
-    lines += [
-        "",
-        _section("ATTRIBUTES"),
-        "",
-        _row("Strength", p.strength, "Wisdom", p.wisdom),
-        _row("Constitution", p.constitution, "Intelligence", p.intelligence),
-        _row("Dexterity", p.dexterity, "Luck", p.luck),
-        _row("Perception", p.perception, "Willpower", p.willpower),
-        _row("Chakra Control", p.chakra_control),
-        _row("Practice Points", p.practice_points, "Training Points", p.training_points),
-        "",
-        _section("MISSION INFO"),
-        "",
-    ]
+        lines.append(f" &YArmor set bonus active: +{set_bonus}% to the stats above&x")
 
-    if target_staff_level and target_staff_level != "player":
-        lines.insert(3, f" &M[{target_staff_level.title()}]&x")
+    lines.append(_score_section("ATTRIBUTES", width))
+    lines += _score_fields(("Strength", p.strength), ("Wisdom", p.wisdom),
+                           ("Intelligence", p.intelligence))
+    lines += _score_fields(("Constitution", p.constitution), ("Dexterity", p.dexterity),
+                           ("Luck", p.luck))
+    lines += _score_fields(("Perception", p.perception), ("Willpower", p.willpower),
+                           ("Chakra Control", p.chakra_control))
+    lines += _score_fields(("Practice Points", p.practice_points),
+                           ("Training Points", p.training_points))
 
-    if p.active_status_effects:
-        lines.append(" &WActive effects:&x " + _format_active_effects(p.active_status_effects))
-    else:
-        lines.append(" &WActive effects:&x &Gnone&x")
+    lines.append(_score_section("MISSION INFO", width))
+    lines.append(" &WActive effects:&x " + _format_active_effects(p.active_status_effects))
     if p.taijutsu_stance:
         lines.append(f" &YTaijutsu stance: {data_jutsu.JUTSU[p.taijutsu_stance]['display_name']}&x")
-
     if p.active_missions:
         mission_strs = []
         for entry in p.active_missions:
@@ -8845,7 +8887,6 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
         lines.append(" &WActive missions:&x " + "; ".join(mission_strs))
     else:
         lines.append(" &WActive missions:&x &Dnone&x")
-
     rank_counts = missions.completed_counts_by_rank(p)
     total_completed = sum(rank_counts.values())
     if total_completed:
@@ -8853,12 +8894,10 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
         lines.append(f" &WMissions completed:&x &C{total_completed}&x total -- {rank_str}")
     else:
         lines.append(" &WMissions completed:&x &C0&x")
-
     rep = p.village_reputation.get(p.village, 0)
     rep_color = "&G" if rep > 0 else ("&R" if rep < 0 else "&W")
     lines.append(f" &WReputation with {village_full_name}:&x {rep_color}{rep}&x")
-    lines.append("")
-    lines.append("&W" + "=" * width + "&x")
+    lines.append(f"&W{'=' * width}&x")
     return lines
 
 
