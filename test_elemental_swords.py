@@ -7,6 +7,8 @@ from unittest.mock import Mock, patch
 import content
 import data_jutsu
 import ninja_arts
+import olc
+import data_weapons
 from models import Player
 
 
@@ -18,11 +20,18 @@ class TestElementalSword(unittest.TestCase):
         self.p.chakra_nature_revealed = True
         self.p.chakra = self.p.stamina = 1000
         self.p.learned_skills.extend(("Weapon Enchantment", "Disenchantment"))
-        self.p.equipment["wielded"] = "A Basic Sword"
+        # Every positive enchantment case uses an actual Chakra Steel weapon,
+        # not merely an arbitrary shop sword or a suggestive item name.
+        proto = olc.default_object(999901, "A Forged Chakra Steel Sword")
+        proto.update({"item_type": "weapon", "weapon_type": "sword", "wear_loc": "wielded",
+                      "craft_materials": ["chakra steel ingot", "yew log"]})
+        olc.OBJECT_TEMPLATES[999901] = proto
+        self.addCleanup(olc.OBJECT_TEMPLATES.pop, 999901, None)
+        self.p.equipment["wielded"] = "A Forged Chakra Steel Sword"
         self.s = NS(player=self.p, send=Mock())
 
     def enchant(self, element):
-        ninja_arts.use_weapon_art(self.s, "weapon enchantment", ["basic", "sword", element])
+        ninja_arts.use_weapon_art(self.s, "weapon enchantment", ["forged", "chakra", "steel", "sword", element])
         return self.p.equipment["wielded"]
 
     def test_all_five_elements_reuse_the_real_jutsu_effects(self):
@@ -34,16 +43,16 @@ class TestElementalSword(unittest.TestCase):
             with self.subTest(element=element):
                 self.p.chakra_nature = element
                 self.p.cooldowns.clear()
-                self.p.equipment["wielded"] = "A Basic Sword"
+                self.p.equipment["wielded"] = "A Forged Chakra Steel Sword"
                 weapon = self.enchant(element)
                 self.assertEqual(ninja_arts.element_of(weapon), element)
-                self.assertEqual(ninja_arts.base_item(weapon), "A Basic Sword")
+                self.assertEqual(ninja_arts.base_item(weapon), "A Forged Chakra Steel Sword")
                 target = Player("Target", "Target")
                 with patch.object(ninja_arts.random, "randint", return_value=1):
                     damage = ninja_arts.weapon_hit(self.p, target, 100)
                 self.assertEqual(damage, 187 if element == "earth" else 150)
                 self.assertEqual(effect in target.active_status_effects, effect is not None)
-                jutsu = data_jutsu.JUTSU[ninja_arts.ELEMENTAL_SWORD_JUTSU[element]]
+                jutsu = data_jutsu.JUTSU[ninja_arts.ELEMENTAL_WEAPON_JUTSU[element]]
                 self.assertEqual((jutsu.get("effect"), jutsu.get("effect_chance_pct", 0)), (effect, chance))
 
     def test_stacks_multiplicatively_with_samurai_sabre(self):
@@ -75,7 +84,7 @@ class TestElementalSword(unittest.TestCase):
         before = (self.p.chakra, self.p.stamina)
         self.enchant("water")
         self.assertEqual((self.p.chakra, self.p.stamina), before)
-        self.assertEqual(self.p.equipment["wielded"], "A Basic Sword")
+        self.assertEqual(self.p.equipment["wielded"], "A Forged Chakra Steel Sword")
         self.p.inventory = ["A Basic Kunai"]
         ninja_arts.use_weapon_art(self.s, "weapon enchantment", ["kunai", "fire"])
         self.assertEqual(self.p.inventory, ["A Basic Kunai"])
@@ -88,7 +97,7 @@ class TestElementalSword(unittest.TestCase):
         self.assertEqual(ninja_arts.element_of(item), "water")
         self.p.cooldowns.clear()
         ninja_arts.use_weapon_art(self.s, "disenchantment", ["sword"])
-        self.assertEqual(self.p.equipment["wielded"], "A Basic Sword")
+        self.assertEqual(self.p.equipment["wielded"], "A Forged Chakra Steel Sword")
         self.p.chakra_nature_tertiary = "earth"
         self.p.chakra_nature_tertiary_revealed = True
         self.p.cooldowns.clear()

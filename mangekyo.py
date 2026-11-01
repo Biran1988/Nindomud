@@ -53,6 +53,21 @@ def _create_pocket_room(world_module) -> int:
     return vnum
 
 
+def is_inside_kamui_pocket(player, world_module) -> bool:
+    """True only while *inside* a Kamui pocket, for owner or prisoner.
+
+    The owner may have a pocket open while standing outside, so checking
+    kamui_pocket_dimension_vnum alone would incorrectly block normal travel.
+    The actual temporary room is the authority for prisoners, who do not
+    have the owner's pocket VNUM stored on their character.
+    """
+    room = world_module.WORLD.get(getattr(player, "room_vnum", None))
+    if room is not None and room.name == "A Pocket Dimension":
+        return True
+    return bool(getattr(player, "kamui_pocket_dimension_active", False)
+                and getattr(player, "kamui_pocket_dimension_vnum", None) == player.room_vnum)
+
+
 def open_pocket_dimension(caster_session, target_session, world_module) -> int:
     """Send a same-room target into a new pocket without moving the caster."""
     import whirlpool_fuinjutsu

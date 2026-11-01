@@ -46,6 +46,36 @@ class KamuiCommandTests(unittest.TestCase):
         output.clear()
         return session, output
 
+    def test_anki_and_recall_cannot_escape_kamui_captivity(self):
+        """A captive cannot recall to Kage or an apartment, even off cooldown."""
+        self.caster.handle_line("perform kamui Target")
+        pocket = self.target.player.room_vnum
+        self.assertEqual(world.WORLD.get(pocket).name, "A Pocket Dimension")
+        self.target.player.apartment_room_vnum = 2
+        self.target_output.clear()
+        self.target.handle_line("anki")
+        self.assertEqual(self.target.player.room_vnum, pocket)
+        self.assertIn("Anki cannot escape", "".join(self.target_output))
+        self.assertNotIn("anki", self.target.player.cooldowns)
+        self.target_output.clear()
+        self.target.handle_line("recall")
+        self.assertEqual(self.target.player.room_vnum, pocket)
+        self.assertIn("cannot recall", "".join(self.target_output))
+        self.caster.handle_line("perform kamui close")
+        self.assertEqual(self.target.player.room_vnum, 1)
+
+    def test_anki_blocked_for_kamui_owner_inside_but_not_outside(self):
+        self.caster.handle_line("perform kamui self")
+        pocket = self.caster.player.room_vnum
+        self.output.clear()
+        self.caster.handle_line("anki")
+        self.assertEqual(self.caster.player.room_vnum, pocket)
+        self.assertIn("Anki cannot escape", "".join(self.output))
+        self.assertNotIn("anki", self.caster.player.cooldowns)
+        self.caster.handle_line("kpocket close")
+        self.assertEqual(self.caster.player.room_vnum, 1)
+        self.assertFalse(mangekyo.is_inside_kamui_pocket(self.caster.player, world))
+
     def test_caster_closes_from_outside_and_releases_player_immediately(self):
         import storage
         self.caster.handle_line("perform kamui Target")

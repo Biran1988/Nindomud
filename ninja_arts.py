@@ -17,12 +17,12 @@ import world
 PROPERTIES = ("flaming", "frost", "life", "sharp", "vorpal", "shocking", "poison")
 # Permanent *item-bound* chakra imbuements use the same inventory/equipment
 # name persistence as older Ninja Arts, not per-character or prototype state.
-ELEMENTAL_SWORD_JUTSU = {
+ELEMENTAL_WEAPON_JUTSU = {
     "fire": "fireball jutsu", "water": "water dragon jutsu",
     "wind": "wind blade jutsu", "lightning": "lightning strike jutsu",
     "earth": "earth wall crusher",
 }
-ELEMENTAL_SWORD_DAMAGE_PERCENT = 50
+ELEMENTAL_WEAPON_DAMAGE_PERCENT = 50
 EARTH_SWORD_IMPACT_PERCENT = 25  # Earth Wall Crusher: greater direct damage, no status
 
 TRAPS = {
@@ -44,7 +44,7 @@ def element_of(item):
     """Identify a permanent single-element sword enchantment, if any."""
     if not item:
         return None
-    for element in ELEMENTAL_SWORD_JUTSU:
+    for element in ELEMENTAL_WEAPON_JUTSU:
         if item.lower().endswith(f" [element:{element}]"):
             return element
     return None
@@ -58,13 +58,47 @@ def base_item(item):
     return item[:-(len(prop) + 7)] if prop else item
 
 
+def is_chakra_steel_weapon(item: str) -> bool:
+    """Only a *genuinely forged* Chakra Steel weapon is enchantable.
+
+    Item names are player-controlled. Never trust the displayed name or an
+    appended suffix as proof of materials. Match the exact saved item
+    prototype first and inspect its original crafting record. Legacy
+    forged prototypes used only a generated description; accept that
+    canonical format for existing saved weapons. A developer-made item
+    can also declare explicit material provenance on its own prototype.
+    """
+    import olc
+    original_name = base_item(item)
+    if not original_name:
+        return False
+    for proto in olc.OBJECT_TEMPLATES.values():
+        if proto.get("short_desc", "").casefold() != original_name.casefold():
+            continue
+        if proto.get("item_type") != "weapon" or proto.get("weapon_type") not in data_weapons.WEAPON_TYPES:
+            return False
+        materials = proto.get("craft_materials")
+        if isinstance(materials, (tuple, list)) and materials:
+            return "chakra steel ingot" in {str(x).casefold() for x in materials}
+        description = str(proto.get("description", "")).casefold()
+        # Only the specific canonical forging statement, not a player's
+        # custom display name or description with incidental keywords.
+        import re
+        legacy = re.fullmatch(
+            r"a crafted weapon named .+, forged from ([a-z ]+) and ([a-z ]+)\.",
+            description,
+        )
+        return bool(legacy and "chakra steel ingot" in legacy.groups())
+    return False
+
+
 def _known_elements(player):
     """Only the player's revealed, owned natures may be used for enchanting."""
     return {nature for nature, revealed in (
         (getattr(player, "chakra_nature", None), getattr(player, "chakra_nature_revealed", False)),
         (getattr(player, "chakra_nature_secondary", None), getattr(player, "chakra_nature_secondary_revealed", False)),
         (getattr(player, "chakra_nature_tertiary", None), getattr(player, "chakra_nature_tertiary_revealed", False)),
-    ) if revealed and nature in ELEMENTAL_SWORD_JUTSU}
+    ) if revealed and nature in ELEMENTAL_WEAPON_JUTSU}
 
 
 def _owned_item(player, query):
@@ -120,7 +154,7 @@ def use_weapon_art(session, key, args):
         return
     if key == "weapon enchantment":
         available = "flaming|frost|life|sharp|vorpal|shocking|fire|water|wind|lightning|earth"
-        if len(args) < 2 or args[-1].lower() not in (*PROPERTIES[:-1], *ELEMENTAL_SWORD_JUTSU):
+        if len(args) < 2 or args[-1].lower() not in (*PROPERTIES[:-1], *ELEMENTAL_WEAPON_JUTSU):
             session.send(f"Usage: weapon enchantment <weapon> <{available}>")
             return
         prop = args[-1].lower()
@@ -145,13 +179,13 @@ def use_weapon_art(session, key, args):
     if key != "disenchantment" and (old or element):
         session.send("That weapon is already bound. Disenchant it first.")
         return
-    is_elemental = prop in ELEMENTAL_SWORD_JUTSU
+    is_elemental = prop in ELEMENTAL_WEAPON_JUTSU
     if is_elemental:
         if player.primary_class != "bukijutsu":
-            session.send("Only Bukijutsu users can imbue elemental swords.")
+            session.send("Only Bukijutsu users can imbue elemental weapons.")
             return
-        if data_weapons.weapon_type_for_item(base_item(item)) != "sword":
-            session.send("Elemental chakra can only be bound to a sword.")
+        if not is_chakra_steel_weapon(item):
+            session.send("Elemental enchantments require a weapon forged with a Chakra Steel Ingot.")
             return
         if prop not in _known_elements(player):
             session.send("You must first discover and possess that chakra nature to enchant a sword with it.")
@@ -271,15 +305,15 @@ def weapon_hit(attacker, victim, damage):
     if damage > 0 and getattr(attacker, "samurai_sabre_active", False) and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword":
         damage = max(1, damage * 120 // 100)
     element = element_of(wielded)
-    # This buff belongs to the WIELDER, not the sword's original creator.
+    # This buff belongs to the WIELDER, not the weapon's original creator.
     # Both the Bukijutsu class and a matching unlocked chakra nature are
     # required on every strike. An ordinary character can carry/trade an
-    # enchanted sword without gaining its elemental boost or status effect.
+    # enchanted weapon without gaining its elemental boost or status effect.
     if (damage > 0 and element and getattr(attacker, "primary_class", None) == "bukijutsu"
             and element in _known_elements(attacker)
-            and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword"):
-        damage = max(1, damage * (100 + ELEMENTAL_SWORD_DAMAGE_PERCENT) // 100)
-        jutsu = data_jutsu.JUTSU[ELEMENTAL_SWORD_JUTSU[element]]
+            and is_chakra_steel_weapon(wielded)):
+        damage = max(1, damage * (100 + ELEMENTAL_WEAPON_DAMAGE_PERCENT) // 100)
+        jutsu = data_jutsu.JUTSU[ELEMENTAL_WEAPON_JUTSU[element]]
         effect = jutsu.get("effect")
         if element == "earth":
             # Earth nature mirrors Earth Wall Crusher's extra upfront force.
@@ -287,7 +321,7 @@ def weapon_hit(attacker, victim, damage):
         elif effect and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 0):
             status_effects.apply_effect(
                 victim.active_status_effects, effect,
-                source=f"{element} chakra sword")
+                source=f"{element} chakra weapon")
         return damage
     if prop is None or damage <= 0:
         return damage

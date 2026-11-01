@@ -2652,6 +2652,10 @@ def cmd_spawnpoint(session, args: List[str]) -> None:
 
 def cmd_recall(session, args: List[str]) -> None:
     player = session.player
+    import mangekyo
+    if mangekyo.is_inside_kamui_pocket(player, world):
+        session.send("&RYou cannot recall out of a Kamui pocket dimension. Only the caster can release you.&x")
+        return
     if player.in_chunin_exam:
         session.send("&RRecall is denied during the Chunin Exam. Leaving means failing and restarting; 'leave confirm' forfeits your attempt.&x")
         return
@@ -2697,6 +2701,10 @@ def cmd_anki(session, args: List[str]) -> None:
     1000), the same real room used elsewhere for the Hokage's own
     chamber."""
     player = session.player
+    import mangekyo
+    if mangekyo.is_inside_kamui_pocket(player, world):
+        session.send("&RAnki cannot escape a Kamui pocket dimension. Only the caster can release you.&x")
+        return
     if player.in_chunin_exam:
         session.send("&RAnki cannot remove you from the Chunin Exam. Leaving means failure and a full restart. Use 'leave confirm' to forfeit.&x")
         return
@@ -6552,6 +6560,22 @@ def cmd_roulette(session, args: List[str]) -> None:
     session.start_timed_action("roulette", ROULETTE_DELAY_SECONDS, resolve)
 
 
+def _award_job_action_xp(session, job: str, amount: int) -> None:
+    """Report real XP earned from a successful job action, not total XP.
+
+    The central job ledger still owns level-up/stat rewards. Report only
+    the increase it actually accepted (0 at the job cap), so action
+    failures, denied inventory deliveries and maxed jobs don't lie.
+    """
+    before = jobs.get_job_xp(session.player, job)
+    level_messages = jobs.add_job_xp(session.player, job, amount)
+    gained = jobs.get_job_xp(session.player, job) - before
+    if gained > 0:
+        session.send(f"&G+{gained:,} {job.capitalize()} XP&x")
+    for message in level_messages:
+        session.send(message)
+
+
 FISHING_DELAY_SECONDS = 6.0
 
 
@@ -6639,13 +6663,11 @@ def cmd_fish(session, args: List[str]) -> None:
             session.send(f"You caught {rarity_colored_name(display_name)}, but had nowhere to put it!")
             session.send(inventory.full_message(reason, display_name))
             session.send("You release it back into the water.")
-            for message in jobs.add_job_xp(player, "fishing", catch["xp"]):
-                session.send(message)
+            _award_job_action_xp(session, "fishing", catch["xp"])
             return
 
         session.send(f"You caught {rarity_colored_name(display_name)}!")
-        for message in jobs.add_job_xp(player, "fishing", catch["xp"]):
-            session.send(message)
+        _award_job_action_xp(session, "fishing", catch["xp"])
 
     session.send("You cast your line and wait...")
     session.start_timed_action("fishing", FISHING_DELAY_SECONDS, resolve)
@@ -6710,8 +6732,7 @@ def cmd_mine(session, args: List[str]) -> None:
             return
 
         session.send(f"You mine {rarity_colored_name(display_name)}!")
-        for message in jobs.add_job_xp(player, "mining", find["xp"]):
-            session.send(message)
+        _award_job_action_xp(session, "mining", find["xp"])
 
         bonus = gems.roll_bonus_gem()
         if bonus:
@@ -6859,8 +6880,7 @@ def cmd_chop(session, args: List[str]) -> None:
             return
 
         session.send(f"You chop free {rarity_colored_name(display_name)}!")
-        for message in jobs.add_job_xp(player, "lumberjack", find["xp"]):
-            session.send(message)
+        _award_job_action_xp(session, "lumberjack", find["xp"])
 
     session.send("You swing your axe at the trunk...")
     session.start_timed_action("lumberjack", FISHING_DELAY_SECONDS, resolve)
@@ -6922,8 +6942,7 @@ def cmd_farm(session, args: List[str]) -> None:
             return
 
         session.send(f"You harvest {rarity_colored_name(display_name)}!")
-        for message in jobs.add_job_xp(player, "farming", find["xp"]):
-            session.send(message)
+        _award_job_action_xp(session, "farming", find["xp"])
 
     session.send("You till the soil and tend the crops...")
     session.start_timed_action("farming", FISHING_DELAY_SECONDS, resolve)
@@ -7016,8 +7035,7 @@ def cmd_cook(session, args: List[str]) -> None:
             return
 
         session.send(f"You cook {rarity_colored_name(display_name)}!")
-        for message in jobs.add_job_xp(player, "cooking", result["xp"]):
-            session.send(message)
+        _award_job_action_xp(session, "cooking", result["xp"])
 
     session.send(f"You start cooking {ingredient_name}...")
     session.start_timed_action("cooking", COOK_DELAY_SECONDS, resolve)
@@ -7071,8 +7089,7 @@ def cmd_gemcut(session, args: List[str]) -> None:
             f"Hitroll +{bonuses.get('hitroll', 0)} and Damageroll +{bonuses.get('damroll', 0)} "
             "for future weapon upgrades."
         )
-        for message in jobs.add_job_xp(player, "gemcutter", xp):
-            session.send(message)
+        _award_job_action_xp(session, "gemcutter", xp)
 
     session.send(f"You carefully start cutting {raw_gem}...")
     session.start_timed_action("gemcutting", COOK_DELAY_SECONDS, resolve)
@@ -7306,6 +7323,11 @@ def cmd_craft(session, args: List[str]) -> None:
             proto["short_desc"] = item_name
             proto["long_desc"] = f"{item_name} lies here."
             proto["description"] = f"A crafted {kind} named {item_name}, forged from {material_a} and {material_b}."
+            # This is an immutable provenance record of the *ingredients*,
+            # separate from an arbitrary player-chosen item name. Chakra
+            # enchantments must not be earned by naming a cheap iron blade
+            # "Chakra Steel". The provenance lives in the saved object.
+            proto["craft_materials"] = [material_a, material_b]
             if kind == "weapon":
                 proto["item_type"] = "weapon"
                 proto["weapon_type"] = sub_type
@@ -7337,6 +7359,10 @@ def cmd_craft(session, args: List[str]) -> None:
                 session.send(inventory.full_message(reason, item_name))
                 return
             session.send(f"&WYou craft {rarity_colored_name(item_name)}!&x")
+            # Newly forged objects must survive server restarts, including
+            # their material provenance. Never replace existing /data files.
+            import world_autosave
+            world_autosave.mark_dirty()
 
         session.send(f"You set to work crafting {item_name}...")
         session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, resolve)
