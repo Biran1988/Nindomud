@@ -43,8 +43,9 @@ class MobBalanceTests(unittest.TestCase):
         for level in (1, 15, 50, 100, 250):
             old_hp = 80 + 20 * level + 2 * level * level
             self.assertEqual(mob_balance.hp_for_level(level), old_hp * 5)
+            self.template["level"] = level
             self.assertEqual(combat.spawn_mob(self.vnum, self.room).max_health,
-                             mob_balance.hp_for_level(50))
+                             mob_balance.hp_for_level(level))
         self.assertEqual(mob_balance.target_damage_for_level(50),
                          round(3 + 0.65 * 50 + 0.0075 * 50 * 50))
 
