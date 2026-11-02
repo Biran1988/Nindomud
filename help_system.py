@@ -1130,9 +1130,9 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: title <words> | title set <words> | title color <name|0-255> | title clear\n"
             "\n"
-            "Add a cosmetic colored title after your character name on WHO, WHOIS, SCORE, room LOOK and LOOK <player>. Titles never appear in OOC chat, OOC emotes or CHATLOG.\n"
+            "Add a colored cosmetic title after your character name ONLY on the WHO list. Not shown in OOC, CHATLOG, WHOIS, SCORE, LOOK, emotes or other character displays.\n"
             "\n"
-            "Titles allow 1-40 plain characters. Choose a named color or palette value 0-255 with TITLE COLOR. TITLE shows your character display and TITLE CLEAR removes the title. Your actual account name and command targeting remain unchanged. Settings save immediately and persist through quit/reboot."
+            "Titles allow 1-40 plain characters. Choose a named color or palette value 0-255 with TITLE COLOR. TITLE previews your WHO-list display and TITLE CLEAR removes the title. Your actual account name and command targeting remain unchanged. Settings save immediately and persist through quit/reboot."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
