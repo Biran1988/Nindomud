@@ -33,7 +33,7 @@ Confirmed design, locked in across the whole conversation:
   matching hitroll"). A crafted ARMOR's combined stat value applies
   as -armor_class (confirmed earlier in this same conversation,
   lower/more negative is better, matching ROM convention).
-- Unlocked by EITHER Bukijutsu level 25+, OR any class at level 70+
+- Unlocked by EITHER Bukijutsu level 25+, OR any class at level 100+
   (confirmed directly: two genuinely separate real unlock paths to
   the same skill, not one combined gate).
 """
@@ -71,12 +71,12 @@ def equipment_metal_material(value: str):
 
 
 CRAFTING_BUKIJUTSU_MIN_LEVEL = 25  # confirmed directly: the first, real unlock path
-CRAFTING_GENERAL_MIN_LEVEL = 70  # confirmed directly: the second, separate real unlock path (any class)
+CRAFTING_GENERAL_MIN_LEVEL = 100  # confirmed directly: the second, separate real unlock path (any class)
 
 
 def can_craft(player) -> bool:
     """Whether this player currently meets EITHER real, confirmed
-    unlock path -- Bukijutsu at level 25+, or any class at level 70+.
+    unlock path -- Bukijutsu at level 25+, or any class at level 100+.
     Confirmed directly as two genuinely separate paths, not a single
     combined gate."""
     if player.primary_class == "bukijutsu" and player.level >= CRAFTING_BUKIJUTSU_MIN_LEVEL:
