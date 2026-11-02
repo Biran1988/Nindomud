@@ -11,7 +11,7 @@ MAX_TITLE_STORED_LENGTH = 160
 _TITLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ',.!?_-]*$")
 # Inline ROM/xterm colors may change *within* a title (not the player name).
 # Do not accept terminal escapes, reset codes or other arbitrary & controls.
-_INLINE_COLOR_RE = re.compile(r"&\\[(\\d{1,3})\\]|&([RGBYCMWDOrgybcmwd])")
+_INLINE_COLOR_RE = re.compile(r"&\[(\d{1,3})\]|&([RGBYCMWDOrgybcmwd])")
 COLOR_CHOICES = {
     "red": "&r", "green": "&g", "yellow": "&y", "blue": "&b",
     "cyan": "&c", "magenta": "&m", "purple": "&m",
