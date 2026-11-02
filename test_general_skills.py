@@ -7,6 +7,7 @@ from unittest.mock import patch
 import combat
 import commands
 import data_jutsu
+import jutsu_balance
 import general_skills as skills
 import genjutsu
 import hidden_mist
@@ -81,9 +82,9 @@ class GeneralSkillTests(unittest.TestCase):
             self.cast(self.actor, key)
             self.assertTrue(skills.active(self.actor.player, effect), key)
             self.assertEqual(self.actor.player.active_status_effects[effect]["duration"],
-                             1 if status_effects.EFFECT_DEFS[effect].get("toggled") else 110)
-            self.assertEqual(before[0] - self.actor.player.chakra, info["chakra_cost"])
-            self.assertEqual(before[1] - self.actor.player.stamina, info["stamina_cost"])
+                             1 if status_effects.EFFECT_DEFS[effect].get("toggled") else jutsu_balance.boosted_duration(self.actor.player, info, 110))
+            self.assertEqual(before[0] - self.actor.player.chakra, jutsu_balance.cast_cost(self.actor.player, info, "chakra"))
+            self.assertEqual(before[1] - self.actor.player.stamina, jutsu_balance.cast_cost(self.actor.player, info, "stamina"))
             growth_calls = self.grow.call_count
             self.cast(self.actor, key + " on")
             self.assertEqual(self.grow.call_count, growth_calls)
@@ -118,7 +119,7 @@ class GeneralSkillTests(unittest.TestCase):
                 self.cast(self.actor, key)
                 self.assertTrue(skills.active(player, effect), self.output)
                 self.assertEqual(player.active_status_effects[effect]["duration"],
-                                 1 if status_effects.EFFECT_DEFS[effect].get("toggled") else 160)
+                                 1 if status_effects.EFFECT_DEFS[effect].get("toggled") else jutsu_balance.boosted_duration(player, data_jutsu.JUTSU[key], 160))
                 self.cast(self.actor, key + " off")
         self.assertEqual(player.practiced_skills, [])
         self.assertEqual(player.practice_exempt_skills, [])
@@ -380,7 +381,10 @@ class GeneralSkillTests(unittest.TestCase):
         with patch.object(combat.random, "randint", return_value=1), \
                 patch.object(combat.derived_stats, "dodge_chance", return_value=-100):
             combat.use_jutsu_on_player(self.viewer, "narakumi", self.actor)
-        self.assertEqual(self.actor.player.active_status_effects["narakumi"]["duration"], 16)
+        self.assertEqual(self.actor.player.active_status_effects["narakumi"]["duration"],
+                         jutsu_balance.boosted_duration(self.viewer.player, data_jutsu.JUTSU["narakumi"],
+                             skills.focused_duration(self.actor.player, status_effects.genjutsu_duration("narakumi")),
+                             is_pvp=True, effect="narakumi"))
 
     def test_focused_mind_shortens_room_sleep_without_granting_immunity(self):
         self.actor.player.skill_proficiencies["Focused Mind"] = 100
@@ -391,7 +395,10 @@ class GeneralSkillTests(unittest.TestCase):
         with patch.object(genjutsu.random, "randint", return_value=1):
             genjutsu.resolve_cast(self.viewer, "nehan shouja", {
                 "kind": "room_sleep", "room_vnum": self.room.vnum})
-        self.assertEqual(self.actor.player.active_status_effects["asleep"]["duration"], 8)
+        self.assertEqual(self.actor.player.active_status_effects["asleep"]["duration"],
+                         jutsu_balance.boosted_duration(self.viewer.player, info,
+                             skills.focused_duration(self.actor.player, status_effects.genjutsu_duration("asleep")),
+                             is_pvp=True, effect="asleep"))
 
     def test_camouflage_prevents_normal_mob_aggression_but_sensors_can_engage(self):
         mob = combat.Mob(992719, 992719, "Alert Guard", 25, 200, 200, 1, 0, 0)
