@@ -46,6 +46,7 @@ from typing import Dict, List, Optional
 
 import config
 import data_jutsu
+import jutsu_balance
 import hyuga
 import data_mangekyo
 import data_passives
@@ -750,18 +751,17 @@ def start_attack(session, mob: Mob) -> None:
 
 
 def jutsu_resource_shortfall(player: Player, jutsu: dict, jutsu_key: str) -> str | None:
-    """Use the same copied-jutsu and chakra-control price as casting."""
-    is_copied_cast = player.copied_jutsu_key == jutsu_key
-    chakra_cost = player.copied_jutsu_cost if is_copied_cast else jutsu["chakra_cost"]
-    if not is_copied_cast and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
-        discount = derived_stats.chakra_control_cost_discount_percent(player.chakra_control)
-        chakra_cost = round(chakra_cost * (100 - discount) / 100)
+    """Match actual live casting prices for hand-sign prechecks and utility."""
+    copied = player.copied_jutsu_key == jutsu_key
+    chakra_cost = jutsu_balance.cast_cost(
+        player, jutsu, "chakra",
+        base_override=player.copied_jutsu_cost if copied else None)
+    stamina_cost = jutsu_balance.cast_cost(player, jutsu, "stamina")
     if player.chakra < chakra_cost:
         return "You don't have enough chakra."
-    if player.stamina < jutsu["stamina_cost"]:
+    if player.stamina < stamina_cost:
         return "You don't have enough stamina."
     return None
-
 
 class PendingCast:
     """A hand-sign casting delay in progress, per direct request/
@@ -2841,11 +2841,12 @@ def use_shadow_clone_jutsu(session) -> None:
     if now < cooldown_ready_at:
         jutsu_colors.send(session, f"&WShadow Clone Jutsu&x is still recovering ({cooldown_ready_at - now:.1f}s).")
         return
-    if player.chakra < jutsu["chakra_cost"]:
+    chakra_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    if player.chakra < chakra_cost:
         session.send("You don't have enough chakra.")
         return
 
-    player.chakra -= jutsu["chakra_cost"]
+    player.chakra -= chakra_cost
     player.cooldowns["shadow clone jutsu"] = now + jutsu["cooldown"]
 
     mastery = player.skill_proficiencies.get("Shadow Clone Jutsu", 0)
@@ -2894,7 +2895,7 @@ def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
     if now < player.cooldowns.get(jutsu_key, 0):
         jutsu_colors.send(session, f"{jutsu['display_name']} is still recovering.")
         return
-    cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
+    cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
     if player.chakra < cost:
         session.send("You don't have enough chakra.")
         return
@@ -2928,12 +2929,14 @@ def use_barrier(session) -> None:
     if now < player.cooldowns.get("barrier", 0):
         session.send("Barrier is still recovering.")
         return
-    if player.chakra < jutsu["chakra_cost"]:
+    chakra_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    if player.chakra < chakra_cost:
         session.send("You don't have enough chakra.")
         return
-    player.chakra -= jutsu["chakra_cost"]
+    player.chakra -= chakra_cost
     player.cooldowns["barrier"] = now + jutsu["cooldown"]
-    duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS["barrier"]["duration"])
+    duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(
+        player, jutsu, status_effects.EFFECT_DEFS["barrier"]["duration"], effect="barrier"))
     status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier",
                                 duration_override=duration)
     grow_skill_from_usage(player, "Barrier", session=session)
@@ -2968,11 +2971,10 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         jutsu_colors.send(session, f"{colored_name} is still recovering ({cooldown_ready_at - now:.1f}s).")
         return
     is_copied_cast = player.copied_jutsu_key == jutsu_key
-    chakra_cost = player.copied_jutsu_cost if is_copied_cast else jutsu["chakra_cost"]
-    stamina_cost = jutsu["stamina_cost"]
-    discount_pct = derived_stats.chakra_control_cost_discount_percent(player.chakra_control)
-    if not is_copied_cast and discount_pct and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
-        chakra_cost = round(chakra_cost * (100 - discount_pct) / 100)
+    chakra_cost = jutsu_balance.cast_cost(
+        player, jutsu, "chakra",
+        base_override=player.copied_jutsu_cost if is_copied_cast else None)
+    stamina_cost = jutsu_balance.cast_cost(player, jutsu, "stamina")
     if player.chakra < chakra_cost:
         jutsu_colors.send(session, "You don't have enough chakra.")
         return
@@ -3065,7 +3067,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         dmg = int(dmg * biome_mult)
 
     dmg = sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg), jutsu=True)
-    dmg = signature_moves.amount(player, jutsu, dmg)
+    dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     mob.health -= dmg
     hyuga.on_strike(session, mob, jutsu)
     _genjutsu_impact(jutsu, mob)
@@ -3086,12 +3088,14 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         duration = (status_effects.genjutsu_duration(jutsu["effect"])
                     if jutsu["class_requirement"] == "genjutsu"
                     else status_effects.EFFECT_DEFS[jutsu["effect"]]["duration"])
-        duration = signature_moves.duration(player, jutsu, duration)
+        duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(
+            player, jutsu, duration, effect=jutsu["effect"]))
         status_effects.apply_effect(mob.active_status_effects, jutsu["effect"], source=jutsu_key,
                                     duration_override=duration)
         jutsu_colors.send(session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=mob.name))
     for effect in sevenfold_effects:
-        duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"])
+        duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(
+            player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"], effect=effect))
         status_effects.apply_effect(mob.active_status_effects, effect, source=jutsu_key,
                                     duration_override=duration)
         jutsu_colors.send(session, status_effects.EFFECT_DEFS[effect]["message"].format(target=mob.name))
@@ -3184,11 +3188,10 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         jutsu_colors.send(session, f"{colored_name} is still recovering ({cooldown_ready_at - now:.1f}s).")
         return
     is_copied_cast = player.copied_jutsu_key == jutsu_key
-    chakra_cost = player.copied_jutsu_cost if is_copied_cast else jutsu["chakra_cost"]
-    stamina_cost = jutsu["stamina_cost"]
-    discount_pct = derived_stats.chakra_control_cost_discount_percent(player.chakra_control)
-    if not is_copied_cast and discount_pct and jutsu["class_requirement"] in ("genjutsu", "ninjutsu"):
-        chakra_cost = round(chakra_cost * (100 - discount_pct) / 100)
+    chakra_cost = jutsu_balance.cast_cost(
+        player, jutsu, "chakra",
+        base_override=player.copied_jutsu_cost if is_copied_cast else None)
+    stamina_cost = jutsu_balance.cast_cost(player, jutsu, "stamina")
     if player.chakra < chakra_cost:
         jutsu_colors.send(session, "You don't have enough chakra.")
         return
@@ -3311,7 +3314,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
 
     dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
     dmg = sage_mode.outgoing(player, dmg, jutsu=True)
-    dmg = signature_moves.amount(player, jutsu, dmg)
+    dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
     hyuga.on_strike(session, target, jutsu)
@@ -3353,13 +3356,15 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             if jutsu["class_requirement"] == "genjutsu":
                 import general_skills
                 effect_duration = general_skills.focused_duration(target, effect_duration)
-            effect_duration = signature_moves.duration(player, jutsu, effect_duration)
+            effect_duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(
+                player, jutsu, effect_duration, is_pvp=True, effect=jutsu["effect"]))
             status_effects.apply_effect(target.active_status_effects, jutsu["effect"], source=jutsu_key,
                                              duration_override=effect_duration, genjutsu=jutsu["class_requirement"] == "genjutsu")
             jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target="You"))
             jutsu_colors.send(session, status_effects.EFFECT_DEFS[jutsu["effect"]]["message"].format(target=target.name))
     for effect in sevenfold_effects:
-        duration = signature_moves.duration(player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"])
+        duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(
+            player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"], is_pvp=True, effect=effect))
         status_effects.apply_effect(target.active_status_effects, effect, source=jutsu_key,
                                     duration_override=duration)
         jutsu_colors.send(target_session, status_effects.EFFECT_DEFS[effect]["message"].format(target="You"))
