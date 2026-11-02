@@ -13,6 +13,78 @@ solo -- only requested to share XP, not everything.
 """
 
 MAX_GROUP_SIZE = 6
+GROUP_XP_LEVEL_RANGE = 20
+
+
+def group_join_violation(candidate, members):
+    """Return (reason, offending IP) for attempted joins.
+
+    A group must remain within twenty ninja levels, and no group member may
+    share the real socket IP of another. Missing IP data rejects the join
+    without automatically punishing a player for unavailable networking data.
+    """
+    import country_geo
+    if candidate is None or not getattr(candidate, "player", None):
+        return "Player is unavailable.", None
+    candidate_ip = getattr(candidate, "connection_ip", None)
+    if not candidate_ip:
+        return "Cannot verify your connection IP; grouping is unavailable.", None
+    try:
+        address = country_geo.address(candidate_ip)
+    except ValueError:
+        return "Cannot verify your connection IP; grouping is unavailable.", None
+    all_members = [m for m in members if m and getattr(m, "player", None)]
+    levels = [candidate.player.level] + [m.player.level for m in all_members]
+    for member in all_members:
+        other_ip = getattr(member, "connection_ip", None)
+        if not other_ip:
+            return "Cannot verify a member's connection IP; grouping is unavailable.", None
+        try:
+            if country_geo.address(other_ip) == address:
+                return "Two players on the same IP cannot group.", str(address)
+        except ValueError:
+            return "Cannot verify a member's connection IP; grouping is unavailable.", None
+    if max(levels) - min(levels) > GROUP_XP_LEVEL_RANGE:
+        return f"Group members must be within {GROUP_XP_LEVEL_RANGE} ninja levels.", None
+    return None, None
+
+
+def xp_eligible(killer, candidate):
+    """Defend against existing-group rank drift and stale same-IP sessions."""
+    import country_geo
+    if not getattr(candidate, "player", None) or not getattr(killer, "player", None):
+        return False
+    if abs(candidate.player.level - killer.player.level) > GROUP_XP_LEVEL_RANGE:
+        return False
+    if killer is candidate:
+        return True
+    a, b = getattr(killer, "connection_ip", None), getattr(candidate, "connection_ip", None)
+    if not a or not b:
+        return False
+    try:
+        return country_geo.address(a) != country_geo.address(b)
+    except ValueError:
+        return False
+
+
+def enforce_join(session, members):
+    """Central security check for both invitation and actual acceptance."""
+    reason, ban_ip = group_join_violation(session, members)
+    if ban_ip:
+        import network_bans
+        try:
+            network_bans.temporary_ip_ban(ban_ip, duration_seconds=1800)
+        except (OSError, ValueError) as error:
+            # Never allow a forbidden same-IP group if security storage fails.
+            session.send(f"&RGrouping denied; unable to record security ban: {error}&x")
+            return False
+        session.send("&RSame-IP group attempt: your IP is banned for 30 minutes.&x")
+        session.request_close()
+        return False
+    if reason:
+        session.send(reason)
+        return False
+    return True
 
 
 class Group:
