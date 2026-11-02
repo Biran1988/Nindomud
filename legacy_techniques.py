@@ -65,10 +65,12 @@ def chokkan(session, words):
     if combat._is_action_blocked(player) or session.pending_cast is not None:
         session.send("You cannot focus right now.")
         return
-    if player.chakra < jutsu["chakra_cost"]:
+    import jutsu_balance
+    chokkan_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    if player.chakra < chokkan_cost:
         session.send("You need 25 Chakra to activate Chokkan.")
         return
-    player.chakra -= jutsu["chakra_cost"]
+    player.chakra -= chokkan_cost
     player.chokkan_active = True
     combat.grow_skill_from_usage(player, "Chokkan")
     upkeep_reports.maintain_skill(player, "Chokkan", session=session)
@@ -92,7 +94,10 @@ def instant_kill(session, words, preferred_player=None):
     if now < player.cooldowns.get(key, 0):
         session.send(f"1000 Years of Death is recovering ({player.cooldowns[key] - now:.1f}s).")
         return
-    if player.chakra < jutsu["chakra_cost"] or player.stamina < jutsu["stamina_cost"]:
+    import jutsu_balance
+    chakra_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    stamina_cost = jutsu_balance.cast_cost(player, jutsu, "stamina")
+    if player.chakra < chakra_cost or player.stamina < stamina_cost:
         session.send("You need 100 Chakra and 20 Stamina.")
         return
 
@@ -128,8 +133,8 @@ def instant_kill(session, words, preferred_player=None):
             session.send("Your attack passes through the intangible target.")
             return
 
-    player.chakra -= jutsu["chakra_cost"]
-    player.stamina -= jutsu["stamina_cost"]
+    player.chakra -= chakra_cost
+    player.stamina -= stamina_cost
     player.cooldowns[key] = now + jutsu["cooldown"]
     combat.grow_skill_from_usage(player, jutsu["display_name"])
     if mob:
