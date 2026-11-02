@@ -106,6 +106,17 @@ def populate(entries, commands):
             continue
         if key in SECRET_KEYS:
             continue
+        # Command aliases reuse the identical help entry of their real
+        # handler, rather than creating conflicting alias-only pages.
+        canonical = next((base for base, original in commands.items()
+                          if base != key and original is handler
+                          and base in by_key and base not in SECRET_KEYS), None)
+        if canonical is not None:
+            entry = by_key[canonical]
+            if key not in entry["keywords"]:
+                entry["keywords"].append(key)
+            COVERED.add(canonical)
+            continue
         description = _clean_description(handler)
         entry = _entry(key, key.replace("_", " ").title(),
                        f"Syntax: {key} [arguments]\n\n" +
