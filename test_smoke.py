@@ -3916,7 +3916,7 @@ def test_appraisal_and_examine():
     s.handle_line("examine sword")
     text = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
     out.clear()
-    assert "Rarity: Common" in text
+    assert "Rarity:" not in text
     assert "Item Type" not in text
     assert "train examine further" in text.lower()
 
@@ -8214,8 +8214,7 @@ def test_crafted_items_are_real_and_staff_see_vnums():
         out.clear()
     s.account.staff_level = "implementor"
     s.player.level = 25
-    s.player.inventory.append("an iron ingot")
-    s.player.inventory.append("a sturdy oak log")
+    s.player.inventory.extend(["an iron ingot", "an iron ingot"])
     s.player.stamina = 100
 
     # The new crafting skill always produces a genuinely real, new
@@ -8224,7 +8223,7 @@ def test_crafted_items_are_real_and_staff_see_vnums():
     # framework this test originally covered.
     s.handle_line("craft weapon sword Test-Only Ceremonial Dagger")
     out.clear()
-    s.handle_line("iron ingot, sturdy oak log")
+    s.handle_line("iron")
     out.clear()
     resolve_pending_action(s)
     text_success = "".join(out)
@@ -10097,7 +10096,8 @@ def test_sharingan_tomoe_four_five_six():
 
         cast_until_hit(attacker, "perform demonic illusion hell viewing technique copierfinaltest")
         assert copier.player.copied_jutsu_key == "demonic illusion hell viewing technique"
-        source_cost = round(data_jutsu.JUTSU["demonic illusion hell viewing technique"]["chakra_cost"] * 0.8)
+        source_cost = __import__("jutsu_balance").cast_cost(
+            attacker.player, data_jutsu.JUTSU["demonic illusion hell viewing technique"], "chakra")
         assert copier.player.copied_jutsu_cost == source_cost * 2, \
             "Copy Jutsu's cost must be exactly double what the original caster actually spent"
         # Clear the landed status effect before testing the copied cast.
@@ -11201,7 +11201,8 @@ def test_shadow_clone_jutsu():
     assert len(clones) == 1, "0% mastery must summon exactly 1 clone"
     assert clones[0].max_health == 50, "a clone's HP must be exactly 25% of the caster's own current max health"
     assert clones[0].health == 50
-    assert s.player.chakra == before_chakra - jutsu["chakra_cost"]
+    assert s.player.chakra == before_chakra - __import__("jutsu_balance").cast_cost(
+        s.player, jutsu, "chakra")
 
     # --- The clone is a genuinely indistinguishable, independently-attackable Mob ---
     assert combat.is_shadow_clone(clones[0])
@@ -16062,16 +16063,15 @@ def test_bukijutsu_crafting_skill():
     s.handle_line("craft weapon sword Test Sword")
     text_low = "".join(out)
     out.clear()
-    assert "level 25" in text_low.lower() and "level 70" in text_low.lower()
+    assert "level 25" in text_low.lower() and "level 100" in text_low.lower()
 
     # --- Bukijutsu at 25+: unlocked, full real weapon-craft flow ---
     s, out = make("Craftpermtestbuki", "CraftPermTestBukiP1", "bukijutsu", 25)
-    s.player.inventory.append("an iron ingot")
-    s.player.inventory.append("a yew log")
+    s.player.inventory.extend(["an iron ingot", "an iron ingot"])
     s.player.stamina = 100
     s.handle_line("craft weapon exotic My Permanent Blade")
     out.clear()
-    s.handle_line("iron ingot, yew log")
+    s.handle_line("iron")
     out.clear()
     s.pending_action["resolve_fn"]()
     text_resolve = "".join(out)
@@ -16079,47 +16079,45 @@ def test_bukijutsu_crafting_skill():
     assert "you craft" in text_resolve.lower()
 
     crafted_proto = next(p for p in olc.OBJECT_TEMPLATES.values() if p["short_desc"] == "My Permanent Blade")
-    expected = data_crafting.combined_stat_value("iron ingot", "yew log")
+    expected = data_crafting.combined_stat_value("iron ingot", "iron ingot")
     assert crafted_proto["stat_bonuses"] == {"hitroll": expected, "damroll": expected}
     assert crafted_proto["weapon_type"] == "exotic"
     assert crafted_proto["wear_loc"] == "wielded"
-    assert not any("iron ingot" in item.lower() or "yew log" in item.lower() for item in s.player.inventory), \
+    assert not any("iron ingot" in item.lower() for item in s.player.inventory), \
         "both real materials must be genuinely consumed"
     assert any("My Permanent Blade" in item for item in s.player.inventory)
 
     # --- Any class at 70+: unlocked (the second, separate real path) ---
-    s2, out2 = make("Craftpermtestgen", "CraftPermTestGenPass1", "ninjutsu", 70)
-    s2.player.inventory.append("a chakra steel ingot")
-    s2.player.inventory.append("an ancient heartwood log")
+    s2, out2 = make("Craftpermtestgen", "CraftPermTestGenPass1", "ninjutsu", 100)
+    s2.player.inventory.extend(["an iron ingot", "an iron ingot"])
     s2.player.stamina = 100
     s2.handle_line("craft armor head My Permanent Helm")
     out2.clear()
-    s2.handle_line("chakra steel ingot, ancient heartwood log")
+    s2.handle_line("iron")
     out2.clear()
     s2.pending_action["resolve_fn"]()
     out2.clear()
 
     helm_proto = next(p for p in olc.OBJECT_TEMPLATES.values() if p["short_desc"] == "My Permanent Helm")
-    expected_helm = data_crafting.combined_stat_value("chakra steel ingot", "ancient heartwood log")
+    expected_helm = data_crafting.combined_stat_value("iron ingot", "iron ingot")
     assert helm_proto["stat_bonuses"] == {"armor_class": -expected_helm}
     assert helm_proto["wear_loc"] == "head"
 
     # --- Same material combined with itself: requires and consumes 2 copies ---
     s3, out3 = make("Craftpermtestsame", "CraftPermTestSameP1", "bukijutsu", 25)
-    s3.player.inventory.append("a sturdy oak log")
-    s3.player.inventory.append("a sturdy oak log")
+    s3.player.inventory.extend(["a steel ingot", "a steel ingot"])
     s3.player.stamina = 100
     s3.handle_line("craft weapon sword Twin Oak Sword")
     out3.clear()
-    s3.handle_line("sturdy oak log, sturdy oak log")
+    s3.handle_line("steel")
     out3.clear()
     s3.pending_action["resolve_fn"]()
     out3.clear()
 
     twin_proto = next(p for p in olc.OBJECT_TEMPLATES.values() if p["short_desc"] == "Twin Oak Sword")
-    expected_twin = data_crafting.combined_stat_value("sturdy oak log", "sturdy oak log")
+    expected_twin = data_crafting.combined_stat_value("steel ingot", "steel ingot")
     assert twin_proto["stat_bonuses"] == {"hitroll": expected_twin, "damroll": expected_twin}
-    assert not any("sturdy oak log" in item.lower() for item in s3.player.inventory), \
+    assert not any("steel ingot" in item.lower() for item in s3.player.inventory), \
         "both copies of the same material must genuinely be consumed"
 
     # --- Invalid weapon type / armor slot: refused ---
@@ -17118,9 +17116,9 @@ def test_rarity_tags_hidden_except_examine():
     s.handle_line("examine rarity tag perm test blade")
     text2 = "".join(out)
     out.clear()
-    assert "Legendary" in text2, "examine must still show the real rarity information"
+    assert "Legendary" not in text2, "rarity must stay hidden even inside Examine"
 
-    print("RARITY TAGS HIDDEN EXCEPT EXAMINE TEST PASSED")
+    print("RARITY TAGS HIDDEN IN ALL ITEM VIEWS TEST PASSED")
 
 
 def test_immortal_mob_flag():
