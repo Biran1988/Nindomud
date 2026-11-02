@@ -32,18 +32,28 @@ Seal Release does **not** open the Reaper Death Seal or release Tailed Beasts.
 
 | Level | Name / usage | Initial cost | Lifetime |
 | --- | --- | ---: | --- |
-| 30 | `perform flowing barrier seal <direction>` | 36 Chakra | 6 Chakra every 5 seconds, indefinitely while the caster is online |
-| 50 | `perform timed barrier seal <direction>` | 75 Chakra | 180 real seconds |
-| 70 | `perform imbued barrier seal <direction> <chakra>` | 50–1000 Chakra | Imbued Chakra × 3 real seconds, maximum 30 minutes |
+| 35 | `perform flowing barrier seal <direction>` | 36 Chakra | 6 Chakra every 5 seconds, indefinitely while the caster is online |
+| 75 | `perform timed barrier seal <direction>` | 75 Chakra | 180 real seconds |
+| 135 | `perform imbued barrier seal <direction> <chakra>` | 50–1000 Chakra | Imbued Chakra × 3 real seconds, maximum 30 minutes |
+| 180 | `perform multi exit barrier` (or `wmulti`) | 120 Chakra base (level-scaled) | Automatically seals all eligible exits for 240 real seconds |
 
-Each seals **one directed exit**. It does not affect the reverse direction,
-transports, teleporting, or builder world editing. It blocks regular player
-movement without charging stamina. A caster may move arbitrarily far away from
-all wall types. Fixed and imbued walls remain even after logout and reboot;
-flowing walls end upon logout/disconnection or insufficient Chakra.
-No more than three active barriers may belong to a single caster. An exit
-cannot carry more than one active Whirlpool barrier. Barriers cannot seal
-safe rooms, destinations that are safe, nonexistent exits, or reaper prisons.
+Single-exit seals affect **one directed exit**. Multi Exit Barrier scans the
+current room and seals **every valid, unsealed exit**, including diagonal,
+vertical, and inside/outside exits, without specifying directions. It skips
+destinations that are safe, nonexistent, or reaper prisons; casting inside a
+safe room or reaper prison is forbidden. If no eligible exit remains, no Chakra
+or cooldown is spent. A room with more than three eligible exits is supported:
+one multi-exit array is **one barrier cast** toward the caster's maximum of
+three concurrent barrier casts, not one cast per direction. Existing individual
+seals are left untouched. Every part of an array expires simultaneously and
+can be released remotely with `perform seal release barriers`.
+
+Walls do not affect the reverse direction, transports, teleporting, or builder
+world editing. They block regular player movement without charging stamina.
+A caster may move arbitrarily far away from all wall types. Timed, multi-exit
+and imbued walls remain even after logout and reboot; flowing walls end upon
+logout/disconnection or insufficient Chakra. An exit cannot carry more than
+one active Whirlpool barrier.
 Staff may bypass them for moderation. If a builder removes or redirects an
 exit, a barrier tied to the old exit is dissolved rather than sealing an
 unrelated connection.
