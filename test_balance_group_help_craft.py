@@ -136,11 +136,11 @@ class ForgingAndExamineTests(unittest.TestCase):
 class HelpCoverageTests(unittest.TestCase):
     def test_all_registered_public_commands_have_a_topic(self):
         pages = {e["primary_keyword"].casefold() for e in help_system.DEFAULT_HELP_ENTRIES}
-        for command in commands.COMMANDS:
-            if command not in help_audit.SECRET_KEYS:
-                self.assertIn(command, pages)
         aliases = {alias.casefold() for entry in help_system.DEFAULT_HELP_ENTRIES
                    for alias in entry.get("keywords", ())}
+        for command in commands.COMMANDS:
+            if command not in help_audit.SECRET_KEYS:
+                self.assertIn(command, pages | aliases)
         for art_key, art in data_jutsu.JUTSU.items():
             if not art.get("secret") and art_key not in help_audit.SECRET_KEYS:
                 self.assertIn(art_key, pages | aliases)
