@@ -405,3 +405,12 @@ leveling, mob XP, and the older gameplay smoke checks.
   in-character SAY or the WHO roster. Player saves store title/color
   automatically and all existing saves default to no title. Chatlog entries
   made before titles still load normally; runtime `data/` is excluded.
+
+- Version 15.394: Clarified the title feature introduced in 15.393.
+  Custom colored character titles now appear AFTER character names in
+  WHO, WHOIS, SCORE and the room/target LOOK displays. They no longer
+  appear in OOC chat, OOC emotes or CHATLOG, even when old log entries
+  contain saved title snapshots. Character-save fields are unchanged
+  so all existing titles and colors survive upgrades. Real names,
+  player lookup and in-character combat/chat identities remain unchanged.
+  Existing runtime `data/` is never packaged or overwritten.
