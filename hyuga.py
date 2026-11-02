@@ -304,7 +304,10 @@ def cast(session, key, args):
     if now < player.cooldowns.get(key, 0):
         session.send(f"{spec['display_name']} is recovering.")
         return
-    if player.chakra < spec["chakra_cost"] or player.stamina < spec["stamina_cost"]:
+    import jutsu_balance
+    chakra_cost = jutsu_balance.cast_cost(player, spec, "chakra")
+    stamina_cost = jutsu_balance.cast_cost(player, spec, "stamina")
+    if player.chakra < chakra_cost or player.stamina < stamina_cost:
         session.send("Not enough chakra or stamina.")
         return
     if effect == "celestial" and not player.byakugan_active:
@@ -313,8 +316,8 @@ def cast(session, key, args):
     if effect == "tenseigan" and not player.celestial_byakugan_active:
         session.send("Activate Celestial Byakugan first.")
         return
-    player.chakra -= spec["chakra_cost"]
-    player.stamina -= spec["stamina_cost"]
+    player.chakra -= chakra_cost
+    player.stamina -= stamina_cost
     player.cooldowns[key] = now + spec["cooldown"]
     if effect == "byakugan":
         player.byakugan_active = True
