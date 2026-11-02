@@ -90,7 +90,8 @@ def cast(session) -> bool:
     if now < player.cooldowns.get(JUTSU_KEY, 0):
         session.send(f"Hidden Mist Jutsu is still recovering ({player.cooldowns[JUTSU_KEY] - now:.1f}s).")
         return False
-    cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
+    import jutsu_balance
+    cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
     if player.chakra < cost:
         session.send("You don't have enough chakra.")
         return False
