@@ -6,6 +6,7 @@ import logging
 import os
 from pathlib import Path
 import tempfile
+import time
 
 import config
 import country_geo
@@ -75,8 +76,54 @@ def matches(rule, ip, country):
     return addr.version == subnet.version and addr in subnet
 
 
+def _active(rule, now=None):
+    """Permanent admin bans and time-limited automated bans share one file."""
+    expiry = rule.get("expires_at")
+    return expiry is None or float(expiry) > (time.time() if now is None else now)
+
+
 def blocked(ip, country, rules=None):
-    return any(matches(rule, ip, country) for rule in (load_rules() if rules is None else rules))
+    return any(_active(rule) and matches(rule, ip, country)
+               for rule in (load_rules() if rules is None else rules))
+
+
+def temporary_ip_ban(ip, *, duration_seconds=1800, reason="same-IP group attempt"):
+    """Persist a temporary address ban, then disconnect ALL affected sockets.
+
+    Repeated violations renew the expiry; permanent admin rules are left intact.
+    Ban is written first, so new connections cannot race the disconnects.
+    """
+    from session import ACTIVE_SESSIONS
+    address = str(network(ip))
+    now = time.time()
+    rules = load_rules()
+    temporary = next((r for r in rules if r["kind"] == "ip" and
+                      r["value"] == address and r.get("expires_at") is not None), None)
+    if temporary is None:
+        temporary = {"kind": "ip", "value": address, "by": "group-security",
+                     "created": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                     "reason": reason}
+        rules.append(temporary)
+    temporary["expires_at"] = max(float(temporary.get("expires_at", 0)), now + duration_seconds)
+    save_rules(rules)
+    LOG.warning("Temporary same-IP group ban for %s for %s seconds", address, duration_seconds)
+    for other in list(ACTIVE_SESSIONS):
+        other_ip = getattr(other, "connection_ip", None)
+        if not other_ip:
+            continue
+        try:
+            hit = country_geo.address(other_ip) in network(address)
+        except ValueError:
+            continue
+        if hit:
+            if other.player:
+                try:
+                    storage.save_player(other.player)
+                except OSError:
+                    LOG.exception("Could not save player before temporary group ban")
+            other.send("&RGrouping from the same IP is prohibited. IP banned for 30 minutes.&x")
+            other.request_close()
+    return temporary["expires_at"]
 
 
 def initialize():
@@ -125,8 +172,10 @@ def cmd_ban(session, args):
         session.send("Connection bans (saved across reboots):")
         for rule in rules:
             value = country_geo.label(rule["value"]) if rule["kind"] == "country" else rule["value"]
+            remaining = (f" | {max(0, int(float(rule['expires_at']) - time.time()))}s left"
+                         if rule.get("expires_at") is not None else "")
             session.send(f"{rule['kind']}: {value} | by {rule.get('by', '?')} | "
-                         f"{rule.get('created', '?')} | {rule.get('reason', '')}")
+                         f"{rule.get('created', '?')} | {rule.get('reason', '')}{remaining}")
         session.send(f"{len(rules)} ban(s). Offline IPv4/IPv6 country database ready. "
                      "IP geolocation by DB-IP (https://db-ip.com).")
         session.send(USAGE)
