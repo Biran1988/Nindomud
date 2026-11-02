@@ -6579,11 +6579,17 @@ def _award_job_action_xp(session, job: str, amount: int) -> None:
     the increase it actually accepted (0 at the job cap), so action
     failures, denied inventory deliveries and maxed jobs don't lie.
     """
+    # Apply the already-active village/global EXP perk to jobs, too.
+    # Resolve it when an activity finishes, not when a timer begins.
+    # Staff global and Kage village perks already replace rather than stack.
+    multiplier = village_perks.xp_multiplier(session.player.village)
+    earned_xp = int(amount * multiplier) if amount > 0 else amount
     before = jobs.get_job_xp(session.player, job)
-    level_messages = jobs.add_job_xp(session.player, job, amount)
+    level_messages = jobs.add_job_xp(session.player, job, earned_xp)
     gained = jobs.get_job_xp(session.player, job) - before
     if gained > 0:
-        session.send(f"&G+{gained:,} {job.capitalize()} XP&x")
+        perk_note = f" &Y(x{multiplier:g} EXP perk)&x" if multiplier != 1.0 else ""
+        session.send(f"&G+{gained:,} {job.capitalize()} XP&x{perk_note}")
     for message in level_messages:
         session.send(message)
 
