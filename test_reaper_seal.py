@@ -2,6 +2,7 @@
 import json
 import os
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -133,21 +134,96 @@ class ReaperSealTests(unittest.TestCase):
         self.assertEqual(self.caster.player.room_vnum, 1)
         self.assertEqual(self.target.player.room_vnum, 1)
 
-    def test_immortal_target_cannot_be_sealed(self):
+    def test_mortal_caster_can_seal_immortal_target_without_restricting_staff(self):
         self.learn(self.caster)
-        self.target.account.staff_level = "immortal"
-        before = self.caster.player.chakra
+        self.target.account.staff_level = "implementor"
+        # A staff character's existing effects and chakra must not be
+        # removed just because the rite transports them to the prison.
+        self.target.player.active_status_effects["custom_buff"] = {"duration": 999}
+        original_chakra = self.target.player.chakra
         commands.dispatch_line(self.caster, "perform reaper death seal Victim")
+        prison = self.caster.player.room_vnum
+        self.assertTrue(rite.imprisoned(self.caster.player), self.out)
+        self.assertTrue(world.WORLD.get(prison).reaper_prison)
+        self.assertEqual(self.target.player.room_vnum, prison)
         self.assertFalse(rite.imprisoned(self.target.player))
-        self.assertFalse(rite.imprisoned(self.caster.player))
-        self.assertEqual(self.caster.player.chakra, before)
+        self.assertIsNone(self.target.player.reaper_seal_room_vnum)
+        self.assertIn("custom_buff", self.target.player.active_status_effects)
+        self.assertEqual(self.target.player.chakra, original_chakra)
+        self.assertIn("Victim", next(iter(rite._load().values()))["unbound_staff"])
+        self.target.player.room_vnum = 2
+        self.assertEqual(self.target.player.room_vnum, 2)
+        commands.dispatch_line(self.target, "goto 1")
+        self.assertEqual(self.target.player.room_vnum, 1)
+        self.assertTrue(rite.imprisoned(self.caster.player))
+        saved_staff = storage.load_player("Victim")
+        self.assertFalse(rite.imprisoned(saved_staff))
+        self.assertEqual(saved_staff.room_vnum, prison)
 
-    def test_immortal_caster_cannot_be_sealed(self):
-        self.learn(self.caster)
-        self.caster.account.staff_level = "immortal"
+    def test_immortal_caster_can_cast_without_scroll_clan_chakra_or_cooldown(self):
+        self.caster.account.staff_level = "implementor"
+        self.caster.player.village = "leaf"
+        self.caster.player.clan = "nara"
+        self.caster.player.level = 1
+        self.caster.player.chakra = 1
+        self.caster.player.cooldowns[rite.SEAL_KEY] = time.time() + 9999
+        self.caster.player.active_status_effects["custom_buff"] = {"duration": 999}
         commands.dispatch_line(self.caster, "perform reaper death seal Victim")
-        self.assertFalse(rite.imprisoned(self.target.player))
+        self.assertTrue(rite.imprisoned(self.target.player), self.out)
+        prison = self.target.player.room_vnum
+        self.assertEqual(self.caster.player.room_vnum, prison)
         self.assertFalse(rite.imprisoned(self.caster.player))
+        self.assertEqual(self.caster.player.chakra, 1)
+        self.assertIn("custom_buff", self.caster.player.active_status_effects)
+        # Immortal may use staff travel without undoing mortal's seal.
+        commands.dispatch_line(self.caster, "goto 2")
+        self.assertEqual(self.caster.player.room_vnum, 2)
+        self.assertTrue(rite.imprisoned(self.target.player))
+        storage.save_player(self.caster.player)
+        self.assertFalse(rite.imprisoned(storage.load_player("Sealer")))
+
+    def test_two_immortals_enter_stomach_but_both_can_leave(self):
+        self.caster.account.staff_level = "implementor"
+        self.target.account.staff_level = "implementor"
+        commands.dispatch_line(self.caster, "perform reaper death seal Victim")
+        room = self.caster.player.room_vnum
+        self.assertTrue(world.WORLD.get(room).reaper_prison, self.out)
+        self.assertEqual(self.target.player.room_vnum, room)
+        self.assertFalse(rite.imprisoned(self.caster.player))
+        self.assertFalse(rite.imprisoned(self.target.player))
+        self.caster.player.room_vnum = 1
+        self.target.player.room_vnum = 2
+        self.assertEqual(self.caster.player.room_vnum, 1)
+        self.assertEqual(self.target.player.room_vnum, 2)
+
+    def test_staff_promotion_unlocks_legacy_seal_without_freeing_mortal(self):
+        self.capture()
+        prison = self.caster.player.room_vnum
+        self.assertEqual(self.target.player.room_vnum, prison)
+        self.caster.account.staff_level = "implementor"
+        commands.dispatch_line(self.caster, "goto 2")
+        self.assertEqual(self.caster.player.room_vnum, 2, self.out)
+        self.assertFalse(rite.imprisoned(self.caster.player))
+        self.assertTrue(rite.imprisoned(self.target.player))
+        sealed = next(iter(rite._load().values()))
+        self.assertIn("Sealer", sealed["unbound_staff"])
+        self.assertTrue(sealed["active"])
+        storage.save_player(self.caster.player)
+        reloaded = storage.load_player("Sealer")
+        self.assertFalse(rite.imprisoned(reloaded))
+        self.assertEqual(reloaded.room_vnum, 2)
+
+    def test_reversing_immortal_cast_releases_mortal_without_dragging_staff(self):
+        self.caster.account.staff_level = "implementor"
+        commands.dispatch_line(self.caster, "perform reaper death seal Victim")
+        self.assertTrue(rite.imprisoned(self.target.player))
+        commands.dispatch_line(self.caster, "goto 2")
+        self.assertEqual(self.caster.player.room_vnum, 2)
+        # Staff may reverse from outside, without mask or skill gates.
+        commands.dispatch_line(self.caster, "perform reverse reaper seal Victim")
+        self.assertFalse(rite.imprisoned(self.target.player))
+        self.assertEqual(self.target.player.room_vnum, 1)
+        self.assertEqual(self.caster.player.room_vnum, 2)
 
     def test_trapped_player_can_reverse_with_carried_mask(self):
         self.capture()
