@@ -13,7 +13,7 @@ drops the oldest one, so the log can never grow unbounded.
 Loaded once at startup (content.populate(), matching teams.load_all's
 own pattern) into the module-level ENTRIES deque, then every new OOC
 message appends to it and re-saves. Each entry is a plain
-{"speaker": str, "message": str} dict -- no timestamp requested,
+{"speaker": str, "message": str} dict -- no title or timestamp,
 kept minimal per what was actually asked for.
 """
 
@@ -34,17 +34,12 @@ def load_all() -> None:
         ENTRIES.append(entry)
 
 
-def record(speaker: str, message: str, *, title: str = "", title_color: str = "gold") -> None:
-    """Save message and a snapshot of the speaker's OOC title if present.
+def record(speaker: str, message: str) -> None:
+    """Record pure OOC speaker/message without a character-title suffix.
 
-    Old log entries with only speaker/message continue to render normally.
+    Existing log rows with old title metadata remain readable but the OOC
+    display intentionally ignores those title fields.
     """
     import storage
-    import ooc_titles
-    entry = {"speaker": speaker, "message": message}
-    safe_title = ooc_titles.clean_title(title)
-    if safe_title:
-        entry["title"] = safe_title
-        entry["title_color"] = title_color if ooc_titles.valid_color(title_color) else "gold"
-    ENTRIES.append(entry)
+    ENTRIES.append({"speaker": speaker, "message": message})
     storage.save_chatlog(list(ENTRIES))
