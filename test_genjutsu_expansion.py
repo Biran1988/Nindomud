@@ -8,6 +8,7 @@ import combat
 import commands
 import data_handsigns
 import data_jutsu
+import jutsu_balance
 import genjutsu
 import leveling
 import session as session_module
@@ -77,7 +78,9 @@ class GenjutsuExpansionTests(unittest.TestCase):
         self.assertIn("Golden Scroll", genjutsu.displayed_items(self.player))
         with patch.object(session_module, "ACTIVE_SESSIONS", [self.session]):
             self.assertEqual([d["name"] for d in genjutsu.decoys_in_room(1)], ["Shuriken"])
-        for _ in range(20):
+        remaining = self.player.genjutsu_item_illusions["Kunai"]["pulses"]
+        remaining = max(remaining, self.player.genjutsu_decoys[0]["pulses"])
+        for _ in range(remaining + 1):
             genjutsu.tick_player(self.session)
         self.assertEqual(genjutsu.displayed_items(self.player), self.player.inventory)
         self.assertEqual(self.player.genjutsu_decoys, [])
@@ -122,7 +125,8 @@ class GenjutsuExpansionTests(unittest.TestCase):
         self.assertIn("asleep", foe.active_status_effects)
         self.assertIn("asleep", victim.active_status_effects)
         self.assertEqual(foe.active_status_effects["asleep"]["duration"], 12)
-        self.assertEqual(victim.active_status_effects["asleep"]["duration"], 12)
+        self.assertEqual(victim.active_status_effects["asleep"]["duration"],
+                         jutsu_balance.boosted_duration(self.player, data_jutsu.JUTSU["nehan shouja"], 12, is_pvp=True, effect="asleep"))
 
     def test_frightened_reduces_player_and_mob_damage_once(self):
         self.assertEqual(status_effects.reduce_outgoing_damage({"frightened": {}}, 100), 80)
@@ -163,7 +167,10 @@ class GenjutsuExpansionTests(unittest.TestCase):
              patch.object(combat, "_jutsu_damage_bonus", return_value=0), \
              patch.object(combat, "grow_skill_from_usage"):
             combat.use_jutsu_on_player(self.session, "distortion flame", target_session)
-        self.assertEqual(target.health, 85)
+        expected_damage = status_effects.reduce_incoming_damage(
+            {"barrier": {"duration": 180}},
+            jutsu_balance.boosted_damage(attacker, data_jutsu.JUTSU["distortion flame"], 20))
+        self.assertEqual(target.health, 100 - expected_damage)
         self.assertEqual(status_effects.reduce_incoming_damage({}, 20), 20)
 
 
