@@ -395,3 +395,13 @@ leveling, mob XP, and the older gameplay smoke checks.
   each action finishes, and job XP messages show the actual award. No
   separate stacked perk, new permanent multiplier, job level cap
   increase, or change to staff LEVELUP JOB. Runtime data/ is excluded.
+
+- Version 15.393: Added `title <words>` (or `title set <words>`),
+  `title color <name|0-255>`, and `title clear`. Validated titles up to
+  40 characters appear after the real character name on global OOC chat,
+  OOC emotes, and the persisted chatlog. Color is restricted to recognized
+  named colors or xterm 0-255; players cannot inject custom terminal codes.
+  Titles are cosmetic only and do not change actual player identity,
+  in-character SAY or the WHO roster. Player saves store title/color
+  automatically and all existing saves default to no title. Chatlog entries
+  made before titles still load normally; runtime `data/` is excluded.
