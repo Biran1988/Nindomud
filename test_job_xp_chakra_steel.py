@@ -33,7 +33,6 @@ class JobXpGainTests(unittest.TestCase):
                 self.assertTrue(any(f"+35 {job.capitalize()} XP" in m for m in messages))
 
     def test_active_triple_exp_grants_three_times_job_xp(self):
-        self.perks.stop()
         with patch.object(village_perks, "xp_multiplier", return_value=3.0) as perk:
             for job in ("fishing", "mining", "lumberjack", "farming", "cooking", "gemcutter"):
                 with self.subTest(job=job):
