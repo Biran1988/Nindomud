@@ -6,6 +6,8 @@ from unittest.mock import patch
 import combat
 import commands
 import data_tailed_beasts
+import data_jutsu
+import jutsu_balance
 import mangekyo
 import skill_training
 import tailed_beasts
@@ -60,7 +62,8 @@ class TailedBeastSealingWindowTests(unittest.TestCase):
                 commands.dispatch_line(self.s, "perform sealing jutsu " + mob.name)
                 self.assertEqual(self.s.player.jinchuriki_beast_key, beast["key"])
                 self.assertNotIn(mob, combat.mobs_in_room(self.room.vnum))
-                self.assertEqual(self.s.player.chakra, 900)
+                self.assertEqual(self.s.player.chakra, 1000 - jutsu_balance.cast_cost(
+                    self.s.player, data_jutsu.JUTSU["sealing jutsu"], "chakra"))
 
     def test_repeated_defeat_and_damage_do_not_kill_or_extend_window(self):
         mob = self.down_beast(data_tailed_beasts.TAILED_BEASTS[0])
