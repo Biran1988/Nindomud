@@ -225,6 +225,9 @@ def _capture(session, target_session):
               "caster": player.name, "target": target_session.player.name}
     records[seal_id] = record
     _save(records)  # commit the whole pair before either character is moved
+    # Create the pocket even when both participants are immortals. Mortal
+    # players create it through _bind, but staff visitors never call _bind.
+    _room(record)
     for trapped in [session, target_session]:
         if _immortal(trapped):
             # Staff experience the same arrival, but never acquire any
