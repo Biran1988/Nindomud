@@ -235,7 +235,9 @@ def _ready(session, key, *, amount=None):
     if player.cooldowns.get(key, 0) > now:
         session.send(f"{info['display_name']} is recovering for {player.cooldowns[key] - now:.0f}s.")
         return False
-    cost = info["chakra_cost"] if amount is None else amount
+    import jutsu_balance
+    minimum = jutsu_balance.cast_cost(player, info, "chakra")
+    cost = minimum if amount is None else max(int(amount), minimum)
     if player.chakra < cost:
         session.send(f"You need {cost} chakra for this seal.")
         return False
@@ -255,7 +257,9 @@ def _ready(session, key, *, amount=None):
 
 def _pay(session, key, *, amount=None):
     info = jutsu_entries()[key]
-    session.player.chakra -= info["chakra_cost"] if amount is None else amount
+    import jutsu_balance
+    minimum = jutsu_balance.cast_cost(session.player, info, "chakra")
+    session.player.chakra -= minimum if amount is None else max(int(amount), minimum)
     session.player.cooldowns[key] = time.time() + info["cooldown"]
     import general_skills
     general_skills.break_camouflage(session)
