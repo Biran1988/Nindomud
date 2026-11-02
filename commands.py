@@ -1641,13 +1641,19 @@ def cmd_emote(session, args: List[str], ooc: bool = False) -> None:
     own, other = phrases
     prefix = "&M[OOC]&x " if ooc else ""
     session.send(f"{prefix}You {own}")
-    message = f"{prefix}{session.player.name} {other}"
     if ooc:
+        import ooc_titles
+        message = f"{prefix}{ooc_titles.player_display(session.player)} {other}"
         session.broadcast_all(message, exclude_self=True)
         import chatlog
-        chatlog.record(session.player.name, f"[emote] {other}")
+        if session.player.ooc_title:
+            chatlog.record(session.player.name, f"[emote] {other}",
+                           title=session.player.ooc_title,
+                           title_color=session.player.ooc_title_color)
+        else:
+            chatlog.record(session.player.name, f"[emote] {other}")
     else:
-        session.broadcast_room(message, exclude_self=True)
+        session.broadcast_room(f"{prefix}{session.player.name} {other}", exclude_self=True)
 
 
 def cmd_ooc(session, args: List[str]) -> None:
@@ -1665,10 +1671,17 @@ def cmd_ooc(session, args: List[str]) -> None:
         return
     message = chat_moderation.censor(" ".join(args))
     player = session.player
+    import ooc_titles
+    # Only the title is colored; the real OOC character name is unchanged.
+    name = ooc_titles.player_display(player)
     session.send(f"&M[OOC] You:&x {message}")
-    session.broadcast_all(f"&M[OOC] {player.name}:&x {message}", exclude_self=True)
+    session.broadcast_all(f"&M[OOC] {name}:&x {message}", exclude_self=True)
     import chatlog
-    chatlog.record(player.name, message)
+    if player.ooc_title:
+        chatlog.record(player.name, message, title=player.ooc_title,
+                       title_color=player.ooc_title_color)
+    else:
+        chatlog.record(player.name, message)
 
 
 def cmd_village_chat(session, args: List[str]) -> None:
@@ -1697,7 +1710,9 @@ def cmd_chatlog(session, args: List[str]) -> None:
     if not chatlog.ENTRIES:
         session.send("No OOC chat has been logged yet.")
         return
-    lines = [f"&M[OOC] {entry['speaker']}:&x {entry['message']}" for entry in chatlog.ENTRIES]
+    import ooc_titles
+    lines = [f"&M[OOC] {ooc_titles.display_name(entry['speaker'], entry.get('title', ''), entry.get('title_color', 'gold'))}:&x {entry['message']}"
+             for entry in chatlog.ENTRIES]
     session.send("\n".join(lines))
 
 
@@ -9759,6 +9774,7 @@ COMMANDS = {
     "scan": cmd_scan,
     "say": cmd_say,
     "ooc": cmd_ooc,
+    "title": __import__("ooc_titles").command,
     "chatlog": cmd_chatlog,
     "village": cmd_village_chat, "vchat": cmd_village_chat, "vc": cmd_village_chat,
     "ask": cmd_ask,
