@@ -116,6 +116,10 @@ class Player:
     # help-topic authoring.
     description: str = ""
     biography: str = ""
+    # Cosmetic OOC-only title. Plain text and selected color are persisted
+    # with the character and never alter their actual login/roleplay name.
+    ooc_title: str = ""
+    ooc_title_color: str = "gold"
 
     # Player housing (Section 52). Rooms themselves are NOT persisted to
     # disk across restarts (a pre-existing project limitation -- the
