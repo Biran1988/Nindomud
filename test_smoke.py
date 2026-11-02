@@ -1325,6 +1325,10 @@ def test_village_perks():
     s1.player.auto_sac_corpse = False
     combat_module.spawn_mob(5001, s1.player.room_vnum)
     feed1("attack bandit")
+    # This section verifies Ryo multiplier in corpse loot, not time to
+    # defeat a fivefold-HP monster. Finish a wounded foe deterministically.
+    if s1.combat_target is not None:
+        s1.combat_target.health = min(s1.combat_target.health, 1)
     n = 0
     while s1.combat_target is not None and n < 30:
         combat_module.tick_all_mob_effects()
