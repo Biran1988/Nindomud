@@ -21,7 +21,7 @@ FIND_TABLE = [
     ("a birch branch", 1, 40, 8),
     ("a sturdy oak log", 15, 25, 25),
     ("an ironwood log", 35, 15, 60),
-    ("a masterwork oak log", 60, 6, 150),
+    ("an elder oak log", 60, 6, 150),
     ("an ancient heartwood log", 85, 2, 400),
     ("a yew log", 95, 1, 500),
 ]
@@ -38,9 +38,27 @@ def tool_required_level(tool_name: str):
     return gathering_job.tool_required_level(tool_name, AXES)
 
 
+# Steel and chakra-steel axes still CAN find low-tier wood, but the rates
+# fall sharply so higher-tier tools overwhelmingly harvest useful logs.
+LOW_TIER_MULTIPLIERS = {
+    2: {"a bundle of kindling": .03, "a birch branch": .04,
+        "a sturdy oak log": .40},
+    3: {"a bundle of kindling": .005, "a birch branch": .01,
+        "a sturdy oak log": .15},
+}
+
+
+def weighted_find_table(tier: int):
+    factors = LOW_TIER_MULTIPLIERS.get(tier, {})
+    return [(name, required, weight * factors.get(name, 1.0), xp)
+            for name, required, weight, xp in FIND_TABLE]
+
+
 def attempt_chop(job_level: int, tool_name: str) -> dict:
     tool = AXES.get(tool_name.lower())
     if tool is None:
         raise ValueError("Unknown lumber axe")
-    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
-                                        max_resource_level=tool["max_resource_level"], tier=tool["tier"])
+    return gathering_job.attempt_gather(
+        job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR,
+        weighted_find_table(tool["tier"]),
+        max_resource_level=tool["max_resource_level"], tier=tool["tier"])
