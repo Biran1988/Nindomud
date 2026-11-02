@@ -3521,11 +3521,20 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     remove_mob(mob)
 
     if session.group and len(session.group.members) > 1:
+        import groups
         qualifying = [
             m for m in session.group.members
             if m.player and m.player.room_vnum == mob.room_vnum and m.player.health > 0
             and getattr(getattr(m, "state", None), "name", "PLAYING") == "PLAYING"
+            and groups.xp_eligible(session, m)
         ]
+        # Rank drift or stale sessions must never permit a >20-level
+        # shared-XP party. A disqualified member simply gets no shared XP.
+        if qualifying and (max(m.player.level for m in qualifying)
+                           - min(m.player.level for m in qualifying)) > groups.GROUP_XP_LEVEL_RANGE:
+            qualifying = [session]
+        if session not in qualifying:
+            qualifying = [session]
     else:
         qualifying = [session]
 
