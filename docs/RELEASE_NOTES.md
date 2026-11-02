@@ -433,3 +433,19 @@ leveling, mob XP, and the older gameplay smoke checks.
   Invalid color/control codes are rejected. Titles and default colors
   still persist in existing character saves and appear ONLY on WHO.
   This update never includes or alters the runtime `data/` directory.
+
+- Version 15.397: Restored authenticated immortal Reaper Death Seal casting
+  without ordinary scroll, level, clan, resource or proficiency gates;
+  staff casts succeed automatically. Immortal targets can also be
+  transported into the Reaper's stomach. Both staff casters and staff
+  targets arrive as unrestricted visitors: they have no persistent
+  `reaper_seal_id` movement lock, their statuses are preserved, their
+  commands work, and they can teleport away at will. Regular players
+  remain fully sealed and cannot escape without a legitimate reversal.
+  The durable journal marks `unbound_staff` participants so reconnects
+  and server restarts never imprison visitors; staff promoted while
+  bound are released from old restrictions without freeing mortal peers.
+  Reversal returns visitors still inside the prison but never moves
+  staff who have already departed. Existing `data/reaper_seals.json`
+  and all player saves remain untouched by installation; `data/` is
+  excluded from packaged ZIPs.
