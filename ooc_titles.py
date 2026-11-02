@@ -1,8 +1,8 @@
-"""Safe, persistent player-selected titles for the OOC channel only.
+"""Safe, persistent player titles for character identification displays.
 
-The title is cosmetic metadata. It never replaces the actual character
-name, account name or in-character identity. Escape sequences and MUD color
-codes cannot be injected by players into global chat.
+Titles show after real player names in WHO, WHOIS, SCORE, room LOOK and
+character examination. They never appear on OOC messages/emotes/chatlog.
+Titles do not replace account identity, target matching or in-character names.
 """
 import re
 
@@ -45,7 +45,7 @@ def color_code(value):
 
 
 def display_name(name, title="", color=DEFAULT_COLOR):
-    """Formatted chat speaker with independently colored title, if valid."""
+    """Formatted player name with independently colored cosmetic title, if valid."""
     title = clean_title(title)
     if not title:
         return name
@@ -63,7 +63,7 @@ def command(session, args):
     if not player:
         return
     if not args or args[0].lower() in ("show", "status"):
-        session.send("Your OOC name: " + player_display(player))
+        session.send("Your character name: " + player_display(player))
         session.send("Usage: title <words> | title set <words> | "
                      "title color <red|green|gold|purple|0-255> | title clear")
         return
@@ -73,7 +73,7 @@ def command(session, args):
         player.ooc_title = ""
         import storage
         storage.save_player(player)
-        session.send("Your OOC title is removed. Your character name is unchanged.")
+        session.send("Your title is removed. Your character name is unchanged.")
         return
 
     if action == "color":
@@ -97,4 +97,4 @@ def command(session, args):
     player.ooc_title = title
     import storage
     storage.save_player(player)
-    session.send("Your new OOC name: " + player_display(player))
+    session.send("Your new title: " + player_display(player))
