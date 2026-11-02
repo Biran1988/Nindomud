@@ -1123,6 +1123,19 @@ DEFAULT_HELP_ENTRIES = [
         "updated_by": "System",
         "updated_at": 0.0,
     },
+{
+        "primary_keyword": "title",
+        "keywords": ["title", "ooc title", "title color", "custom title"],
+        "title": "Custom OOC Title",
+        "body": (
+            "Syntax: title <words> | title set <words> | title color <name|0-255> | title clear\\n"
+            "Use TITLE with no arguments to preview your OOC display name.\\n\\n"
+            "Set up to 40 characters of plain title text after your character's name on the global OOC channel and its emotes. The color affects only your title. Choose red, green, blue, yellow, cyan, magenta, purple, white, gray, orange, pink, gold or a 0-255 color number.\\n\\n"
+            "Example: title The Last Uchiha | title color 208 -> YourName [The Last Uchiha].\\n"
+            "Titles appear in OOC messages and chatlog, never change your real name, and save immediately across quit/reboot. TITLE CLEAR removes the text. No embedded color or control codes."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
     {
         "primary_keyword": "ooc",
         "keywords": ["ooc"],
