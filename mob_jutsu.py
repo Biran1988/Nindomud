@@ -9,6 +9,7 @@ import random
 import time
 
 import data_jutsu
+import jutsu_balance
 import damage_messages
 import derived_stats
 import mob_balance
@@ -52,7 +53,7 @@ def available_jutsu(mob, now=None):
         element = art.get("element", "none")
         if element not in ("none", None) and element != mob.chakra_nature:
             continue
-        if mob.chakra < art.get("chakra_cost", 0) or mob.stamina < art.get("stamina_cost", 0):
+        if mob.chakra < jutsu_balance.cast_cost(mob, art, "chakra", apply_control=False) or mob.stamina < jutsu_balance.cast_cost(mob, art, "stamina"):
             continue
         if now < mob.jutsu_cooldowns.get(key, 0):
             continue
@@ -87,8 +88,8 @@ def try_cast(session, mob):
     import commands
 
     key, art = random.choice(choices)
-    mob.chakra -= art.get("chakra_cost", 0)
-    mob.stamina -= art.get("stamina_cost", 0)
+    mob.chakra -= jutsu_balance.cast_cost(mob, art, "chakra", apply_control=False)
+    mob.stamina -= jutsu_balance.cast_cost(mob, art, "stamina")
     mob.jutsu_cooldowns[key] = now + max(0, float(art.get("cooldown", 0)))
     mob.next_jutsu_at = now + GLOBAL_CAST_DELAY_SECONDS
 
@@ -125,7 +126,8 @@ def try_cast(session, mob):
     # twice this level's expected normal hit so battles remain playable.
     if art.get("jutsu_type") == "ambush":
         damage = max(1, round(damage * art.get("ambush_multiplier", 1.0)))
-    damage = min(damage, max(5, mob_balance.target_damage_for_level(mob.level) * 2))
+    damage = min(jutsu_balance.boosted_damage(mob, art, damage),
+                 max(5, mob_balance.target_damage_for_level(mob.level) * 2))
     if player.sharingan_active and player.bloodline_tomoe >= 3:
         damage = combat._sharingan_predict_and_reduce_damage(player, damage)
     damage = status_effects.reduce_outgoing_damage(mob.active_status_effects, damage)
@@ -143,6 +145,7 @@ def try_cast(session, mob):
         else:
             duration = (status_effects.genjutsu_duration(effect)
                         if genjutsu else status_effects.EFFECT_DEFS[effect]["duration"])
+            duration = jutsu_balance.boosted_duration(mob, art, duration, is_pvp=True, effect=effect)
             status_effects.apply_effect(
                 player.active_status_effects, effect, source=mob.name,
                 duration_override=duration, genjutsu=genjutsu)
