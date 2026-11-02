@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import combat
 import commands
 import data_jutsu
+import jutsu_balance
 import help_system
 import jutsu_shortcuts
 import world
@@ -101,13 +102,15 @@ class JutsuShortcutTests(unittest.TestCase):
         self.player.practiced_skills.append("Camouflage")
         with patch.object(combat, "grow_skill_from_usage"):
             commands.dispatch_line(self.session, "cam on")
-        self.assertEqual((self.player.chakra, self.player.stamina), (485, 495))
+        self.assertEqual((self.player.chakra, self.player.stamina), (500 - jutsu_balance.cast_cost(self.player, data_jutsu.JUTSU["counter kunai"], "chakra"),
+                          500 - jutsu_balance.cast_cost(self.player, data_jutsu.JUTSU["counter kunai"], "stamina")))
         self.assertIn("camouflage", self.player.active_status_effects)
         commands.dispatch_line(self.session, "cam off")
         self.assertNotIn("camouflage", self.player.active_status_effects)
         commands.dispatch_line(self.session, "cam on")
         self.assertIn("recovering", self.session.send.call_args.args[0])
-        self.assertEqual((self.player.chakra, self.player.stamina), (485, 495))
+        self.assertEqual((self.player.chakra, self.player.stamina), (500 - jutsu_balance.cast_cost(self.player, data_jutsu.JUTSU["counter kunai"], "chakra"),
+                          500 - jutsu_balance.cast_cost(self.player, data_jutsu.JUTSU["counter kunai"], "stamina")))
 
     def test_learned_list_and_catalog_keep_unknown_scroll_shortcuts_hidden(self):
         self.player.learned_skills = ["Dynamic Entry", "Shadow Shuriken Technique"]
