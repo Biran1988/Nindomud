@@ -385,3 +385,13 @@ leveling, mob XP, and the older gameplay smoke checks.
   its distinct canonical maximum HP and attack dice as specified in
   `data_tailed_beasts.py`. Ordinary mobs still gain the 5x base HP.
   Sealing, capture timers, wandering, and live runtime `data/` are untouched.
+
+- Version 15.392: The currently active EXP perk (24-hour immortal MUD-wide
+  override or temporary Kage village purchase) now multiplies earned job
+  experience for successful Fishing, Mining, Lumberjack, Farming, Cooking
+  and Gemcutter actions, just like combat and mission XP. Double EXP grants
+  2x, Triple EXP 3x; ordinary job XP returns to 1x as soon as the perk
+  is turned off or expires. The effective multiplier is resolved when
+  each action finishes, and job XP messages show the actual award. No
+  separate stacked perk, new permanent multiplier, job level cap
+  increase, or change to staff LEVELUP JOB. Runtime data/ is excluded.
