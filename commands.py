@@ -5358,18 +5358,10 @@ def cmd_skills(session, args: List[str]) -> None:
 
 
 def cmd_examine(session, args: List[str]) -> None:
-    """Examines an item (in inventory or equipped) and reveals its
-    stats -- gated first by character LEVEL (Examine isn't granted at
-    creation; it unlocks automatically at data_jutsu.APPRAISAL_LEVEL_REQUIREMENT,
-    see leveling.py), then by proficiency in that skill once unlocked
-    (trainable via 'practice examine' like any other skill),
-    revealing progressively more detail at higher proficiency rather
-    than dumping everything at once. Untrained/novice: just the name
-    and rarity. Familiar/skilled: adds item type, weapon type, cost,
-    and weight. Expert/mastered: adds full armor-set requirements and
-    bonus, and a clear breakdown of any crafted stat bonus (which is
-    also visible in the item's own name text, but spelled out
-    explicitly here)."""
+    """Inspect carried or equipped items, showing item-bound enchantments
+    only in this report and improving Examine proficiency through use.
+    Rarity is deliberately hidden everywhere.
+    """
     player = session.player
     if not args:
         session.send("Examine what?")
@@ -5395,10 +5387,22 @@ def cmd_examine(session, args: List[str]) -> None:
         return
     appraisal_pct = player.skill_proficiencies.get("Examine", 0)
     proto = _find_object_prototype_by_name(match)
-    rarity = proto.get("rarity", "common") if proto else "common"
+    import ninja_arts
 
-    lines = [f"You examine {_examine_rarity_colored_name(match)}."]
-    lines.append(f"&WRarity:&x {data_rarity.display_name(rarity)}")
+    def complete_examination():
+        session.send("\n".join(lines))
+        combat.grow_skill_from_usage(player, "Examine", session=session)
+
+    lines = [f"You examine {rarity_colored_name(match)}."]
+    element = ninja_arts.element_of(match)
+    art = ninja_arts.property_of(match)
+    if element:
+        lines.append(f"&WElemental Enchantment:&x {element.title()} chakra")
+        lines.append("&DElemental benefits require a Bukijutsu wielder with that chakra nature.&x")
+    elif art:
+        lines.append(f"&WWeapon Enchantment:&x {art.replace('_', ' ').title()}")
+    if match.casefold().endswith(" [glued]"):
+        lines.append("&WBinding:&x Glued (cannot drop or trade)")
     import pill_crafting
     pill_info = pill_crafting.pill_data(match)
     if pill_info:
@@ -5410,7 +5414,7 @@ def cmd_examine(session, args: List[str]) -> None:
 
     if appraisal_pct < 40:
         lines.append("&D(Train Examine further to learn more about this item.)&x")
-        session.send("\n".join(lines))
+        complete_examination()
         return
 
     if proto:
@@ -5440,7 +5444,7 @@ def cmd_examine(session, args: List[str]) -> None:
 
     if appraisal_pct < 80:
         lines.append("&D(Train Examine further to see full set details.)&x")
-        session.send("\n".join(lines))
+        complete_examination()
         return
 
     if proto and proto.get("set_vnums"):
@@ -5452,7 +5456,7 @@ def cmd_examine(session, args: List[str]) -> None:
     elif proto:
         lines.append("&WSet Bonus:&x not part of a set")
 
-    session.send("\n".join(lines))
+    complete_examination()
 
 
 # --- prac: categorized skill list (Sections 8-9, 12) --------------------
@@ -8148,26 +8152,15 @@ def rarity_colored_name(item_name: str) -> str:
     only in cmd_examine's own dedicated view -- see
     _examine_rarity_colored_name below."""
     import lightsabers
-    themed = legendary_items.styled_name(item_name)
-    return themed if themed is not None else lightsabers.display_name(item_name)
+    import ninja_arts
+    clean_name = ninja_arts.base_item(item_name)
+    themed = legendary_items.styled_name(clean_name)
+    return themed if themed is not None else lightsabers.display_name(clean_name)
 
 
 def _examine_rarity_colored_name(item_name: str) -> str:
-    """The real, tagged/colored rarity display (Borderlands-style,
-    Common -> Legendary) -- confirmed directly (Section 149) to be
-    hidden from every OTHER real item display in the game, surfacing
-    only here, in cmd_examine's own dedicated view. Shows as a
-    bracketed tag at the front -- e.g. '[Legendary] a legendary
-    blade' -- with the tier name inside the brackets cycling through
-    that tier's own colors, followed by the item name in the tier's
-    plain color. Falls back to plain/common (white) if the item has
-    no matching oset prototype."""
-    proto = _find_object_prototype_by_name(item_name)
-    rarity = proto.get("rarity", "common") if proto else "common"
-    themed = legendary_items.styled_name(item_name)
-    if themed is not None:
-        return f"{data_rarity.colored_tag(rarity)} {themed}"
-    return f"{data_rarity.colored_tag(rarity)} {data_rarity.color(rarity)}{item_name}&x"
+    """Plain-name compatibility alias; Examine no longer displays rarity."""
+    return rarity_colored_name(item_name)
 
 
 _CHAKRA_PAPER_REACTIONS = {
