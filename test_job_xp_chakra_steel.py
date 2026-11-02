@@ -7,6 +7,7 @@ import changelog
 import commands
 import content
 import jobs
+import village_perks
 import ninja_arts
 import olc
 from models import Player
@@ -15,7 +16,12 @@ from models import Player
 class JobXpGainTests(unittest.TestCase):
     def setUp(self):
         self.player = Player("Farmer", "Farmer")
+        self.player.village = "leaf"
         self.session = NS(player=self.player, send=Mock())
+        # Keep base XP tests isolated from any persisted global perks.
+        self.perks = patch.object(village_perks, "xp_multiplier", return_value=1.0)
+        self.perks.start()
+        self.addCleanup(self.perks.stop)
 
     def test_each_job_displays_earned_xp(self):
         for job in ("fishing", "mining", "lumberjack", "farming", "cooking", "gemcutter"):
@@ -25,6 +31,30 @@ class JobXpGainTests(unittest.TestCase):
                 self.assertEqual(jobs.get_job_xp(self.player, job), 35)
                 messages = [call.args[0] for call in self.session.send.call_args_list]
                 self.assertTrue(any(f"+35 {job.capitalize()} XP" in m for m in messages))
+
+    def test_active_triple_exp_grants_three_times_job_xp(self):
+        self.perks.stop()
+        with patch.object(village_perks, "xp_multiplier", return_value=3.0) as perk:
+            for job in ("fishing", "mining", "lumberjack", "farming", "cooking", "gemcutter"):
+                with self.subTest(job=job):
+                    self.session.send.reset_mock()
+                    commands._award_job_action_xp(self.session, job, 35)
+                    perk.assert_called_with("leaf")
+                    self.assertEqual(jobs.get_job_xp(self.player, job), 105)
+                    messages = [call.args[0] for call in self.session.send.call_args_list]
+                    self.assertTrue(any("+105 " + job.capitalize() + " XP" in msg for msg in messages))
+                    self.assertTrue(any("x3 EXP perk" in msg for msg in messages))
+
+    def test_double_exp_is_double_and_perk_off_returns_to_normal(self):
+        with patch.object(village_perks, "xp_multiplier", side_effect=[2.0, 1.0]):
+            commands._award_job_action_xp(self.session, "fishing", 40)
+            commands._award_job_action_xp(self.session, "fishing", 40)
+        self.assertEqual(jobs.get_job_xp(self.player, "fishing"), 120)
+        msgs = [call.args[0] for call in self.session.send.call_args_list]
+        self.assertIn("+80 Fishing XP", msgs[0])
+        self.assertIn("x2 EXP perk", msgs[0])
+        self.assertIn("+40 Fishing XP", msgs[1])
+        self.assertNotIn("perk", msgs[1].lower())
 
     def test_zero_and_capped_job_xp_not_falsely_displayed(self):
         self.player.job_levels["fishing"] = jobs.MAX_JOB_LEVEL
