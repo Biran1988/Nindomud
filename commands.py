@@ -4160,7 +4160,7 @@ def cmd_group(session, args: List[str]) -> None:
         if not session.group:
             session.send("You aren't in a group. Try 'group invite <player>'.")
             return
-        lines = ["&WYour group:&x"]
+        lines = [f"&WYour group (maximum {groups.GROUP_XP_LEVEL_RANGE} ninja-level spread for XP):&x"]
         for member in session.group.members:
             if not member.player:
                 continue
@@ -4207,6 +4207,12 @@ def cmd_group(session, args: List[str]) -> None:
         if target_session.group:
             session.send(f"{target_session.player.name} is already in a group.")
             return
+        # Validate BOTH existing members and the new invitee. The invitation
+        # attempt itself incurs the timed ban when the socket IP matches.
+        current_members = session.group.members if session.group else [session]
+        if not groups.enforce_join(target_session, current_members):
+            session.send("Group invitation denied by level or connection restrictions.")
+            return
 
         if not session.group:
             session.group = groups.Group(session)
@@ -4223,6 +4229,11 @@ def cmd_group(session, args: List[str]) -> None:
         session.pending_group_invite = None
         if group.is_full():
             session.send("That group is now full.")
+            return
+        if not groups.enforce_join(session, group.members):
+            return
+        if not group.members or any(member.group is not group for member in group.members):
+            session.send("That group is no longer available.")
             return
         group.members.append(session)
         session.group = group
