@@ -422,3 +422,14 @@ leveling, mob XP, and the older gameplay smoke checks.
   `title`, `title color`, `title clear` and saved player title/color
   fields remain compatible with existing accounts. No `data/` files are
   included in the release archive.
+
+- Version 15.396: Setting a new TITLE immediately replaces the previous
+  WHO-only title; there is no need to run TITLE CLEAR first. Players may
+  mix safe built-in ROM/xterm codes inside a single title, e.g.
+  `title &RFlame &CIce &YMaster` or `title &[208]Orange &[39]Blue`.
+  The existing `title color <color>` is the fallback color for unmarked
+  spans. Validation limits titles to 40 visible characters, at most 16
+  supported inline color codes and 160 characters of stored markup.
+  Invalid color/control codes are rejected. Titles and default colors
+  still persist in existing character saves and appear ONLY on WHO.
+  This update never includes or alters the runtime `data/` directory.
