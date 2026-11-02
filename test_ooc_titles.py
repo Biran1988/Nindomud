@@ -115,12 +115,13 @@ class OocTitleTests(unittest.TestCase):
         self.assertIn("Shinobi yawns.", self.session.broadcast_room.call_args.args[0])
         self.assertNotIn("The Wanderer", self.session.broadcast_room.call_args.args[0])
 
-    def test_title_in_who_whois_score_and_room_look_but_not_in_chat(self):
+    def test_title_only_in_who_not_whois_score_or_look(self):
         import world
         self.player.ooc_title = "The Last Uchiha"
         self.player.ooc_title_color = "208"
         self.player.primary_class = "ninjutsu"
         self.player.room_vnum = 5001
+
         viewer = Player("Observer", "Observer")
         viewer.village = "leaf"
         viewer.primary_class = "ninjutsu"
@@ -129,17 +130,20 @@ class OocTitleTests(unittest.TestCase):
                       _clone_original_player=None)
         observer.active_sessions = lambda: [observer, self.session]
         self.session.active_sessions = observer.active_sessions
-
         with patch("staff_invisibility.visible_to", return_value=True):
             commands.cmd_who(observer, [])
-            self.assertIn("Shinobi &[208][The Last Uchiha]&x",
-                          observer.send.call_args.args[0])
+            output = observer.send.call_args.args[0]
+            self.assertIn("Shinobi &[208][The Last Uchiha]&x", output)
+            observer.send.reset_mock()
             commands.cmd_whois(observer, ["Shinobi"])
-            self.assertIn("Shinobi &[208][The Last Uchiha]&x",
-                          observer.send.call_args.args[0])
+            output = observer.send.call_args.args[0]
+            self.assertIn("Shinobi", output)
+            self.assertNotIn("The Last Uchiha", output)
 
         score = "\n".join(commands.build_score_lines(self.player, "Nobody"))
-        self.assertIn("Shinobi &[208][The Last Uchiha]&x", score)
+        self.assertIn("Name:", score)
+        self.assertIn("Shinobi", score)
+        self.assertNotIn("The Last Uchiha", score)
 
         room = world.Room(5001, "Test Clearing", "Open ground.")
         with (patch.object(commands.WORLD, "get", return_value=room),
@@ -153,11 +157,16 @@ class OocTitleTests(unittest.TestCase):
               patch("genjutsu.decoys_in_room", return_value=[]),
               patch("session.ACTIVE_SESSIONS", [])):
             commands.cmd_look(observer, [])
-            self.assertIn("Shinobi [The Last Uchiha] is here.",
-                          colors.render(observer.send.call_args.args[0], False))
+            rendered = colors.render(observer.send.call_args.args[0], False)
+            self.assertIn("Shinobi is here.", rendered)
+            self.assertNotIn("The Last Uchiha", rendered)
             commands.cmd_look(observer, ["Shinobi"])
-            self.assertIn("Shinobi &[208][The Last Uchiha]&x",
-                          observer.send.call_args.args[0])
+            self.assertIn("Shinobi", observer.send.call_args.args[0])
+            self.assertNotIn("The Last Uchiha", observer.send.call_args.args[0])
+
+        with patch("chat_moderation.record_and_check_spam", return_value=False):
+            commands.cmd_ooc(self.session, ["hello"])
+        self.assertNotIn("The Last Uchiha", self.session.broadcast_all.call_args.args[0])
 
 
 if __name__ == "__main__":
