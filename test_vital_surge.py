@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 
 import commands
 import data_jutsu
+import jutsu_balance
 import help_system
 from models import Player
 import six_paths
@@ -34,7 +35,8 @@ class VitalSurgeTests(unittest.TestCase):
     def test_heal_clear_only_two_ailments_and_pay_real_cost_in_combat(self):
         self.p.active_status_effects = {"poisoned": {}, "weakened": {}, "blinded": {}, "barrier": {}}
         self.cast()
-        self.assertEqual((self.p.health, self.p.stamina, self.p.chakra), (650, 400, 880))
+        self.assertEqual((self.p.health, self.p.stamina, self.p.chakra),
+                         (650, 400, 1000 - jutsu_balance.cast_cost(self.p, data_jutsu.JUTSU[KEY], "chakra")))
         self.assertEqual(set(self.p.active_status_effects), {"blinded", "barrier"})
         self.assertEqual(self.p.cooldowns[KEY], 1120)
         self.assertTrue(self.p.six_paths_active)
@@ -48,7 +50,8 @@ class VitalSurgeTests(unittest.TestCase):
         self.p.cooldowns.clear()
         self.p.active_status_effects["poisoned"] = {}
         self.cast(["me"])
-        self.assertEqual(self.p.chakra, 760)
+        self.assertEqual(self.p.chakra, 1000 - 2 * jutsu_balance.cast_cost(
+            self.p, data_jutsu.JUTSU[KEY], "chakra"))
         self.assertNotIn("poisoned", self.p.active_status_effects)
 
     def test_full_health_no_ailment_costs_nothing(self):
@@ -102,8 +105,9 @@ class VitalSurgeTests(unittest.TestCase):
 
     def test_ordinary_chakra_control_discount(self):
         with patch("derived_stats.chakra_control_cost_discount_percent", return_value=25):
+            expected_cost = jutsu_balance.cast_cost(self.p, data_jutsu.JUTSU[KEY], "chakra")
             self.cast()
-        self.assertEqual(self.p.chakra, 910)
+        self.assertEqual(self.p.chakra, 1000 - expected_cost)
 
     def test_usage_can_raise_mastery_after_practice_cap(self):
         self.p.skill_proficiencies[NAME] = 80
