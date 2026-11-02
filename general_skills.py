@@ -2,6 +2,7 @@
 import time
 
 import data_jutsu
+import jutsu_balance
 import status_effects
 
 CAMOUFLAGE_UPKEEP_SECONDS = 5.0
@@ -75,12 +76,12 @@ def activate(session, key, words):
     if shortfall:
         session.send(shortfall)
         return
-    player.chakra -= info["chakra_cost"]
-    player.stamina -= info["stamina_cost"]
+    player.chakra -= jutsu_balance.cast_cost(player, info, "chakra")
+    player.stamina -= jutsu_balance.cast_cost(player, info, "stamina")
     player.cooldowns[key] = now + info["cooldown"]
     mastery = max(0, min(100, player.skill_proficiencies.get(info["display_name"], 0)))
     toggled = status_effects.EFFECT_DEFS[effect].get("toggled", False)
-    duration = None if toggled else 60 + mastery
+    duration = None if toggled else jutsu_balance.boosted_duration(player, info, 60 + mastery)
     status_effects.apply_effect(player.active_status_effects, effect, source=key,
                                 duration_override=duration)
     combat.grow_skill_from_usage(player, info["display_name"], session=session)
