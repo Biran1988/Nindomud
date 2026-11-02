@@ -3258,6 +3258,11 @@ def _current_jutsu_opponent(session) -> List[str]:
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
+    # Actual resource costs follow ninja level, art tier and maximum pools.
+    # Upkeep/toggles continue using their separate established maintenance.
+    import jutsu_balance
+    scaled_chakra_cost = jutsu_balance.cast_cost(player, jutsu_data, "chakra")
+    scaled_stamina_cost = jutsu_balance.cast_cost(player, jutsu_data, "stamina")
 
     # Kamui owners can dismiss an existing pocket from OUTSIDE without
     # entering it, paying upkeep, or needing the target to be in this room.
@@ -3479,10 +3484,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             player.taijutsu_stance = ""
             jutsu_colors.send(session, f"You leave {jutsu_data['display_name']} and return to a normal stance.")
             return
-        if player.stamina < jutsu_data["stamina_cost"]:
+        if player.stamina < scaled_stamina_cost:
             jutsu_colors.send(session, "You don't have enough stamina.")
             return
-        player.stamina -= jutsu_data["stamina_cost"]
+        player.stamina -= scaled_stamina_cost
         player.taijutsu_stance = jutsu_key
         combat.grow_skill_from_usage(player, jutsu_data["display_name"])
         jutsu_colors.send(session, f"You enter {jutsu_data['display_name']} stance.")
@@ -3517,7 +3522,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if now < cooldown_ready_at:
             jutsu_colors.send(session, f"&WTrack&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
 
@@ -3537,7 +3542,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "You can't get a fix on their location.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["track"] = now + jutsu_data["cooldown"]
         tracking.start_tracking(
             player,
@@ -3552,7 +3557,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Seal what?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         query = " ".join(target_words)
@@ -3564,7 +3569,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, f"{mob.name} is still fighting back -- you can't seal it yet.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         beast_key = mob.tailed_beast_key
         import data_tailed_beasts
         beast = data_tailed_beasts.TAILED_BEASTS_BY_KEY[beast_key]
@@ -3579,7 +3584,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Release the beast from who?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         query = " ".join(target_words).lower()
@@ -3594,7 +3599,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, f"You must defeat {target_session.player.name} in combat first.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         beast_key = target_session.player.jinchuriki_beast_key
         import data_tailed_beasts
         import tailed_beasts as tailed_beasts_module
@@ -3615,7 +3620,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Unleash the Tailed Beast Bomb on who?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3636,7 +3641,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nothing here by that name.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["tailed beast bomb"] = now + jutsu_data["cooldown"]
         import tailed_beasts as tailed_beasts_module
         dmg = tailed_beasts_module.bomb_damage(player)
@@ -3665,7 +3670,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Trap who in Tsukuyomi?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3684,7 +3689,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["tsukuyomi"] = now + jutsu_data["cooldown"]
         if has_silent_genjutsu(player):
             combat.resolve_tsukuyomi_cast(session, target_session)
@@ -3698,7 +3703,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Unleash Amaterasu on who?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3717,7 +3722,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["amaterasu"] = now + jutsu_data["cooldown"]
         if has_silent_genjutsu(player):
             combat.resolve_amaterasu_cast(session, target_session)
@@ -3775,7 +3780,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
             jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3783,7 +3788,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if now < cooldown_ready_at:
             jutsu_colors.send(session, f"&WKamui: Intangibility&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["kamui intangibility"] = now + jutsu_data["cooldown"]
         import data_mangekyo
         player.kamui_intangibility_rounds_left = data_mangekyo.KAMUI_INTANGIBILITY_ROUNDS
@@ -3798,7 +3803,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Unleash Kamui: Limb Removal on who?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3817,7 +3822,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["kamui limb removal"] = now + jutsu_data["cooldown"]
         import random
         import data_mangekyo
@@ -3832,7 +3837,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not target_words:
             jutsu_colors.send(session, "Trap who in Izanami?")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3851,7 +3856,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["izanami"] = now + jutsu_data["cooldown"]
         if has_silent_genjutsu(player):
             combat.resolve_izanami_cast(session, target_session)
@@ -3862,7 +3867,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
             jutsu_colors.send(session, "You haven't learned that skill or jutsu.")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         now = time.time()
@@ -3870,7 +3875,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if now < cooldown_ready_at:
             jutsu_colors.send(session, f"&WKekkei no Me&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["kekkei no me"] = now + jutsu_data["cooldown"]
         if has_silent_genjutsu(player):
             combat.resolve_kekkei_no_me_cast(session)
@@ -3886,7 +3891,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if now < cooldown_ready_at:
             jutsu_colors.send(session, f"&WIllusion Walk&x is still recovering ({cooldown_ready_at - now:.1f}s).")
             return
-        if player.chakra < jutsu_data["chakra_cost"]:
+        if player.chakra < scaled_chakra_cost:
             jutsu_colors.send(session, "You don't have enough chakra.")
             return
         if session.pending_cast is not None:
@@ -3902,7 +3907,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
 
-        player.chakra -= jutsu_data["chakra_cost"]
+        player.chakra -= scaled_chakra_cost
         player.cooldowns["illusion walk"] = now + jutsu_data["cooldown"]
         if has_silent_genjutsu(player):
             combat.resolve_illusion_walk_cast(session, target_session)
