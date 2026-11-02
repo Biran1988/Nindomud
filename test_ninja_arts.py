@@ -7,6 +7,7 @@ import combat
 import commands
 import content
 import data_jutsu
+import jutsu_balance
 import leveling
 import ninja_arts
 import olc
@@ -55,18 +56,19 @@ class NinjaArtsTests(unittest.TestCase):
         self.assertEqual(self.player.chakra, starting_chakra)
 
         self.player.equipment["wielded"] = "A Basic Sword"
+        cast_cost = jutsu_balance.cast_cost(self.player, data_jutsu.JUTSU["samurai sabre"], "chakra")
         commands.cmd_use_jutsu(self.session, "samurai sabre", [])
         self.assertTrue(self.player.samurai_sabre_active)
         self.assertNotIn("samurai_sabre", self.player.active_status_effects)
-        self.assertEqual(self.player.chakra, starting_chakra - 35)
+        self.assertEqual(self.player.chakra, starting_chakra - cast_cost)
         self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 60)
         for _ in range(6):
             ninja_arts.tick_samurai_sabre(self.session)
         self.assertTrue(self.player.samurai_sabre_active)
-        self.assertEqual(self.player.chakra, starting_chakra - 35 - 24)
+        self.assertEqual(self.player.chakra, starting_chakra - cast_cost - 24)
         before_stamina = self.player.stamina
         ninja_arts.tick_samurai_sabre(self.session, combat=True)
-        self.assertEqual(self.player.chakra, starting_chakra - 35 - 24 - 6)
+        self.assertEqual(self.player.chakra, starting_chakra - cast_cost - 24 - 6)
         self.assertEqual(self.player.stamina, before_stamina - 2)
         self.player.equipment["wielded"] = "A Basic Kunai"
         self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 50)
