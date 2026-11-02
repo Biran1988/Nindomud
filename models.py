@@ -116,8 +116,9 @@ class Player:
     # help-topic authoring.
     description: str = ""
     biography: str = ""
-    # Cosmetic OOC-only title. Plain text and selected color are persisted
-    # with the character and never alter their actual login/roleplay name.
+    # Cosmetic character-display title; saved as legacy ooc_title fields
+    # to preserve all titles from v15.393 without migrating player data.
+    # Not displayed in OOC chat or used for login/target matching.
     ooc_title: str = ""
     ooc_title_color: str = "gold"
 
