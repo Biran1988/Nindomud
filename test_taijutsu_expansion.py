@@ -8,6 +8,7 @@ import combat
 import commands
 import data_handsigns
 import data_jutsu
+import jutsu_balance
 import derived_stats
 import leveling
 from models import Player
@@ -42,7 +43,8 @@ class TaijutsuExpansionTests(unittest.TestCase):
                  patch.object(combat, "_jutsu_damage_bonus", return_value=0):
                 combat.use_jutsu(session, key, mob)
         self.assertLess(mob.health, 1000)
-        self.assertEqual(player.stamina, 73)
+        self.assertEqual(player.stamina, 100 - sum(jutsu_balance.cast_cost(
+            player, data_jutsu.JUTSU[key], "stamina") for key in ("empi", "nidan kyten geri")))
         self.assertEqual(player.chakra, Player(name="Base", account_name="Base").chakra)
 
     def test_stances_switch_persist_and_affect_combat_stats(self):
@@ -121,7 +123,8 @@ class TaijutsuExpansionTests(unittest.TestCase):
              patch.object(combat, "roll_jutsu_damage", return_value=(20, False)), \
              patch.object(combat, "_jutsu_damage_bonus", return_value=0):
             combat.use_jutsu(session, "ushiro shishou", mob)
-        self.assertEqual(mob.health, 970)
+        self.assertEqual(mob.health, 1000 - jutsu_balance.boosted_damage(
+            player, data_jutsu.JUTSU["ushiro shishou"], 30))
         self.assertLess(player.chakra, 100)
 
 
