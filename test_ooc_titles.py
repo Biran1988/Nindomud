@@ -43,24 +43,30 @@ class OocTitleTests(unittest.TestCase):
                          "Shinobi [The Last Uchiha]")
         self.assertIn("\x1b[38;5;208m", colors.render(ooc_titles.player_display(loaded), True))
 
-    def test_active_title_in_ooc_and_saved_chat_history(self):
-        commands.dispatch(self.session, "title", ["set", "The", "Hokage"])
+    def test_titles_never_appear_in_ooc_or_saved_chat_history(self):
+        commands.dispatch(self.session, "title", ["The", "Hokage"])
         commands.dispatch(self.session, "title", ["color", "gold"])
         with patch("chat_moderation.record_and_check_spam", return_value=False):
             commands.cmd_ooc(self.session, ["hello", "everyone"])
-        text = self.session.broadcast_all.call_args.args[0]
-        self.assertIn("&[220][The Hokage]&x:", text)
-        self.assertIn("Shinobi", text)
-        self.assertIn("Shinobi", self.session.send.call_args.args[0] if self.session.send.call_args else "")
-        self.assertEqual(len(chatlog.ENTRIES), 1)
-        self.assertEqual(chatlog.ENTRIES[0]["title"], "The Hokage")
-        self.assertEqual(chatlog.ENTRIES[0]["title_color"], "gold")
+        rendered = self.session.broadcast_all.call_args.args[0]
+        self.assertIn("[OOC] Shinobi: hello everyone", rendered)
+        self.assertNotIn("Hokage", rendered)
+        self.assertIn("[OOC] You: hello everyone",
+                      self.session.send.call_args.args[0])
+        self.assertEqual(list(chatlog.ENTRIES),
+                         [{"speaker": "Shinobi", "message": "hello everyone"}])
+        # Old persisted OOC entries with title snapshots must also display
+        # without the historical titles. Do not destroy their saved data.
+        chatlog.ENTRIES.append({"speaker": "Shinobi", "title": "Old Title",
+                                "title_color": "red", "message": "old message"})
         self.session.send.reset_mock()
         commands.cmd_chatlog(self.session, [])
-        self.assertIn("[The Hokage]", self.session.send.call_args.args[0])
+        output = self.session.send.call_args.args[0]
+        self.assertIn("[OOC] Shinobi: old message", output)
+        self.assertNotIn("Old Title", output)
         chatlog.ENTRIES.clear()
         chatlog.load_all()
-        self.assertEqual(chatlog.ENTRIES[0]["title"], "The Hokage")
+        self.assertEqual(chatlog.ENTRIES[0]["message"], "hello everyone")
 
     def test_legacy_ooc_without_title_stays_the_same(self):
         with patch("chat_moderation.record_and_check_spam", return_value=False):
@@ -92,19 +98,66 @@ class OocTitleTests(unittest.TestCase):
         commands.dispatch(self.session, "title", ["color", "&R"])
         self.assertEqual(self.player.ooc_title_color, "gold")
 
-    def test_emotes_show_title_only_on_ooc_channel(self):
+    def test_ooc_emotes_never_include_titles(self):
         self.player.ooc_title = "The Wanderer"
         self.player.ooc_title_color = "cyan"
         with patch("chat_moderation.record_and_check_spam", return_value=False):
             commands.cmd_emote(self.session, ["@yawn"], ooc=True)
-        self.assertIn("[The Wanderer]", self.session.broadcast_all.call_args.args[0])
-        self.assertEqual(chatlog.ENTRIES[0]["title"], "The Wanderer")
+        self.assertIn("[OOC]", self.session.broadcast_all.call_args.args[0])
+        self.assertIn("Shinobi yawns.", self.session.broadcast_all.call_args.args[0])
+        self.assertNotIn("Wanderer", self.session.broadcast_all.call_args.args[0])
+        self.assertEqual(chatlog.ENTRIES[0],
+                         {"speaker": "Shinobi", "message": "[emote] yawns."})
         self.session.broadcast_all.reset_mock()
         self.session.broadcast_room = Mock()
         with patch("chat_moderation.record_and_check_spam", return_value=False):
             commands.cmd_emote(self.session, ["@yawn"], ooc=False)
         self.assertIn("Shinobi yawns.", self.session.broadcast_room.call_args.args[0])
         self.assertNotIn("The Wanderer", self.session.broadcast_room.call_args.args[0])
+
+    def test_title_in_who_whois_score_and_room_look_but_not_in_chat(self):
+        import world
+        self.player.ooc_title = "The Last Uchiha"
+        self.player.ooc_title_color = "208"
+        self.player.primary_class = "ninjutsu"
+        self.player.room_vnum = 5001
+        viewer = Player("Observer", "Observer")
+        viewer.village = "leaf"
+        viewer.primary_class = "ninjutsu"
+        viewer.room_vnum = 5001
+        observer = NS(player=viewer, account=NS(staff_level="player"), send=Mock(),
+                      _clone_original_player=None)
+        observer.active_sessions = lambda: [observer, self.session]
+        self.session.active_sessions = observer.active_sessions
+
+        with patch("staff_invisibility.visible_to", return_value=True):
+            commands.cmd_who(observer, [])
+            self.assertIn("Shinobi &[208][The Last Uchiha]&x",
+                          observer.send.call_args.args[0])
+            commands.cmd_whois(observer, ["Shinobi"])
+            self.assertIn("Shinobi &[208][The Last Uchiha]&x",
+                          observer.send.call_args.args[0])
+
+        score = "\n".join(commands.build_score_lines(self.player, "Nobody"))
+        self.assertIn("Shinobi &[208][The Last Uchiha]&x", score)
+
+        room = world.Room(5001, "Test Clearing", "Open ground.")
+        with (patch.object(commands.WORLD, "get", return_value=room),
+              patch.object(commands, "_format_exits", return_value=[]),
+              patch.object(commands, "_player_hidden_from", return_value=False),
+              patch("seasonal_events.tree_visible", return_value=False),
+              patch("halloween_event.decorate_village", return_value=""),
+              patch("combat.mobs_in_room", return_value=[]),
+              patch("corpses.corpses_in_room", return_value=[]),
+              patch("room_jutsu_objects.active_objects", return_value=[]),
+              patch("genjutsu.decoys_in_room", return_value=[]),
+              patch("session.ACTIVE_SESSIONS", [])):
+            commands.cmd_look(observer, [])
+            self.assertIn("Shinobi &[208][The Last Uchiha]&x is here.",
+                          observer.send.call_args.args[0])
+            commands.cmd_look(observer, ["Shinobi"])
+            self.assertIn("Shinobi &[208][The Last Uchiha]&x",
+                          observer.send.call_args.args[0])
 
 
 if __name__ == "__main__":
