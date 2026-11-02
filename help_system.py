@@ -1132,8 +1132,8 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Add a colored cosmetic title after your character name ONLY on the WHO list. Not shown in OOC, CHATLOG, WHOIS, SCORE, LOOK, emotes or other character displays.\n"
             "\n"
-            "Typing TITLE <words> instantly REPLACES your previous title without requiring TITLE CLEAR. TITLE CLEAR is only for removing the title entirely.\\n"
-            "Use multiple colors inside one title with built-in MUD codes, e.g. TITLE &RFlame &CIce &YMaster or TITLE &[208]Orange &[39]Blue. The TITLE COLOR <color> setting remains the fallback for unmarked text.\\n"
+            "Typing TITLE <words> instantly REPLACES your previous title without requiring TITLE CLEAR. TITLE CLEAR is only for removing the title entirely.\n"
+            "Use multiple colors inside one title with built-in MUD codes, e.g. TITLE &RFlame &CIce &YMaster or TITLE &[208]Orange &[39]Blue. The TITLE COLOR <color> setting remains the fallback for unmarked text.\n"
             "The title can contain 1-40 visible characters and up to 16 valid inline color codes. No raw escape/control sequences. TITLE previews your WHO-list display. Your actual account name and command targeting remain unchanged. Settings save immediately and persist through quit/reboot."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
