@@ -7,6 +7,7 @@ import combat
 import data_jutsu
 import jutsu_balance
 import mob_jutsu
+import mob_balance
 from models import Player
 
 
@@ -74,12 +75,16 @@ class MobJutsuTests(unittest.TestCase):
              patch("mob_jutsu.random.choice", side_effect=lambda seq: seq[0]), \
              patch("combat.roll_jutsu_damage", return_value=(40, False)):
             self.assertTrue(mob_jutsu.try_cast(session, mob))
-            self.assertEqual(session.player.health, 460)
+            expected = min(jutsu_balance.boosted_damage(mob, art, 40),
+                           max(5, mob_balance.target_damage_for_level(mob.level) * 2))
+            self.assertEqual(session.player.health, 500 - expected)
             self.assertEqual(mob.chakra, 300 - jutsu_balance.cast_cost(mob, art, "chakra", apply_control=False))
             self.assertEqual(mob.next_jutsu_at, 108.0)
             self.assertEqual(mob.jutsu_cooldowns["chakra ball"], 100 + art["cooldown"])
             self.assertFalse(mob_jutsu.try_cast(session, mob))
-            self.assertEqual(session.player.health, 460)
+            expected = min(jutsu_balance.boosted_damage(mob, art, 40),
+                           max(5, mob_balance.target_damage_for_level(mob.level) * 2))
+            self.assertEqual(session.player.health, 500 - expected)
         self.assertTrue(any("Chakra Ball" in call.args[0]
                             for call in session.send.call_args_list))
 
