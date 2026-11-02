@@ -30,7 +30,10 @@ def cast(session, key, mob):
     if session.pending_cast is not None:
         jutsu_colors.send(session, "You're already forming hand signs for another jutsu!")
         return
-    if player.chakra < jutsu["chakra_cost"] or player.stamina < jutsu.get("stamina_cost", 0):
+    import jutsu_balance
+    chakra_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    stamina_cost = jutsu_balance.cast_cost(player, jutsu, "stamina")
+    if player.chakra < chakra_cost or player.stamina < stamina_cost:
         jutsu_colors.send(session, "You don't have enough Chakra or Stamina.")
         return
     now = time.time()
@@ -43,8 +46,8 @@ def cast(session, key, mob):
         except ValueError as exc:
             jutsu_colors.send(session, str(exc))
             return
-    player.chakra -= jutsu["chakra_cost"]
-    player.stamina -= jutsu.get("stamina_cost", 0)
+    player.chakra -= chakra_cost
+    player.stamina -= stamina_cost
     player.cooldowns[key] = now + jutsu["cooldown"]
     if key == "kamui pocket dimension":
         mangekyo_discovery.record_use(player, key)
