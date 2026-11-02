@@ -1674,7 +1674,7 @@ def cmd_ooc(session, args: List[str]) -> None:
     import ooc_titles
     # Only the title is colored; the real OOC character name is unchanged.
     name = ooc_titles.player_display(player)
-    session.send(f"&M[OOC] You:&x {message}")
+    session.send(f"&M[OOC] {name if player.ooc_title else 'You'}:&x {message}")
     session.broadcast_all(f"&M[OOC] {name}:&x {message}", exclude_self=True)
     import chatlog
     if player.ooc_title:
