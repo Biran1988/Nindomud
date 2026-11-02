@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import combat
 import data_jutsu
+import jutsu_balance
 import mob_jutsu
 from models import Player
 
@@ -74,7 +75,7 @@ class MobJutsuTests(unittest.TestCase):
              patch("combat.roll_jutsu_damage", return_value=(40, False)):
             self.assertTrue(mob_jutsu.try_cast(session, mob))
             self.assertEqual(session.player.health, 460)
-            self.assertEqual(mob.chakra, 300 - art["chakra_cost"])
+            self.assertEqual(mob.chakra, 300 - jutsu_balance.cast_cost(mob, art, "chakra", apply_control=False))
             self.assertEqual(mob.next_jutsu_at, 108.0)
             self.assertEqual(mob.jutsu_cooldowns["chakra ball"], 100 + art["cooldown"])
             self.assertFalse(mob_jutsu.try_cast(session, mob))
@@ -94,7 +95,7 @@ class MobJutsuTests(unittest.TestCase):
             self.assertTrue(mob_jutsu.try_cast(session, mob))
         self.assertEqual(session.player.health, 500)
         self.assertEqual(session.player.kamui_intangibility_rounds_left, 1)
-        self.assertEqual(mob.chakra, 300 - art["chakra_cost"])
+        self.assertEqual(mob.chakra, 300 - jutsu_balance.cast_cost(mob, art, "chakra", apply_control=False))
 
     def test_critical_defeat_uses_existing_hospital_handler(self):
         mob = self.make_mob(50)
