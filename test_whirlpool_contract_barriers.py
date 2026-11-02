@@ -4,6 +4,8 @@ import unittest
 from unittest.mock import patch
 
 import commands
+import data_jutsu
+import jutsu_balance
 import sage_mode
 import storage
 import whirlpool_fuinjutsu as seals
@@ -20,7 +22,7 @@ class WhirlpoolExpansionTests(unittest.TestCase):
         caster = self.caster
         original = caster.player.chakra
         self.run_jutsu(caster, 'multi exit barrier north east')
-        self.assertEqual(caster.player.chakra, original - 120)
+        self.assertEqual(caster.player.chakra, original - jutsu_balance.cast_cost(caster.player, data_jutsu.JUTSU["multi exit barrier"], "chakra"))
         self.assertEqual({r['direction'] for r in seals._load()}, {'north', 'east'})
         self.assertTrue(all(235 < r['expires_at'] - time.time() <= 241 for r in seals._load()))
         caster.player.room_vnum = 2
@@ -92,7 +94,7 @@ class WhirlpoolExpansionTests(unittest.TestCase):
         self.assertEqual(a.player.signed_summoning_contracts, ['toad'])
         self.assertEqual(b.player.signed_summoning_contracts, ['snake'])
         commands.dispatch_line(b, 'yes')
-        self.assertEqual(self.caster.player.chakra, old_chakra - seals.CONTRACT_BREAK_COST)
+        self.assertEqual(self.caster.player.chakra, old_chakra - jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["summoning contract break"], "chakra"))
         self.assertEqual(self.caster.player.signed_summoning_contracts, ['slug'])
         self.assertEqual(a.player.signed_summoning_contracts, [])
         self.assertEqual(b.player.signed_summoning_contracts, [])
