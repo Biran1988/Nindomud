@@ -8,6 +8,7 @@ import combat
 import commands
 import content
 import data_jutsu
+import jutsu_balance
 import legacy_techniques
 import leveling
 import olc
@@ -67,7 +68,8 @@ class LegacyTechniquesTests(unittest.TestCase):
         self.player.skill_proficiencies["Chokkan"] = 100
         commands.cmd_use_jutsu(self.session, "chokkan", [])
         self.assertTrue(self.player.chokkan_active)
-        self.assertEqual(self.player.chakra, 475)
+        self.assertEqual(self.player.chakra, 500 - jutsu_balance.cast_cost(
+            self.player, data_jutsu.JUTSU["chokkan"], "chakra"))
         with patch("data_handsigns.casting_delay_seconds", return_value=4):
             combat.begin_pending_cast(self.session, "narakumi", self.session, is_pvp=False)
         self.assertEqual(self.session.pending_cast.remaining_seconds, 2)
@@ -95,7 +97,8 @@ class LegacyTechniquesTests(unittest.TestCase):
             legacy_techniques.instant_kill(self.session, ["Bandit"])
             self.assertEqual(mob.health, 0)
             defeated.assert_called_once_with(self.session, mob)
-        self.assertEqual(self.player.chakra, 400)
+        self.assertEqual(self.player.chakra, 500 - jutsu_balance.cast_cost(
+            self.player, data_jutsu.JUTSU["1000 years of death"], "chakra"))
 
     def test_instant_kill_obeys_pvp_safe_room_and_uses_normal_defeat(self):
         other = Session(lambda message: None, lambda: None)
