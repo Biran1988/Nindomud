@@ -71,7 +71,8 @@ class VitalSurgeTests(unittest.TestCase):
         self.assertEqual(restored.to_dict(), state)
         with patch("time.time", return_value=1120):
             commands.cmd_use_jutsu(self.s, KEY, [])
-        self.assertEqual(restored.chakra, 760)
+        self.assertEqual(restored.chakra, 1000 - 2 * jutsu_balance.cast_cost(
+            restored, data_jutsu.JUTSU[KEY], "chakra"))
 
     def test_reject_wrong_soul_level_inactive_unlearned_and_other_target(self):
         for attr, value in (("reincarnation", "indra"), ("level", 74), ("six_paths_active", False),
