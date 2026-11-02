@@ -2475,7 +2475,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Casts a line for the Fishing job. Needs a fishing rod held and a water biome (river/ocean/lake/swamp) to stand in. Costs 1-2 Stamina. Takes a few seconds to resolve. A held rod loses one use per attempt and breaks after 250 uses by default.\n"
             "\n"
-            "There are 6 rods (Kindling, Birch, Oak, Ironwood, Masterwork Oak, Heartwood -- required levels 1/20/40/60/80/99), one for each Lumberjack log type. Every fish species has a full Common-through-Legendary tier ladder; your rod is built around a specific tier and shifts the odds sharply toward it, so a better rod always matters more than levels alone. Only the Heartwood rod gives a real (though still not guaranteed) shot at Legendary catches -- every other rod can land one, but it's nearly never.\n"
+            "There are 6 rods (Kindling, Birch, Oak, Ironwood, Elder Oak, Heartwood -- required levels 1/20/40/60/80/99), one for each Lumberjack log type. Every fish species has a full Common-through-Legendary tier ladder; your rod is built around a specific tier and shifts the odds sharply toward it, so a better rod always matters more than levels alone. Only the Heartwood rod gives a real (though still not guaranteed) shot at Legendary catches -- every other rod can land one, but it's nearly never.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -2530,7 +2530,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Swings an axe for the Lumberjack job. Needs an axe held and a forest biome to stand in. Costs 1-2 Stamina and takes a few seconds. A held axe loses one use per attempt and breaks after 250 uses by default.\n"
             "\n"
-            "There are 6 axes (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Edged -- required levels 1/20/40/60/80/99). Pine, Maple, Redwood, and Ebony wood each have a full Common-through-Legendary tier ladder, built around your axe's own tier -- a better axe always matters more than levels alone, and only the Diamond-Edged axe gives a real (though still not guaranteed) shot at Legendary wood. Kindling, Birch, Oak, Ironwood, Masterwork Oak, and Heartwood logs (feeding Fishing's own rod crafting) are still findable at their usual fixed rarity alongside the tiered wood.\n"
+            "There are 6 axes (Copper, Iron, Steel, Chakra Steel, Blacksteel, Diamond-Edged -- required levels 1/20/40/60/80/99). Pine, Maple, Redwood, and Ebony wood each have a full Common-through-Legendary tier ladder, built around your axe's own tier -- a better axe always matters more than levels alone, and only the Diamond-Edged axe gives a real (though still not guaranteed) shot at Legendary wood. Kindling, Birch, Oak, Ironwood, Elder Oak, and Heartwood logs (feeding Fishing's own rod crafting) are still findable at their usual fixed rarity alongside the tiered wood.\n"
             "\n"
             "Lumberjack also raises your Max Stamina -- each Lumberjack level adds its own level number, stacking cumulatively (Farming and Mining contribute to the same Max Stamina pool too, so leveling more than one adds up together). See 'help farm' for the exact math.\n"
             "\n"
@@ -2621,7 +2621,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: The 9 real materials usable with 'craft' (see 'help craft'), gathered via Mining and Lumberjack. Each has its own fixed stat value -- higher-tier materials give a stronger crafted item, and combining 2 strong materials gives the best results of all.\n"
             "\n"
-            "Iron Ingot (5), Sturdy Oak Log (6), Ironwood Log (8), Steel Ingot (12), Masterwork Oak Log (14), Alloy Ingot (22), Ancient Heartwood Log (26), Yew Log (26), Chakra Steel Ingot (30) -- the strongest material overall.\n"
+            "Iron Ingot (5), Sturdy Oak Log (6), Ironwood Log (8), Steel Ingot (12), Elder Oak Log (14), Alloy Ingot (22), Ancient Heartwood Log (26), Yew Log (26), Chakra Steel Ingot (30) -- the strongest material overall.\n"
             "\n"
             "Date: 2026-09-07"
         ),
@@ -5226,7 +5226,7 @@ _GATHERING_TIER_HELP = {
         "Syntax: chop (hold an axe in forests)\n\n"
         "Copper Axe: Kindling, Birch Branch, Sturdy Oak Log (Lumberjack 15). "
         "Ironbound Oak Axe (Lumberjack 15+): adds Ironwood Log (level 35). "
-        "Steel Ironwood Axe (Lumberjack 35+): adds Masterwork Oak (level 60) "
+        "Steel Ironwood Axe (Lumberjack 35+): adds Elder Oak (level 60) "
         "and Ancient Heartwood (level 85). "
         "Chakra Steel Heartwood Axe (Lumberjack 75+): adds rare Yew Log (level 95). "
         "Each axe can also collect all earlier wood types as job level allows. "
@@ -5242,7 +5242,7 @@ _GATHERING_TIER_HELP = {
         "A completed tool can be traded, held and used for Fishing, Mining or Lumberjack "
         "as appropriate, with overlapping resource pools and profession-level gates.\n\n"
         "Other crafting: craft weapon <type> <name> / craft armor <slot> <name> "
-        "(Bukijutsu level 25+ or any class level 70+), then select two materials "
+        "(Bukijutsu level 25+ or other classes level 100+), then select two materials "
         "at the prompt. Craft pill <antidote|medicine> <level> is Bukijutsu-only."
     ),
 }
