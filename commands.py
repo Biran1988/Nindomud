@@ -9940,3 +9940,8 @@ _shortcut_reserved_words = set(COMMANDS) | set(world.DIRECTION_ALIASES) | set(wo
 validate_shortcuts(data_jutsu.JUTSU, data_jutsu.JUTSU_ALIASES,
                    {word[:length] for word in _shortcut_reserved_words
                     for length in range(1, len(word) + 1)})
+
+# Inventory actual command registrations to ensure all command aliases and
+# public techniques have an individual searchable in-game help page.
+import help_audit as _help_audit
+_help_audit.populate(help_system.DEFAULT_HELP_ENTRIES, COMMANDS)
