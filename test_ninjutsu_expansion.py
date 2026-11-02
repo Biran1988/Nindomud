@@ -8,6 +8,7 @@ import combat
 import commands
 import data_handsigns
 import data_jutsu
+import jutsu_balance
 import derived_stats
 import leveling
 import status_effects
@@ -151,13 +152,14 @@ class NinjutsuExpansionTests(unittest.TestCase):
         p.learned_skills = ["Nanairo no Rasengan"]
         s = NS(player=p, send=Mock())
         mob = combat.Mob(1, 100, "enemy", 100, 100000, 100000, 1, 0, 0)
+        cost = jutsu_balance.cast_cost(p, data_jutsu.JUTSU["nanairo no rasengan"], "chakra")
         with patch.object(combat.random, "randint", side_effect=lambda lo, hi: lo), \
              patch.object(combat, "_jutsu_damage_bonus", return_value=0):
             combat.use_jutsu(s, "nanairo no rasengan", mob)
         self.assertLess(mob.health, 100000)
         self.assertIn("poisoned", mob.active_status_effects)
         self.assertIn("blinded", mob.active_status_effects)
-        self.assertEqual(p.chakra, 380)
+        self.assertEqual(p.chakra, 500 - cost)
 
         p.cooldowns.clear()
         defender = Player(name="Defender", account_name="Defender", level=100)
@@ -170,7 +172,7 @@ class NinjutsuExpansionTests(unittest.TestCase):
              patch.object(combat, "grow_skill_from_usage"):
             combat.use_jutsu_on_player(s, "nanairo no rasengan", defender_session)
         self.assertLess(defender.health, 1000)
-        self.assertEqual(p.chakra, 260)
+        self.assertEqual(p.chakra, 500 - 2 * cost)
 
 
 if __name__ == "__main__":
