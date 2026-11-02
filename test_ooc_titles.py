@@ -68,10 +68,10 @@ class OocTitleTests(unittest.TestCase):
         plain = colors.render(result, False)
         self.assertEqual(plain, "Shinobi [Flame Ice Storm]")
         colored = colors.render(result, True)
-        self.assertIn("\x1b[1;31m", colored)  # bright red
+        self.assertIn("\x1b[31m", colored)  # red
         self.assertIn("\x1b[36m", colored)    # cyan
         self.assertIn("\x1b[38;5;208m", colored)  # xterm orange
-        self.assertLess(colored.index("\x1b[1;31m"),
+        self.assertLess(colored.index("\x1b[31m"),
                         colored.index("\x1b[36m"))
         self.assertLess(colored.index("\x1b[36m"),
                         colored.index("\x1b[38;5;208m"))
