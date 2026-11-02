@@ -9,6 +9,7 @@ import combat
 import commands
 import data_handsigns
 import data_jutsu
+import jutsu_balance
 import leveling
 from models import Player
 import sage_mode
@@ -153,8 +154,8 @@ class SixPathsTests(unittest.TestCase):
                             else:
                                 combat.use_jutsu(s, key, victim)
                         self.assertLess(victim.health, 100000)
-                        self.assertEqual(p.chakra, 1000 - jutsu["chakra_cost"])
-                        self.assertEqual(p.stamina, 1000 - jutsu["stamina_cost"])
+                        self.assertEqual(p.chakra, 1000 - jutsu_balance.cast_cost(p, jutsu, "chakra"))
+                        self.assertEqual(p.stamina, 1000 - jutsu_balance.cast_cost(p, jutsu, "stamina"))
                         self.assertGreater(p.cooldowns[key], 0)
                         self.assertIn(jutsu["effect"], victim.active_status_effects)
                         before = victim.health
