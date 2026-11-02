@@ -51,15 +51,14 @@ class GroupSecurityTests(unittest.TestCase):
     def test_persisted_ip_ban_expires_after_thirty_minutes(self):
         with tempfile.TemporaryDirectory() as folder, \
              patch.object(storage, "DATA_DIR", folder), \
-             patch("session.ACTIVE_SESSIONS", []), \
-             patch.object(network_bans.time, "time", return_value=100000.0):
-            network_bans.temporary_ip_ban("203.0.113.99")
-            self.assertTrue(network_bans.blocked("203.0.113.99", None))
-            self.assertFalse(network_bans.blocked("203.0.113.100", None))
-        with patch.object(network_bans.time, "time", return_value=101801.0), \
-             patch.object(storage, "DATA_DIR", folder):
-            # The saved file was in a temporary location and is now cleaned up.
-            pass
+             patch("session.ACTIVE_SESSIONS", []):
+            with patch.object(network_bans.time, "time", return_value=100000.0):
+                network_bans.temporary_ip_ban("203.0.113.99")
+                self.assertTrue(network_bans.blocked("203.0.113.99", None))
+                self.assertFalse(network_bans.blocked("203.0.113.100", None))
+            with patch.object(network_bans.time, "time", return_value=101801.0):
+                self.assertFalse(network_bans.blocked("203.0.113.99", None))
+
 
 
 class JutsuBalanceTests(unittest.TestCase):
@@ -93,8 +92,7 @@ class ForgingAndExamineTests(unittest.TestCase):
         s = NS(player=player, send=output.append, is_busy=lambda: False,
                start_timed_action=lambda label, seconds, cb: cb(),
                enter_single_line=lambda prompt, cb: cb("chakra steel"))
-        with patch.object(commands.world_autosave, "mark_dirty", create=True) if False else patch(
-                "world_autosave.mark_dirty") as saved:
+        with patch("world_autosave.mark_dirty") as saved:
             commands.cmd_craft(s, ["weapon", "sword", "Storm", "Blade"])
         self.assertIn("Storm Blade", player.inventory)
         self.assertNotIn("A Chakra Steel Ingot", player.inventory)
