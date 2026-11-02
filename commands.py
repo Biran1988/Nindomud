@@ -7290,7 +7290,7 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra>  |  craft weapon <type> <name>  |  craft armor <slot> <name>  |  craft pill <antidote|medicine> <level>")
+        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot> <name> | craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()
@@ -7314,56 +7314,43 @@ def cmd_craft(session, args: List[str]) -> None:
         session.send("You're already busy with something.")
         return
 
-    def on_materials(response: str) -> None:
-        if response.strip().lower() == "cancel":
+    def on_metal(response: str) -> None:
+        if response.strip().casefold() == "cancel":
             session.send("You set your tools aside.")
             return
-        parts = [p.strip() for p in response.split(",")]
-        if len(parts) != 2:
-            session.send("You need to name exactly 2 materials, separated by a comma (e.g. 'iron ingot, yew log').")
+        metal = data_crafting.equipment_metal_material(response)
+        if metal is None:
+            session.send("Choose iron, steel or chakra steel (or cancel).")
             return
-        material_a = data_crafting.find_material(parts[0])
-        material_b = data_crafting.find_material(parts[1])
-        if not material_a or not material_b:
-            unknown = parts[0] if not material_a else parts[1]
-            session.send(f"'{unknown}' isn't a real crafting material.")
+        if player.primary_class != "bukijutsu" and metal != "iron ingot":
+            session.send("Only Bukijutsu masters can craft Steel and Chakra Steel equipment.")
             return
 
-        count_a = sum(1 for item in player.inventory if material_a in item.lower())
-        count_b = sum(1 for item in player.inventory if material_b in item.lower())
-        required_a = 2 if material_a == material_b else 1
-        required_b = 1
-        if count_a < required_a or (material_a != material_b and count_b < required_b):
-            session.send(f"You don't have both {material_a} and {material_b} in your inventory.")
-            return
+        def ingots():
+            return [item for item in player.inventory
+                    if data_crafting.find_material(item.casefold()) == metal]
 
+        if len(ingots()) < 2:
+            session.send(f"Forging requires two {metal}s, no wood.")
+            return
         if not jobs.try_deduct_action_stamina(player):
             session.send("You don't have enough stamina.")
             return
 
-        def resolve() -> None:
-            # Re-check materials are still owned -- could have been
-            # given away or otherwise spent during the crafting delay.
-            count_a = sum(1 for item in player.inventory if material_a in item.lower())
-            count_b = sum(1 for item in player.inventory if material_b in item.lower())
-            required_a = 2 if material_a == material_b else 1
-            required_b = 1
-            if count_a < required_a or (material_a != material_b and count_b < required_b):
-                session.send(f"You no longer have both materials. The crafting attempt fails.")
+        def resolve():
+            material_items = ingots()
+            if len(material_items) < 2:
+                session.send("You no longer have two matching metal ingots. The craft fails.")
                 return
-
-            stat_value = data_crafting.combined_stat_value(material_a, material_b)
+            stat_value = data_crafting.combined_stat_value(metal, metal)
             vnum = _allocate_crafted_item_vnum()
             proto = dict(olc.DEFAULT_OBJECT_FIELDS)
             proto["keywords"] = item_name.lower().split()
             proto["short_desc"] = item_name
             proto["long_desc"] = f"{item_name} lies here."
-            proto["description"] = f"A crafted {kind} named {item_name}, forged from {material_a} and {material_b}."
-            # This is an immutable provenance record of the *ingredients*,
-            # separate from an arbitrary player-chosen item name. Chakra
-            # enchantments must not be earned by naming a cheap iron blade
-            # "Chakra Steel". The provenance lives in the saved object.
-            proto["craft_materials"] = [material_a, material_b]
+            proto["description"] = (f"A crafted {kind} named {item_name}, "
+                                    f"forged from {metal} and {metal}.")
+            proto["craft_materials"] = [metal, metal]
             if kind == "weapon":
                 proto["item_type"] = "weapon"
                 proto["weapon_type"] = sub_type
@@ -7373,37 +7360,27 @@ def cmd_craft(session, args: List[str]) -> None:
                 proto["item_type"] = "armor"
                 proto["wear_loc"] = sub_type
                 proto["stat_bonuses"] = {"armor_class": -stat_value}
-            olc.OBJECT_TEMPLATES[vnum] = proto
 
-            if material_a == material_b:
-                removed = 0
-                for item in list(player.inventory):
-                    if removed >= 2:
-                        break
-                    if material_a in item.lower():
-                        player.inventory.remove(item)
-                        removed += 1
-            else:
-                for material in (material_a, material_b):
-                    for item in list(player.inventory):
-                        if material in item.lower():
-                            player.inventory.remove(item)
-                            break
-
+            # Do not consume ingredients unless the resulting item fits.
+            # Revert the new prototype if the inventory is at capacity.
             ok, reason = inventory.add_item(player.inventory, item_name)
             if not ok:
                 session.send(inventory.full_message(reason, item_name))
                 return
-            session.send(f"&WYou craft {rarity_colored_name(item_name)}!&x")
-            # Newly forged objects must survive server restarts, including
-            # their material provenance. Never replace existing /data files.
+            for item in material_items[:2]:
+                player.inventory.remove(item)
+            olc.OBJECT_TEMPLATES[vnum] = proto
+            session.send(f"&WYou craft {rarity_colored_name(item_name)} from two {metal}s!&x")
             import world_autosave
             world_autosave.mark_dirty()
 
-        session.send(f"You set to work crafting {item_name}...")
+        session.send(f"You start forging {item_name} with two {metal}s...")
         session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, resolve)
 
-    session.enter_single_line("What 2 materials do you want to combine? (or 'cancel')", on_materials)
+    session.enter_single_line(
+        "Choose metal for your {kind}: iron, steel or chakra steel (or cancel)".format(kind=kind),
+        on_metal)
+
 
 
 def cmd_give(session, args: List[str]) -> None:
