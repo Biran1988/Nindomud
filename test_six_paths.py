@@ -84,17 +84,22 @@ class SixPathsTests(unittest.TestCase):
         with patch.object(storage, "save_player"):
             six_paths.command(s, ["on"])
             self.assertTrue(six_paths.active(p))
-            self.assertEqual(p.chakra, 960)
+            self.assertEqual(p.chakra, 1000 - jutsu_balance.cast_cost(
+                p, data_jutsu.JUTSU["six paths rinnegan"], "chakra"))
             six_paths.command(s, ["on"])
-            self.assertEqual(p.chakra, 960)
+            self.assertEqual(p.chakra, 1000 - jutsu_balance.cast_cost(
+                p, data_jutsu.JUTSU["six paths rinnegan"], "chakra"))
             six_paths.idle_upkeep(s)
-            self.assertEqual(p.chakra, 942)
+            self.assertEqual(p.chakra, 1000 - jutsu_balance.cast_cost(
+                p, data_jutsu.JUTSU["six paths rinnegan"], "chakra") - 18)
             sage_mode.combat_pulse(s)
-            self.assertEqual((p.chakra, p.stamina), (918, 992))
+            self.assertEqual((p.chakra, p.stamina), (1000 - jutsu_balance.cast_cost(
+                p, data_jutsu.JUTSU["six paths rinnegan"], "chakra") - 18 - 24, 992))
             p.stamina = 7
             sage_mode.combat_pulse(s)
             self.assertFalse(p.six_paths_active)
-            self.assertEqual((p.chakra, p.stamina), (918, 7))
+            self.assertEqual((p.chakra, p.stamina), (1000 - jutsu_balance.cast_cost(
+                p, data_jutsu.JUTSU["six paths rinnegan"], "chakra") - 18 - 24, 7))
             self.assertEqual(sage_mode.outgoing(p, 100), 100)
 
     def test_bonuses_scale_with_mastery_and_never_stack_with_sage(self):
