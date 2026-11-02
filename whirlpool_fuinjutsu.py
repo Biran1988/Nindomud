@@ -303,7 +303,7 @@ def _cast_wall(session, key, words):
     if any(r["room"] == room.vnum and r["direction"] == direction for r in existing):
         session.send("A Whirlpool barrier already seals that exit.")
         return
-    if sum(1 for r in existing if r["caster"].casefold() == player.name.casefold()) >= MAX_BARRIERS_PER_CASTER:
+    if _caster_barrier_count(existing, player.name) >= MAX_BARRIERS_PER_CASTER:
         session.send("You can maintain no more than three barriers at once. Use Seal Release to dismiss them.")
         return
     mode = BARRIERS[key]["mode"]
@@ -326,47 +326,73 @@ def _cast_wall(session, key, words):
     storage.save_player(player)
 
 
+def _caster_barrier_count(records, caster):
+    """A multi-exit array is one barrier cast, regardless of exit count."""
+    owned = set()
+    for record in records:
+        if record.get("caster", "").casefold() != caster.casefold():
+            continue
+        # Legacy records with no array id still count as individual walls.
+        array_id = record.get("array_id")
+        identity = ("array", array_id) if array_id else (
+            "exit", record.get("room"), record.get("direction"))
+        owned.add(identity)
+    return len(owned)
+
+
 def _cast_multi_wall(session, words):
-    """One paid cast, 2-3 independent directional seals, persisted atomically."""
+    """Seal all eligible exits in the current room with one paid, atomic cast."""
+    import uuid
     import world
     import storage
     key = "multi exit barrier"
-    if not 2 <= len(words) <= 3:
-        session.send("Usage: perform multi exit barrier <direction1> <direction2> [direction3]")
-        return
-    directions = [world.normalize_direction(word) for word in words]
-    if any(not d for d in directions) or len(set(directions)) != len(directions):
-        session.send("Specify two or three different valid directions.")
+    if words:
+        session.send("Usage: perform multi exit barrier (directions are detected automatically)")
         return
     player = session.player
     room = world.WORLD.get(player.room_vnum)
     if not room or room.safe or room.reaper_prison:
         session.send("You cannot seal exits from a safe area or soul prison.")
         return
-    destinations = [world.WORLD.get(room.exits.get(d)) for d in directions]
-    if any(d is None or d.safe or d.reaper_prison for d in destinations):
-        session.send("Every selected exit must lead to a real, unprotected room.")
-        return
+
     now = time.time()
     existing = [r for r in _load() if _valid_wall(r, now)]
-    if any(r.get("room") == room.vnum and r.get("direction") in directions for r in existing):
-        session.send("One of those exits is already sealed.")
+    sealed = {(r.get("room"), r.get("direction")) for r in existing}
+    exits = []
+    # Only real, traversable-direction entries are candidates. Never mutate
+    # world exits; individual records keep their destination for safe expiry.
+    for direction, dest_vnum in room.exits.items():
+        if world.normalize_direction(direction) != direction:
+            continue
+        dest = world.WORLD.get(dest_vnum)
+        if not dest or dest.safe or dest.reaper_prison:
+            continue
+        if (room.vnum, direction) in sealed:
+            continue
+        exits.append((direction, dest))
+
+    if not exits:
+        session.send("There are no eligible unsealed exits in this room.")
         return
-    owned = sum(r["caster"].casefold() == player.name.casefold() for r in existing)
-    if owned + len(directions) > MAX_BARRIERS_PER_CASTER:
-        session.send("You may only maintain three sealed exits at once. Release older barriers first.")
+    if _caster_barrier_count(existing, player.name) >= MAX_BARRIERS_PER_CASTER:
+        session.send("You may only maintain three barrier casts at once. Release older barriers first.")
         return
     if not _ready(session, key):
         return
+
+    array_id = uuid.uuid4().hex
     records = [{"caster": player.name, "room": room.vnum,
                 "direction": direction, "destination": dest.vnum,
+                "array_id": array_id,
                 "mode": "timed", "expires_at": now + MULTI_EXIT_SECONDS,
                 "next_upkeep_at": now + UPKEEP_INTERVAL, "imbued_chakra": 0}
-               for direction, dest in zip(directions, destinations)]
+               for direction, dest in exits]
     _save(existing + records)
     _pay(session, key)
-    session.send("&CAn array of Whirlpool seals blocks " + ", ".join(directions)
-                 + f" for {MULTI_EXIT_SECONDS} seconds. The seals persist after you leave or log out.&x")
+    directions = [direction for direction, _ in exits]
+    session.send("&CYour Whirlpool array detects and seals all "
+                 + str(len(directions)) + " eligible exits: " + ", ".join(directions)
+                 + f". The seals last {MULTI_EXIT_SECONDS} seconds and persist after logout.&x")
     session.broadcast_room("&CA multiple-exit sealing array erupts across the passages!&x", exclude_self=True)
     storage.save_player(player)
 
