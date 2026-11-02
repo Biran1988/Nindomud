@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "title",
+  "keywords": [
+    "title",
+    "ooc title",
+    "title color",
+    "custom title"
+  ],
+  "title": "Custom OOC Title",
+  "body": "Syntax: title <words> | title set <words> | title color <name|0-255> | title clear\n\nSets a cosmetic title after your name on the OOC channel, its emotes and in chatlog. The title can be up to 40 plain characters. Colors are chosen with TITLE COLOR (named colors: red, green, yellow, blue, cyan, magenta, purple, white, gray, orange, pink, gold; or numbers 0-255). TITLE shows your current title and preview. TITLE CLEAR removes it. Example: title The Last Uchiha; title color gold.\n\nTitles do not change your actual player/account name and save across logout/reboot.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
