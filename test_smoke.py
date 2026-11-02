@@ -488,6 +488,12 @@ def test_corpses_loot_config_chat_autosave():
         return s, feed_local, out
 
     def run_pulses(sess, max_pulses=30):
+        # The corpse/loot scenario tests defeat, corpse persistence and
+        # inventory behavior, not a full fivefold-HP boss endurance fight.
+        # Use a nearly defeated target to keep the test deterministic after
+        # the intentional global mob-HP increase.
+        if sess.combat_target is not None:
+            sess.combat_target.health = min(sess.combat_target.health, 1)
         n = 0
         while sess.combat_target is not None and n < max_pulses:
             combat.tick_all_mob_effects()
