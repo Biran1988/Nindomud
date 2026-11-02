@@ -5,8 +5,13 @@ speech, combat logs, targeting or the underlying character/account name.
 """
 import re
 
-MAX_TITLE_LENGTH = 40
+MAX_TITLE_LENGTH = 40  # visible characters, excluding legal color markup
+MAX_TITLE_COLOR_CODES = 16
+MAX_TITLE_STORED_LENGTH = 160
 _TITLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ',.!?_-]*$")
+# Inline ROM/xterm colors may change *within* a title (not the player name).
+# Do not accept terminal escapes, reset codes or other arbitrary & controls.
+_INLINE_COLOR_RE = re.compile(r"&\\[(\\d{1,3})\\]|&([RGBYCMWDOrgybcmwd])")
 COLOR_CHOICES = {
     "red": "&r", "green": "&g", "yellow": "&y", "blue": "&b",
     "cyan": "&c", "magenta": "&m", "purple": "&m",
@@ -17,11 +22,25 @@ DEFAULT_COLOR = "gold"
 
 
 def clean_title(text):
-    """Return valid plain title or None; never accept custom escape codes."""
+    """Validate plain title or safely formatted multicolor title.
+
+    Recognize only the game's actual color syntax (&R, &C, &[208], etc).
+    A maximum of 40 *visible* characters avoids penalizing color markup.
+    All other ampersands and terminal/control characters are rejected.
+    """
     if not isinstance(text, str):
         return None
     value = " ".join(text.split())
-    if not 1 <= len(value) <= MAX_TITLE_LENGTH or not _TITLE_RE.fullmatch(value):
+    if len(value) > MAX_TITLE_STORED_LENGTH:
+        return None
+    matches = list(_INLINE_COLOR_RE.finditer(value))
+    if len(matches) > MAX_TITLE_COLOR_CODES:
+        return None
+    if any(match.group(1) is not None and int(match.group(1)) > 255
+           for match in matches):
+        return None
+    visible = _INLINE_COLOR_RE.sub("", value)
+    if not 1 <= len(visible) <= MAX_TITLE_LENGTH or not _TITLE_RE.fullmatch(visible):
         return None
     return value
 
@@ -65,6 +84,8 @@ def command(session, args):
         session.send("Your WHO list name: " + player_display(player))
         session.send("Usage: title <words> | title set <words> | "
                      "title color <red|green|gold|purple|0-255> | title clear")
+        session.send("Titles replace the old one automatically. For multiple "
+                     "colors: title &RFlame &CIce &[208]Storm")
         return
 
     action = args[0].lower()
@@ -89,11 +110,16 @@ def command(session, args):
     words = args[1:] if action == "set" else args
     title = clean_title(" ".join(words))
     if title is None:
-        session.send("A title must be 1-40 characters: letters, numbers, spaces "
-                     "and simple punctuation only. No color/escape codes. "
-                     "Use 'title color <color>' for its color.")
+        session.send("A title must be 1-40 visible characters: letters, numbers, "
+                     "spaces, simple punctuation, and valid inline MUD color codes "
+                     "(&R, &C, &[208], etc). No terminal/control escapes. "
+                     "Use TITLE COLOR <color> for its default color.")
         return
+    # Replacing a title is unconditional. Players never need TITLE CLEAR
+    # before choosing another one; the previous color choice persists.
+    replaced = bool(player.ooc_title)
     player.ooc_title = title
     import storage
     storage.save_player(player)
-    session.send("Your new WHO title: " + player_display(player))
+    session.send(("WHO title replaced: " if replaced else "Your new WHO title: ")
+                 + player_display(player))
