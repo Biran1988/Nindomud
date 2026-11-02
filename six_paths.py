@@ -263,6 +263,7 @@ def command(session, args, soul=None):
         session.send("You cannot awaken Six Paths power while down or unable to act.")
         return
     import jutsu_balance
+    import data_jutsu  # local import: data_jutsu registers Six Paths techniques
     activation_cost = jutsu_balance.cast_cost(
         player, data_jutsu.JUTSU[MODE_SKILLS[_soul(player)].lower()], "chakra")
     if player.chakra < activation_cost:
