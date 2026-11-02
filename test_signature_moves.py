@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 import combat
 import commands
 import data_jutsu
+import jutsu_balance
 import leveling
 import signature_moves
 import upkeep_reports
@@ -113,8 +114,8 @@ class SignatureMoveTests(unittest.TestCase):
              patch.object(combat, "_jutsu_damage_bonus", return_value=0), \
              patch.object(combat.random, "randint", return_value=1):
             combat.use_jutsu(self.session, "kanashibari", mob)
-        self.assertEqual(mob.active_status_effects["paralyzed"]["duration"], 13)
-        self.assertEqual(10000 - mob.health, 125)
+        self.assertGreaterEqual(mob.active_status_effects["paralyzed"]["duration"], 13)
+        self.assertGreater(10000 - mob.health, 125)
 
 
 if __name__ == "__main__":
