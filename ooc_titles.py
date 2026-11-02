@@ -1,8 +1,7 @@
-"""Safe, persistent player titles for character identification displays.
+"""Safe, persistent player title displayed EXCLUSIVELY on the WHO list.
 
-Titles show after real player names in WHO, WHOIS, SCORE, room LOOK and
-character examination. They never appear on OOC messages/emotes/chatlog.
-Titles do not replace account identity, target matching or in-character names.
+Never attach a player's cosmetic title to OOC, WHOIS, SCORE, LOOK, emotes,
+speech, combat logs, targeting or the underlying character/account name.
 """
 import re
 
@@ -63,7 +62,7 @@ def command(session, args):
     if not player:
         return
     if not args or args[0].lower() in ("show", "status"):
-        session.send("Your character name: " + player_display(player))
+        session.send("Your WHO list name: " + player_display(player))
         session.send("Usage: title <words> | title set <words> | "
                      "title color <red|green|gold|purple|0-255> | title clear")
         return
@@ -84,7 +83,7 @@ def command(session, args):
         player.ooc_title_color = args[1].lower()
         import storage
         storage.save_player(player)
-        session.send("Your OOC name: " + player_display(player))
+        session.send("Your WHO list name: " + player_display(player))
         return
 
     words = args[1:] if action == "set" else args
@@ -97,4 +96,4 @@ def command(session, args):
     player.ooc_title = title
     import storage
     storage.save_player(player)
-    session.send("Your new title: " + player_display(player))
+    session.send("Your new WHO title: " + player_display(player))
