@@ -86,7 +86,17 @@ def _immortal(session):
 
 
 def blocks_command(session, verb):
-    if session.player and imprisoned(session.player) and not _immortal(session) and verb.lower() not in SAFE_COMMANDS and verb.lower() != "perform":
+    if not session.player:
+        return False
+    if imprisoned(session.player) and _immortal(session):
+        # Staff promoted while imprisoned under older rules must not inherit
+        # the ordinary player's movement lock (including Player.__setattr__).
+        # Mark their participant as unbound in the durable seal journal.
+        import storage
+        if reconcile_player(session.player, staff=True):
+            storage.save_player(session.player)
+        return False
+    if imprisoned(session.player) and verb.lower() not in SAFE_COMMANDS and verb.lower() != "perform":
         session.send("The Reaper's seal binds your soul. You cannot act or leave this place.")
         return True
     return False
@@ -121,13 +131,27 @@ def _destination(vnum, player=None):
         room.vnum for room in world.WORLD.rooms.values() if not room.reaper_prison)
 
 
-def reconcile_player(player):
-    """The journal wins over a stale character save after a crash or logout."""
+def reconcile_player(player, *, staff=False):
+    """Restore mortal imprisonment; staff visitors cannot be held captive.
+
+    The durable unbound_staff marker prevents a staff caster/target from being
+    re-imprisoned by storage.load_player() on their next login, even though
+    that loader does not have access to the authenticated account's rank.
+    """
     records = _load()
     for seal_id, record in records.items():
         if player.name not in record["players"]:
             continue
         if record["active"]:
+            if staff or player.name in record.get("unbound_staff", []):
+                if staff and player.name not in record.get("unbound_staff", []):
+                    record.setdefault("unbound_staff", []).append(player.name)
+                    _save(records)
+                was_bound = imprisoned(player) or player.reaper_seal_room_vnum is not None
+                if was_bound:
+                    player.reaper_seal_id = ""
+                    player.reaper_seal_room_vnum = None
+                return was_bound
             before = (player.reaper_seal_id, player.room_vnum)
             _bind(player, seal_id, record)
             return before != (player.reaper_seal_id, player.room_vnum)
@@ -138,6 +162,12 @@ def reconcile_player(player):
         player.room_vnum = _destination(record["players"][player.name], player)
         return True
     if imprisoned(player):
+        if staff:
+            # Emergency recovery for old staff prison state with a missing
+            # journal. Mortal players still fail closed as before.
+            player.reaper_seal_id = ""
+            player.reaper_seal_room_vnum = None
+            return True
         # Fail closed if the journal was lost; never silently free a soul.
         _room({"room": player.reaper_seal_room_vnum})
     return False
@@ -179,9 +209,6 @@ def _capture(session, target_session):
     import storage
     import world
     player = session.player
-    if _immortal(session) or _immortal(target_session):
-        session.send("Immortals are immune to the Reaper Death Seal.")
-        return
     origin = player.room_vnum
     records = _load()
     vnum = ROOM_BASE
@@ -192,16 +219,27 @@ def _capture(session, target_session):
     seal_id = uuid.uuid4().hex
     participants = {player.name: origin}
     participants[target_session.player.name] = target_session.player.room_vnum
+    visitors = [s.player.name for s in (session, target_session) if _immortal(s)]
     record = {"active": True, "room": vnum, "origin": origin,
-              "players": participants,
+              "players": participants, "unbound_staff": visitors,
               "caster": player.name, "target": target_session.player.name}
     records[seal_id] = record
     _save(records)  # commit the whole pair before either character is moved
     for trapped in [session, target_session]:
-        _stop(trapped)
-        _bind(trapped.player, seal_id, record)
-        storage.save_player(trapped.player)
-        trapped.send("&[141]The Reaper tears both souls from the world and swallows them. The seal has no end.&x")
+        if _immortal(trapped):
+            # Staff experience the same arrival, but never acquire any
+            # reaper_seal_id/room lock, restriction or status-effect purge.
+            # They can use GOTO/ANKI and all staff/jutsu commands normally.
+            trapped.combat_target = trapped.pvp_target = trapped.pending_cast = None
+            trapped.pending_action = None
+            trapped.player.room_vnum = vnum
+            storage.save_player(trapped.player)
+            trapped.send("&[141]The Reaper opens its stomach, but your immortal soul remains free. You can act and leave at will.&x")
+        else:
+            _stop(trapped)
+            _bind(trapped.player, seal_id, record)
+            storage.save_player(trapped.player)
+            trapped.send("&[141]The Reaper tears your soul from the world and swallows it. The seal has no end.&x")
 
 def _reverse(session, words):
     import commands
@@ -232,10 +270,16 @@ def _reverse(session, words):
             (s for s in sessions.ACTIVE_SESSIONS if s.player and s.player.name == name), None))
         player = live.player if live else storage.load_player(name)
         if player:
-            if reconcile_player(player):
+            if name in record.get("unbound_staff", []):
+                # An immortal may already have teleported elsewhere. Never
+                # drag them back to the old room when a mortal gets released.
+                if player.room_vnum == record["room"]:
+                    player.room_vnum = _destination(record["players"][name], player)
+                    storage.save_player(player)
+            elif reconcile_player(player):
                 storage.save_player(player)
             if live:
-                live.send("&[141]The Reaper's binding tears open. Your soul returns to the living world!&x")
+                live.send("&[141]The Reaper's binding tears open. The sealed souls return to the living world!&x")
     if not _immortal(session):
         _pay(session, REVERSE_KEY)
     session.send("&[141]The Reaper's belly opens. Both bound souls are released!&x")
@@ -257,18 +301,19 @@ def cast(session, key, words):
     import world
     player = session.player
     info = data_jutsu.JUTSU[key]
-    staff_reverse = key == REVERSE_KEY and _immortal(session)
-    if not staff_reverse and (not eligible(player) or info["display_name"] not in player.learned_skills):
+    staff_cast = _immortal(session)
+    staff_reverse = key == REVERSE_KEY and staff_cast
+    if not staff_cast and (not eligible(player) or info["display_name"] not in player.learned_skills):
         session.send("You haven't learned that skill or jutsu.")
         return
     inside_reverse = key == REVERSE_KEY and imprisoned(player)
-    if (not staff_reverse and ((imprisoned(player) and not inside_reverse and not _immortal(session))
+    if (not staff_cast and ((imprisoned(player) and not inside_reverse)
             or player.health <= 0 or (combat._is_action_blocked(player) and not inside_reverse)
             or ("silenced" in player.active_status_effects and not inside_reverse)
             or session.pending_cast)):
         session.send("You cannot perform the rite right now.")
         return
-    if not staff_reverse and (player.chakra < info["chakra_cost"] or time.time() < player.cooldowns.get(key, 0)):
+    if not staff_cast and (player.chakra < info["chakra_cost"] or time.time() < player.cooldowns.get(key, 0)):
         session.send("You lack the Chakra or the rite is still recovering.")
         return
     if key == REVERSE_KEY:
@@ -276,9 +321,6 @@ def cast(session, key, words):
         storage.save_player(player)
         return
     room = world.WORLD.get(player.room_vnum)
-    if _immortal(session):
-        session.send("Immortals cannot cast Reaper Death Seal.")
-        return
     if not words or not room or room.safe or room.reaper_prison:
         session.send("The rite requires a target here, outside a safe room.")
         return
@@ -288,15 +330,15 @@ def cast(session, key, words):
     if not target:
         session.send("Reaper Death Seal can bind only another player, never an NPC.")
         return
-    if (_immortal(target) or target.player.health <= 0 or imprisoned(target.player)
-            or combat._staff_testing_mangekyo(target.player)
+    if (target.player.health <= 0 or imprisoned(target.player)
             or target.player.illusion_walk_caster or target.player.tsukuyomi_frozen
             or general_skills.concealed_from(player, target.player)
             or hidden_mist.obscures(player, target.player)):
         session.send("You cannot bind that target's soul here.")
         return
-    _pay(session, key)
-    chance = max(5, min(100, player.skill_proficiencies.get(info["display_name"], 0)))
+    if not staff_cast:
+        _pay(session, key)
+    chance = 100 if staff_cast else max(5, min(100, player.skill_proficiencies.get(info["display_name"], 0)))
     if random.randint(1, 100) > chance:
         session.send("The spectral hand slips away. The Reaper's seal fails to take hold.")
         combat.grow_skill_from_usage(player, info["display_name"], session=session)
