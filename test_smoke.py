@@ -4409,7 +4409,7 @@ def test_score_sheet_restructure():
     # Section order: identity block (with Total Play Time) -> Combat
     # Information (with Position/Fighting/Player Kills) -> Attributes
     # (with Practice Points/Training Points) -> Mission Info.
-    total_playtime_idx = text.index("Total Play Time")
+    total_playtime_idx = text.index("Play Time")
     combat_idx = text.index("COMBAT INFORMATION")
     position_idx = text.index("Position:")
     attributes_idx = text.index("ATTRIBUTES")
