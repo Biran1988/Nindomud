@@ -9,6 +9,7 @@ from unittest.mock import patch
 import commands
 import combat
 import data_jutsu
+import jutsu_balance
 import leveling
 import regen
 import session as sessions
@@ -110,7 +111,7 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
         self.assertIsNone(self.enemy.player.mangekyo_amaterasu_caster)
         self.assertEqual(self.enemy.player.mangekyo_amaterasu_expires_at, 0)
         self.assertEqual(room.amaterasu_fire_caster, 'Other')
-        self.assertEqual(self.caster.player.chakra, original_chakra - 95)
+        self.assertEqual(self.caster.player.chakra, original_chakra - jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["black flame suppression seal"], "chakra"))
         self.assertFalse(storage.load_player('Opponent').mangekyo_amaterasu_burning)
 
     def test_black_flame_seal_room_and_all_targets(self):
@@ -145,7 +146,8 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
         world.WORLD.get(1).amaterasu_fire_expires_at = time.time() + 300
         self.run_jutsu(self.enemy, 'black flame suppression seal room')
         self.assertIsNone(world.WORLD.get(1).amaterasu_fire_caster)
-        self.assertEqual(self.enemy.player.chakra, 405)
+        self.assertEqual(self.enemy.player.chakra, 500 - jutsu_balance.cast_cost(
+            self.enemy.player, data_jutsu.JUTSU["black flame suppression seal"], "chakra"))
 
     def test_ninjutsu_and_genjutsu_sealed_independently(self):
         target = self.enemy.player
@@ -201,7 +203,8 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
         self.enemy.player.chakra = 700
         self.run_jutsu(self.caster, 'chakra siphon seal Opponent')
         self.assertEqual(self.enemy.player.chakra, 100)
-        self.assertEqual(self.caster.player.chakra, 2000 - 50 + 300)
+        self.assertEqual(self.caster.player.chakra, 2000 - jutsu_balance.cast_cost(
+            self.caster.player, data_jutsu.JUTSU["chakra siphon seal"], "chakra") + 300)
         self.run_jutsu(self.caster, 'chakra siphon seal Opponent')
         self.assertEqual(self.enemy.player.chakra, 100)
 
@@ -246,7 +249,8 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
     def test_imbued_wall_charges_exact_amount_and_duration_scales(self):
         self.run_jutsu(self.caster, 'imbued barrier seal east 200')
         record = seals.current_barrier(1, 'east')
-        self.assertEqual(self.caster.player.chakra, 2800)
+        self.assertEqual(self.caster.player.chakra, 3000 - max(
+            200, jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["imbued barrier seal"], "chakra")))
         self.assertEqual(record['mode'], 'imbued')
         self.assertEqual(record['imbued_chakra'], 200)
         self.assertAlmostEqual(record['expires_at'] - time.time(), 600, delta=3)
@@ -259,10 +263,12 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
             self.run_jutsu(self.caster, 'imbued barrier seal ' + args)
         self.assertEqual(self.caster.player.chakra, before)
         self.run_jutsu(self.caster, 'imbued barrier seal east 100')
-        self.assertEqual(self.caster.player.chakra, 2900)
+        self.assertEqual(self.caster.player.chakra, 3000 - max(
+            100, jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["imbued barrier seal"], "chakra")))
         self.run_jutsu(self.caster, 'timed barrier seal east')
         self.assertEqual(len(seals._load()), 1)
-        self.assertEqual(self.caster.player.chakra, 2900)
+        self.assertEqual(self.caster.player.chakra, 3000 - max(
+            100, jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["imbued barrier seal"], "chakra")))
 
     def test_flowing_wall_upkeep_and_chakra_failure_even_in_other_room(self):
         self.run_jutsu(self.caster, 'flowing barrier seal north')
@@ -315,7 +321,9 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
         self.caster.player.room_vnum = 1
         self.run_jutsu(self.caster, 'imbued barrier seal north 100')
         self.assertEqual(len(seals._load()), 3)
-        self.assertEqual(self.caster.player.chakra, 3000 - 75 * 2 - 36)
+        self.assertEqual(self.caster.player.chakra, 3000 - (
+            2 * jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["timed barrier seal"], "chakra")
+            + jutsu_balance.cast_cost(self.caster.player, data_jutsu.JUTSU["flowing barrier seal"], "chakra")))
 
 
 if __name__ == '__main__':
