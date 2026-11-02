@@ -101,7 +101,7 @@ class KageLegendaryPaletteTests(unittest.TestCase):
         formatted = commands._examine_rarity_colored_name(item["short_desc"])
         self.assertNotIn("Legendary", colors.render(formatted, False))
         self.assertIn("&[203]Itachi's", formatted)
-        self.assertEqual(colors.render(formatted, False), "[Legendary] Itachi's Akatsuki Ring")
+        self.assertEqual(colors.render(formatted, False), "Itachi's Akatsuki Ring")
 
     def test_bought_item_remains_a_plain_persistable_name(self):
         item = legendary_items.LEGENDARY_ITEMS["naruto's jacket"]
