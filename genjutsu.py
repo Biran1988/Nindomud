@@ -10,6 +10,7 @@ import time
 
 import combat
 import data_jutsu
+import jutsu_balance
 import derived_stats
 import status_effects
 
@@ -132,7 +133,7 @@ def begin_cast(session, key, words):
     if time.time() < player.cooldowns.get(key, 0):
         jutsu_colors.send(session, f"{jutsu['display_name']} is still recovering.")
         return
-    cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
+    cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
     if player.chakra < cost:
         jutsu_colors.send(session, "You don't have enough chakra.")
         return
@@ -206,7 +207,7 @@ def resolve_cast(session, key, payload):
     if kind == "chisei" and status_effects.has_effect(player.active_status_effects, "chisei"):
         jutsu_colors.send(session, "Chisei is already active.")
         return
-    cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
+    cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
     if player.chakra < cost or not combat._can_use_jutsu(player, jutsu, key):
         jutsu_colors.send(session, "You can no longer complete that Genjutsu.")
         return
@@ -216,15 +217,15 @@ def resolve_cast(session, key, payload):
 
     if kind == "disguise":
         player.genjutsu_disguise = payload["target"].name
-        duration = signature_moves.duration(player, jutsu, jutsu["duration"])
+        duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(player, jutsu, jutsu["duration"]))
         player.genjutsu_disguise_pulses = duration
         jutsu_colors.send(session, f"You assume the appearance of {player.genjutsu_disguise} for {duration} pulses.")
     elif kind == "item_illusion":
-        player.genjutsu_item_illusions[payload["item"]] = {"alias": payload["alias"], "pulses": signature_moves.duration(player, jutsu, jutsu["duration"])}
+        player.genjutsu_item_illusions[payload["item"]] = {"alias": payload["alias"], "pulses": signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(player, jutsu, jutsu["duration"]))}
         jutsu_colors.send(session, f"{payload['item']} now appears as {payload['alias']}; its real properties are unchanged.")
     elif kind == "item_decoy":
         player.genjutsu_decoys.append({"name": payload["item"], "room_vnum": player.room_vnum,
-                                       "pulses": signature_moves.duration(player, jutsu, jutsu["duration"])})
+                                       "pulses": signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(player, jutsu, jutsu["duration"]))})
         jutsu_colors.send(session, f"A false {payload['item']} appears on the ground. It cannot be taken or used.")
     elif kind == "chisei":
         bonus = signature_moves.amount(player, jutsu, max(20, 10 + player.intelligence // 2))
@@ -249,7 +250,7 @@ def resolve_cast(session, key, payload):
             chance = max(25, min(85, 70 + (player.level - mob.level) * 2))
             if random.randint(1, 100) <= chance:
                 status_effects.apply_effect(mob.active_status_effects, "asleep", source=key,
-                                            duration_override=signature_moves.duration(player, jutsu, status_effects.genjutsu_duration("asleep")))
+                                            duration_override=signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(player, jutsu, status_effects.genjutsu_duration("asleep"), effect="asleep")))
                 affected += 1
         if not (room and room.safe):
             import data_kekkei_genkai
@@ -269,7 +270,7 @@ def resolve_cast(session, key, payload):
                         duration = data_kekkei_genkai.reduced_genjutsu_duration(duration)
                     import general_skills
                     duration = general_skills.focused_duration(other.player, duration)
-                    duration = signature_moves.duration(player, jutsu, duration)
+                    duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(player, jutsu, duration, is_pvp=True, effect="asleep"))
                     status_effects.apply_effect(other.player.active_status_effects, "asleep",
                                                 source=key, duration_override=duration, genjutsu=True)
                     other.send("Illusory feathers drift down; you fall asleep and cannot act!")
