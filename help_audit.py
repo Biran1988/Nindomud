@@ -187,6 +187,94 @@ def populate(entries, commands):
         by_key[key] = entry
         COVERED.add(key)
 
+    # Public professions, equipment categories, biomes and rank caps.
+    # These are actual registries, not guessed feature descriptions.
+    import jobs
+    import data_weapons
+    import data_shops
+    import biomes
+    import kage
+
+    for name in jobs.JOB_NAMES:
+        key = f"job {name.casefold()}"
+        if name in jobs.HIDDEN_JOBS or key in by_key:
+            continue
+        bonus = jobs.JOB_STAT_BONUS.get(name)
+        extra_note = (f" Leveling grants cumulative {bonus} stat benefits."
+                      if bonus else "")
+        entry = _entry(key, f"{name.title()} Profession",
+                       f"{name.title()} is a job track separate from ninja level. "
+                       f"The job cap is {jobs.MAX_JOB_LEVEL}. "
+                       "Use JOBS to see your level and experience, and participate "
+                       "in the matching gathering or crafting activity to gain job XP."
+                       + extra_note)
+        entries.append(entry)
+        by_key[key] = entry
+        COVERED.add(key)
+
+    for weapon, record in data_weapons.WEAPON_TYPES.items():
+        key = f"weapon type {weapon}"
+        if key in by_key:
+            continue
+        entry = _entry(key, record["display_name"] + " Weapons",
+                       f"Weapon category: {record['display_name']}. "
+                       f"Associated proficiency: {record['skill']}. "
+                       "Equip matching weapons and use them in real combat "
+                       "to improve the corresponding weapon skill. "
+                       "Forging a custom weapon uses CRAFT WEAPON <type> <name>, "
+                       "then a metal selection of Iron, Steel or Chakra Steel.")
+        entries.append(entry)
+        by_key[key] = entry
+        COVERED.add(key)
+
+    for shop, info in data_shops.SHOP_TYPES.items():
+        key = f"shop type {shop}"
+        if key in by_key:
+            continue
+        allowed = info.get("allowed_sell_categories")
+        accepts = ("all inventory categories" if allowed is None
+                   else ", ".join(sorted(allowed)))
+        entry = _entry(key, info.get("display_name", shop.title()),
+                       f"This shop buys {accepts}. "
+                       f"Resale multiplier {info.get('sell_multiplier', 1.0):g} "
+                       "against the standard item selling value. "
+                       "Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.")
+        entries.append(entry)
+        by_key[key] = entry
+        COVERED.add(key)
+
+    for biome in biomes.BIOME_TYPES:
+        if biome == "none":
+            continue
+        key = f"biome {biome}"
+        if key in by_key:
+            continue
+        affinity = biomes.BIOME_ELEMENT_AFFINITY.get(biome, {})
+        entry = _entry(key, f"{biome.title()} Biome",
+                       f"Room terrain: {biome}. Matching elemental jutsu may "
+                       f"receive a {biomes.BOOST_MULTIPLIER:g}x damage boost and "
+                       f"opposed elements can suffer a {biomes.WEAKEN_MULTIPLIER:g}x "
+                       "modifier. Inspect the area's setting and your chakra nature "
+                       "for the live effect. Gathering professions require "
+                       "their associated biome.")
+        entries.append(entry)
+        by_key[key] = entry
+        COVERED.add(key)
+
+    for rank, cap in kage.RANK_LEVEL_CAPS.items():
+        key = f"rank {rank}"
+        if key in by_key:
+            continue
+        gate = ("Staff-appointed only." if rank in {"village elder", "kage"}
+                else "Earn the normal required exam, promotion or rank requirements.")
+        entry = _entry(key, rank.title() + " Ninja Rank",
+                       f"Rank: {rank.title()}. Maximum ninja level {cap}. "
+                       "Rank caps prevent earning new ninja experience past "
+                       "your current rank's ceiling. " + gate)
+        entries.append(entry)
+        by_key[key] = entry
+        COVERED.add(key)
+
     import status_effects
     for key, definition in sorted(status_effects.EFFECT_DEFS.items()):
         topic = f"effect {key.replace('_', ' ')}"
