@@ -1169,10 +1169,12 @@ def cmd_look(session, args: List[str]) -> None:
             # To the pilot, examining their body looks the same as
             # examining any other player. Never expose a control status.
             description = original_body.description or f"{original_body.name} hasn't set a description."
-            session.send(f"&C{original_body.name}&x\n{description}")
+            import ooc_titles
+            session.send(f"&C{ooc_titles.player_display(original_body)}&x\n{description}")
             return
         if query in ("self", "me") or query in player.name.lower():
-            lines = [f"&C{player.name}&x"]
+            import ooc_titles
+            lines = [f"&C{ooc_titles.player_display(player)}&x"]
             lines.append(player.description if player.description else "You haven't set a description.")
             session.send("\n".join(lines))
             return
@@ -1184,7 +1186,11 @@ def cmd_look(session, args: List[str]) -> None:
                     return
                 target = other.player
                 apparent = genjutsu.apparent_name(target)
-                lines = [f"&C{apparent}&x"]
+                import ooc_titles
+                # A disguise should not reveal the character's normal title.
+                shown_name = (ooc_titles.player_display(target) if apparent == target.name
+                              else apparent)
+                lines = [f"&C{shown_name}&x"]
                 lines.append(target.description if target.description else f"{apparent} hasn't set a description.")
                 if target.genjutsu_item_illusions:
                     lines.append("Apparent item: " + ", ".join(
@@ -1242,6 +1248,7 @@ def cmd_look(session, args: List[str]) -> None:
         lines.append("")
     lines.extend(_format_exits(room, is_staff))
     lines.append("")
+    import ooc_titles
     for other in session.active_sessions():
         if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _player_hidden_from(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
@@ -1261,20 +1268,24 @@ def cmd_look(session, args: List[str]) -> None:
                   and not _player_hidden_from(player, other.pvp_target.player)):
                 opponent_name = genjutsu.apparent_name(other.pvp_target.player)
                 activity = f" &R[Fighting {opponent_name}]&x"
-            lines.append(f"  &G{genjutsu.apparent_name(other.player)}&x is here.{activity}{afk_tag}")
+            apparent = genjutsu.apparent_name(other.player)
+            shown_name = ooc_titles.player_display(other.player) if apparent == other.player.name else apparent
+            lines.append(f"  &G{shown_name}&x is here.{activity}{afk_tag}")
     # Linkdead characters remain physically present but are untargetable.
     import session as session_module
     for other in session_module.ACTIVE_SESSIONS:
         if (getattr(other, "state", None) == session_module.State.LINKDEAD and other.player
                 and other.player.room_vnum == player.room_vnum
                 and other is not session and not _player_hidden_from(player, other.player)):
-            lines.append(f"  &D{genjutsu.apparent_name(other.player)}&x is here. &[244][LINKDEAD - Protected]&x")
+            apparent = genjutsu.apparent_name(other.player)
+            shown_name = ooc_titles.player_display(other.player) if apparent == other.player.name else apparent
+            lines.append(f"  &D{shown_name}&x is here. &[244][LINKDEAD - Protected]&x")
     # A pilot viewing the original room must still see their physical
     # body, but as an ordinary character. Spectators already see it via
     # the normal active-session loop; never show control metadata.
     original_body = getattr(session, "_clone_original_player", None)
     if original_body is not None and original_body.room_vnum == room.vnum:
-        lines.append(f"  &G{original_body.name}&x is here.")
+        lines.append(f"  &G{ooc_titles.player_display(original_body)}&x is here.")
     mobs = combat.mobs_in_room(player.room_vnum)
     for mob in mobs:
         if mob is getattr(session, "controlled_clone", None):
@@ -1642,16 +1653,10 @@ def cmd_emote(session, args: List[str], ooc: bool = False) -> None:
     prefix = "&M[OOC]&x " if ooc else ""
     session.send(f"{prefix}You {own}")
     if ooc:
-        import ooc_titles
-        message = f"{prefix}{ooc_titles.player_display(session.player)} {other}"
-        session.broadcast_all(message, exclude_self=True)
+        # Titles are character-display decorations, not OOC chat labels.
+        session.broadcast_all(f"{prefix}{session.player.name} {other}", exclude_self=True)
         import chatlog
-        if session.player.ooc_title:
-            chatlog.record(session.player.name, f"[emote] {other}",
-                           title=session.player.ooc_title,
-                           title_color=session.player.ooc_title_color)
-        else:
-            chatlog.record(session.player.name, f"[emote] {other}")
+        chatlog.record(session.player.name, f"[emote] {other}")
     else:
         session.broadcast_room(f"{prefix}{session.player.name} {other}", exclude_self=True)
 
@@ -1671,17 +1676,10 @@ def cmd_ooc(session, args: List[str]) -> None:
         return
     message = chat_moderation.censor(" ".join(args))
     player = session.player
-    import ooc_titles
-    # Only the title is colored; the real OOC character name is unchanged.
-    name = ooc_titles.player_display(player)
-    session.send(f"&M[OOC] {name if player.ooc_title else 'You'}:&x {message}")
-    session.broadcast_all(f"&M[OOC] {name}:&x {message}", exclude_self=True)
+    session.send(f"&M[OOC] You:&x {message}")
+    session.broadcast_all(f"&M[OOC] {player.name}:&x {message}", exclude_self=True)
     import chatlog
-    if player.ooc_title:
-        chatlog.record(player.name, message, title=player.ooc_title,
-                       title_color=player.ooc_title_color)
-    else:
-        chatlog.record(player.name, message)
+    chatlog.record(player.name, message)
 
 
 def cmd_village_chat(session, args: List[str]) -> None:
@@ -1710,9 +1708,9 @@ def cmd_chatlog(session, args: List[str]) -> None:
     if not chatlog.ENTRIES:
         session.send("No OOC chat has been logged yet.")
         return
-    import ooc_titles
-    lines = [f"&M[OOC] {ooc_titles.display_name(entry['speaker'], entry.get('title', ''), entry.get('title_color', 'gold'))}:&x {entry['message']}"
-             for entry in chatlog.ENTRIES]
+    # Historical OOC entries may retain old title metadata, but never show
+    # it: titles are excluded from OOC including persisted chat history.
+    lines = [f"&M[OOC] {entry['speaker']}:&x {entry['message']}" for entry in chatlog.ENTRIES]
     session.send("\n".join(lines))
 
 
@@ -1865,6 +1863,7 @@ def cmd_who(session, args: List[str]) -> None:
 
     lines = [_who_banner("=", "&Y", "SHINOBI ONLINE", label_color="&C")]
 
+    import ooc_titles
     for s in online:
         p = s.player
         village_display = _who_village_name(p.village)
@@ -1873,7 +1872,7 @@ def cmd_who(session, args: List[str]) -> None:
         clan_text = (p.clan.title() if p.clan and p.clan != "none" else "None").ljust(WHO_CLAN_WIDTH)
         if p.village_rank == "kage" and village_info:
             rank_label = f"{KAGE_WHO_COLOR}{'Kage'.center(WHO_RANK_WIDTH)}&W"
-            name_text = f"{p.name}, the {village_info['kage_title']} of {village_info['village_name']}"
+            name_text = f"{ooc_titles.player_display(p)}, the {village_info['kage_title']} of {village_info['village_name']}"
         else:
             # Staff shown here too now (Section 139: no more separate
             # section), using their real rank badge, not a false Kage
@@ -1881,7 +1880,7 @@ def cmd_who(session, args: List[str]) -> None:
             rank_text = RANK_WHO_LABEL.get(p.village_rank, p.village_rank.title()).ljust(WHO_RANK_WIDTH)
             rank_color = RANK_WHO_COLOR.get(p.village_rank, "&W")
             rank_label = f"{rank_color}{rank_text}&W"
-            name_text = p.name
+            name_text = ooc_titles.player_display(p)
         lines.append(f"&W[{village_display}&W][{rank_label}][{level_label}]&W[{clan_text}]&Y {name_text}&D{_who_tags(p)}")
 
     # Retained characters are listed separately: present in the world,
@@ -1892,7 +1891,7 @@ def cmd_who(session, args: List[str]) -> None:
                 and staff_invisibility.visible_to(session, s)]
     for s in linkdead:
         remaining = max(0, int((s.linkdead_until - time.time() + 59) // 60))
-        lines.append(f"&D[LINKDEAD] {s.player.name} - protected ({remaining}m until logout)&x")
+        lines.append(f"&D[LINKDEAD] {ooc_titles.player_display(s.player)} - protected ({remaining}m until logout)&x")
 
     count = len(online)
     noun = "shinobi is" if count == 1 else "shinobi are"
@@ -1923,7 +1922,8 @@ def cmd_whois(session, args: List[str]) -> None:
     p = match.player
     village_display = _who_village_name(p.village)
     rank_text = RANK_WHO_LABEL.get(p.village_rank, p.village_rank.title())
-    lines = [f"&C{p.name}&x"]
+    import ooc_titles
+    lines = [f"&C{ooc_titles.player_display(p)}&x"]
     lines.append(p.description if p.description else f"{p.name} hasn't set a description.")
     lines.append("")
     lines.append(f"&WVillage:&x {village_display}   &WLevel:&x {p.level}   &WClass:&x {p.primary_class.capitalize()}")
@@ -8835,7 +8835,8 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
     ]
     if target_staff_level and target_staff_level != "player":
         lines.append(f" &M[{target_staff_level.title()}]&x")
-    lines += _score_fields(("Name", p.name), ("Village", village_full_name))
+    import ooc_titles
+    lines += _score_fields(("Name", ooc_titles.player_display(p)), ("Village", village_full_name))
     lines += _score_fields(("Rank", p.village_rank.title(), "&Y"),
                            ("Clan", data_clans.display_name(p.clan)),
                            ("Class", p.primary_class.capitalize()))
