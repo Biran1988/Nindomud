@@ -290,7 +290,8 @@ def _reverse(session, words):
 
 def _pay(session, key):
     import data_jutsu
-    session.player.chakra -= data_jutsu.JUTSU[key]["chakra_cost"]
+    import jutsu_balance
+    session.player.chakra -= jutsu_balance.cast_cost(session.player, data_jutsu.JUTSU[key], "chakra")
     session.player.cooldowns[key] = time.time() + data_jutsu.JUTSU[key]["cooldown"]
 
 
@@ -316,7 +317,9 @@ def cast(session, key, words):
             or session.pending_cast)):
         session.send("You cannot perform the rite right now.")
         return
-    if not staff_cast and (player.chakra < info["chakra_cost"] or time.time() < player.cooldowns.get(key, 0)):
+    import jutsu_balance
+    actual_cost = jutsu_balance.cast_cost(player, info, "chakra")
+    if not staff_cast and (player.chakra < actual_cost or time.time() < player.cooldowns.get(key, 0)):
         session.send("You lack the Chakra or the rite is still recovering.")
         return
     if key == REVERSE_KEY:
