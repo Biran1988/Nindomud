@@ -21,7 +21,7 @@ class WhirlpoolExpansionTests(unittest.TestCase):
     def test_multi_wall_is_atomic_and_persists_offline(self):
         caster = self.caster
         original = caster.player.chakra
-        self.run_jutsu(caster, 'multi exit barrier north east')
+        self.run_jutsu(caster, 'multi exit barrier')
         self.assertEqual(caster.player.chakra, original - jutsu_balance.cast_cost(caster.player, data_jutsu.JUTSU["multi exit barrier"], "chakra"))
         self.assertEqual({r['direction'] for r in seals._load()}, {'north', 'east'})
         self.assertTrue(all(235 < r['expires_at'] - time.time() <= 241 for r in seals._load()))
@@ -31,16 +31,71 @@ class WhirlpoolExpansionTests(unittest.TestCase):
         self.assertTrue(seals.current_barrier(1, 'east'))
         self.assertTrue(seals.current_barrier(1, 'north'))
 
-    def test_multi_wall_rejects_all_if_any_exit_invalid(self):
-        original = self.caster.player.chakra
-        self.run_jutsu(self.caster, 'multi exit barrier north south')  # south is a safe zone
-        self.assertEqual(seals._load(), [])
-        self.assertEqual(self.caster.player.chakra, original)
-        self.run_jutsu(self.caster, 'multi exit barrier north north')
-        self.assertEqual(seals._load(), [])
+    def test_multi_wall_skips_protected_destinations_and_needs_no_args(self):
+        before = self.caster.player.chakra
+        self.run_jutsu(self.caster, 'multi exit barrier')
+        self.assertEqual({r['direction'] for r in seals._load()}, {'north', 'east'})
+        self.assertIsNone(seals.current_barrier(1, 'south'))  # safe destination
+        paid = jutsu_balance.cast_cost(
+            self.caster.player, data_jutsu.JUTSU["multi exit barrier"], "chakra")
+        self.assertEqual(self.caster.player.chakra, before - paid)
         self.run_jutsu(self.caster, 'multi exit barrier north east')
-        self.run_jutsu(self.caster, 'multi exit barrier east south')
+        self.assertEqual(len(seals._load()), 2)  # explicit arguments are rejected
+        self.assertEqual(self.caster.player.chakra, before - paid)
+
+    def test_multi_wall_detects_more_than_three_exits_including_vertical(self):
+        for direction in ('west', 'northeast', 'up', 'inside'):
+            world.WORLD.link(1, direction, 2, bidirectional=False)
+        self.run_jutsu(self.caster, 'multi exit barrier')
+        records = seals._load()
+        self.assertEqual({r['direction'] for r in records},
+                         {'north', 'east', 'west', 'northeast', 'up', 'inside'})
+        self.assertEqual(len({r['array_id'] for r in records}), 1)
+        self.assertEqual(seals._caster_barrier_count(records, 'Caster'), 1)
+        self.assertTrue(all(seals.current_barrier(1, d) for d in
+                            ('north', 'east', 'west', 'northeast', 'up', 'inside')))
+        self.assertIsNone(seals.current_barrier(1, 'south'))
+
+    def test_multi_wall_skips_already_sealed_exit(self):
+        self.run_jutsu(self.caster, 'timed barrier seal north')
+        original = seals.current_barrier(1, 'north')
+        self.run_jutsu(self.caster, 'multi exit barrier')
+        records = seals._load()
+        self.assertEqual(len(records), 2)
+        self.assertEqual(seals.current_barrier(1, 'north'), original)
+        self.assertIsNotNone(seals.current_barrier(1, 'east'))
+        self.assertEqual(seals._caster_barrier_count(records, 'Caster'), 2)
+        chakra = self.caster.player.chakra
+        self.caster.player.cooldowns['multi exit barrier'] = 0
+        self.run_jutsu(self.caster, 'multi exit barrier')  # no eligible exits left
+        self.assertEqual(self.caster.player.chakra, chakra)
         self.assertEqual(len(seals._load()), 2)
+
+    def test_multi_wall_no_eligible_exits_does_not_charge(self):
+        world.WORLD.add_room(world.Room(5, 'Dead end', 'Protected passage.'))
+        world.WORLD.link(5, 'north', 4, bidirectional=False)  # safe destination
+        self.caster.player.room_vnum = 5
+        before = self.caster.player.chakra
+        self.run_jutsu(self.caster, 'multi exit barrier')
+        self.assertEqual(seals._load(), [])
+        self.assertEqual(self.caster.player.chakra, before)
+
+    def test_multi_wall_counts_one_cast_toward_three_cast_limit(self):
+        for direction in ('west', 'up'):
+            world.WORLD.link(1, direction, 2, bidirectional=False)
+        self.run_jutsu(self.caster, 'multi exit barrier')
+        self.caster.player.room_vnum = 2
+        self.run_jutsu(self.caster, 'timed barrier seal south')
+        world.WORLD.link(2, 'east', 3, bidirectional=False)
+        self.caster.player.cooldowns['timed barrier seal'] = 0
+        self.run_jutsu(self.caster, 'timed barrier seal east')
+        self.assertEqual(seals._caster_barrier_count(seals._load(), 'Caster'), 3)
+        world.WORLD.link(2, 'west', 3, bidirectional=False)
+        self.caster.player.cooldowns['timed barrier seal'] = 0
+        before = self.caster.player.chakra
+        self.run_jutsu(self.caster, 'timed barrier seal west')
+        self.assertEqual(self.caster.player.chakra, before)
+        self.assertIsNone(seals.current_barrier(2, 'west'))
 
     def test_anchor_blocks_anki_and_recall_but_walking_works(self):
         self.run_jutsu(self.caster, 'teleportation anchor seal Opponent')
