@@ -52,7 +52,7 @@ COMMAND_OVERRIDES = {
              "Log unlocks at Lumberjack level 60 and retains its 6% base weight "
              "before high-tier tool weighting."),
     "perform": ("PERFORM <learned jutsu> [target]",
-                "Jutsu now spend increasing Chakra or Stamina based on caster "
+                "Alias: PER. Jutsu now spend increasing Chakra or Stamina based on caster "
                 "ninja level, the jutsu's tier and the actor's maximum resource "
                 "pool. Chakra Control discounts still apply where supported. "
                 "Repeated high-tier casts are expensive; individual attacks "
