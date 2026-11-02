@@ -414,3 +414,11 @@ leveling, mob XP, and the older gameplay smoke checks.
   so all existing titles and colors survive upgrades. Real names,
   player lookup and in-character combat/chat identities remain unchanged.
   Existing runtime `data/` is never packaged or overwritten.
+
+- Version 15.395 (final title scope): Custom colored player titles are
+  exclusively a `WHO` list decoration, including WHO's linkdead roster.
+  WHOIS, SCORE, LOOK, ordinary room output, OOC, CHATLOG, emotes, combat,
+  and all other character displays use the unmodified player name.
+  `title`, `title color`, `title clear` and saved player title/color
+  fields remain compatible with existing accounts. No `data/` files are
+  included in the release archive.
