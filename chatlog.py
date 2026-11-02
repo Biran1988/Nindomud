@@ -34,12 +34,17 @@ def load_all() -> None:
         ENTRIES.append(entry)
 
 
-def record(speaker: str, message: str) -> None:
-    """Appends a new OOC message to the log and persists it
-    immediately -- matching every other persistent system in this
-    project (teams, spawn points), which save on every mutation
-    rather than batching. The deque's own maxlen=25 handles dropping
-    the oldest entry automatically once full."""
+def record(speaker: str, message: str, *, title: str = "", title_color: str = "gold") -> None:
+    """Save message and a snapshot of the speaker's OOC title if present.
+
+    Old log entries with only speaker/message continue to render normally.
+    """
     import storage
-    ENTRIES.append({"speaker": speaker, "message": message})
+    import ooc_titles
+    entry = {"speaker": speaker, "message": message}
+    safe_title = ooc_titles.clean_title(title)
+    if safe_title:
+        entry["title"] = safe_title
+        entry["title_color"] = title_color if ooc_titles.valid_color(title_color) else "gold"
+    ENTRIES.append(entry)
     storage.save_chatlog(list(ENTRIES))
