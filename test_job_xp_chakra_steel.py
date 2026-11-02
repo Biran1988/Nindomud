@@ -101,6 +101,8 @@ class AuthenticChakraSteelTests(unittest.TestCase):
         for kind in ("kunai", "sword", "shuriken", "blunt", "polearm", "exotic"):
             with self.subTest(kind=kind):
                 self.player.cooldowns.clear()
+                self.player.chakra = self.player.maximum_chakra = 1000
+                self.player.stamina = self.player.maximum_stamina = 1000
                 name = self.forge(f"Unique Chakra Forged {kind}", kind,
                                   ["chakra steel ingot", "yew log"])
                 self.player.equipment["wielded"] = name
