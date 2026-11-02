@@ -48,12 +48,27 @@ MATERIALS = {
     "sturdy oak log": {"stat_value": 6, "price_ryo": 300},
     "ironwood log": {"stat_value": 8, "price_ryo": 600},
     "steel ingot": {"stat_value": 12, "price_ryo": 2000},
-    "masterwork oak log": {"stat_value": 14, "price_ryo": 3000},
+    "elder oak log": {"stat_value": 14, "price_ryo": 3000},
     "alloy ingot": {"stat_value": 22, "price_ryo": 20000},
     "ancient heartwood log": {"stat_value": 26, "price_ryo": 40000},
     "yew log": {"stat_value": 26, "price_ryo": 40000},
     "chakra steel ingot": {"stat_value": 30, "price_ryo": 60000},
 }
+
+# Weapons and armor now forge directly from one metal ingot; gathering
+# tools keep their separate wood + ingot recipes.
+EQUIPMENT_METAL_TIERS = {
+    "iron": "iron ingot",
+    "steel": "steel ingot",
+    "chakra steel": "chakra steel ingot",
+    "chakra": "chakra steel ingot",
+}
+
+
+def equipment_metal_material(value: str):
+    """Select exactly one smelted ingot for metal armor or weapon crafting."""
+    return EQUIPMENT_METAL_TIERS.get(" ".join(value.lower().strip().split()))
+
 
 CRAFTING_BUKIJUTSU_MIN_LEVEL = 25  # confirmed directly: the first, real unlock path
 CRAFTING_GENERAL_MIN_LEVEL = 70  # confirmed directly: the second, separate real unlock path (any class)
