@@ -141,7 +141,8 @@ def vital_surge(session, target_words):
     if now < player.cooldowns.get(key, 0):
         session.send("Vital Surge is still recovering.")
         return
-    cost = round(jutsu["chakra_cost"] * (100 - derived_stats.chakra_control_cost_discount_percent(player.chakra_control)) / 100)
+    import jutsu_balance
+    cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
     if player.chakra < cost:
         session.send(f"You need {cost} Chakra to channel Vital Surge.")
         return
@@ -261,14 +262,17 @@ def command(session, args, soul=None):
     if player.health <= 0 or combat._is_action_blocked(player):
         session.send("You cannot awaken Six Paths power while down or unable to act.")
         return
-    if player.chakra < ACTIVATION_CHAKRA:
-        session.send(f"You need {ACTIVATION_CHAKRA} Chakra to activate Six Paths power.")
+    import jutsu_balance
+    activation_cost = jutsu_balance.cast_cost(
+        player, data_jutsu.JUTSU[MODE_SKILLS[_soul(player)].lower()], "chakra")
+    if player.chakra < activation_cost:
+        session.send(f"You need {activation_cost} Chakra to activate Six Paths power.")
         return
     if _staff_can_test(player):
         player._staff_six_paths_soul = soul if soul in MODE_SKILLS else _soul(player)
     else:
         sync_skills(player)
-    player.chakra -= ACTIVATION_CHAKRA
+    player.chakra -= activation_cost
     player.six_paths_active = True
     storage.save_player(player)
     session.send(f"&[213]You awaken {MODE_SKILLS[_soul(player)]}! Use sixpaths off to release it.&x")
