@@ -10,6 +10,7 @@ import random
 import time
 
 import data_jutsu
+import jutsu_balance
 import data_weapons
 import status_effects
 import world
@@ -125,11 +126,13 @@ def _pay(session, key):
     if time.time() < player.cooldowns.get(key, 0):
         session.send("That technique is still recovering.")
         return False
-    if player.chakra < jutsu["chakra_cost"] or player.stamina < jutsu["stamina_cost"]:
+    chakra_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    stamina_cost = jutsu_balance.cast_cost(player, jutsu, "stamina")
+    if player.chakra < chakra_cost or player.stamina < stamina_cost:
         session.send("You need more chakra or stamina.")
         return False
-    player.chakra -= jutsu["chakra_cost"]
-    player.stamina -= jutsu["stamina_cost"]
+    player.chakra -= chakra_cost
+    player.stamina -= stamina_cost
     player.cooldowns[key] = time.time() + jutsu["cooldown"]
     combat.grow_skill_from_usage(player, jutsu["display_name"])
     return True
