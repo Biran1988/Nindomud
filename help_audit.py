@@ -15,6 +15,8 @@ SECRET_KEYS = {
     # Do not disclose the bypass, its route, or other explicitly hidden
     # discoveries before players uncover them in game.
     "reverse summoning jutsu",
+    # Lightsaber commands must remain undiscoverable until the event or item.
+    "activate", "deactivate", "insert",
 }
 COMMAND_OVERRIDES = {
     "group": ("GROUP | GROUP INVITE <player> | GROUP ACCEPT | GROUP LEAVE | GROUP KICK <player> | GROUP DISBAND | GROUP FOLLOW",
@@ -113,10 +115,11 @@ def populate(entries, commands):
         by_key[key] = entry
         COVERED.add(key)
 
-    # The jutsu registry is authoritative; no ability is left without a page.
-    # Keep gated/secret techniques subject to the existing visibility checks.
+    # Preserve intentional overview/alias pages and secret discoverability.
+    known_aliases = {alias.casefold() for entry in entries
+                     for alias in entry.get("keywords", ())}
     for key, art in sorted(data_jutsu.JUTSU.items()):
-        if key in by_key or key in SECRET_KEYS or art.get("secret"):
+        if key in by_key or key in known_aliases or key in SECRET_KEYS or art.get("secret"):
             continue
         kind = art.get("jutsu_type", "attack")
         damage = art.get("damage")
