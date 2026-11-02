@@ -49,10 +49,10 @@ class OocTitleTests(unittest.TestCase):
         with patch("chat_moderation.record_and_check_spam", return_value=False):
             commands.cmd_ooc(self.session, ["hello", "everyone"])
         rendered = self.session.broadcast_all.call_args.args[0]
-        self.assertIn("[OOC] Shinobi: hello everyone", rendered)
+        self.assertIn("[OOC] Shinobi: hello everyone", colors.render(rendered, False))
         self.assertNotIn("Hokage", rendered)
         self.assertIn("[OOC] You: hello everyone",
-                      self.session.send.call_args.args[0])
+                      colors.render(self.session.send.call_args.args[0], False))
         self.assertEqual(list(chatlog.ENTRIES),
                          [{"speaker": "Shinobi", "message": "hello everyone"}])
         # Old persisted OOC entries with title snapshots must also display
@@ -62,7 +62,7 @@ class OocTitleTests(unittest.TestCase):
         self.session.send.reset_mock()
         commands.cmd_chatlog(self.session, [])
         output = self.session.send.call_args.args[0]
-        self.assertIn("[OOC] Shinobi: old message", output)
+        self.assertIn("[OOC] Shinobi: old message", colors.render(output, False))
         self.assertNotIn("Old Title", output)
         chatlog.ENTRIES.clear()
         chatlog.load_all()
@@ -153,8 +153,8 @@ class OocTitleTests(unittest.TestCase):
               patch("genjutsu.decoys_in_room", return_value=[]),
               patch("session.ACTIVE_SESSIONS", [])):
             commands.cmd_look(observer, [])
-            self.assertIn("Shinobi &[208][The Last Uchiha]&x is here.",
-                          observer.send.call_args.args[0])
+            self.assertIn("Shinobi [The Last Uchiha] is here.",
+                          colors.render(observer.send.call_args.args[0], False))
             commands.cmd_look(observer, ["Shinobi"])
             self.assertIn("Shinobi &[208][The Last Uchiha]&x",
                           observer.send.call_args.args[0])
