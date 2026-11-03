@@ -119,6 +119,9 @@ def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
     if not match:
         return False, f"{shopkeeper_mob.name.capitalize()} doesn't sell that.", None
     item_name = stock_item_name(match)
+    import crafted_provenance
+    if crafted_provenance.denied(item_name, buyer):
+        return False, crafted_provenance.DENIED, None
     level_error = purchase_level_error(buyer, stock_prototype(match), item_name)
     if level_error:
         return False, level_error, None
