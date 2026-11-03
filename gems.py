@@ -1,20 +1,8 @@
-"""
-Random gem finds (Section 77), per explicit request: gems can
-occasionally turn up while Mining any suitable rock, rather than
-getting their own full gathering job or progression track. A flat,
-deliberately tiny chance (FIND_CHANCE_PERCENT) rolled on top of a
-normal, successful mining attempt -- not instead of it, and not
-scaled by pickaxe tier or job level the way mining.ORE_TABLE's own
-odds are, since "very rare across the board" was the explicit ask,
-not "rare until you're a master miner."
+"""Rare bonus gems awarded alongside normal ore on successful Mining.
 
-Deliberately distinct from mining.ORE_TABLE's own "a rough quartz" /
-"a raw sapphire" / "a raw ruby" / "a raw diamond" entries, which still
-feed Gemcutter's existing cutting recipes unchanged -- these bonus
-gems are standalone, already-finished items (no further processing,
-no crafting job consuming them), so the names deliberately don't
-collide: "a quartz" here vs. "a rough quartz" from the ore table, "a
-sapphire" here vs. "a raw sapphire" there, and so on.
+Every gem here has a matching Gemcutter recipe. Top elemental stones have
+identical rarity and weight: fire, water, earth, wind and lightning.
+Rough Quartz is NOT part of the normal ore drop table.
 """
 
 import random
@@ -25,15 +13,15 @@ import random
 # legendary tiers (for the standard rarity-colored display), separate
 # from each gem's own natural color (used in its description).
 GEM_TABLE = [
-    ("a quartz", "uncommon", 30, "clear"),
+    ("a rough quartz", "uncommon", 30, "clear"),
     ("a jade", "uncommon", 25, "green"),
     ("an amber", "rare", 15, "golden orange"),
     ("a garnet", "rare", 12, "deep red"),
-    ("an amethyst", "rare", 10, "purple"),
-    ("a topaz", "rare", 8, "golden yellow"),
+    ("an amethyst", "epic", 5, "purple"),
+    ("a topaz", "epic", 5, "golden yellow"),
     ("a sapphire", "epic", 5, "blue"),
-    ("an emerald", "epic", 4, "vivid green"),
-    ("a ruby", "epic", 3, "red"),
+    ("an emerald", "epic", 5, "vivid green"),
+    ("a ruby", "epic", 5, "red"),
     ("a diamond", "legendary", 1, "brilliant clear"),
 ]
 
