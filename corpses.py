@@ -73,8 +73,19 @@ def loot_ryo(player, corpse: Corpse) -> int:
     return amount
 
 
-def loot_gear(player, corpse: Corpse) -> List[str]:
-    added, leftover = inventory.add_items(player.inventory, list(corpse.items))
+def loot_gear(player, corpse: Corpse, *, session=None) -> List[str]:
+    """Never auto-loot or manually loot an alt-locked crafted item."""
+    import crafted_provenance
+    added, leftover = [], []
+    for item in list(corpse.items):
+        if crafted_provenance.denied(item, player, session=session):
+            leftover.append(item)
+            continue
+        ok, _reason = inventory.add_item(player.inventory, item)
+        if ok:
+            added.append(item)
+        else:
+            leftover.append(item)
     corpse.items = leftover
     return added
 
