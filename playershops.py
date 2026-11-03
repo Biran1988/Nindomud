@@ -156,9 +156,13 @@ def close_shop(player) -> list:
     results = []
     room = world.WORLD.get(player.shop_room_vnum) if player.shop_room_vnum else None
 
+    import crafted_provenance
     for entry in player.shop_stock:
         item_name = stock_item_name(entry)
-        ok, _reason = inventory.add_item(player.inventory, item_name)
+        # Legacy shop stock cannot be an escape hatch around IP-bound
+        # crafted-item receipt rules.
+        allowed = not crafted_provenance.denied(item_name, player)
+        ok, _reason = inventory.add_item(player.inventory, item_name) if allowed else (False, "alt_locked")
         if ok:
             results.append((item_name, "inventory"))
         else:
