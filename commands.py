@@ -5460,7 +5460,16 @@ def cmd_examine(session, args: List[str]) -> None:
         if proto.get("gem_inlay"):
             gem = proto["gem_inlay"]
             lines.append(f"&WGem Inlay:&x {gem.title()} (permanent, 1 slot)")
-            lines.append(f"&WInlay Bonuses:&x Hitroll +{gem_inlays.strength(gem)}, Damageroll +{gem_inlays.strength(gem)}")
+            lines.append(f"&WAdded Gem Bonuses:&x Hitroll +{gem_inlays.strength(gem)}, Damageroll +{gem_inlays.strength(gem)}")
+            original = proto.get("stat_bonuses", {})
+            if proto.get("item_type") == "weapon":
+                lines.append(
+                    f"&WWeapon Total:&x Hitroll +{original.get('hitroll', 0) + gem_inlays.strength(gem)}, "
+                    f"Damageroll +{original.get('damroll', 0) + gem_inlays.strength(gem)} "
+                    "(original forge stats + gem)"
+                )
+            else:
+                lines.append("&WArmor:&x Original defense and all other forged stats are unchanged.")
             element = gem_inlays.ELEMENT_GEMS.get(gem)
             if element:
                 lines.append(f"&WElemental Gem:&x +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% {element.title()} jutsu damage; "
@@ -7218,8 +7227,8 @@ def cmd_inlay(session, args: List[str]) -> None:
                   f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% "
                   f"{elemental_counters.counters(element)} resistance"
                   if element else "")
-        session.send(f"&GYou inlay {gem_name} into {forged}: "
-                     f"+{gem_inlays.strength(gem_key)} Hitroll/Damroll{detail}.&x")
+        session.send(f"&GYou securely inlay {gem_name} into {forged}. "
+                     "Its original stats are preserved; EXAMINE it for the added bonuses.&x")
 
     session.send(f"You begin setting {gem_name} into {forged}...")
     session.start_timed_action("gem inlay", COOK_DELAY_SECONDS, resolve)
