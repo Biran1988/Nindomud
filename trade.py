@@ -111,6 +111,19 @@ def complete_trade(trade: Trade) -> None:
     items get added/removed during negotiation)."""
     player_a = trade.session_a.player
     player_b = trade.session_b.player
+    import crafted_provenance
+    # Validate both sides before moving even one item or one ryo. A
+    # staged trade can outlive an IP or item change.
+    for item in trade.offer_a["items"]:
+        if (item not in player_a.inventory
+                or crafted_provenance.denied(item, player_a, session=trade.session_a)
+                or crafted_provenance.denied(item, player_b, session=trade.session_b)):
+            raise ValueError(crafted_provenance.DENIED)
+    for item in trade.offer_b["items"]:
+        if (item not in player_b.inventory
+                or crafted_provenance.denied(item, player_b, session=trade.session_b)
+                or crafted_provenance.denied(item, player_a, session=trade.session_a)):
+            raise ValueError(crafted_provenance.DENIED)
 
     for item in trade.offer_a["items"]:
         player_a.inventory.remove(item)
