@@ -121,6 +121,9 @@ class Player:
     # Not displayed in OOC chat or used for login/target matching.
     ooc_title: str = ""
     ooc_title_color: str = "gray"
+    # Most recently verified TCP peer; used for offline auction anti-alt checks.
+    # Never surfaced in player-facing commands, WHO, EXAMINE, or item names.
+    last_connection_ip: str = ""
 
     # Player housing (Section 52). Rooms themselves are NOT persisted to
     # disk across restarts (a pre-existing project limitation -- the
