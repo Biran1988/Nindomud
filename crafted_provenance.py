@@ -50,7 +50,11 @@ def stamped_prototype(item_name: str):
     import ninja_arts
     name = ninja_arts.base_item(item_name)
     matches = [p for p in olc.OBJECT_TEMPLATES.values()
-               if p.get("short_desc", "").casefold() == name.casefold()]
+               if (p.get("short_desc", "").casefold() == name.casefold()
+                   or name.casefold() in {
+                       str(previous).casefold()
+                       for previous in p.get("previous_short_descs", [])
+                   })]
     return matches[0] if len(matches) == 1 else None
 
 
