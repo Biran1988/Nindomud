@@ -3052,6 +3052,12 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
+    # Five top cut gems give the same +15% damage for their own element.
+    # The rest of the gem's flat damage bonus already enters _jutsu_damage_bonus.
+    import gem_inlays
+    gem_mult = gem_inlays.elemental_jutsu_multiplier(player, jutsu.get("element", "none"))
+    if gem_mult != 1.0:
+        dmg = max(1, round(dmg * gem_mult))
     import village_perks
     dmg_mult = village_perks.damage_multiplier(player.village)
     if dmg_mult != 1.0:
@@ -3289,6 +3295,12 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         dmg = max(1, dmg * (100 + jutsu["wind_damage_bonus_pct"]) // 100)
     if jutsu.get("jutsu_type") == "ambush":
         dmg = max(1, round(dmg * jutsu["ambush_multiplier"]))
+    # Five top cut gems give the same +15% damage for their own element.
+    # The rest of the gem's flat damage bonus already enters _jutsu_damage_bonus.
+    import gem_inlays
+    gem_mult = gem_inlays.elemental_jutsu_multiplier(player, jutsu.get("element", "none"))
+    if gem_mult != 1.0:
+        dmg = max(1, round(dmg * gem_mult))
     import village_perks
     dmg_mult = village_perks.damage_multiplier(player.village)
     if dmg_mult != 1.0:
@@ -3316,6 +3328,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     dmg = sage_mode.outgoing(player, dmg, jutsu=True)
     dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
+    # A fire inlay resists water, earth resists lightning, etc.
+    dmg = gem_inlays.reduce_counter_damage(target, jutsu.get("element", "none"), dmg)
     target.health -= dmg
     hyuga.on_strike(session, target, jutsu)
     _genjutsu_impact(jutsu, target)
