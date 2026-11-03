@@ -91,6 +91,8 @@ _ITEM_VNUMS = {
     "gem_quartz": 9790, "gem_jade": 9791, "gem_amber": 9792, "gem_garnet": 9793,
     "gem_amethyst": 9794, "gem_topaz": 9795, "gem_sapphire": 9796, "gem_emerald": 9797,
     "gem_ruby": 9798, "gem_diamond": 9799,
+    "cut_jade": 20950, "cut_amber": 20951, "cut_garnet": 20952,
+    "cut_amethyst": 20953, "cut_topaz": 20954, "cut_emerald": 20955,
     # Weaponsmith crafted goods
     "iron_kunai_smith": 9740, "steel_sword_smith": 9741, "chakra_steel_shuriken_smith": 9742,
     # Armorsmith crafted goods
@@ -260,8 +262,9 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["ore_steel"], "A Steel Ore", "material", 800)
     make(_ITEM_VNUMS["ore_chakra_steel"], "A Chakra Steel Ore", "material", 8000)
 
-    # Gems -- each a single, non-tiered item, level-gated by
-    # mining.FIND_TABLE rather than a rarity roll (Section 79 revamp).
+    # Existing legacy raw gems remain usable even though new Mining gives
+    # ONLY ores as primary finds. All ten gems can be cut after rare drops.
+    import gem_inlays
     for raw_key, raw_name, cut_key, cut_name, rarity, raw_cost in (
         ("rough_quartz", "A Rough Quartz", "cut_quartz", "A Cut Quartz", "uncommon", 50),
         ("raw_sapphire", "A Raw Sapphire", "cut_sapphire", "A Cut Sapphire", "epic", 800),
@@ -270,11 +273,22 @@ def _register_shared_items() -> None:
     ):
         make(_ITEM_VNUMS[raw_key], raw_name, "material", raw_cost, rarity=rarity)
         make(_ITEM_VNUMS[cut_key], cut_name, "material", raw_cost * 3 // 2, rarity=rarity)
-        strength = gemcutter.BONUS_BY_RARITY[rarity]
-        # Reserved for a later weapon upgrade action; these are
-        # intrinsic gem stats, not bonuses from holding the gem.
+        gem_key = cut_name.rsplit(" ", 1)[-1].casefold()
+        points = gem_inlays.strength(gem_key)
         olc.OBJECT_TEMPLATES[_ITEM_VNUMS[cut_key]]["gem_bonuses"] = {
-            "hitroll": strength, "damroll": strength,
+            "hitroll": points, "damroll": points,
+        }
+    for gem_key, rarity, cost in (
+        ("jade", "uncommon", 25), ("amber", "rare", 60),
+        ("garnet", "rare", 70), ("amethyst", "epic", 500),
+        ("topaz", "epic", 500), ("emerald", "epic", 500),
+    ):
+        cut_key = "cut_" + gem_key
+        make(_ITEM_VNUMS[cut_key], gem_inlays.cut_name(gem_key), "material",
+             cost * 3 // 2, rarity=rarity)
+        points = gem_inlays.strength(gem_key)
+        olc.OBJECT_TEMPLATES[_ITEM_VNUMS[cut_key]]["gem_bonuses"] = {
+            "hitroll": points, "damroll": points,
         }
 
     # Lumberjack loot table
@@ -328,8 +342,7 @@ def _register_shared_items() -> None:
         _crop_display = " ".join(word.capitalize() for word in _crop_name.split())
         make(_crop_vnum, _crop_display, "food", _CROP_COST[_crop_index])
 
-    # Random gem finds (gems.py) -- a rare bonus during Mining, distinct
-    # from the raw ore-table gems above that still feed Gemcutter.
+    # Rare bonus gem finds (gems.py), all now usable with Gemcutter.
     make(_ITEM_VNUMS["gem_quartz"], "A Quartz", "misc", 15, rarity="uncommon")
     olc.OBJECT_TEMPLATES[_ITEM_VNUMS["gem_quartz"]]["long_desc"] = "A clear quartz crystal lies here."
     make(_ITEM_VNUMS["gem_jade"], "A Jade", "misc", 25, rarity="uncommon")
