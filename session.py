@@ -1148,6 +1148,13 @@ class Session:
         self.player = player
         self.state = State.PLAYING
         self.color_enabled = player.color_enabled
+        # Keep only the actual authenticated TCP-peer IP for offline
+        # auction protections. Never accept IP claims from the player.
+        import crafted_provenance
+        verified_peer = crafted_provenance.canonical_ip(self.connection_ip)
+        if verified_peer and getattr(player, "last_connection_ip", "") != verified_peer:
+            player.last_connection_ip = verified_peer
+            storage.save_player(player)
         # The privilege belongs to the authenticated immortal account,
         # never solely to a saved character flag after a demotion.
         if (not self.account or self.account.staff_level == "player") and player.wizinvis:
