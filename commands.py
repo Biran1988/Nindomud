@@ -6026,6 +6026,10 @@ def cmd_buy(session, args: List[str]) -> None:
         if player.ryo < obj["cost"]:
             session.send("You can't afford that.")
             return
+        import crafted_provenance
+        if crafted_provenance.denied(obj["short_desc"], player, session=session):
+            session.send(crafted_provenance.DENIED)
+            return
         ok, reason = inventory.add_item(player.inventory, obj["short_desc"])
         if not ok:
             session.send(inventory.full_message(reason, obj["short_desc"]))
@@ -6054,6 +6058,10 @@ def cmd_buy(session, args: List[str]) -> None:
         return
     if player.ryo < match["price"]:
         session.send("You can't afford that.")
+        return
+    import crafted_provenance
+    if crafted_provenance.denied(match["name"], player, session=session):
+        session.send(crafted_provenance.DENIED)
         return
     ok, reason = inventory.add_item(player.inventory, match["name"])
     if not ok:
@@ -6148,6 +6156,10 @@ def _buy_multiple(session, args: List[str]) -> None:
         # most 2,000 copies per exact item, even when an item is free.
         count = inventory.MAX_STACK_SIZE if unlimited else min(limit, inventory.MAX_STACK_SIZE)
         for _ in range(count):
+            import crafted_provenance
+            if crafted_provenance.denied(name, player, session=session):
+                stop_reason = crafted_provenance.DENIED
+                break
             if player.ryo < cost:
                 stop_reason = "You can't afford any more of that item."
                 break
@@ -8010,6 +8022,10 @@ def _get_from_backpack(session, item_query: str, backpack_query: str) -> None:
         return
     contents_position = item_matches[item_index - 1]
     match = contents[contents_position]
+    import crafted_provenance
+    if crafted_provenance.denied(match, player, session=session):
+        session.send(crafted_provenance.DENIED)
+        return
 
     ok, reason = inventory.add_item(player.inventory, match)
     if not ok:
