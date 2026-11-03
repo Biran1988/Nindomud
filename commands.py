@@ -668,6 +668,10 @@ def cmd_auction(session, args: List[str]) -> None:
             session.send("You aren't carrying that.")
             return
 
+        import crafted_provenance
+        if crafted_provenance.denied(match, player, session=session):
+            session.send(crafted_provenance.DENIED)
+            return
         player.inventory.remove(match)
         auction_id = auction.create_listing(player.name, match, starting_bid, duration_seconds, buyout_price)
         session.send(
@@ -4547,6 +4551,11 @@ def cmd_trade(session, args: List[str]) -> None:
         if match.endswith(" [glued]"):
             session.send("That item is glued to you and cannot be traded.")
             return
+        import crafted_provenance
+        if (crafted_provenance.denied(match, player, session=session)
+                or crafted_provenance.denied(match, other.player, session=other)):
+            session.send(crafted_provenance.DENIED)
+            return
         my_offer = active_trade.my_offer(session)
         if match in my_offer["items"]:
             session.send(f"{match} is already in your offer.")
@@ -4594,7 +4603,13 @@ def cmd_trade(session, args: List[str]) -> None:
         other.send(f"{player.name} confirms the trade.")
         if active_trade.both_confirmed():
             import trade as trade_module
-            trade_module.complete_trade(active_trade)
+            try:
+                trade_module.complete_trade(active_trade)
+            except ValueError as exc:
+                active_trade.reset_confirmations()
+                session.send(str(exc))
+                other.send("Trade blocked: a crafted item cannot be received by an alt.")
+                return
             session.send("&GThe trade is complete!&x")
             other.send("&GThe trade is complete!&x")
         return
@@ -7461,6 +7476,8 @@ def cmd_craft(session, args: List[str]) -> None:
             proto["description"] = (f"A crafted {kind} named {item_name}, "
                                     f"forged from {metal} and {metal}.")
             proto["craft_materials"] = [metal, metal]
+            import crafted_provenance
+            crafted_provenance.stamp(proto, session)
             if kind == "weapon":
                 proto["item_type"] = "weapon"
                 proto["weapon_type"] = sub_type
@@ -7546,6 +7563,10 @@ def cmd_give(session, args: List[str]) -> None:
             if match.endswith(" [glued]"):
                 session.send("That item is glued to you and cannot be given away.")
                 return
+            import crafted_provenance
+            if crafted_provenance.denied(match, player, session=session):
+                session.send(crafted_provenance.DENIED)
+                return
             player.inventory.remove(match)
             player.shop_stock.append({"item_name": match, "price": None,
                                       "item_vnum": playershops.item_vnum_for_stock(match)})
@@ -7599,6 +7620,11 @@ def cmd_give(session, args: List[str]) -> None:
         session.send("That item is glued to you and cannot be given away.")
         return
 
+    import crafted_provenance
+    if (crafted_provenance.denied(match, player, session=session)
+            or crafted_provenance.denied(match, target_session.player, session=target_session)):
+        session.send(crafted_provenance.DENIED)
+        return
     ok, reason = inventory.add_item(target_session.player.inventory, match)
     if not ok:
         session.send(f"{target_session.player.name} has no room for that.")
@@ -7812,9 +7838,14 @@ def cmd_get(session, args: List[str]) -> None:
         picked = []
         fixed = 0
         full = 0
+        denied_count = 0
+        import crafted_provenance
         for item in candidates:
             if _has_no_take_flag(item):
                 fixed += 1
+                continue
+            if crafted_provenance.denied(item, player, session=session):
+                denied_count += 1
                 continue
             ok, _reason = inventory.add_item(player.inventory, item)
             if not ok:
@@ -7837,10 +7868,10 @@ def cmd_get(session, args: List[str]) -> None:
             currency_piles.pickup(session, "all ryo")
         if not picked and not has_ryo:
             session.send("There is nothing here you can pick up.")
-        if full or fixed:
+        if full or fixed or denied_count:
             session.send(
                 f"Left behind: {full} item(s) due to inventory limits, "
-                f"{fixed} fixed decoration(s)."
+                f"{fixed} fixed decoration(s), {denied_count} alt-locked crafted item(s)."
             )
         return
 
@@ -7856,6 +7887,10 @@ def cmd_get(session, args: List[str]) -> None:
         return
     if _has_no_take_flag(match):
         session.send(f"{rarity_colored_name(match)} won't budge -- it's fixed in place.")
+        return
+    import crafted_provenance
+    if crafted_provenance.denied(match, player, session=session):
+        session.send(crafted_provenance.DENIED)
         return
 
     ok, reason = inventory.add_item(player.inventory, match)
