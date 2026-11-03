@@ -9,7 +9,7 @@ MAX_TITLE_LENGTH = 40  # visible characters, excluding legal color markup
 MAX_TITLE_COLOR_CODES = 16
 MAX_TITLE_STORED_LENGTH = 160
 # Brackets are optional player text, never added by the renderer.
-_TITLE_RE = re.compile(r"^[A-Za-z0-9\\[][A-Za-z0-9 ',.!?_\\-\\[\\]]*$")
+_TITLE_RE = re.compile(r"^[A-Za-z0-9\[][A-Za-z0-9 ',.!?_\-\[\]]*$")
 # Inline ROM/xterm colors may change *within* a title (not the player name).
 # Do not accept terminal escapes, reset codes or other arbitrary & controls.
 _INLINE_COLOR_RE = re.compile(r"&\[(\d{1,3})\]|&([RGBYCMWDOrgybcmwd])")
