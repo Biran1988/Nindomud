@@ -8529,7 +8529,7 @@ def cmd_loot(session, args: List[str]) -> None:
     ryo_taken = corpses.loot_ryo(player, corpse)
     if ryo_taken:
         session.send(f"You loot {ryo_taken} ryo from {corpse.name}.")
-    items_taken = corpses.loot_gear(player, corpse)
+    items_taken = corpses.loot_gear(player, corpse, session=session)
     for item in items_taken:
         session.send(f"You loot {item} from {corpse.name}.")
     if corpse.items:
