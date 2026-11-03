@@ -48,6 +48,19 @@ class ForgedItemAltGuardTests(unittest.TestCase):
         self.assertTrue(provenance.denied(self.name, self.session("Unknown", None).player,
                                           session=self.session("Unknown", None)))
 
+    def test_examine_never_leaks_crafter_character_or_ip(self):
+        self.friend.player.inventory.append(self.name)
+        self.friend.player.learned_skills.append("Examine")
+        self.friend.player.skill_proficiencies["Examine"] = 90
+        with (patch("skill_training.needs_first_practice", return_value=False),
+              patch("combat.grow_skill_from_usage")):
+            commands.cmd_examine(self.friend, ["blade"])
+        text = "\\n".join(self.friend.messages)
+        self.assertIn("Hitroll: +10", text)
+        self.assertNotIn("192.0.2.20", text)
+        self.assertNotIn("crafted_by_ip", text)
+        self.assertNotIn("Maker", text)
+
     def test_ipv4_mapped_v6_is_same_origin(self):
         alt_mapped = self.session("AltMapped", "::ffff:192.0.2.20")
         self.assertTrue(provenance.denied(self.name, alt_mapped.player, session=alt_mapped))
