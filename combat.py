@@ -3512,7 +3512,7 @@ def handle_mob_defeat(session, mob: Mob) -> None:
         taken = corpses.loot_ryo(player, corpse)
         session.send(f"You automatically loot {taken} ryo from the corpse.")
     if player.auto_loot_gear and corpse.items:
-        taken = corpses.loot_gear(player, corpse)
+        taken = corpses.loot_gear(player, corpse, session=session)
         for item in taken:
             session.send(f"You automatically loot {item} from the corpse.")
     if player.auto_sac_corpse:
