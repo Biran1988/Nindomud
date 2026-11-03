@@ -120,7 +120,7 @@ class Player:
     # to preserve all titles from v15.393 without migrating player data.
     # Not displayed in OOC chat or used for login/target matching.
     ooc_title: str = ""
-    ooc_title_color: str = "gold"
+    ooc_title_color: str = "gray"
 
     # Player housing (Section 52). Rooms themselves are NOT persisted to
     # disk across restarts (a pre-existing project limitation -- the
