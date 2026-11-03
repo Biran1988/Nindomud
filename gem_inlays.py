@@ -45,12 +45,14 @@ def inlaid(proto: dict) -> str | None:
 
 def equipped_gems(actor) -> list:
     import olc
+    import ninja_arts
     found = []
     for _slot, name in getattr(actor, "equipment", {}).items():
         if not name:
             continue
+        base_name = ninja_arts.base_item(name)
         matches = [p for p in olc.OBJECT_TEMPLATES.values()
-                   if p.get("short_desc", "").casefold() == name.casefold()]
+                   if p.get("short_desc", "").casefold() == base_name.casefold()]
         # Name-only inventory means ambiguously named prototypes are unsafe.
         if len(matches) != 1:
             continue
