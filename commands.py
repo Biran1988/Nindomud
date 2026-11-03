@@ -5440,11 +5440,21 @@ def cmd_examine(session, args: List[str]) -> None:
         lines.extend(stat_lines)
 
     if proto:
+        import gem_inlays
+        import elemental_counters
+        if proto.get("gem_inlay"):
+            gem = proto["gem_inlay"]
+            lines.append(f"&WGem Inlay:&x {gem.title()} (permanent, 1 slot)")
+            lines.append(f"&WInlay Bonuses:&x Hitroll +{gem_inlays.strength(gem)}, Damageroll +{gem_inlays.strength(gem)}")
+            element = gem_inlays.ELEMENT_GEMS.get(gem)
+            if element:
+                lines.append(f"&WElemental Gem:&x +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% {element.title()} jutsu damage; "
+                             f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% {elemental_counters.counters(element).title()} resistance")
         if proto.get("weapon_type"):
             lines.append(f"&WWeapon Type:&x {data_weapons.display_name(proto['weapon_type'])}")
         if proto.get("gem_bonuses"):
             bonuses = proto["gem_bonuses"]
-            lines.append(f"&WFuture Weapon Gem Bonus:&x Hitroll +{bonuses.get('hitroll', 0)}, Damageroll +{bonuses.get('damroll', 0)}")
+            lines.append(f"&WGem Inlay Potential:&x Hitroll +{bonuses.get('hitroll', 0)}, Damageroll +{bonuses.get('damroll', 0)}")
         lines.append(f"&WCost:&x {proto.get('cost', 0):,} ryo   &WWeight:&x {proto.get('weight', 1)}")
 
     if appraisal_pct < 80:
@@ -8135,7 +8145,8 @@ def equipped_weapon_hitroll_bonus(player) -> int:  # player: Player or combat.Mo
             total += proto.get("stat_bonuses", {}).get("hitroll", 0)
         if slot == "wielded":
             total += parse_crafted_bonus(name, "hitroll")
-    return total
+    import gem_inlays
+    return total + gem_inlays.equipment_flat_bonus(player)
 
 
 def equipped_weapon_damroll_bonus(player) -> int:  # player: Player or combat.Mob
@@ -8144,11 +8155,12 @@ def equipped_weapon_damroll_bonus(player) -> int:  # player: Player or combat.Mo
     Armor/jewelry Kage rewards declare these stat bonuses; they must
     count in combat as well as weapon prototype bonuses.
     """
+    import gem_inlays
     return sum(
         (proto.get("stat_bonuses", {}).get("damroll", 0) if proto else 0)
         for name in player.equipment.values() if name
         for proto in [_find_object_prototype_by_name(name)]
-    )
+    ) + gem_inlays.equipment_flat_bonus(player)
 
 
 def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
