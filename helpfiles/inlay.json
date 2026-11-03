@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "inlay",
+  "keywords": [
+    "inlay",
+    "gem inlay",
+    "gemstone inlay"
+  ],
+  "title": "Gemstone Inlays",
+  "body": "Syntax: inlay <forged item> with <cut gem>\n\nHold a Copper Chisel, carry a uniquely named forged weapon or armor and a Cut Gem, and have the Gemcutter level required for that gem. Inlaying takes stamina, time and one chisel use. It consumes one cut gem only on success. Inlaid items have one permanent gem slot, so a second gem cannot replace the first.\n\nLower stones: Cut Quartz +2 Hitroll/Damroll, Jade/Amber/Garnet +3 each. Diamond gives +12 Hitroll and +12 Damroll without elemental effects. All five top elemental gems have equal +10 Hitroll/Damroll, +15% corresponding elemental-jutsu damage, and +15% resistance to the elemental counter:\nRuby -> Fire boost, Water resistance;\nSapphire -> Water boost, Earth resistance;\nEmerald -> Earth boost, Lightning resistance;\nAmethyst -> Wind boost, Fire resistance;\nTopaz -> Lightning boost, Wind resistance.\nElemental boosts/resistances stack to a maximum of 30% each.\n\nBonuses apply only when that weapon/armor is equipped. EXAMINE the item to see its gem inlay and stats. No special name suffix. Data is persisted with the world's object prototypes, not player-only effects.\n\nDate: 2026-11-02",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
