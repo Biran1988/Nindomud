@@ -92,6 +92,18 @@ def get_listing(auction_id):
     return all_listings().get(str(auction_id))
 
 
+def _allowed_to_receive(player_name: str, item_name: str) -> bool:
+    """Check the verified live connection or last persisted login address."""
+    import crafted_provenance
+    import storage
+    from session import ACTIVE_SESSIONS, State
+    for session in ACTIVE_SESSIONS:
+        if session.state == State.PLAYING and session.player.name.casefold() == player_name.casefold():
+            return not crafted_provenance.denied(item_name, session.player, session=session)
+    player = storage.load_player(player_name)
+    return bool(player and not crafted_provenance.denied(item_name, player))
+
+
 def _get_ryo(player_name: str):
     """Current ryo for a player, whether online or offline. None if no
     such player exists at all."""
@@ -163,6 +175,9 @@ def place_bid(auction_id, bidder_name: str, amount: int):
         return False, "There's no auction with that ID."
     if entry["seller"] == bidder_name:
         return False, "You can't bid on your own listing."
+    if not _allowed_to_receive(bidder_name, entry["item_name"]):
+        import crafted_provenance
+        return False, crafted_provenance.DENIED
     if amount <= entry["current_bid"]:
         return False, f"Your bid must be higher than the current bid of {entry['current_bid']:,} ryo."
     bidder_ryo = _get_ryo(bidder_name)
@@ -187,6 +202,9 @@ def buyout_listing(auction_id, buyer_name: str):
         return False, "This listing has no buyout price -- you'll have to bid."
     if entry["seller"] == buyer_name:
         return False, "You can't buy out your own listing."
+    if not _allowed_to_receive(buyer_name, entry["item_name"]):
+        import crafted_provenance
+        return False, crafted_provenance.DENIED
     price = entry["buyout_price"]
     if not _charge_ryo(buyer_name, price):
         return False, "You don't have enough ryo for the buyout price."
@@ -235,6 +253,11 @@ def resolve_auction(auction_id) -> str:
 
     winner = entry["current_bidder"]
     price = entry["current_bid"]
+    if not _allowed_to_receive(winner, entry["item_name"]):
+        _deliver_item(entry["seller"], entry["item_name"])
+        del auctions[key]
+        storage.save_auctions(auctions)
+        return "alt-restricted bidder, item returned without a charge"
     if not _charge_ryo(winner, price):
         _deliver_item(entry["seller"], entry["item_name"])
         del auctions[key]
