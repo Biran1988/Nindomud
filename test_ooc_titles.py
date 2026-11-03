@@ -40,7 +40,7 @@ class OocTitleTests(unittest.TestCase):
                          ("The Last Uchiha", "208"))
         self.assertEqual(loaded.name, "Shinobi")
         self.assertEqual(colors.render(ooc_titles.player_display(loaded), False),
-                         "Shinobi [The Last Uchiha]")
+                         "Shinobi The Last Uchiha")
         self.assertIn("\x1b[38;5;208m", colors.render(ooc_titles.player_display(loaded), True))
 
     def test_setting_next_title_replaces_old_without_clearing(self):
@@ -55,7 +55,7 @@ class OocTitleTests(unittest.TestCase):
         self.assertEqual(saved.ooc_title, "The Silent Storm")
         self.assertEqual(saved.ooc_title_color, "cyan")
         self.assertEqual(colors.render(ooc_titles.player_display(saved), False),
-                         "Shinobi [The Silent Storm]")
+                         "Shinobi The Silent Storm")
 
     def test_multicolor_title_uses_inline_mud_codes_and_keeps_color_on_replacement(self):
         commands.dispatch(self.session, "title", ["set", "Initial"])
@@ -66,7 +66,7 @@ class OocTitleTests(unittest.TestCase):
         self.assertEqual(self.player.ooc_title_color, "gold")
         result = ooc_titles.player_display(self.player)
         plain = colors.render(result, False)
-        self.assertEqual(plain, "Shinobi [Flame Ice Storm]")
+        self.assertEqual(plain, "Shinobi Flame Ice Storm")
         colored = colors.render(result, True)
         self.assertIn("\x1b[31m", colored)  # red
         self.assertIn("\x1b[36m", colored)    # cyan
@@ -78,7 +78,26 @@ class OocTitleTests(unittest.TestCase):
         loaded = storage.load_player("Shinobi")
         self.assertEqual(loaded.ooc_title, "&RFlame &CIce &[208]Storm")
         self.assertEqual(colors.render(ooc_titles.player_display(loaded), False),
-                         "Shinobi [Flame Ice Storm]")
+                         "Shinobi Flame Ice Storm")
+
+    def test_default_title_is_gray_with_no_forced_brackets(self):
+        commands.dispatch(self.session, "title", ["Shadow", "Ninja"])
+        self.assertEqual(self.player.ooc_title_color, "gray")
+        result = ooc_titles.player_display(self.player)
+        self.assertEqual(colors.render(result, False), "Shinobi Shadow Ninja")
+        self.assertIn("&DShadow Ninja&x", result)
+        self.assertNotIn("[Shadow Ninja]", result)
+
+    def test_players_can_choose_literal_square_brackets(self):
+        commands.dispatch(self.session, "title", ["[Shadow", "Ninja]"])
+        self.assertEqual(self.player.ooc_title, "[Shadow Ninja]")
+        self.assertEqual(colors.render(ooc_titles.player_display(self.player), False),
+                         "Shinobi [Shadow Ninja]")
+        commands.dispatch(self.session, "title", ["[&RFlame", "&CIce]"])
+        self.assertEqual(self.player.ooc_title, "[&RFlame &CIce]")
+        self.assertEqual(colors.render(ooc_titles.player_display(self.player), False),
+                         "Shinobi [Flame Ice]")
+        self.assertIn("&D[&RFlame &CIce]&x", ooc_titles.player_display(self.player))
 
     def test_titles_never_appear_in_ooc_or_saved_chat_history(self):
         commands.dispatch(self.session, "title", ["The", "Hokage"])
@@ -126,16 +145,16 @@ class OocTitleTests(unittest.TestCase):
         self.assertNotIn("Wolf", self.session.broadcast_all.call_args.args[0])
 
     def test_invalid_title_and_color_cannot_inject_codes(self):
-        for value in ("&QAdministrator", "\x1b[31mEvil", "[OOC]", "X" * 41,
+        for value in ("&QAdministrator", "\x1b[31mEvil", "X" * 41,
                       "&[256]Fake", "&[999]Fake", "&xReset", "&R" * 17 + "Name",
                       "&R" + "X" * 41):
             commands.dispatch(self.session, "title", [value])
             self.assertEqual(self.player.ooc_title, "")
         commands.dispatch(self.session, "title", ["Good", "Ninja"])
         commands.dispatch(self.session, "title", ["color", "256"])
-        self.assertEqual(self.player.ooc_title_color, "gold")
+        self.assertEqual(self.player.ooc_title_color, "gray")
         commands.dispatch(self.session, "title", ["color", "&R"])
-        self.assertEqual(self.player.ooc_title_color, "gold")
+        self.assertEqual(self.player.ooc_title_color, "gray")
 
     def test_ooc_emotes_never_include_titles(self):
         self.player.ooc_title = "The Wanderer"
@@ -172,7 +191,7 @@ class OocTitleTests(unittest.TestCase):
         with patch("staff_invisibility.visible_to", return_value=True):
             commands.cmd_who(observer, [])
             output = observer.send.call_args.args[0]
-            self.assertIn("Shinobi &[208][The Last Uchiha]&x", output)
+            self.assertIn("Shinobi &[208]The Last Uchiha&x", output)
             observer.send.reset_mock()
             commands.cmd_whois(observer, ["Shinobi"])
             output = observer.send.call_args.args[0]
