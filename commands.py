@@ -7083,7 +7083,7 @@ def cmd_cook(session, args: List[str]) -> None:
 
 
 def cmd_gemcut(session, args: List[str]) -> None:
-    """Cut one raw mining gem using a held chisel and its durability."""
+    """Cut any of the ten rare mining gems using a held Copper Chisel."""
     player = session.player
     if session.is_busy():
         session.send("You're already busy with something.")
@@ -7093,12 +7093,12 @@ def cmd_gemcut(session, args: List[str]) -> None:
         session.send("You need to hold a copper chisel to cut gems.")
         return
     if not args:
-        session.send("Usage: gemcut <raw gem>  (rough quartz, raw sapphire, raw ruby, raw diamond)")
+        session.send("Usage: gemcut <gem>  (quartz, jade, amber, garnet, amethyst, topaz, sapphire, emerald, ruby, diamond)")
         return
     raw_gems = [item for item in player.inventory if item.lower() in gemcutter.RECIPES]
     raw_gem = find_indexed_item(" ".join(args).lower(), raw_gems)
     if not raw_gem:
-        session.send("You aren't carrying that raw gem.")
+        session.send("You aren't carrying a cuttable gem by that name.")
         return
     result_name, required_level, xp = gemcutter.RECIPES[raw_gem.lower()]
     job_level = jobs.get_job_level(player, "gemcutter")
@@ -7128,12 +7128,78 @@ def cmd_gemcut(session, args: List[str]) -> None:
             f"You cut {raw_gem} into {result_name}! "
             f"Its {gem_proto.get('rarity', 'common') if gem_proto else 'common'} quality stores "
             f"Hitroll +{bonuses.get('hitroll', 0)} and Damageroll +{bonuses.get('damroll', 0)} "
-            "for future weapon upgrades."
+            "for a permanent forge or inlay upgrade."
         )
         _award_job_action_xp(session, "gemcutter", xp)
 
     session.send(f"You carefully start cutting {raw_gem}...")
     session.start_timed_action("gemcutting", COOK_DELAY_SECONDS, resolve)
+
+
+def cmd_inlay(session, args: List[str]) -> None:
+    """Place one cut gem into a uniquely forged weapon or armor, no name suffix."""
+    import gem_inlays
+    import elemental_counters
+    import world_autosave
+    player = session.player
+    words = " ".join(args)
+    item_query, separator, gem_query = words.partition(" with ")
+    if not separator or not item_query.strip() or not gem_query.strip():
+        session.send("Usage: inlay <forged item> with <cut gem>")
+        return
+    if session.is_busy():
+        session.send("You're already busy with something.")
+        return
+    held_tool = player.equipment.get("tool", "")
+    if strip_crafted_suffix(held_tool).casefold() not in gemcutter.CHISELS:
+        session.send("Hold a Copper Chisel to inlay a cut gem.")
+        return
+    forged = find_indexed_item(item_query.casefold(), player.inventory)
+    gem_name = gem_inlays.available_cut_gem(player, gem_query)
+    proto = gem_inlays.forged_prototype(forged) if forged else None
+    if not proto:
+        session.send("That must be a uniquely named forged weapon or armor in your inventory.")
+        return
+    if proto.get("gem_inlay"):
+        session.send("This item already has a permanent gemstone inlay.")
+        return
+    if not gem_name:
+        session.send("You must carry the selected Cut Gem.")
+        return
+    gem_key = gem_inlays.gem_from_cut_item(gem_name)
+    required_level = min(level for output, level, _xp in gemcutter.RECIPES.values()
+                         if output.casefold() == gem_name.casefold())
+    if jobs.get_job_level(player, "gemcutter") < required_level:
+        session.send(f"Inlaying {gem_name} requires Gemcutter level {required_level}.")
+        return
+    if not jobs.try_deduct_action_stamina(player):
+        session.send("You don't have enough stamina.")
+        return
+
+    def resolve() -> None:
+        if (forged not in player.inventory or gem_name not in player.inventory
+                or gem_inlays.forged_prototype(forged) is not proto
+                or proto.get("gem_inlay")):
+            session.send("Your items changed; the gem inlay was cancelled.")
+            return
+        if not _use_held_job_tool(session, held_tool):
+            return
+        proto["gem_inlay"] = gem_key
+        player.inventory.remove(gem_name)
+        world_autosave.mark_dirty()
+        storage.save_player(player)
+        element = gem_inlays.ELEMENT_GEMS.get(gem_key)
+        detail = (f" +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% {element} jutsu and "
+                  f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% "
+                  f"{elemental_counters.counters(element)} resistance"
+                  if element else "")
+        session.send(f"&GYou inlay {gem_name} into {forged}: "
+                     f"+{gem_inlays.strength(gem_key)} Hitroll/Damroll{detail}.&x")
+
+    session.send(f"You begin setting {gem_name} into {forged}...")
+    session.start_timed_action("gem inlay", COOK_DELAY_SECONDS, resolve)
+
+
 
 
 CRAFT_DELAY_SECONDS = 20.0
@@ -7323,12 +7389,34 @@ def cmd_craft(session, args: List[str]) -> None:
         if response.strip().casefold() == "cancel":
             session.send("You set your tools aside.")
             return
-        metal = data_crafting.equipment_metal_material(response)
+        import gem_inlays
+        metal_choice, _, gem_choice = response.strip().casefold().partition(" with ")
+        metal = data_crafting.equipment_metal_material(metal_choice)
         if metal is None:
             session.send("Choose iron, steel or chakra steel (or cancel).")
             return
         if player.primary_class != "bukijutsu" and metal != "iron ingot":
             session.send("Only Bukijutsu masters can craft Steel and Chakra Steel equipment.")
+            return
+
+        selected_gem = None
+        gem_key = None
+        if gem_choice.strip():
+            selected_gem = gem_inlays.available_cut_gem(player, gem_choice.strip())
+            if not selected_gem:
+                session.send("You don't carry that cut gem. Use iron/steel/chakra steel with <gem>.")
+                return
+            gem_key = gem_inlays.gem_from_cut_item(selected_gem)
+            required_gem_level = min(level for output, level, _xp in gemcutter.RECIPES.values()
+                                     if output.casefold() == selected_gem.casefold())
+            if jobs.get_job_level(player, "gemcutter") < required_gem_level:
+                session.send(f"That gem requires Gemcutter level {required_gem_level} to inlay.")
+                return
+        # Item names are saved as strings. Reject duplicate object names so
+        # gemstone inlays cannot accidentally change another player's gear.
+        if any(p.get("short_desc", "").casefold() == item_name.casefold()
+               for p in olc.OBJECT_TEMPLATES.values()):
+            session.send("That item name is already in use. Choose a unique forged-item name.")
             return
 
         def ingots():
@@ -7346,6 +7434,13 @@ def cmd_craft(session, args: List[str]) -> None:
             material_items = ingots()
             if len(material_items) < 2:
                 session.send("You no longer have two matching metal ingots. The craft fails.")
+                return
+            if selected_gem and selected_gem not in player.inventory:
+                session.send("You no longer carry the selected cut gem.")
+                return
+            if any(p.get("short_desc", "").casefold() == item_name.casefold()
+                   for p in olc.OBJECT_TEMPLATES.values()):
+                session.send("That name was already taken; the forge is cancelled.")
                 return
             stat_value = data_crafting.combined_stat_value(metal, metal)
             vnum = _allocate_crafted_item_vnum()
@@ -7366,6 +7461,9 @@ def cmd_craft(session, args: List[str]) -> None:
                 proto["wear_loc"] = sub_type
                 proto["stat_bonuses"] = {"armor_class": -stat_value}
 
+            if gem_key:
+                proto["gem_inlay"] = gem_key
+
             # Do not consume ingredients unless the resulting item fits.
             # Revert the new prototype if the inventory is at capacity.
             ok, reason = inventory.add_item(player.inventory, item_name)
@@ -7374,16 +7472,20 @@ def cmd_craft(session, args: List[str]) -> None:
                 return
             for item in material_items[:2]:
                 player.inventory.remove(item)
+            if selected_gem:
+                player.inventory.remove(selected_gem)
             olc.OBJECT_TEMPLATES[vnum] = proto
-            session.send(f"&WYou craft {rarity_colored_name(item_name)} from two {metal}s!&x")
+            inlay_note = f" with a Cut {gem_key.title()} inlay" if gem_key else ""
+            session.send(f"&WYou craft {rarity_colored_name(item_name)} from two {metal}s{inlay_note}!&x")
             import world_autosave
             world_autosave.mark_dirty()
 
-        session.send(f"You start forging {item_name} with two {metal}s...")
+        session.send(f"You start forging {item_name} with two {metal}s"
+                     + (f" and {selected_gem}" if selected_gem else "") + "...")
         session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, resolve)
 
     session.enter_single_line(
-        "Choose metal for your {kind}: iron, steel or chakra steel (or cancel)".format(kind=kind),
+        "Choose metal: iron, steel or chakra steel. Optional: iron with ruby (or cancel)".format(kind=kind),
         on_metal)
 
 
@@ -9835,6 +9937,7 @@ COMMANDS = {
     "cook": cmd_cook,
     "farm": cmd_farm,
     "gemcut": cmd_gemcut,
+    "inlay": cmd_inlay,
     "craft": cmd_craft,
     "give": cmd_give,
     "bribe": cmd_bribe,
