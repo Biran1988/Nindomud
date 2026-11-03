@@ -138,6 +138,10 @@ DEFAULT_OBJECT_FIELDS = {
     # visible item-name suffix or per-character state is required.
     "gem_bonuses": {},
     "gem_inlay": "",
+    # Server-only provenance for uniquely named forged items. These fields
+    # are not user-settable via OSET or shown by OSTAT / EXAMINE / listings.
+    "crafted_by_character": "",
+    "crafted_by_ip": "",
     # Damage reduction by weapon type, in percent, while worn as armor.
     "weapon_resistances": {},
     # Medical items restore this much HP over this many real seconds.
