@@ -37,9 +37,9 @@ def test_vnums_gems_and_cutting():
                for key in ("hoe_copper", "chisel_copper"))
     for raw_key, cut_key, rarity, strength in (
         ("rough_quartz", "cut_quartz", "uncommon", 2),
-        ("raw_sapphire", "cut_sapphire", "epic", 5),
-        ("raw_ruby", "cut_ruby", "epic", 5),
-        ("raw_diamond", "cut_diamond", "legendary", 8),
+        ("raw_sapphire", "cut_sapphire", "epic", 10),
+        ("raw_ruby", "cut_ruby", "epic", 10),
+        ("raw_diamond", "cut_diamond", "legendary", 12),
     ):
         raw = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS[raw_key]]
         cut = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS[cut_key]]
@@ -59,7 +59,7 @@ def test_vnums_gems_and_cutting():
     resolve(session)
     assert "A Cut Quartz" in player.inventory and "A Rough Quartz" not in player.inventory
     assert player.equipment["tool"] == "A Copper Chisel [249/250 uses]"
-    assert any("Hitroll +2" in message and "future weapon upgrades" in message for message in session.sent)
+    assert any("Hitroll +2" in message and "permanent forge or inlay upgrade" in message for message in session.sent)
     assert gemcutter.RECIPES["a rough quartz"][0] == "A Cut Quartz"
     with patch.object(olc, "_log"):
         olc.cmd_ostat(session, [str(content._ITEM_VNUMS["cut_quartz"])])
