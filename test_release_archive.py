@@ -139,6 +139,16 @@ class ReleaseArchiveTests(unittest.TestCase):
                     )
                 )
                 self.assertEqual(bundled_sources["changelog"], current_changes.decode("utf-8"))
+                # Never ship a release missing the hidden forged-item IP/alt guard.
+                self.assertIn("crafted_provenance.py", names)
+                self.assertIn("test_crafted_provenance.py", names)
+                self.assertIn(b"def denied(", archive.read("crafted_provenance.py"))
+                self.assertIn(b"crafted_by_ip", archive.read("crafted_provenance.py"))
+                self.assertIn(b"15.406", archive.read("changelog.py"))
+                self.assertEqual(
+                    bundled_sources["crafted_provenance"],
+                    archive.read("crafted_provenance.py").decode("utf-8"),
+                )
                 for version in range(343, 354):
                     self.assertIn(f'"15.{version}"'.encode(), current_changes)
                 self.assertIn(b"def focused_accuracy", archive.read("general_skills.py"))
