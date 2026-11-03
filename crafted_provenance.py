@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import ipaddress
 
-DENIED = "That crafted item cannot be transferred to another character from its creator's IP."
+DENIED = "That crafted item cannot be transferred to this character."
 
 
 def canonical_ip(raw) -> str | None:
