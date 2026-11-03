@@ -106,6 +106,17 @@ class ForgedItemAltGuardTests(unittest.TestCase):
         self.assertEqual(before_a, self.creator.player.inventory)
         self.assertEqual(before_b, self.alt.player.inventory)
 
+    def test_corpse_loot_and_autoloot_skip_alt_locked_gear(self):
+        import corpses
+        corpse = corpses.Corpse("the corpse of Test", 99881,
+                                items=[self.name, "A Plain Stick"])
+        found = corpses.loot_gear(self.alt.player, corpse, session=self.alt)
+        self.assertEqual(found, ["A Plain Stick"])
+        self.assertEqual(corpse.items, [self.name])
+        found = corpses.loot_gear(self.friend.player, corpse, session=self.friend)
+        self.assertEqual(found, [self.name])
+        self.assertEqual(corpse.items, [])
+
     def test_offline_last_known_ip_is_used_for_auction_recipients(self):
         self.assertTrue(provenance.denied(self.name, self.alt.player))
         self.assertFalse(provenance.denied(self.name, self.friend.player))
