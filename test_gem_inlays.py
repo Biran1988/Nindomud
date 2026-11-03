@@ -43,7 +43,7 @@ class GemInlayTests(unittest.TestCase):
         for key, element in gem_inlays.ELEMENT_GEMS.items():
             with self.subTest(gem=key, element=element):
                 self.assertEqual(by_gem[key], ("epic", 5))
-                self.assertEqual(gemcutter.RECIPES["a" + ("n" if key == "amethyst" else "") + " " + key][1], 60)
+                self.assertEqual(gemcutter.RECIPES["an " + key if key in ("amethyst", "emerald") else "a " + key][1], 60)
                 self.assertEqual(gem_inlays.strength(key), 10)
                 self.assertIn(element, elemental_counters.ELEMENT_COUNTERS)
 
@@ -67,6 +67,10 @@ class GemInlayTests(unittest.TestCase):
                 player = models.Player("GemFighter", "GemFighter")
                 player.equipment["wielded"] = name
                 self.assertEqual(gem_inlays.equipment_flat_bonus(player), 10)
+                self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 12)
+                self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 12)
+                self.assertEqual(proto["stat_bonuses"], {"hitroll": 2, "damroll": 2})
+                self.assertEqual(proto["short_desc"], name)
                 self.assertEqual(gem_inlays.elemental_jutsu_multiplier(player, element), 1.15)
                 self.assertEqual(gem_inlays.elemental_jutsu_multiplier(player, "none"), 1.0)
                 counter = elemental_counters.counters(element)
