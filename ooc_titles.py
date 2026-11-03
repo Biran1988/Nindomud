@@ -8,7 +8,8 @@ import re
 MAX_TITLE_LENGTH = 40  # visible characters, excluding legal color markup
 MAX_TITLE_COLOR_CODES = 16
 MAX_TITLE_STORED_LENGTH = 160
-_TITLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ',.!?_-]*$")
+# Brackets are optional player text, never added by the renderer.
+_TITLE_RE = re.compile(r"^[A-Za-z0-9\\[][A-Za-z0-9 ',.!?_\\-\\[\\]]*$")
 # Inline ROM/xterm colors may change *within* a title (not the player name).
 # Do not accept terminal escapes, reset codes or other arbitrary & controls.
 _INLINE_COLOR_RE = re.compile(r"&\[(\d{1,3})\]|&([RGBYCMWDOrgybcmwd])")
@@ -18,7 +19,7 @@ COLOR_CHOICES = {
     "white": "&w", "gray": "&D", "grey": "&D",
     "orange": "&O", "pink": "&[213]", "gold": "&[220]",
 }
-DEFAULT_COLOR = "gold"
+DEFAULT_COLOR = "gray"
 
 
 def clean_title(text):
@@ -40,7 +41,9 @@ def clean_title(text):
            for match in matches):
         return None
     visible = _INLINE_COLOR_RE.sub("", value)
-    if not 1 <= len(visible) <= MAX_TITLE_LENGTH or not _TITLE_RE.fullmatch(visible):
+    if (not 1 <= len(visible) <= MAX_TITLE_LENGTH
+            or not _TITLE_RE.fullmatch(visible)
+            or not any(char.isalnum() for char in visible)):
         return None
     return value
 
@@ -67,7 +70,7 @@ def display_name(name, title="", color=DEFAULT_COLOR):
     title = clean_title(title)
     if not title:
         return name
-    return f"{name} {color_code(color)}[{title}]&x"
+    return f"{name} {color_code(color)}{title}&x"
 
 
 def player_display(player):
@@ -84,7 +87,7 @@ def command(session, args):
         session.send("Your WHO list name: " + player_display(player))
         session.send("Usage: title <words> | title set <words> | "
                      "title color <red|green|gold|purple|0-255> | title clear")
-        session.send("Titles replace the old one automatically. For multiple "
+        session.send("Titles appear unbracketed in gray by default. You may type your own [brackets]. For multiple "
                      "colors: title &RFlame &CIce &[208]Storm")
         return
 
@@ -112,7 +115,7 @@ def command(session, args):
     if title is None:
         session.send("A title must be 1-40 visible characters: letters, numbers, "
                      "spaces, simple punctuation, and valid inline MUD color codes "
-                     "(&R, &C, &[208], etc). No terminal/control escapes. "
+                     "(&R, &C, &[208], etc). Literal [brackets] are allowed. No terminal/control escapes. "
                      "Use TITLE COLOR <color> for its default color.")
         return
     # Replacing a title is unconditional. Players never need TITLE CLEAR
