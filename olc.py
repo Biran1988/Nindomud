@@ -133,9 +133,11 @@ DEFAULT_OBJECT_FIELDS = {
     # live on the prototype, set once by a builder via 'oset <vnum>
     # statbonus <stat> <value>'. Valid keys: STAT_BONUS_KEYS below.
     "stat_bonuses": {},
-    # Cut gems carry future weapon upgrade values. Merely carrying a
-    # gem does not equip or apply these bonuses to combat yet.
+    # Cut gems are ingredients; only a uniquely forged item with this
+    # permanent inlay metadata grants equipment/combat benefits. No
+    # visible item-name suffix or per-character state is required.
     "gem_bonuses": {},
+    "gem_inlay": "",
     # Damage reduction by weapon type, in percent, while worn as armor.
     "weapon_resistances": {},
     # Medical items restore this much HP over this many real seconds.
