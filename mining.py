@@ -1,7 +1,7 @@
-"""Mining with overlapping copper, iron, steel and chakra-steel pickaxe tiers.
+"""Mining ores using overlapping copper, iron, steel and chakra-steel tiers.
 
-The job level still gates each ore or gem, and upgraded pickaxes widen
-rather than replace the set of obtainable minerals.
+The primary find table contains only ores. Every gem, including rough
+quartz, arrives as a rare additional drop after a successful mine.
 """
 
 import gathering_job
@@ -18,19 +18,16 @@ PICKAXES = {
     "a chakra steel heartwood pickaxe": {"required_level": 75, "max_resource_level": 80, "tier": 3},
 }
 
-# Every material Mining can find, each a single, non-tiered item.
+# Every primary Mining material, each a single, non-tiered ore.
 # Mining level directly gates which of these are even reachable at
 # all (Minecraft-style progression) -- weight only matters among
-# whatever's already unlocked at the player's current level. Ordered
+# whatever's already unlocked at the player's current level. Gems are
+# rolled separately by gems.roll_bonus_gem after ore is granted. Ordered
 # low to high; xp scales with how hard-won a material is to reach.
 FIND_TABLE = [
     ("an iron ore", 1, 60, 15),
-    ("a rough quartz", 1, 40, 15),
     ("a steel ore", 20, 30, 40),
-    ("a raw sapphire", 25, 20, 40),
     ("a chakra steel ore", 50, 12, 100),
-    ("a raw ruby", 55, 8, 100),
-    ("a raw diamond", 80, 2, 300),
 ]
 
 FAIL_CHANCE_BASE = 20   # % chance to fail at Mining level 1, matching fishing/lumberjack's own convention
