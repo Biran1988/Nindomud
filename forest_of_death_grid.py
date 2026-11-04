@@ -123,3 +123,55 @@ def install_once() -> bool:
         if tmp.exists():
             tmp.unlink()
     return True
+
+
+# VNUM 670 is intentionally outside the original 45..669 forest migration.
+FINAL_ROOM_MARKER = ".forest_of_death_final_670_installed.json"
+
+
+def build_final_room():
+    """The sealed, single-room Chunin 1v1 battleground."""
+    from world import Room
+    room = Room(670, "Forest of Death -- Final Trial Chamber",
+                "A sealed stone chamber surrounds you. The proctor's barrier "
+                "leaves no exit; only victory or forfeiture will release you.",
+                sector="inside", exits={})
+    room.safe = True
+    return room
+
+
+def populate_final_room(world_obj=None):
+    import world
+    (world_obj or world.WORLD).add_room(build_final_room())
+
+
+def install_final_room_once() -> bool:
+    """Replace saved VNUM 670 exactly once, keeping every other /data entry."""
+    import storage
+    import world
+
+    marker = Path(storage.DATA_DIR) / FINAL_ROOM_MARKER
+    if marker.exists():
+        return False
+    state = storage.load_world_state()
+    if not isinstance(state, dict):
+        raise ValueError("Invalid world save: expected JSON object")
+    saved_rooms = state.setdefault("rooms", {})
+    if not isinstance(saved_rooms, dict):
+        raise ValueError("Invalid world save: expected rooms object")
+    room = build_final_room()
+    saved_rooms[str(room.vnum)] = asdict(room)
+    storage.save_world_state(state)
+    world.WORLD.add_room(room)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    temp = marker.with_name(marker.name + ".tmp")
+    try:
+        with temp.open("w", encoding="utf-8") as file:
+            json.dump({"vnum": 670, "version": 1}, file)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temp, marker)
+    finally:
+        if temp.exists():
+            temp.unlink()
+    return True

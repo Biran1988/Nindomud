@@ -1147,6 +1147,11 @@ class Session:
 
         self.player = player
         self.state = State.PLAYING
+        # Resume an already-entered final trial after reconnect/reboot;
+        # the scrolls were consumed on entry, so do not charge them twice.
+        import chunin_exam
+        if player.in_chunin_exam and player.room_vnum == chunin_exam.FINAL_ARENA_VNUM:
+            chunin_exam.begin_final_match(self)
         self.color_enabled = player.color_enabled
         # Keep only the actual authenticated TCP-peer IP for offline
         # auction protections. Never accept IP claims from the player.

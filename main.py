@@ -20,6 +20,7 @@ def main():
     # Merge the commissioned VNUM 45-669 forest into existing /data once.
     import forest_of_death_grid
     forest_of_death_grid.install_once()
+    forest_of_death_grid.install_final_room_once()
     import seasonal_events
     seasonal_events.sync_visitors()
     from world import reconcile_apartment_ownership

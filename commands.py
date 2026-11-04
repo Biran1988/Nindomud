@@ -347,7 +347,10 @@ def cmd_move(session, direction: str) -> None:
 
     room = WORLD.get(player.room_vnum)
 
-    if player.in_chunin_exam and player.room_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM):
+    if player.in_chunin_exam and player.room_vnum == chunin_exam.FINAL_ARENA_VNUM:
+        session.send("&RThe final arena is sealed. Defeat your shadow or use leave confirm to forfeit.&x")
+        return
+    if player.in_chunin_exam and player.room_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM, chunin_exam.FINAL_ARENA_VNUM):
         session.send("&RYou have stepped outside the Exam arena. Leave confirm forfeits the attempt.&x")
         return
 
@@ -417,7 +420,7 @@ def cmd_move(session, direction: str) -> None:
 
     destination_vnum = room.exits[direction]
     if (player.in_chunin_exam
-            and destination_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM)):
+            and destination_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM, chunin_exam.FINAL_ARENA_VNUM)):
         session.send("&RThe exam proctor bars this exit. Leaving means failing and repeating the entire Chunin Exam. Use 'leave confirm' to forfeit.&x")
         return
     if not olc._require_assigned_vnum(session, destination_vnum):
@@ -1489,6 +1492,10 @@ def cmd_say(session, args: List[str]) -> None:
         import genin_exam
         genin_exam.start_exam(session)
         return
+    if player.room_vnum == chunin_exam.TOWER_VNUM and message.strip().lower() in ("ready", "submit scrolls", "final trial"):
+        if chunin_exam.start_final_trial(session):
+            cmd_look(session, [])
+        return
     if message.strip().lower() in ("present", "gift", "merry christmas"):
         import seasonal_events
         if seasonal_events.claim_present(session):
@@ -1727,6 +1734,11 @@ def cmd_ask(session, args: List[str]) -> None:
         if seasonal_events.claim_present(session):
             return
     player = session.player
+    if (args[0].lower() in ("proctor", "examiner")
+            and topic.replace("about ", "", 1) in ("exam", "trial", "final", "final trial", "scrolls", "submit")):
+        if chunin_exam.start_final_trial(session):
+            cmd_look(session, [])
+        return
     village_rooms = content._VILLAGE_ROOMS.get(player.village)
     if village_rooms and player.room_vnum == village_rooms["kage"] and "promotion" in topic:
         session.send(kage.handle_promotion_request(player))
@@ -3187,6 +3199,10 @@ def cmd_attack(session, args: List[str]) -> None:
         return
     mob = combat.find_mob(player.room_vnum, " ".join(args))
     if mob:
+        if (getattr(mob, "chunin_exam_owner", "")
+                and (not player.in_chunin_exam or mob.chunin_exam_owner != player.name)):
+            session.send("That exam shadow is bound to another candidate.")
+            return
         if combat.is_shopkeeper(mob) or combat.is_gambler(mob) or combat.is_teacher(mob) or combat.is_immortal_mob(mob):
             session.send(f"{mob.name.capitalize()} is protected and cannot be attacked.")
             return
@@ -4708,7 +4724,7 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
         return
 
     if player.in_chunin_exam:
-        if chunin_exam.final_opponent(session):
+        if player.room_vnum == chunin_exam.FINAL_ARENA_VNUM:
             session.send("&RYour final Chunin 1v1 is already underway. Defeat your shadow!&x")
             return
         session.send("You're already inside the Forest of Death -- finish the trial without leaving.")
@@ -4721,7 +4737,7 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
     session.send(
         f"&YYou pass through the gate into the Forest of Death.&x\n"
         f"You've been given {rarity_colored_name(starting_scroll)} -- you'll need to find "
-        f"{'an Earth Scroll' if starting_scroll == chunin_exam.HEAVEN_SCROLL else 'a Heaven Scroll'} "
+        f"{'a Hell Scroll' if starting_scroll == chunin_exam.HEAVEN_SCROLL else 'a Heaven Scroll'} "
         f"to pass. Defeat one of the scroll guardians deeper in the forest, or another exam "
         f"candidate carrying one, then reach the tower."
     )
@@ -4747,25 +4763,9 @@ def cmd_leave_exam(session, args: List[str]) -> None:
 
 
 def cmd_submit_scrolls(session, args: List[str]) -> None:
-    """Heaven + Earth at the tower unlock a DIFFERENT-class mirror 1v1."""
-    player = session.player
-    if player.room_vnum != chunin_exam.TOWER_VNUM:
-        session.send("You need to be at the tower to submit your scrolls.")
-        return
-    if not player.in_chunin_exam:
-        session.send("You aren't currently taking the Chunin Exam.")
-        return
-    if chunin_exam.final_opponent(session):
-        session.send("Your final 1v1 is already in progress. Defeat your opponent to pass.")
-        return
-    if not chunin_exam.has_both_scrolls(player):
-        session.send(f"You still need {rarity_colored_name(chunin_exam.missing_scroll(player))} to pass.")
-        return
-    if not chunin_exam.consume_both_scrolls(player):
-        session.send("You must carry both Heaven and Earth Scrolls, including those in backpacks.")
-        return
-    chunin_exam.begin_final_match(session)
-    storage.save_player(player)
+    """Use the tower proctor to begin the sealed 1v1 at VNUM 670."""
+    if chunin_exam.start_final_trial(session):
+        cmd_look(session, [])
 
 
 def cmd_missions(session, args: List[str]) -> None:

@@ -1047,11 +1047,11 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Enters the Forest of Death to attempt the Chunin Exam -- the only way to be promoted from Genin to Chunin. Requires at least level 15 and 25 completed missions, but is NOT level-capped beyond that minimum; a Genin who qualified a while ago can still take it at any time.\n"
             "\n"
-            "On entry, you're given one of two scroll types (a Heaven Scroll or an Earth Scroll) at random. To pass, you need BOTH -- get the one you're missing by defeating one of the two scroll guardian mobs deep in the forest (each always drops one specific type) and looting its corpse, or by defeating ANOTHER exam candidate and taking theirs. Once you have both, reach the tower and 'submit' to complete the exam and be promoted on the spot, headband and all.\n"
+            "On entry, you're given one of two scroll types (a Heaven Scroll or a Hell Scroll) at random. To pass, you need BOTH -- get the one you're missing by defeating one of the two scroll guardian mobs deep in the forest (each always drops one specific type) and looting its corpse, or by defeating ANOTHER exam candidate and taking theirs. Once you have both, reach the central tower (VNUM 357) and ASK PROCTOR EXAM (or SUBMIT SCROLLS). The proctor consumes the scrolls and transfers you to the sealed VNUM 670 for a 1v1 against a stronger copy of your character. Victory grants Chunin rank and headband; defeat or LEAVE CONFIRM forfeits the trial. Legacy Earth Scrolls also count as Hell Scrolls.\n"
             "\n"
-            "Need a break? 'leave' takes you back to your village without forfeiting anything -- your scrolls and progress are kept, and 'exam' brings you right back to the entrance whenever you're ready to continue.\n"
+            "Leaving the exam with LEAVE CONFIRM forfeits the attempt and scrolls; ANKI, RECALL, and travel cannot skip the exam.\n"
             "\n"
-            "Re-entering after leaving (e.g. a hospital respawn from a PvP loss) does not re-roll or top up a scroll you've already lost -- the exam is meant to be survived, not retried for free.\n"
+            "Every failed attempt starts fresh with a newly assigned scroll. Leaving or dying forfeits both scrolls and any progress toward the final 1v1.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -1066,7 +1066,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: submit\n"
             "\n"
-            "Description: Completes the Chunin Exam -- must be standing at the tower in the Forest of Death, with both a Heaven Scroll and an Earth Scroll in hand. Consumes both scrolls and promotes you to Chunin immediately, headband included.\n"
+            "Description: At the central tower (357), talk to the Chunin Exam proctor with a Heaven Scroll and a Hell Scroll (legacy Earth Scrolls accepted). ASK PROCTOR EXAM or SUBMIT SCROLLS consumes both, moves you to VNUM 670 and begins the final 1v1 against a stronger copy. You earn Chunin only by winning.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -1079,9 +1079,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["leave", "leave exam"],
         "title": "Leave (Chunin Exam)",
         "body": (
-            "Syntax: leave\n"
+            "Syntax: leave confirm\n"
             "\n"
-            "Description: Voluntarily exits the Forest of Death back to your village, without finishing or forfeiting the Chunin Exam. Any scrolls you've collected and your exam progress are unaffected -- 'exam' takes you right back to the entrance whenever you're ready to continue. Only works while actually in the exam.\n"
+            "Description: Forfeits your current Chunin Exam, surrendering all Heaven/Hell scrolls and resetting the final opponent. Returns you to your village. You must start over with EXAM.\n"
             "\n"
             "Date: 2026-08-17"
         ),
