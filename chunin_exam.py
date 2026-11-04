@@ -4,7 +4,7 @@ Chunin Exam -- the Forest of Death scroll mechanic.
 Per explicit design discussion: the simple "ask the Kage, meet a
 level/mission threshold" Genin -> Chunin promotion is replaced by a
 real trial, modeled on canon's Forest of Death -- a genin enters with
-one of two scroll types (Heaven or Hell, with legacy Earth accepted) and must obtain the other to
+one of two scroll types (Heaven or Earth, with legacy Hell accepted) and must obtain the other to
 pass, either by defeating one of two dangerous "scroll guardian" mobs
 deep in the forest, or by defeating ANOTHER player who's also in the
 exam and taking theirs. At the central tower a protected proctor accepts both scrolls and sends
@@ -38,10 +38,10 @@ EXAM_PROCTOR_VNUM = 6902
 FOREST_VNUMS = [v for v in range(46, 670) if v != TOWER_VNUM]
 
 HEAVEN_SCROLL = "A Heaven Scroll"
-HELL_SCROLL = "A Hell Scroll"
-EARTH_SCROLL = "An Earth Scroll"  # Legacy saved exam item; still accepted.
-SCROLLS = (HEAVEN_SCROLL, HELL_SCROLL)
-SCROLL_ALIASES = {HEAVEN_SCROLL: (HEAVEN_SCROLL,), HELL_SCROLL: (HELL_SCROLL, EARTH_SCROLL)}
+EARTH_SCROLL = "An Earth Scroll"
+HELL_SCROLL = "A Hell Scroll"  # Legacy saved exam item; still accepted.
+SCROLLS = (HEAVEN_SCROLL, EARTH_SCROLL)
+SCROLL_ALIASES = {HEAVEN_SCROLL: (HEAVEN_SCROLL,), EARTH_SCROLL: (EARTH_SCROLL, HELL_SCROLL)}
 
 HEAVEN_GUARDIAN_VNUM = 6900
 EARTH_GUARDIAN_VNUM = 6901
@@ -77,7 +77,7 @@ def _matching_scroll(container, required):
 
 
 def remove_one_scroll(player, required):
-    """Consume one scroll of the required type; legacy Earth counts as Hell."""
+    """Consume one scroll of the required type; legacy Hell counts as Earth."""
     for container in scroll_containers(player):
         item = _matching_scroll(container, required)
         if item is not None:
@@ -106,7 +106,7 @@ def has_both_scrolls(player) -> bool:
 
 
 def steal_scroll_on_pvp_defeat(winner, loser) -> Optional[str]:
-    """Steal the exact matching Heaven/Hell (or legacy Earth) item."""
+    """Steal the exact matching Heaven/Earth (or legacy Hell) item."""
     if not (winner.in_chunin_exam and loser.in_chunin_exam):
         return None
     needed = missing_scroll(winner)
@@ -134,7 +134,7 @@ def ensure_proctor() -> None:
     template["long_desc"] = "The Chunin Exam proctor waits to inspect your scrolls."
     template["description"] = (
         "The proctor guards the gate to the final trial. "
-        "ASK PROCTOR EXAM or SUBMIT SCROLLS when you hold Heaven and Hell scrolls."
+        "ASK PROCTOR EXAM or SUBMIT SCROLLS when you hold Heaven and Earth scrolls."
     )
     template["act_flags"] = ["Npc", "Sentinel", "Immortal"]
     template["enabled"] = True
@@ -182,7 +182,7 @@ def start_final_trial(session) -> bool:
         session.send("The proctor is not here to examine your scrolls.")
         return False
     if not has_both_scrolls(player):
-        session.send(f"&YThe proctor says: Bring me both Heaven and Hell scrolls. "
+        session.send(f"&YThe proctor says: Bring me both Heaven and Earth scrolls. "
                      f"You still need {missing_scroll(player)}.&x")
         return False
     if chamber_occupied(session):
