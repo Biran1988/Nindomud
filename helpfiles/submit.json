@@ -5,8 +5,8 @@
     "submit scrolls"
   ],
   "title": "Submit",
-  "body": "Syntax: submit\n\nDescription: Completes the Chunin Exam -- must be standing at the tower in the Forest of Death, with both a Heaven Scroll and an Earth Scroll in hand. Consumes both scrolls and promotes you to Chunin immediately, headband included.\n\nDate: 2026-08-17",
+  "body": "Syntax: submit scrolls\n\nDescription: While standing at the Forest of Death central tower (VNUM 357), submit a Heaven Scroll (VNUM 20800) and an Earth Scroll (VNUM 20801) to the exam proctor. ASK PROCTOR EXAM or SUBMIT SCROLLS starts the sealed final 1v1 in VNUM 670. Winning the fight, not merely turning in the scrolls, awards Chunin rank and headband. Older Hell Scrolls also count as Earth Scrolls.\n\nDate: 2026-11-03",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
