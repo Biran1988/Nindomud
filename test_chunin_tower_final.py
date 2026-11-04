@@ -70,6 +70,7 @@ class ChuninTowerFinalTests(unittest.TestCase):
 
         self.assertTrue(exam.handle_final_trial_answer(self.session, "yes"))
         self.assertTrue(self.player.chunin_final_ready)
+        self.assertTrue(Player.from_dict(self.player.to_dict()).chunin_final_ready)
         opponent = exam.final_opponent(self.session)
         self.assertIsNotNone(opponent)
         self.assertEqual(opponent.chunin_exam_owner, self.player.name)
