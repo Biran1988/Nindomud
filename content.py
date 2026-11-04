@@ -628,50 +628,11 @@ def populate() -> None:
             )
             combat.MOB_TEMPLATES[_trap_vnum]["act_flags"] = ["Npc", "Trap"]
 
-    # --- Chunin Exam: Forest of Death (shared, not per-village) --------
-    # See chunin_exam.py's own docstring for the full design reasoning.
-    if not areas.find_area("forest-of-death"):
-        try:
-            areas.register_area("forest-of-death", 60000, 60099, "system")
-        except ValueError:
-            pass  # registered by a concurrent/earlier call in the same startup
-
-    entrance = Room(chunin_exam.ENTRANCE_VNUM, "Forest of Death -- Entrance",
-        "A massive iron fence, strung with warning signs, marks the edge of "
-        "this sealed training ground. Beyond it, the trees grow close and "
-        "dark. Genin gather here before an exam attempt, and the only way "
-        "back out before finishing is to survive the trip.")
-    entrance.safe = True
-    WORLD.add_room(entrance)
-
-    forest_names = [
-        ("Forest of Death -- Deep Woods",
-         "Thick undergrowth and looming trees swallow the light here. "
-         "Something is always moving just out of sight."),
-        ("Forest of Death -- Ravine",
-         "A steep ravine cuts through the forest floor, its bottom lost "
-         "in shadow. The air is heavy with the smell of damp earth."),
-        ("Forest of Death -- Clearing",
-         "A rare gap in the canopy lets sunlight reach the ground, "
-         "illuminating claw marks scored deep into the surrounding bark."),
-    ]
-    for vnum, (name, desc) in zip(chunin_exam.FOREST_VNUMS, forest_names):
-        room = Room(vnum, name, desc)
-        room.biome = "forest"
-        WORLD.add_room(room)
-
-    tower = Room(chunin_exam.TOWER_VNUM, "Forest of Death -- Tower",
-        "A weathered stone tower rises at the heart of the forest, its "
-        "entrance marked with the sigil of the exam proctors. This is "
-        "where an exam attempt is completed.")
-    tower.safe = True
-    WORLD.add_room(tower)
-
-    WORLD.link(chunin_exam.ENTRANCE_VNUM, "north", chunin_exam.FOREST_VNUMS[0])
-    WORLD.link(chunin_exam.FOREST_VNUMS[0], "east", chunin_exam.FOREST_VNUMS[1])
-    WORLD.link(chunin_exam.FOREST_VNUMS[1], "north", chunin_exam.FOREST_VNUMS[2])
-    WORLD.link(chunin_exam.FOREST_VNUMS[2], "west", chunin_exam.TOWER_VNUM)
-    WORLD.link(chunin_exam.FOREST_VNUMS[0], "north", chunin_exam.TOWER_VNUM)  # a shortcut, so the forest isn't a single forced path
+    # 25x25 Forest of Death, VNUM 45..669. Saved world rooms restore later;
+    # the main entry point performs one explicitly authorized, bounded
+    # migration over the live /data world on the first updated startup.
+    import forest_of_death_grid
+    forest_of_death_grid.populate_world(WORLD)
 
     combat.register_template(
         chunin_exam.HEAVEN_GUARDIAN_VNUM, "a Heaven Scroll guardian", level=15,

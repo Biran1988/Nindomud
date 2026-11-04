@@ -31,9 +31,9 @@ the "steal another candidate's scroll" mechanic mean anything at all
 
 from typing import Optional
 
-ENTRANCE_VNUM = 60000
-FOREST_VNUMS = [60001, 60002, 60003]
-TOWER_VNUM = 60004
+ENTRANCE_VNUM = 45
+TOWER_VNUM = 357  # Middle cell of the 25x25 Forest of Death grid.
+FOREST_VNUMS = [v for v in range(46, 670) if v != TOWER_VNUM]
 
 HEAVEN_SCROLL = "A Heaven Scroll"
 EARTH_SCROLL = "An Earth Scroll"
