@@ -186,7 +186,7 @@ def start_final_trial(session) -> bool:
                      f"You still need {missing_scroll(player)}.&x")
         return False
     if chamber_occupied(session):
-        session.send("&YThe proctor says: A candidate is still fighting in the sealed chamber. Return shortly.&x")
+        session.send("&YThe proctor says: Another candidate still occupies the final chamber. Return shortly.&x")
         return False
     if world.WORLD.get(FINAL_ARENA_VNUM) is None:
         session.send("The final chamber is unavailable. Your scrolls are safe.")
@@ -197,27 +197,68 @@ def start_final_trial(session) -> bool:
     if not consume_both_scrolls(player):
         session.send("The proctor cannot verify the two scrolls.")
         return False
-    old_room = player.room_vnum
     player.room_vnum = FINAL_ARENA_VNUM
+    player.chunin_final_ready = False
     # No helpers in an individual 1v1 arena.
     combat.dismiss_summon(player)
     session.combat_target = None
     session.pvp_target = None
     session.send("&CThe proctor accepts both scrolls and seals them away. "
                  "A transportation seal sends you to the final trial!&x")
-    opponent = begin_final_match(session)
-    if opponent is None:
-        player.room_vnum = old_room
-        player.inventory.extend(SCROLLS)
-        session.send("The trial could not begin; both scrolls have been returned.")
-        return False
+    show_hokage_speech(session)
     storage.save_player(player)
     return True
 
 
-# Final stage: completing the scroll trial starts a real 1v1 against a
-# stronger copy with a DIFFERENT ninja class. Passing scrolls alone never
-# grants Chunin rank.
+def show_hokage_speech(session) -> None:
+    """Original Heaven-and-Earth address, heard before the trial is accepted."""
+    session.send(
+        "&YThe Third Hokage steps into the chamber and addresses you:&x\n"
+        '&W"Heaven stretches above every village, carrying the hopes of those '
+        'who came before us. Earth lies beneath our feet, bearing the weight '
+        'of every choice we make.\n'
+        'A shinobi must understand both: dreams without action are empty, '
+        'and strength without purpose has no direction.\n'
+        'You brought Heaven and Earth together. Now you must face a reflection '
+        'of your own strength and prove that your judgment is worthy of a Chunin."&x\n'
+        '&YThe Third Hokage asks: "Are you ready for your one-on-one final trial? '
+        '(yes/no)"&x'
+    )
+
+
+def handle_final_trial_answer(session, line: str) -> bool:
+    """Keep YES/NO local to the arena; YES spawns the opponent, not combat."""
+    player = getattr(session, "player", None)
+    if not (player and player.in_chunin_exam and player.room_vnum == FINAL_ARENA_VNUM):
+        return False
+    answer = line.strip().casefold()
+    if answer not in ("yes", "no", "ready"):
+        return False
+    if player.chunin_final_ready:
+        session.send("Your shadow is already waiting. Use ATTACK <shadow> to begin, "
+                     "or LEAVE CONFIRM to forfeit.")
+        return True
+    if answer == "no":
+        session.send('&YThe Third Hokage nods. "Take the time you need. '
+                     'Say YES when you are ready, or LEAVE CONFIRM to forfeit."&x')
+        return True
+    if answer == "ready":
+        show_hokage_speech(session)
+        return True
+    player.chunin_final_ready = True
+    if begin_final_match(session) is None:
+        player.chunin_final_ready = False
+        session.send("&RYour shadow could not appear. Your trial remains open; "
+                     "say YES to try again.&x")
+        return True
+    import storage
+    storage.save_player(player)
+    return True
+
+
+# Final stage: consenting spawns a stronger copy with a DIFFERENT ninja
+# class. Combat begins only when the player chooses to attack or cast.
+# Passing the scrolls alone never grants Chunin rank.
 def final_opponent(session):
     import combat
     p = session.player
@@ -233,11 +274,10 @@ def begin_final_match(session):
     import combat
     import data_classes
     p = session.player
-    if not p.in_chunin_exam or p.room_vnum != FINAL_ARENA_VNUM:
+    if not p.in_chunin_exam or p.room_vnum != FINAL_ARENA_VNUM or not p.chunin_final_ready:
         return None
     current = final_opponent(session)
     if current:
-        session.combat_target = current
         return current
     classes = [name for name in data_classes.CLASSES if name != p.primary_class]
     different_class = classes[(sum(map(ord, p.name)) + p.level) % len(classes)]
@@ -253,6 +293,7 @@ def begin_final_match(session):
     t["auto_balance"] = False
     t["primary_class"] = different_class
     t["respawns"] = False
+    t["no_wander"] = True
     t["act_flags"] = ["Npc", "Sentinel"]
     mob = combat.spawn_mob(vnum, FINAL_ARENA_VNUM)
     if mob is None:
@@ -267,10 +308,10 @@ def begin_final_match(session):
     mob.chunin_exam_owner = p.name
     mob.respawns = False
     mob.attacks = 2
-    session.combat_target = mob
     session.send(
-        f"&RThe proctor seals the exits! Your final trial begins: "
-        f"{name}, a stronger version of yourself, stands before you. "
+        f"&RThe Hokage steps back as {name}, a stronger version of yourself, "
+        "materializes before you. The shadow is waiting for your first move. "
+        "Use ATTACK <shadow> or target it with a jutsu to begin. "
         "Defeat this opponent to become Chunin!&x"
     )
     return mob
@@ -280,6 +321,7 @@ def reset_exam(player):
     """Forfeiture/death: remove BOTH scroll types and only owned exam mob."""
     import combat
     player.in_chunin_exam = False
+    player.chunin_final_ready = False
     for container in scroll_containers(player):
         container[:] = [item for item in container
                         if not (isinstance(item, str) and
