@@ -582,6 +582,9 @@ class Player:
     # (combat.handle_pvp_defeat) to only apply there, not to every
     # fight in the game.
     in_chunin_exam: bool = False
+    # Persist the player's YES answer across quitting, reconnects and reboots.
+    # False means the Third Hokage must offer the final trial first.
+    chunin_final_ready: bool = False
     age: int = 16
 
     # Cosmetic identity choices made at creation (Section 62) -- like
