@@ -373,7 +373,7 @@ def _register_shared_items() -> None:
     # risk, kept consistent with that established rule rather than
     # quietly carving out an exception to it.
     make(_ITEM_VNUMS_EXAM["heaven_scroll"], chunin_exam.HEAVEN_SCROLL, "trash", 500, rarity="epic")
-    make(_ITEM_VNUMS_EXAM["earth_scroll"], chunin_exam.HELL_SCROLL, "trash", 500, rarity="epic")
+    make(_ITEM_VNUMS_EXAM["earth_scroll"], chunin_exam.EARTH_SCROLL, "trash", 500, rarity="epic")
 
 
 def _make_shopkeeper(vnum: int, name: str, room_vnum: int, item_keys, buys_categories) -> None:
@@ -644,10 +644,10 @@ def populate() -> None:
     # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add'.
 
     combat.register_template(
-        chunin_exam.EARTH_GUARDIAN_VNUM, "a Hell Scroll guardian", level=15,
+        chunin_exam.EARTH_GUARDIAN_VNUM, "an Earth Scroll guardian", level=15,
         max_health=250, min_damage=8, max_damage=18,
         experience_reward=400, ryo_reward=200,
-        loot_items=[chunin_exam.HELL_SCROLL],
+        loot_items=[chunin_exam.EARTH_SCROLL],
     )
     # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add'.
 
