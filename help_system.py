@@ -1047,7 +1047,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Enters the Forest of Death to attempt the Chunin Exam -- the only way to be promoted from Genin to Chunin. Requires at least level 15 and 25 completed missions, but is NOT level-capped beyond that minimum; a Genin who qualified a while ago can still take it at any time.\n"
             "\n"
-            "On entry, you're given either a Heaven Scroll or an Earth Scroll at random. Defeat animals and rival ninja to find the other scroll. Scroll guardians carry the matching scrolls, and rival exam candidates may carry one as well. With both scrolls, reach the central tower (VNUM 357) and ASK PROCTOR EXAM (or SUBMIT SCROLLS). The proctor consumes both scrolls and sends you to VNUM 670 for a 1v1 against a stronger shadow of yourself. Winning grants Chunin rank and headband; defeat or LEAVE CONFIRM forfeits the exam. Older Hell Scrolls still count as Earth Scrolls.\n"
+            "On entry, you're given either a Heaven Scroll or an Earth Scroll at random. Defeat animals and rival ninja to find the other scroll. Scroll guardians carry the matching scrolls, and rival exam candidates may carry one as well. With both scrolls, reach the central tower (VNUM 357) and ASK PROCTOR EXAM (or SUBMIT SCROLLS). The proctor consumes both scrolls and sends you to VNUM 670. The Third Hokage explains Heaven and Earth and asks if you're ready. Answer YES to reveal a stronger shadow of yourself with a different class; combat does not begin until YOU ATTACK the shadow or target it with jutsu. NO postpones the fight; READY repeats his invitation. Winning grants Chunin rank and headband with a global announcement; defeat or LEAVE CONFIRM forfeits the exam. Your response survives quit and reboot. Older Hell Scrolls still count as Earth Scrolls.\n"
             "\n"
             "Leaving the exam with LEAVE CONFIRM forfeits the attempt and scrolls; ANKI, RECALL, and travel cannot skip the exam.\n"
             "\n"
@@ -1066,7 +1066,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: submit\n"
             "\n"
-            "Description: At the central tower (357), talk to the Chunin Exam proctor with a Heaven Scroll and an Earth Scroll (older Hell Scrolls also count). ASK PROCTOR EXAM or SUBMIT SCROLLS consumes both, moves you to VNUM 670 and begins the final 1v1 against a stronger copy. You earn Chunin only by winning.\n"
+            "Description: At the central tower (357), bring Heaven and Earth scrolls (older Hell Scrolls accepted). ASK PROCTOR EXAM or SUBMIT SCROLLS consumes both, transports you to VNUM 670, and begins the Third Hokage's speech. Say YES to make the stronger mirror opponent appear, then ATTACK it to start the fight. Say NO to delay, READY to hear the speech again, or LEAVE CONFIRM to forfeit. Win the battle to earn Chunin rank and a global rank announcement.\n"
             "\n"
             "Date: 2026-08-17"
         ),
