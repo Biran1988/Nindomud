@@ -4738,8 +4738,8 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
         f"&YYou pass through the gate into the Forest of Death.&x\n"
         f"You've been given {rarity_colored_name(starting_scroll)} -- you'll need to find "
         f"{'a Hell Scroll' if starting_scroll == chunin_exam.HEAVEN_SCROLL else 'a Heaven Scroll'} "
-        f"to pass. Defeat one of the scroll guardians deeper in the forest, or another exam "
-        f"candidate carrying one, then reach the tower."
+        f"to pass. Defeat animals and rival ninja to find the other scroll. "
+        "Then reach the central tower."
     )
 
 
