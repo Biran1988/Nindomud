@@ -27,7 +27,7 @@ class ChuninTowerFinalTests(unittest.TestCase):
         self.player.room_vnum = exam.TOWER_VNUM
         self.player.in_chunin_exam = True
         self.player.inventory = [exam.HEAVEN_SCROLL]
-        self.player.backpack_contents = {"0": [exam.HELL_SCROLL]}
+        self.player.backpack_contents = {"0": [exam.EARTH_SCROLL]}
         self.session = NS(player=self.player, combat_target=None, pvp_target=None,
                           send=Mock(), broadcast_room=Mock())
         self.rooms = {357: forest.build_rooms()[357], 670: forest.build_final_room()}
@@ -66,6 +66,14 @@ class ChuninTowerFinalTests(unittest.TestCase):
         self.assertGreater(opponent.max_health, self.player.maximum_health)
         self.assertEqual(self.player.village_rank, "genin")
         self.assertFalse(world.WORLD.get(670).exits)
+
+    def test_old_hell_scroll_still_counts_as_earth(self):
+        self.assertEqual(exam.SCROLLS, (exam.HEAVEN_SCROLL, exam.EARTH_SCROLL))
+        self.player.backpack_contents = {"0": [exam.HELL_SCROLL]}
+        self.assertTrue(exam.has_both_scrolls(self.player))
+        self.assertTrue(exam.consume_both_scrolls(self.player))
+        self.assertFalse(exam.has_both_scrolls(self.player))
+        self.assertEqual(self.player.backpack_contents["0"], [])
 
     def test_busy_chamber_does_not_take_scrolls(self):
         other = Player("AnotherExam", "AnotherExam", village="leaf")
