@@ -49,7 +49,7 @@ class ChuninTowerFinalTests(unittest.TestCase):
         self.assertEqual(len(mobs), 1)
         self.assertTrue(combat.is_immortal_mob(mobs[0]))
 
-    def test_scrolls_are_consumed_only_when_1v1_starts(self):
+    def test_scrolls_accepted_then_hokage_speaks_before_shadow_appears(self):
         self.player.backpack_contents.clear()
         self.assertFalse(exam.start_final_trial(self.session))
         self.assertEqual(self.player.room_vnum, 357)
@@ -59,13 +59,57 @@ class ChuninTowerFinalTests(unittest.TestCase):
             commands.cmd_ask(self.session, ["proctor", "exam"])
         self.assertEqual(self.player.room_vnum, 670)
         self.assertFalse(exam.has_both_scrolls(self.player))
-        opponent = self.session.combat_target
+        self.assertFalse(self.player.chunin_final_ready)
+        self.assertIsNone(self.session.combat_target)
+        self.assertEqual(combat.mobs_in_room(670), [])
+        speech = "\n".join(str(call.args[0]) for call in self.session.send.call_args_list)
+        self.assertIn("Third Hokage", speech)
+        self.assertIn("Heaven", speech)
+        self.assertIn("Earth", speech)
+        self.assertIn("yes/no", speech)
+
+        self.assertTrue(exam.handle_final_trial_answer(self.session, "yes"))
+        self.assertTrue(self.player.chunin_final_ready)
+        opponent = exam.final_opponent(self.session)
+        self.assertIsNotNone(opponent)
         self.assertEqual(opponent.chunin_exam_owner, self.player.name)
         self.assertEqual(opponent.room_vnum, 670)
         self.assertNotEqual(opponent.primary_class, self.player.primary_class)
         self.assertGreater(opponent.max_health, self.player.maximum_health)
+        self.assertGreater(opponent.level, self.player.level)
+        self.assertIsNone(self.session.combat_target)
         self.assertEqual(self.player.village_rank, "genin")
         self.assertFalse(world.WORLD.get(670).exits)
+
+        # Consent reveals the shadow; only an actual attack begins combat.
+        with patch.object(commands, "_wake_and_stand"), patch("room_actions.emit"):
+            commands.cmd_attack(self.session, ["shadow"])
+        self.assertIs(self.session.combat_target, opponent)
+
+    def test_declining_keeps_the_room_empty_and_can_later_accept(self):
+        self.assertFalse(exam.handle_final_trial_answer(self.session, "yes"))  # not in arena
+        self.assertTrue(exam.start_final_trial(self.session))
+        self.assertTrue(exam.handle_final_trial_answer(self.session, "no"))
+        self.assertFalse(self.player.chunin_final_ready)
+        self.assertIsNone(self.session.combat_target)
+        self.assertEqual(combat.mobs_in_room(670), [])
+        self.assertTrue(exam.handle_final_trial_answer(self.session, "ready"))
+        self.assertTrue(exam.handle_final_trial_answer(self.session, "yes"))
+        opponent = exam.final_opponent(self.session)
+        self.assertIsNotNone(opponent)
+        self.assertIs(exam.begin_final_match(self.session), opponent)
+        self.assertIsNone(self.session.combat_target)
+
+    def test_chunin_announcement_is_global_not_room_limited(self):
+        import kage
+        playing = NS(state=NS(name="PLAYING"), send=Mock(), send_prompt=Mock())
+        disconnected = NS(state=NS(name="NAME"), send=Mock(), send_prompt=Mock())
+        with patch("session.ACTIVE_SESSIONS", [playing, disconnected]):
+            kage.announce_rank_up(self.player.name, "chunin")
+        playing.send.assert_called_once_with(
+            f"&Y{self.player.name} has been promoted to Chunin!&x")
+        playing.send_prompt.assert_called_once()
+        disconnected.send.assert_not_called()
 
     def test_old_hell_scroll_still_counts_as_earth(self):
         self.assertEqual(exam.SCROLLS, (exam.HEAVEN_SCROLL, exam.EARTH_SCROLL))
@@ -84,13 +128,16 @@ class ChuninTowerFinalTests(unittest.TestCase):
         self.assertTrue(exam.has_both_scrolls(self.player))
         self.assertEqual(self.player.room_vnum, 357)
 
-    def test_victory_promotes_and_forfeit_does_not(self):
+    def test_victory_promotes_and_announces_globally(self):
         self.assertTrue(exam.start_final_trial(self.session))
-        mirror = self.session.combat_target
-        with patch("kage.announce_rank_up"):
+        self.assertTrue(exam.handle_final_trial_answer(self.session, "yes"))
+        mirror = exam.final_opponent(self.session)
+        with patch("kage.announce_rank_up") as announce:
             self.assertTrue(exam.finish_final_match(self.session, mirror))
+        announce.assert_called_once_with(self.player.name, "chunin")
         self.assertEqual(self.player.village_rank, "chunin")
         self.assertFalse(self.player.in_chunin_exam)
+        self.assertFalse(self.player.chunin_final_ready)
         self.assertNotIn(mirror, combat.mobs_in_room(670))
         self.assertNotEqual(self.player.room_vnum, 670)
 
