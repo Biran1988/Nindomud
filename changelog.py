@@ -552,5 +552,6 @@ CHANGELOG = [
     ("15.405", "WHO titles now have no automatic square brackets, allow player-authored [brackets], and default to standard gray when no title color has been selected. Inline multicolors, explicit TITLE COLOR and WHO-only scope remain."),
     ("15.406", "Improved forged equipment persistence and consistency across item transfer and recovery systems."),    ("15.407", "Expanded the Chunin Exam Forest of Death to a fully linked 25-by-25 square of 625 rooms, VNUM 45-669, with north/south/east/west movement, clipped boundaries, and a central tower. One-time live world migration updates only those room VNUMs and preserves other data and future builder edits."),
     ("15.408", "The central Forest of Death tower (357) now has an exam proctor: Heaven and Hell scrolls unlock a sealed one-at-a-time final chamber (670) and a stronger shadow 1v1. Winning grants Chunin; failing forfeits the attempt. Legacy Earth scrolls remain valid."),
+    ("15.409", "Corrected the Chunin Exam scroll names: VNUM 20800 gives Heaven and VNUM 20801 gives Earth. Fresh exam scrolls and guardians use Earth instead of Hell; older Hell scrolls still count as Earth. Exam entry now instructs players: Defeat animals and rival ninja to find the other scroll. Updated exam proctor and help text."),
 
 ]
