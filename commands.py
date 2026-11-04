@@ -4725,7 +4725,10 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
 
     if player.in_chunin_exam:
         if player.room_vnum == chunin_exam.FINAL_ARENA_VNUM:
-            session.send("&RYour final Chunin 1v1 is already underway. Defeat your shadow!&x")
+            if player.chunin_final_ready:
+                session.send("&RYour final Chunin opponent is waiting. Attack your shadow to begin!&x")
+            else:
+                chunin_exam.show_hokage_speech(session)
             return
         session.send("You're already inside the Forest of Death -- finish the trial without leaving.")
         return
