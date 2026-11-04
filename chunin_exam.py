@@ -235,7 +235,7 @@ def handle_final_trial_answer(session, line: str) -> bool:
     if answer not in ("yes", "no", "ready"):
         return False
     if player.chunin_final_ready:
-        session.send("Your shadow is already waiting. Use ATTACK <shadow> to begin, "
+        session.send("Your shadow is already waiting. Use ATTACK SHADOW to begin, "
                      "or LEAVE CONFIRM to forfeit.")
         return True
     if answer == "no":
@@ -311,7 +311,7 @@ def begin_final_match(session):
     session.send(
         f"&RThe Hokage steps back as {name}, a stronger version of yourself, "
         "materializes before you. The shadow is waiting for your first move. "
-        "Use ATTACK <shadow> or target it with a jutsu to begin. "
+        "Use ATTACK SHADOW or target it with a jutsu to begin. "
         "Defeat this opponent to become Chunin!&x"
     )
     return mob
