@@ -5,7 +5,7 @@
     "submit scrolls"
   ],
   "title": "Submit",
-  "body": "Syntax: submit scrolls\n\nDescription: While standing at the Forest of Death central tower (VNUM 357), submit a Heaven Scroll (VNUM 20800) and an Earth Scroll (VNUM 20801) to the exam proctor. ASK PROCTOR EXAM or SUBMIT SCROLLS starts the sealed final 1v1 in VNUM 670. Winning the fight, not merely turning in the scrolls, awards Chunin rank and headband. Older Hell Scrolls also count as Earth Scrolls.\n\nDate: 2026-11-03",
+  "body": "Syntax: submit scrolls\n\nDescription: At the Forest of Death central tower (VNUM 357), submit Heaven Scroll (VNUM 20800) and Earth Scroll (VNUM 20801) to the proctor. Older Hell Scrolls count as Earth Scrolls. The scrolls are consumed, and you enter the final arena (VNUM 670). After the Third Hokage speaks about Heaven and Earth, answer YES to summon your stronger shadow, or NO to delay. Combat starts only when you attack the waiting opponent. Defeating the shadow awards Chunin rank and headband, announced globally. LEAVE CONFIRM forfeits the exam.\n\nDate: 2026-11-03",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
