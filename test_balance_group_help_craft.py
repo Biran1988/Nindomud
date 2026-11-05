@@ -22,6 +22,7 @@ from models import Player
 
 def actor(name, level=50, ip="198.51.100.1"):
     return NS(player=Player(name, name, level=level), connection_ip=ip,
+              account=NS(name=name, staff_level="player"),
               send=Mock(), request_close=Mock())
 
 
@@ -34,7 +35,8 @@ class GroupSecurityTests(unittest.TestCase):
         self.assertEqual(groups.group_join_violation(b, [a]), (None, None))
         self.assertIn("20", groups.group_join_violation(c, [a])[0])
         reason, ip = groups.group_join_violation(same, [a])
-        self.assertIn("same IP", reason)
+        self.assertEqual(reason, groups.GROUP_ACCESS_DENIED)
+        self.assertNotIn("IP", reason)
         self.assertEqual(ip, "198.51.100.9")
         self.assertTrue(groups.xp_eligible(a, b))
         self.assertFalse(groups.xp_eligible(a, c))
@@ -47,6 +49,44 @@ class GroupSecurityTests(unittest.TestCase):
             self.assertFalse(groups.enforce_join(b, [a]))
         ban.assert_called_once_with("203.0.113.7", duration_seconds=1800)
         b.request_close.assert_called_once()
+
+    def test_exempt_test_accounts_without_disclosing_security_check(self):
+        ordinary = actor("Ordinary", 50, "203.0.113.17")
+        for identity in ("Kinto", "JARED"):
+            tester = actor("TestCharacter", 50, "::ffff:203.0.113.17")
+            tester.account.name = identity
+            with patch.object(network_bans, "temporary_ip_ban") as ban:
+                self.assertTrue(groups.enforce_join(tester, [ordinary]))
+                self.assertTrue(groups.enforce_join(ordinary, [tester]))
+            ban.assert_not_called()
+            self.assertTrue(groups.xp_eligible(tester, ordinary))
+            self.assertTrue(groups.xp_eligible(ordinary, tester))
+
+        # A character name alone cannot spoof a test-account exemption.
+        fake = actor("Kinto", 50, "203.0.113.17")
+        fake.account.name = "OrdinaryAccount"
+        self.assertEqual(groups.group_join_violation(fake, [ordinary])[0],
+                         groups.GROUP_ACCESS_DENIED)
+
+    def test_immortal_both_directions_and_name_spoof(self):
+        regular = actor("Regular", 50, "203.0.113.19")
+        admin = actor("AdminCharacter", 50, "203.0.113.19")
+        admin.account.staff_level = "implementor"
+        with patch.object(network_bans, "temporary_ip_ban") as ban:
+            self.assertTrue(groups.enforce_join(admin, [regular]))
+            self.assertTrue(groups.enforce_join(regular, [admin]))
+        ban.assert_not_called()
+        self.assertTrue(groups.xp_eligible(admin, regular))
+        self.assertTrue(groups.xp_eligible(regular, admin))
+
+    def test_denial_and_disconnect_messages_do_not_name_detection_method(self):
+        a = actor("A", 40, "203.0.113.20")
+        b = actor("B", 41, "203.0.113.20")
+        with patch.object(network_bans, "temporary_ip_ban"):
+            groups.enforce_join(b, [a])
+        visible = " ".join(c.args[0] for c in b.send.call_args_list)
+        self.assertNotIn("IP", visible)
+        self.assertNotIn("same", visible.lower())
 
     def test_persisted_ip_ban_expires_after_thirty_minutes(self):
         with tempfile.TemporaryDirectory() as folder, \
@@ -149,7 +189,8 @@ class HelpCoverageTests(unittest.TestCase):
         by_key = {e["primary_keyword"]: e["body"] for e in help_system.DEFAULT_HELP_ENTRIES}
         self.assertIn("rarity is never shown", by_key["examine"].lower())
         self.assertIn("no wood", by_key["craft"].lower())
-        self.assertIn("30 minutes", by_key["group"].lower())
+        self.assertNotIn("same ip", by_key["group"].lower())
+        self.assertNotIn("ip address", by_key["group"].lower())
 
 
 if __name__ == "__main__":
