@@ -4179,6 +4179,10 @@ def cmd_follow(session, args: List[str]) -> None:
         if target is None:
             session.send("There's no available player here by that name.")
             return
+    if (not getattr(target, "player", None)
+            or getattr(getattr(target, "state", None), "name", "") != "PLAYING"):
+        session.send("That player isn't available to follow.")
+        return
     if (getattr(getattr(target, "player", None), "room_vnum", None)
             != session.player.room_vnum):
         session.send("You must be in the same room to begin following someone.")
