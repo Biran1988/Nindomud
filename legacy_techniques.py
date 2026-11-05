@@ -133,6 +133,8 @@ def instant_kill(session, words, preferred_player=None):
             session.send("Your attack passes through the intangible target.")
             return
 
+    if not combat.engage_damage_attack(session, mob or target, target_session):
+        return
     player.chakra -= chakra_cost
     player.stamina -= stamina_cost
     player.cooldowns[key] = now + jutsu["cooldown"]

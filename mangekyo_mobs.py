@@ -67,6 +67,8 @@ def resolve(session, key, mob):
     if mob not in combat.mobs_in_room(player.room_vnum) or mob.health <= 0:
         jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
+    if not combat.engage_damage_attack(session, mob):
+        return
     if key == "amaterasu":
         mob.mangekyo_amaterasu_caster = player.name
         room = world.WORLD.get(mob.room_vnum)

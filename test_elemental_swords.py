@@ -124,7 +124,7 @@ class TestElementalSword(unittest.TestCase):
         target = Player("Enemy", "Enemy")
         for prop, fragment in (
             ("flaming", "burns"), ("frost", "Frost"), ("shocking", "stuns"),
-            ("poison", "sickens"), ("sharp", "cuts"), ("vorpal", "cuts"),
+            ("poison", "poisons"), ("sharp", "cuts"), ("vorpal", "cuts"),
         ):
             with self.subTest(prop=prop):
                 self.p.equipment["wielded"] = f"A Forged Chakra Steel Sword [art:{prop}]"

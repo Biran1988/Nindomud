@@ -138,6 +138,8 @@ def try_cast(session, mob):
     import gem_inlays
     damage = gem_inlays.reduce_counter_damage(player, art.get("element", "none"), damage)
     damage = max(1, damage)
+    if getattr(session, "combat_target", None) is not mob:
+        combat.start_attack(session, mob)
     player.health -= damage
     session.send(f"&R{mob.name} unleashes {name} for {damage_messages.describe_damage(damage)} damage!&x")
 

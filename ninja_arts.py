@@ -301,13 +301,15 @@ def detonate_trap(target, name):
     return damage
 
 
-def _enchantment_feedback(session, message):
-    """A single small line after an enchanted weapon's effect actually triggers."""
+def _enchantment_feedback(session, message, *, target_session=None, target_message=None):
+    """A small combat line only after a weapon effect really activates."""
     if session is not None:
         session.send(f"&C{message}&x")
+    if target_session is not None and target_message:
+        target_session.send(f"&R{target_message}&x")
 
 
-def weapon_hit(attacker, victim, damage, *, session=None):
+def weapon_hit(attacker, victim, damage, *, session=None, target_session=None):
     """Apply a weapon property to a landed hit and report successful procs.
 
     This remains callable without a session by tests or other combat helpers.
@@ -341,22 +343,37 @@ def weapon_hit(attacker, victim, damage, *, session=None):
                 "wind": f"Wind chakra throws {victim.name} off balance!",
                 "lightning": f"Lightning chakra paralyzes {victim.name}!",
             }
-            _enchantment_feedback(session, messages.get(element, f"{element.title()} chakra strikes {victim.name}!"))
+            target_messages = {
+                "fire": f"{attacker.name}'s enchanted weapon sets you ablaze!",
+                "water": f"{attacker.name}'s enchanted weapon drains your chakra!",
+                "wind": f"{attacker.name}'s enchanted weapon throws you off balance!",
+                "lightning": f"{attacker.name}'s enchanted weapon paralyzes you!",
+            }
+            _enchantment_feedback(session, messages.get(element, f"{element.title()} chakra strikes {victim.name}!"),
+                                  target_session=target_session, target_message=target_messages.get(element))
         return damage
     if prop is None or damage <= 0:
         return damage
     if prop == "poison" and random.randint(1, 100) <= 30:
         status_effects.apply_effect(victim.active_status_effects, "poisoned", source="toxin binding")
-        _enchantment_feedback(session, f"Your poisoned blade sickens {victim.name}!")
+        _enchantment_feedback(session, f"Your poisoned blade poisons {victim.name}!",
+                              target_session=target_session,
+                              target_message=f"{attacker.name}'s poisoned weapon infects you!")
     elif prop == "flaming" and random.randint(1, 100) <= 25:
         status_effects.apply_effect(victim.active_status_effects, "burning", source="weapon enchantment")
-        _enchantment_feedback(session, f"Your enchanted blade burns {victim.name}!")
+        _enchantment_feedback(session, f"Your enchanted blade burns {victim.name}!",
+                              target_session=target_session,
+                              target_message=f"{attacker.name}'s burning enchantment ignites you!")
     elif prop == "frost" and random.randint(1, 100) <= 25:
         status_effects.apply_effect(victim.active_status_effects, "off_balance", source="weapon enchantment")
-        _enchantment_feedback(session, f"Frost chills {victim.name}, throwing them off balance!")
+        _enchantment_feedback(session, f"Frost chills {victim.name}, throwing them off balance!",
+                              target_session=target_session,
+                              target_message=f"{attacker.name}'s frost enchantment throws you off balance!")
     elif prop == "shocking" and random.randint(1, 100) <= 20:
         status_effects.apply_effect(victim.active_status_effects, "stunned", source="weapon enchantment")
-        _enchantment_feedback(session, f"Your weapon shocks and stuns {victim.name}!")
+        _enchantment_feedback(session, f"Your weapon shocks and stuns {victim.name}!",
+                              target_session=target_session,
+                              target_message=f"{attacker.name}'s shocking enchantment stuns you!")
     elif prop == "life":
         maximum = getattr(attacker, "maximum_health", getattr(attacker, "max_health", 1))
         old_health = attacker.health

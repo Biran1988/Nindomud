@@ -564,5 +564,6 @@ CHANGELOG = [
     ("15.418", "Third, Fourth, and Fifth Attack are Bukijutsu-only, shown under Bukijutsu practice and available through Bukijutsu teachers. Other classes retain Second Attack at level 100."),
     ("15.419", "Successful enchanted weapon strikes now show brief combat feedback when elemental effects, added damage, poison, or life drain activate."),
     ("15.420", "Every Mangekyo holder can summon a chakra-maintained Susanoo. SET SUSANOO opens a saved color/style/weapon menu with offensive, defensive, balanced and eight spectral weapons; choices affect melee damage, accuracy and protection."),
+    ("15.421", "Direct hostile attacks from melee, jutsu, Mangekyo, summons and tailed beast bombs now enter normal combat. Poison and elemental weapon procs apply statuses to their actual mob/player victim and show brief messages to PvP targets."),
 
 ]

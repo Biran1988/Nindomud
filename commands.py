@@ -3667,6 +3667,9 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, "There's nothing here by that name.")
             return
 
+        if not combat.engage_damage_attack(
+                session, mob if mob is not None else target_session.player, target_session):
+            return
         player.chakra -= scaled_chakra_cost
         player.cooldowns["tailed beast bomb"] = now + jutsu_data["cooldown"]
         import tailed_beasts as tailed_beasts_module

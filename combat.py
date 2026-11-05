@@ -1017,6 +1017,9 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     ):
         jutsu_colors.send(session, "&DYour target is no longer there!&x")
         return
+    # First enter normal combat; rejected attacks must not apply flames.
+    if not engage_damage_attack(session, target_session.player, target_session):
+        return
     import data_mangekyo
     # Immortals are immune to attached black flames. Other players are
     # protected from endless burns by a real-time five-minute deadline.
@@ -1073,6 +1076,8 @@ def resolve_kamui_limb_removal_cast(session, target_session) -> None:
         return
     import data_mangekyo
     import random
+    if not engage_damage_attack(session, target_session.player, target_session):
+        return
     dmg = random.randint(*data_mangekyo.KAMUI_LIMB_REMOVAL_DAMAGE)
     dmg = status_effects.reduce_incoming_damage(target_session.player.active_status_effects, dmg)
     target_session.player.health -= dmg
@@ -1821,6 +1826,8 @@ def tick_summon_upkeep(session) -> None:
             target.summon_trap_applied = True
             target.summon_trap_to_hit_penalty = TOAD_STOMACH_MOB_TO_HIT_PENALTY
             session.send(f"&RThe Toad Stomach seals every exit around {target.name}!&x")
+        if not engage_damage_attack(session, target):
+            return
         damage = max(2, target.max_health // 25)
         target.health -= damage
         session.send(f"&RThe living stomach devours {target.name} for {damage} damage!&x")
@@ -2406,6 +2413,8 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
         import room_actions
         room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(player.equipment.get('wielded', ''))} at {mob.name} but misses.")
         return
+    if not engage_damage_attack(session, mob):
+        return False
     dmg = _player_attack_damage(player)
     dmg = sword_styles.damage_bonus(player, dmg)
     dmg = _weapon_expert_damage(player, dmg)
@@ -2456,6 +2465,8 @@ def _clone_attack_mob_once(session, player, mob, clone=None) -> None:
     if random.randint(1, 100) > to_hit:
         session.send(f"Your {clone_label} {attack_verb}s at {mob.name} but misses!")
         return
+    if not engage_damage_attack(session, mob):
+        return
     dmg = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE)
     if element == "earth":
         dmg = round(dmg * 1.25)
@@ -2488,6 +2499,8 @@ def _summon_attack_mob_once(session, player, summon, mob) -> None:
     to_hit = 70  # a summon's own real, tier-independent base accuracy -- deliberately simple, not derived from the player's own stats
     if random.randint(1, 100) > to_hit:
         session.send(f"{summon.name} attacks {mob.name} but misses!")
+        return
+    if not engage_damage_attack(session, mob):
         return
     dmg = stat_for_summon_tier(player.level, tier, SUMMON_DAMAGE_PER_LEVEL)
     mob.health -= dmg
@@ -3047,6 +3060,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         jutsu_colors.send(session, "That target already has this trap attached.")
         return
 
+    if not engage_damage_attack(session, mob):
+        return
     general_skills.break_camouflage(session)
     player.chakra -= chakra_cost
     player.stamina -= stamina_cost
@@ -3270,6 +3285,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         jutsu_colors.send(session, "That target already has this trap attached.")
         return
 
+    if not engage_damage_attack(session, target, target_session):
+        return
     general_skills.break_camouflage(session)
     general_skills.break_camouflage(target_session)
     caster_chakra_cost = chakra_cost  # the amount actually paid for this cast
@@ -3830,6 +3847,39 @@ def start_pvp_attack(session, target_session) -> None:
     target_session.pvp_target = session
 
 
+def engage_damage_attack(session, victim, victim_session=None) -> bool:
+    """Engage the real victim before any hostile direct damage or effect.
+
+    Safe zones, disconnected players, protected NPCs and absent targets
+    remain untouchable. Delayed status ticks do not chase fleeing targets.
+    """
+    player = getattr(session, "player", None)
+    if player is None or victim is None or player.health <= 0:
+        return False
+    if victim_session is not None:
+        if (victim_session is session
+                or getattr(victim_session, "player", None) is not victim
+                or _is_linkdead(session) or _is_linkdead(victim_session)
+                or victim.health <= 0 or victim.room_vnum != player.room_vnum
+                or getattr(victim, "izanami_trapped", False)):
+            return False
+        room = world.WORLD.get(player.room_vnum)
+        if room is not None and room.safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
+            return False
+        if getattr(session, "pvp_target", None) is not victim_session:
+            start_pvp_attack(session, victim_session)
+        return getattr(session, "pvp_target", None) is victim_session
+    if (victim.health <= 0 or victim.room_vnum != player.room_vnum
+            or is_immortal_mob(victim) or is_shopkeeper(victim)
+            or is_gambler(victim) or is_teacher(victim)):
+        session.send(f"{victim.name.capitalize()} is protected or cannot be reached.")
+        return False
+    if getattr(session, "combat_target", None) is not victim:
+        start_attack(session, victim)
+    return getattr(session, "combat_target", None) is victim
+
+
 def _player_attack_target_once(session, player, target_session, target, guaranteed_hit=False) -> bool:
     """One single PvP attack (to-hit roll through the damage/miss/dodge
     messages to both sides) from player against target -- extracted so
@@ -3875,6 +3925,8 @@ def _player_attack_target_once(session, player, target_session, target, guarante
         target_session.send(f"&C{player.name} attacks you but misses!&x")
         return
 
+    if not engage_damage_attack(session, target, target_session):
+        return False
     dmg = _player_attack_damage(player)
     dmg = sword_styles.damage_bonus(player, dmg)
     dmg = _weapon_expert_damage(player, dmg)
@@ -3907,7 +3959,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
             target_session.send("&RYou weren't fast enough to counter!&x")
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
-    dmg = ninja_arts.weapon_hit(player, target, dmg, session=session)
+    dmg = ninja_arts.weapon_hit(player, target, dmg, session=session, target_session=target_session)
     import susanoo
     dmg = susanoo.incoming_damage(
         target, sage_mode.incoming(
@@ -3947,6 +3999,8 @@ def _clone_attack_target_once(session, player, target_session, target, clone) ->
         return
     if random.randint(1, 100) <= derived_stats.dodge_chance(target) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target):
         target_session.send(f"&CYou dodge {player.name}'s {label}!&x")
+        return
+    if not engage_damage_attack(session, target, target_session):
         return
     damage = int(_player_attack_damage(player) * SHADOW_CLONE_DAMAGE_SCALE * (1.25 if element == "earth" else 1))
     damage = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), damage)
