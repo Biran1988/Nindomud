@@ -3676,7 +3676,7 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "flags",
-        "keywords": ["flags", "room flags", "extra_flags", "act_flags", "capturepoint", "no_sac", "no_take", "nosac", "notake", "banker", "bountyoffice"],
+        "keywords": ["flags", "room flags", "extra_flags", "act_flags", "capturepoint", "no_sac", "no_take", "nosac", "notake", "banker", "bountyoffice", "immortal"],
         "title": "Flags (staff)",
         "body": (
             "Syntax: rset flags <flagname>  (room flags -- toggle)\n"
@@ -3695,6 +3695,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "&WMob flags:&x\n"
             "  Banker             -- lets a player 'bank'/'bank deposit'/'bank withdraw' at this mob\n"
+            "  Immortal           -- cannot be attacked or damaged by any means; no deaths, loot or XP\n"
             "  BountyOffice       -- lets a player claim a bounty in person at this mob\n"
             "  Wander             -- gives this mob a small per-tick chance to move through a random available exit (moves roughly every few minutes, not constantly; never into an apartment room)\n"
             "  Sentinel           -- a hard override blocking wander behavior for this mob, even if Wander is also set\n"
@@ -4472,7 +4473,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
