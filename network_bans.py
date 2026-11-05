@@ -121,7 +121,7 @@ def temporary_ip_ban(ip, *, duration_seconds=1800, reason="same-IP group attempt
                     storage.save_player(other.player)
                 except OSError:
                     LOG.exception("Could not save player before temporary group ban")
-            other.send("&RGrouping from the same IP is prohibited. IP banned for 30 minutes.&x")
+            other.send("&RYour connection has been temporarily restricted.&x")
             other.request_close()
     return temporary["expires_at"]
 
