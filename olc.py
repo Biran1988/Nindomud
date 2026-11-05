@@ -47,6 +47,7 @@ import status_effects
 import storage
 import tips
 import world
+import door_links
 
 STAFF_CAN_BUILD = {"builder", "area leader", "administrator", "implementor"}
 # Editing a real player's stats (level, exp, ryo, attributes...) is a bigger
@@ -1529,6 +1530,19 @@ def cmd_rset(session, args: List[str]) -> None:
             session.send(f"'{flag}' isn't a valid exit flag. Valid: {', '.join(EXIT_FLAG_NAMES)}")
             return
 
+        if flag in door_links.SHARED_FLAGS:
+            # A shared door changes the destination room too. Respect the
+            # same cross-area permission checks as a bidirectional exit.
+            if not _require_exit_link(session, room.vnum, room.exits[direction]):
+                return
+            if flag == "door" and len(rest) >= 3 and rest[2].lower() == "on":
+                ok, error = door_links.ensure_reciprocal(room, direction)
+                if not ok:
+                    session.send(error)
+                    return
+            else:
+                door_links.reconcile_pair(room, direction)
+
         flags_here = room.exit_flags.setdefault(direction, [])
 
         if flag in ("door", "locked", "hidden"):
@@ -1542,6 +1556,16 @@ def cmd_rset(session, args: List[str]) -> None:
                     room.exit_door_open[direction] = False  # starts closed
             elif not turn_on and flag in flags_here:
                 flags_here.remove(flag)
+            if flag == "door" and not turn_on:
+                # A removed door cannot retain an invisible lock or key.
+                for shared_flag in ("locked", "keyitem", "passcode"):
+                    if shared_flag in flags_here:
+                        flags_here.remove(shared_flag)
+                room.exit_door_open.pop(direction, None)
+                room.exit_key_item.pop(direction, None)
+                room.exit_passcode.pop(direction, None)
+            if flag in door_links.SHARED_FLAGS:
+                door_links.mirror(room, direction)
             _log(session.player.name, "room", room.vnum, f"exit {direction} {flag} set to {turn_on}")
             session.send(f"Exit {direction}: {flag} is now {'on' if turn_on else 'off'}.")
             return
@@ -1556,6 +1580,7 @@ def cmd_rset(session, args: List[str]) -> None:
                 room.exit_key_item.pop(direction, None)
             else:
                 room.exit_passcode.pop(direction, None)
+            door_links.mirror(room, direction)
             _log(session.player.name, "room", room.vnum, f"exit {direction} {flag} cleared")
             session.send(f"Exit {direction}: {flag} requirement cleared.")
             return
@@ -1566,6 +1591,7 @@ def cmd_rset(session, args: List[str]) -> None:
             room.exit_key_item[direction] = value
         else:
             room.exit_passcode[direction] = value
+        door_links.mirror(room, direction)
         _log(session.player.name, "room", room.vnum, f"exit {direction} {flag} set to '{value}'")
         session.send(f"Exit {direction}: {flag} requirement set to '{value}'.")
         return
@@ -1698,6 +1724,7 @@ def _do_bexit(session, room, rest: List[str], force: bool = False) -> None:
         auto_created = True
 
     world.WORLD.link(src_vnum, direction, dest_vnum)
+    door_links.reconcile_pair(src_room, direction)
     _log(session.player.name, "room", f"{src_vnum}/{dest_vnum}",
          f"bidirectional exit {direction}/{reverse}" + (" (forced)" if conflict else ""))
     auto_created_note = f"\n(Room {dest_vnum} didn't exist yet -- created automatically as \"An Unfinished Room\".)" if auto_created else ""
@@ -1717,10 +1744,14 @@ def _do_bunlink(session, room, rest: List[str]) -> None:
     if not _require_exit_link(session, room.vnum, dest_vnum):
         return
     room.exits.pop(direction)
+    for attr in ("exit_flags", "exit_door_open", "exit_key_item", "exit_passcode"):
+        getattr(room, attr).pop(direction, None)
     reverse = world.OPPOSITE_DIRECTION[direction]
     dest_room = world.WORLD.get(dest_vnum)
     if dest_room and dest_room.exits.get(reverse) == room.vnum:
         del dest_room.exits[reverse]
+        for attr in ("exit_flags", "exit_door_open", "exit_key_item", "exit_passcode"):
+            getattr(dest_room, attr).pop(reverse, None)
         session.send(f"Removed exits: room {room.vnum} {direction} <-> room {dest_vnum} {reverse}.")
     else:
         session.send("The reverse exit no longer points back to this room. Only the local exit was removed.")
