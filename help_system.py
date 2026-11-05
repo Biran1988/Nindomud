@@ -3440,7 +3440,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: bloodset <player> bloodline <kkg_id|none>  |  bloodset <player> potential <0-100>  |  bloodset <player> talent <0-100>  |  bloodset <player> awakened <yes|no>  |  bloodset <player> mangekyo <yes|no>  |  bloodset <player> mastery <int>  |  bloodset <player> tomoe <int>  |  bloodset <player> awaken\n"
             "\n"
-            "Description: Force-edits a player's hidden Kekkei Genkai state, for testing. 'awaken' calls the real awakening framework. 'mangekyo yes' requires an awakened Sharingan and assigns two distinct random eye techniques from the normal pool; repeating it preserves existing eyes. 'mangekyo no' disables Mangekyo but keeps the assigned eyes. You can also use 'mset <player> mangekyo on|off'. 'tomoe' only matters for a Sharingan. Assigning a bloodline with no Potential/Talent rolls both automatically.\n"
+            "Description: Force-edits a player's hidden Kekkei Genkai state, for testing. 'awaken' calls the real awakening framework. 'mangekyo yes' requires an awakened Sharingan, assigns two distinct random eye techniques, and leaves them unchanged if already enabled. 'mangekyo no' disables Mangekyo, clears both eye abilities and their discovery history, and guarantees a fresh pair on the next 'yes' (different from the previous two when the roster permits). You can also use 'mset <player> mangekyo on|off'. 'tomoe' only matters for a Sharingan. Assigning a bloodline with no Potential/Talent rolls both automatically.\n"
             "\n"
             "&D(Staff only -- requires administrator access or higher.)&x\n"
             "\n"
@@ -4465,7 +4465,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team", "bloodset"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and

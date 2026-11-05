@@ -304,7 +304,10 @@ class Player:
     # checked via bloodline_mangekyo alone, not stored here at all.
     mangekyo_eye_1: Optional[str] = None
     mangekyo_eye_2: Optional[str] = None
-    # Permanent discovery: reveal an eye's individual help after first use.
+    # Only used by staff OFF/ON rerolls: old abilities are excluded from
+    # the next random pair. Persist across reboots without retaining powers.
+    mangekyo_previous_eyes: List[str] = field(default_factory=list)
+    # Discoveries belong to the currently assigned eyes; staff OFF clears them.
     mangekyo_eyes_used: List[str] = field(default_factory=list)
     # Izanagi (Section 140, if rolled): a real, deliberate stance the
     # player must proactively activate -- confirmed directly NOT

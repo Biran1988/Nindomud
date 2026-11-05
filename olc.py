@@ -1846,20 +1846,40 @@ PLAYER_BOOL_FIELDS = {"color_enabled", "auto_loot_ryo", "auto_loot_gear", "auto_
 
 
 def _set_player_mangekyo(target, enabled: bool) -> str:
-    """Grant Mangekyo with the normal distinct random eye pair."""
+    """Staff toggles clear an old eye pair and reroll on the next grant.
+
+    A repeated ON while already awakened remains idempotent. A genuine
+    OFF clears both eye slots and their discovery state; the previous
+    pair is remembered *only* to exclude its abilities on the next roll.
+    """
     if enabled and (target.bloodline_id != "sharingan" or not target.bloodline_awakened):
         return "Mangekyo requires an awakened Sharingan bloodline."
+    import data_mangekyo
+    roster = data_mangekyo.TECHNIQUE_ROSTER
     if enabled:
-        import data_mangekyo
-        roster = data_mangekyo.TECHNIQUE_ROSTER
-        if (target.mangekyo_eye_1 not in roster or target.mangekyo_eye_2 not in roster
-                or target.mangekyo_eye_1 == target.mangekyo_eye_2):
-            target.mangekyo_eye_1, target.mangekyo_eye_2 = data_mangekyo.roll_two_eye_techniques()
+        valid_pair = (target.mangekyo_eye_1 in roster
+                      and target.mangekyo_eye_2 in roster
+                      and target.mangekyo_eye_1 != target.mangekyo_eye_2)
+        if not (target.bloodline_mangekyo and valid_pair):
+            previous = (target.mangekyo_previous_eyes
+                        or [target.mangekyo_eye_1, target.mangekyo_eye_2])
+            target.mangekyo_eye_1, target.mangekyo_eye_2 = (
+                data_mangekyo.roll_two_eye_techniques(exclude_eyes=previous))
+            target.mangekyo_eyes_used.clear()
         target.bloodline_mangekyo = True
         return (f"Mangekyo awakened: {roster[target.mangekyo_eye_1]['display_name']} "
                 f"and {roster[target.mangekyo_eye_2]['display_name']}.")
+    old_pair = [target.mangekyo_eye_1, target.mangekyo_eye_2]
+    if any(eye in roster for eye in old_pair):
+        target.mangekyo_previous_eyes = [eye for eye in old_pair if eye in roster]
     target.bloodline_mangekyo = False
-    return "Mangekyo disabled; assigned eyes are preserved."
+    target.mangekyo_eye_1 = None
+    target.mangekyo_eye_2 = None
+    target.mangekyo_eyes_used.clear()
+    # Old eye-only defenses must not remain active without those eyes.
+    target.izanagi_active = False
+    target.kamui_intangibility_rounds_left = 0
+    return "Mangekyo disabled; both eye techniques and discoveries cleared. Next activation rolls new eyes."
 
 
 def _find_target_player(name: str):
@@ -3042,7 +3062,7 @@ def cmd_bloodset(session, args: List[str]) -> None:
             "       bloodset <player> awakened <yes|no>\n"
             "       bloodset <player> mastery <int>\n"
             "       bloodset <player> tomoe <int>   (Sharingan-specific)\n"
-            "       bloodset <player> mangekyo <yes|no>   (rolls two eyes on yes)\n"
+            "       bloodset <player> mangekyo <yes|no>   (no clears eyes; next yes rerolls)\n"
             "       bloodset <player> awaken   (calls the real awakening framework function)\n"
             f"Known kekkei genkai: {', '.join(sorted(data_kekkei_genkai.KEKKEI_GENKAI.keys()))}"
         )

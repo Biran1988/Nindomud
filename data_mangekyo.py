@@ -169,11 +169,21 @@ KEKKEI_NO_ME_STAMINA_DRAIN_PER_TICK = (12, 20)
 KEKKEI_NO_ME_DURATION_SECONDS = 90.0
 
 
-def roll_two_eye_techniques() -> tuple:
-    """The real, confirmed roll: 2 independent picks from
-    TECHNIQUE_ROSTER, guaranteed different from each other. Returns
-    a real (eye_1_key, eye_2_key) tuple. Susanoo is deliberately never
-    part of this roll -- it's universal, checked via
-    player.bloodline_mangekyo alone."""
+def roll_two_eye_techniques(exclude_eyes=None) -> tuple:
+    """Roll two distinct eye abilities. For staff rerolls, exclude prior
+    abilities when the roster has enough alternatives. Regular awakening
+    remains two unbiased independent picks without replacement.
+    Susanoo is universal, never a rolled eye ability.
+    """
     keys = list(TECHNIQUE_ROSTER.keys())
+    excluded = set(exclude_eyes or ()) & set(keys)
+    available = [key for key in keys if key not in excluded]
+    if len(available) >= 2:
+        return tuple(random.sample(available, 2))
+    # If a future roster shrinks, preserve two distinct techniques
+    # while ensuring at least one of the new eyes changes when possible.
+    if len(available) == 1:
+        first = available[0]
+        second = random.choice([key for key in keys if key != first])
+        return first, second
     return tuple(random.sample(keys, 2))
