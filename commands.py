@@ -5083,6 +5083,12 @@ def cmd_practice(session, args: List[str]) -> None:
     if not match:
         session.send("You haven't learned that skill or jutsu.")
         return
+    attack_requirement = next(
+        (required_class for name, _, required_class in data_jutsu.MULTI_ATTACK_SKILLS
+         if name == match), None)
+    if attack_requirement and player.primary_class != attack_requirement:
+        session.send(f"{match} is only available to {attack_requirement.title()} users.")
+        return
     if data_passives.is_passive(match):
         session.send(f"{match} is a passive skill -- it improves automatically through combat experience, not practice.")
         return
@@ -5517,6 +5523,9 @@ def _categorize_skill(skill_name: str) -> str:
             return "KKGK" if jutsu.get("kkg_gate") else jutsu["class_requirement"].capitalize()
     if skill_name in sword_styles.STYLES:
         return "Bukijutsu"
+    if skill_name in {name for name, _, required_class in data_jutsu.MULTI_ATTACK_SKILLS
+                      if required_class == "bukijutsu"}:
+        return "Bukijutsu"
     if lname in {"sharingan", "mangekyo sharingan", "izanagi"}:
         return "KKGK"
     if lname == "punch":
@@ -5537,6 +5546,9 @@ def _skill_catalog_for_category(category: str) -> list:
                 entries.append((jutsu["display_name"], jutsu["level_requirement"]))
         if category == "Bukijutsu":
             entries.extend((name, info["level"]) for name, info in sword_styles.STYLES.items())
+            entries.extend((name, level_req)
+                           for name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS
+                           if required_class == "bukijutsu")
     elif category == "KKGK":
         # This overrides only PRAC presentation. Jutsu retain their
         # original combat class, chakra costs, and bloodline unlocks.
@@ -5560,19 +5572,11 @@ def _skill_catalog_for_category(category: str) -> list:
         entries.append(("Handsigns", data_handsigns.HANDSIGNS_MIN_LEVEL))
         entries.append(("Anki", 1))  # confirmed directly: no real level requirement at all, shown as level 1 like every other level-1-effectively skill (matches how UNIVERSAL_STARTING_SKILLS is handled elsewhere)
         entries.append(("Chakra Charge", data_jutsu.CHAKRA_CHARGE_LEVEL))
-        # Second/Third/Fourth/Fifth Attack (data_jutsu.MULTI_ATTACK_SKILLS)
-        # -- genuinely granted and practicable, but previously missing
-        # from this catalog entirely, so a player who'd learned one
-        # would never see it in 'prac' despite it being real. This
-        # function has no access to the viewing player (by design --
-        # it's the full, static catalog), so all 4 are always listed
-        # here; class-correctness is already handled the same way it
-        # is for the 4 jutsu categories above -- cmd_prac only ever
-        # displays an entry that's also in the viewer's own
-        # learned_skills, and leveling.py already only ever grants
-        # Fourth/Fifth Attack to Bukijutsu characters.
+        # Second Attack is universal (level 25 Bukijutsu; level 100
+        # all other classes). Every later attack is Bukijutsu-only.
         for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
-            entries.append((skill_name, level_req))
+            if required_class is None:
+                entries.append((skill_name, level_req))
         # Every real class-agnostic jutsu (class_requirement="general",
         # e.g. Track, Sealing Jutsu, Release Jutsu, Tailed Beast Bomb --
         # any class can learn these) genuinely belongs here too. Caught
@@ -5649,7 +5653,8 @@ def cmd_prac(session, args: List[str]) -> None:
         catalog = _skill_catalog_for_category(category)
         entries = []
         for name, level_req in catalog:
-            if name in player.learned_skills:
+            if name in player.learned_skills and (
+                    category != "Bukijutsu" or player.primary_class == "bukijutsu"):
                 pct = player.skill_proficiencies.get(name, 0)
                 entries.append(_prac_entry(name, pct, signature=name == getattr(player, "signature_move", "")))
         for i in range(0, len(entries), 2):
@@ -5713,7 +5718,9 @@ def _find_gambler(room_vnum: int):
 
 
 def _categorize_underlying_class(skill_name: str) -> str:
-    if skill_name in sword_styles.STYLES:
+    if skill_name in sword_styles.STYLES or skill_name in {
+            name for name, _, required_class in data_jutsu.MULTI_ATTACK_SKILLS
+            if required_class == "bukijutsu"}:
         return "Bukijutsu"
     for jutsu in data_jutsu.JUTSU.values():
         if jutsu["display_name"].lower() == skill_name.lower():

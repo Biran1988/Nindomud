@@ -372,6 +372,14 @@ def sync_universal_skills(player: Player) -> List[str]:
     player.learned_skills = [skill for skill in player.learned_skills
                              if skill.lower() != "sharingan genjutsu"]
     player.skill_proficiencies.pop("Sharingan Genjutsu", None)
+    # Remove legacy Bukijutsu-only passive attacks from other classes.
+    # Leave proficiency saved so switching back to Bukijutsu can restore
+    # progress, but no one can practice or use them in the wrong class.
+    if player.primary_class != "bukijutsu":
+        buki_attacks = {name for name, _level, requirement in data_jutsu.MULTI_ATTACK_SKILLS
+                        if requirement == "bukijutsu"}
+        player.learned_skills = [name for name in player.learned_skills
+                                 if name not in buki_attacks]
 
     for old_name, new_name in data_jutsu.SKILL_RENAMES.items():
         if old_name in player.learned_skills:

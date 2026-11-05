@@ -25,7 +25,8 @@ class MangekyoBloodsetRerollTests(unittest.TestCase):
         self.saved = []
         patches = (
             patch.object(olc, "_require_admin", return_value=True),
-            patch.object(olc, "_find_target_player", return_value=(self.target, None)),
+            patch.object(olc, "_find_target_player",
+                         side_effect=lambda _name: (self.target, None)),
             patch.object(olc.storage, "save_player",
                          side_effect=lambda p: self.saved.append(p.to_dict())),
         )

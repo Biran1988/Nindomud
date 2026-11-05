@@ -106,7 +106,28 @@ class NumberedAttackRulesTests(unittest.TestCase):
         player.skill_proficiencies = {"Second Attack": 100, "Third Attack": 100}
         self.assertEqual(combat._roll_extra_attacks(player), 0)
         player.level = 100
-        self.assertEqual(combat._roll_extra_attacks(player), 2)
+        self.assertEqual(combat._roll_extra_attacks(player), 1)  # Third belongs to Bukijutsu only
+
+    def test_third_fourth_fifth_attacks_are_bukijutsu_only(self):
+        for name, level, requirement in data_jutsu.MULTI_ATTACK_SKILLS[1:]:
+            self.assertEqual(requirement, "bukijutsu", name)
+            self.assertIn((name, level), commands._skill_catalog_for_category("Bukijutsu"))
+            self.assertNotIn(name, dict(commands._skill_catalog_for_category("General Skills")))
+            self.assertEqual(commands._category_for_skill(name), "Bukijutsu")
+            self.assertEqual(commands._categorize_underlying_class(name), "Bukijutsu")
+        for cls in ("ninjutsu", "taijutsu", "genjutsu"):
+            player = Player("Tester", "Tester", level=250, primary_class=cls)
+            player.learned_skills = [name for name, _, _ in data_jutsu.MULTI_ATTACK_SKILLS]
+            player.skill_proficiencies = {name: 100 for name in player.learned_skills}
+            self.assertEqual(combat._roll_extra_attacks(player), 1)
+            import leveling
+            leveling.sync_universal_skills(player)
+            self.assertEqual(player.learned_skills.count("Second Attack"), 1)
+            self.assertFalse(set(player.learned_skills) & {"Third Attack", "Fourth Attack", "Fifth Attack"})
+            self.assertEqual(player.skill_proficiencies["Third Attack"], 100)
+
+    def test_bukijutsu_attack_requires_bukijutsu_teacher(self):
+        self.assertEqual(commands._categorize_underlying_class("Third Attack"), "Bukijutsu")
 
 
 class SwordSchoolTests(unittest.TestCase):

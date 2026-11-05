@@ -80,6 +80,69 @@ class TestElementalSword(unittest.TestCase):
             self.assertEqual(ninja_arts.weapon_hit(self.p, target, 100), 100)
         self.assertFalse(target.active_status_effects)
 
+    def test_elemental_effect_announces_only_when_it_procs(self):
+        expectations = {
+            "fire": "ignites",
+            "water": "drains",
+            "wind": "off balance",
+            "lightning": "paralyzes",
+            "earth": "crashes",
+        }
+        for element, fragment in expectations.items():
+            with self.subTest(element=element):
+                self.p.chakra_nature = element
+                self.p.cooldowns.clear()
+                self.p.equipment["wielded"] = "A Forged Chakra Steel Sword"
+                self.enchant(element)
+                self.s.send.reset_mock()
+                with patch.object(ninja_arts.random, "randint", return_value=1):
+                    ninja_arts.weapon_hit(self.p, Player("Enemy", "Enemy"), 100, session=self.s)
+                self.s.send.assert_called_once()
+                self.assertIn(fragment, self.s.send.call_args.args[0])
+                self.assertIn("Enemy", self.s.send.call_args.args[0])
+                self.s.send.reset_mock()
+                with patch.object(ninja_arts.random, "randint", return_value=100):
+                    ninja_arts.weapon_hit(self.p, Player("Enemy", "Enemy"), 100, session=self.s)
+                if element == "earth":
+                    self.s.send.assert_called_once()
+                else:
+                    self.s.send.assert_not_called()
+
+    def test_unmatched_element_and_zero_damage_produce_no_message(self):
+        self.enchant("fire")
+        self.s.send.reset_mock()
+        target = Player("Enemy", "Enemy")
+        with patch.object(ninja_arts.random, "randint", return_value=1):
+            self.p.chakra_nature = "water"
+            ninja_arts.weapon_hit(self.p, target, 100, session=self.s)
+            self.p.chakra_nature = "fire"
+            ninja_arts.weapon_hit(self.p, target, 0, session=self.s)
+        self.s.send.assert_not_called()
+        self.assertFalse(target.active_status_effects)
+
+    def test_traditional_enchantments_report_actual_effects(self):
+        target = Player("Enemy", "Enemy")
+        for prop, fragment in (
+            ("flaming", "burns"), ("frost", "Frost"), ("shocking", "stuns"),
+            ("poison", "sickens"), ("sharp", "cuts"), ("vorpal", "cuts"),
+        ):
+            with self.subTest(prop=prop):
+                self.p.equipment["wielded"] = f"A Forged Chakra Steel Sword [art:{prop}]"
+                self.s.send.reset_mock()
+                with patch.object(ninja_arts.random, "randint", return_value=1):
+                    ninja_arts.weapon_hit(self.p, target, 100, session=self.s)
+                self.s.send.assert_called_once()
+                self.assertIn(fragment, self.s.send.call_args.args[0])
+        self.p.equipment["wielded"] = "A Forged Chakra Steel Sword [art:life]"
+        self.p.health = max(1, self.p.maximum_health - 10)
+        self.s.send.reset_mock()
+        ninja_arts.weapon_hit(self.p, target, 100, session=self.s)
+        self.assertIn("drains", self.s.send.call_args.args[0])
+        self.p.health = self.p.maximum_health
+        self.s.send.reset_mock()
+        ninja_arts.weapon_hit(self.p, target, 100, session=self.s)
+        self.s.send.assert_not_called()
+
     def test_invalid_nature_and_weapon_are_rejected_without_cost(self):
         before = (self.p.chakra, self.p.stamina)
         self.enchant("water")

@@ -561,5 +561,7 @@ CHANGELOG = [
     ("15.415", "Updated group security handling for authorized test and immortal accounts. Ordinary group limits remain enforced, and access denials now use neutral player-facing messages."),
     ("15.416", "Players now FOLLOW before grouping; a leader's GROUP ALL recruits eligible followers. Group members automatically assist each other's mob fights, with one mob retaliation per round."),
     ("15.417", "Staff BLOODSET Mangekyo OFF now clears both assigned eye abilities and discoveries; switching ON again rolls a new pair rather than restoring old eyes."),
+    ("15.418", "Third, Fourth, and Fifth Attack are Bukijutsu-only, shown under Bukijutsu practice and available through Bukijutsu teachers. Other classes retain Second Attack at level 100."),
+    ("15.419", "Successful enchanted weapon strikes now show brief combat feedback when elemental effects, added damage, poison, or life drain activate."),
 
 ]

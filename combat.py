@@ -2411,7 +2411,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
     if is_crit:
         dmg = int(dmg * 1.5)
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
-    dmg = ninja_arts.weapon_hit(player, mob, dmg)
+    dmg = ninja_arts.weapon_hit(player, mob, dmg, session=session)
     mob.health -= dmg
     sword_styles.successful_strike(player, session)
     if is_crit:
@@ -3901,7 +3901,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
             target_session.send("&RYou weren't fast enough to counter!&x")
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
-    dmg = ninja_arts.weapon_hit(player, target, dmg)
+    dmg = ninja_arts.weapon_hit(player, target, dmg, session=session)
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
     sword_styles.successful_strike(player, session)

@@ -782,9 +782,9 @@ APPRAISAL_LEVEL_REQUIREMENT = 20
 # Multiple attacks per round, per explicit request. Each entry is
 # (display_name, level_requirement, required_primary_class_or_None).
 # Second Attack unlocks at level 25 for Bukijutsu, level 100 for
-# Ninjutsu/Taijutsu/Genjutsu. Third Attack retains its existing level 50
-# entry but cannot fire until Second Attack is available and procs.
-# Fourth/Fifth Attack are Bukijutsu-specific. All four are auto-granted
+# Ninjutsu/Taijutsu/Genjutsu. Third, Fourth, and Fifth Attack are
+# Bukijutsu-specific; only Bukijutsu can progress beyond two attacks.
+# All four are auto-granted
 # the moment a qualifying character reaches the level (leveling.py's
 # level-up rewards, and leveling.sync_universal_skills() for a
 # returning high-level player), exactly the same mechanism as
@@ -797,7 +797,7 @@ APPRAISAL_LEVEL_REQUIREMENT = 20
 # proficiency-gated in this game.
 MULTI_ATTACK_SKILLS = [
     ("Second Attack", 25, None),
-    ("Third Attack", 50, None),
+    ("Third Attack", 50, "bukijutsu"),
     ("Fourth Attack", 75, "bukijutsu"),
     ("Fifth Attack", 90, "bukijutsu"),
 ]

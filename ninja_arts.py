@@ -301,17 +301,27 @@ def detonate_trap(target, name):
     return damage
 
 
-def weapon_hit(attacker, victim, damage):
-    """Apply the wielded weapon's item-specific combat property on hit."""
+def _enchantment_feedback(session, message):
+    """A single small line after an enchanted weapon's effect actually triggers."""
+    if session is not None:
+        session.send(f"&C{message}&x")
+
+
+def weapon_hit(attacker, victim, damage, *, session=None):
+    """Apply a weapon property to a landed hit and report successful procs.
+
+    This remains callable without a session by tests or other combat helpers.
+    Only the live combat callers supply session, so no effect is announced on
+    a miss or when a non-matching elemental wielder cannot activate the art.
+    """
     wielded = attacker.equipment.get("wielded", "")
     prop = property_of(wielded)
-    if damage > 0 and getattr(attacker, "samurai_sabre_active", False) and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword":
+    if (damage > 0 and getattr(attacker, "samurai_sabre_active", False)
+            and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword"):
         damage = max(1, damage * 120 // 100)
     element = element_of(wielded)
-    # This buff belongs to the WIELDER, not the weapon's original creator.
-    # Both the Bukijutsu class and a matching unlocked chakra nature are
-    # required on every strike. An ordinary character can carry/trade an
-    # enchanted weapon without gaining its elemental boost or status effect.
+    # The elemental bonus is usable only by a Bukijutsu wielder whose
+    # own revealed chakra nature matches the enchantment.
     if (damage > 0 and element and getattr(attacker, "primary_class", None) == "bukijutsu"
             and element in _known_elements(attacker)
             and is_chakra_steel_weapon(wielded)):
@@ -319,29 +329,49 @@ def weapon_hit(attacker, victim, damage):
         jutsu = data_jutsu.JUTSU[ELEMENTAL_WEAPON_JUTSU[element]]
         effect = jutsu.get("effect")
         if element == "earth":
-            # Earth nature mirrors Earth Wall Crusher's extra upfront force.
             damage = max(1, damage * (100 + EARTH_SWORD_IMPACT_PERCENT) // 100)
+            _enchantment_feedback(session, f"Earth chakra crashes into {victim.name}!")
         elif effect and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 0):
             status_effects.apply_effect(
                 victim.active_status_effects, effect,
                 source=f"{element} chakra weapon")
+            messages = {
+                "fire": f"Your blade ignites {victim.name}!",
+                "water": f"Water chakra drains {victim.name}!",
+                "wind": f"Wind chakra throws {victim.name} off balance!",
+                "lightning": f"Lightning chakra paralyzes {victim.name}!",
+            }
+            _enchantment_feedback(session, messages.get(element, f"{element.title()} chakra strikes {victim.name}!"))
         return damage
     if prop is None or damage <= 0:
         return damage
     if prop == "poison" and random.randint(1, 100) <= 30:
         status_effects.apply_effect(victim.active_status_effects, "poisoned", source="toxin binding")
+        _enchantment_feedback(session, f"Your poisoned blade sickens {victim.name}!")
     elif prop == "flaming" and random.randint(1, 100) <= 25:
         status_effects.apply_effect(victim.active_status_effects, "burning", source="weapon enchantment")
+        _enchantment_feedback(session, f"Your enchanted blade burns {victim.name}!")
     elif prop == "frost" and random.randint(1, 100) <= 25:
         status_effects.apply_effect(victim.active_status_effects, "off_balance", source="weapon enchantment")
+        _enchantment_feedback(session, f"Frost chills {victim.name}, throwing them off balance!")
     elif prop == "shocking" and random.randint(1, 100) <= 20:
         status_effects.apply_effect(victim.active_status_effects, "stunned", source="weapon enchantment")
+        _enchantment_feedback(session, f"Your weapon shocks and stuns {victim.name}!")
     elif prop == "life":
-        attacker.health = min(getattr(attacker, "maximum_health", getattr(attacker, "max_health", 1)), attacker.health + max(1, damage // 10))
+        maximum = getattr(attacker, "maximum_health", getattr(attacker, "max_health", 1))
+        old_health = attacker.health
+        attacker.health = min(maximum, attacker.health + max(1, damage // 10))
+        healed = attacker.health - old_health
+        if healed > 0:
+            _enchantment_feedback(session, f"Your blade drains {healed} HP from {victim.name}!")
     elif prop == "sharp":
-        return damage + max(1, damage // 10)
+        bonus = max(1, damage // 10)
+        _enchantment_feedback(session, f"Your sharp enchantment cuts {victim.name} deeper!")
+        return damage + bonus
     elif prop == "vorpal":
-        return damage + max(1, damage // 6)
+        bonus = max(1, damage // 6)
+        _enchantment_feedback(session, f"Your vorpal enchantment cuts into {victim.name}!")
+        return damage + bonus
     return damage
 
 
