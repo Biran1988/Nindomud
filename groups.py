@@ -15,6 +15,24 @@ solo -- only requested to share XP, not everything.
 MAX_GROUP_SIZE = 6
 GROUP_XP_LEVEL_RANGE = 20
 
+# Authenticate exceptions using the account identity, never a character name.
+# Staff status comes from the live, authenticated Account.
+GROUP_TEST_ACCOUNTS = frozenset({"kinto", "jared"})
+GROUP_ACCESS_DENIED = "Unable to join this group under the current group access rules."
+
+
+def _group_test_exempt(session) -> bool:
+    account = getattr(session, "account", None)
+    account_name = str(getattr(account, "name", "") or "").casefold()
+    if not account_name:
+        account_name = str(getattr(getattr(session, "player", None), "account_name", "") or "").casefold()
+    return bool(account_name in GROUP_TEST_ACCOUNTS
+                or (account is not None and getattr(account, "staff_level", "player") != "player"))
+
+
+def _pair_requires_ip_check(a, b):
+    return not (_group_test_exempt(a) or _group_test_exempt(b))
+
 
 def group_join_violation(candidate, members):
     """Return (reason, offending IP) for attempted joins.
@@ -26,24 +44,21 @@ def group_join_violation(candidate, members):
     import country_geo
     if candidate is None or not getattr(candidate, "player", None):
         return "Player is unavailable.", None
-    candidate_ip = getattr(candidate, "connection_ip", None)
-    if not candidate_ip:
-        return "Cannot verify your connection IP; grouping is unavailable.", None
-    try:
-        address = country_geo.address(candidate_ip)
-    except ValueError:
-        return "Cannot verify your connection IP; grouping is unavailable.", None
     all_members = [m for m in members if m and getattr(m, "player", None)]
     levels = [candidate.player.level] + [m.player.level for m in all_members]
     for member in all_members:
+        if not _pair_requires_ip_check(candidate, member):
+            continue  # approved testing account or authenticated immortal
+        candidate_ip = getattr(candidate, "connection_ip", None)
         other_ip = getattr(member, "connection_ip", None)
-        if not other_ip:
-            return "Cannot verify a member's connection IP; grouping is unavailable.", None
+        if not candidate_ip or not other_ip:
+            return GROUP_ACCESS_DENIED, None
         try:
+            address = country_geo.address(candidate_ip)
             if country_geo.address(other_ip) == address:
-                return "Two players on the same IP cannot group.", str(address)
+                return GROUP_ACCESS_DENIED, str(address)
         except ValueError:
-            return "Cannot verify a member's connection IP; grouping is unavailable.", None
+            return GROUP_ACCESS_DENIED, None
     if max(levels) - min(levels) > GROUP_XP_LEVEL_RANGE:
         return f"Group members must be within {GROUP_XP_LEVEL_RANGE} ninja levels.", None
     return None, None
@@ -57,6 +72,8 @@ def xp_eligible(killer, candidate):
     if abs(candidate.player.level - killer.player.level) > GROUP_XP_LEVEL_RANGE:
         return False
     if killer is candidate:
+        return True
+    if not _pair_requires_ip_check(killer, candidate):
         return True
     a, b = getattr(killer, "connection_ip", None), getattr(candidate, "connection_ip", None)
     if not a or not b:
@@ -76,9 +93,9 @@ def enforce_join(session, members):
             network_bans.temporary_ip_ban(ban_ip, duration_seconds=1800)
         except (OSError, ValueError) as error:
             # Never allow a forbidden same-IP group if security storage fails.
-            session.send(f"&RGrouping denied; unable to record security ban: {error}&x")
+            session.send(f"&R{GROUP_ACCESS_DENIED}&x")
             return False
-        session.send("&RSame-IP group attempt: your IP is banned for 30 minutes.&x")
+        session.send("&RYour connection has been temporarily restricted.&x")
         session.request_close()
         return False
     if reason:
