@@ -33,6 +33,7 @@ class TaijutsuExpansionTests(unittest.TestCase):
 
     def test_empi_and_nidan_are_stamina_strikes_without_handsigns(self):
         player = Player(name="Tai", account_name="Tai", primary_class="taijutsu", level=35)
+        player.room_vnum = 1  # Direct hits require the target in the same room.
         player.learned_skills = ["Empi", "Nidan Kyten Geri"]
         player.stamina = 100
         mob = combat.Mob(1, 100, "target", 35, 1000, 1000, 1, 0, 0)
@@ -75,6 +76,7 @@ class TaijutsuExpansionTests(unittest.TestCase):
 
     def test_strikes_apply_their_distinct_effects(self):
         player = Player(name="Tai", account_name="Tai", primary_class="taijutsu", level=35)
+        player.room_vnum = 1
         player.village = "leaf"
         player.learned_skills = ["Kumade", "Tamashiwara"]
         player.stamina = 100
@@ -114,6 +116,7 @@ class TaijutsuExpansionTests(unittest.TestCase):
 
     def test_ushiro_opening_damage_is_increased(self):
         player = Player(name="Nin", account_name="Nin", primary_class="ninjutsu", level=30)
+        player.room_vnum = 1
         player.village = "leaf"
         player.learned_skills = ["Ushiro Shishou"]
         player.chakra = 100

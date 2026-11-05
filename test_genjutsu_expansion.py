@@ -163,6 +163,7 @@ class GenjutsuExpansionTests(unittest.TestCase):
         target_session = NS(player=target, send=Mock())
         status_effects.apply_effect(target.active_status_effects, "barrier")
         with patch.object(combat.random, "randint", side_effect=[1, 100]), \
+             patch.object(combat.world.WORLD, "get", return_value=NS(safe=False, biome="none")), \
              patch.object(combat, "roll_jutsu_damage", return_value=(20, False)), \
              patch.object(combat, "_jutsu_damage_bonus", return_value=0), \
              patch.object(combat, "grow_skill_from_usage"):
