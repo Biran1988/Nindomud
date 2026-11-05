@@ -781,7 +781,9 @@ APPRAISAL_LEVEL_REQUIREMENT = 20
 
 # Multiple attacks per round, per explicit request. Each entry is
 # (display_name, level_requirement, required_primary_class_or_None).
-# Second/Third Attack are general -- any primary class gets them.
+# Second Attack unlocks at level 25 for Bukijutsu, level 100 for
+# Ninjutsu/Taijutsu/Genjutsu. Third Attack retains its existing level 50
+# entry but cannot fire until Second Attack is available and procs.
 # Fourth/Fifth Attack are Bukijutsu-specific. All four are auto-granted
 # the moment a qualifying character reaches the level (leveling.py's
 # level-up rewards, and leveling.sync_universal_skills() for a
@@ -799,6 +801,13 @@ MULTI_ATTACK_SKILLS = [
     ("Fourth Attack", 75, "bukijutsu"),
     ("Fifth Attack", 90, "bukijutsu"),
 ]
+
+
+def multi_attack_required_level(player, skill_name: str, default_level: int) -> int:
+    """Second Attack is delayed to level 100 for non-Bukijutsu classes."""
+    if skill_name == "Second Attack" and player.primary_class != "bukijutsu":
+        return 100
+    return default_level
 
 # Renames of an existing skill's display name (old -> new). Empty for
 # now -- exists so that if a jutsu is ever renamed, existing players'
