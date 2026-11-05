@@ -24,9 +24,7 @@ GROUP_ACCESS_DENIED = "Unable to join this group under the current group access 
 def _group_test_exempt(session) -> bool:
     account = getattr(session, "account", None)
     account_name = str(getattr(account, "name", "") or "").casefold()
-    if not account_name:
-        account_name = str(getattr(getattr(session, "player", None), "account_name", "") or "").casefold()
-    return bool(account_name in GROUP_TEST_ACCOUNTS
+    return bool(account is not None and account_name in GROUP_TEST_ACCOUNTS
                 or (account is not None and getattr(account, "staff_level", "player") != "player"))
 
 
