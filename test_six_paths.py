@@ -153,7 +153,7 @@ class SixPathsTests(unittest.TestCase):
                         victim.health = 100000
                         rolls = iter([1, 100] if pvp else [])
                         with patch.object(combat.random, "randint", side_effect=lambda lo, hi: next(rolls, lo)), \
-                             patch.object(combat.world.WORLD, "get", return_value=NS(safe=False, biome="none")), \
+                             patch.object(combat.world.WORLD, "get", return_value=combat.world.Room(991712, "Combat Test", "A test battle.", safe=False)), \
                              patch.object(combat, "_jutsu_damage_bonus", return_value=0):
                             if pvp:
                                 combat.use_jutsu_on_player(s, key, self.session(victim))

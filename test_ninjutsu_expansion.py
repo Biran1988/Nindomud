@@ -122,7 +122,7 @@ class NinjutsuExpansionTests(unittest.TestCase):
         clone = NS(clone_element="lightning")
         before = defender.health
         with patch.object(combat.random, "randint", side_effect=[1, 100, 1]), \
-             patch.object(combat.world.WORLD, "get", return_value=NS(safe=False, biome="none")), \
+             patch.object(combat.world.WORLD, "get", return_value=combat.world.Room(991712, "Combat Test", "A test battle.", safe=False)), \
              patch.object(combat, "_player_attack_damage", return_value=40):
             combat._clone_attack_target_once(attacker_session, attacker, defender_session, defender, clone)
         self.assertLess(defender.health, before)
@@ -168,7 +168,7 @@ class NinjutsuExpansionTests(unittest.TestCase):
         defender.health = defender.maximum_health = 1000
         defender_session = NS(player=defender, send=Mock())
         with patch.object(combat.random, "randint", side_effect=[1, 100]), \
-             patch.object(combat.world.WORLD, "get", return_value=NS(safe=False, biome="none")), \
+             patch.object(combat.world.WORLD, "get", return_value=combat.world.Room(991712, "Combat Test", "A test battle.", safe=False)), \
              patch.object(combat, "_sevenfold_damage", return_value=(50, ["fire"], [])), \
              patch.object(combat, "_jutsu_damage_bonus", return_value=0), \
              patch.object(combat, "grow_skill_from_usage"):
