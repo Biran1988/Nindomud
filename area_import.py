@@ -728,8 +728,13 @@ def import_package(staged: dict, creator: str) -> dict:
     storage.save_areas(area_state)
     storage.save_custom_templates(template_state)
     storage.save_spawn_points(point_state)
-    storage.save_world_state(world_state)
     world.WORLD.rooms.update(staged["rooms"])
+    # The area editor may supply door flags on just one end of an exit.
+    # Reconcile them before persisting the imported room snapshot.
+    import door_links
+    door_links.reconcile_all()
+    world_state["rooms"] = world_persistence.snapshot_world()["rooms"]
+    storage.save_world_state(world_state)
     combat.MOB_TEMPLATES.update(staged["mobs"])
     olc.OBJECT_TEMPLATES.update(staged["items"])
     for key, point in staged["points"].items():
