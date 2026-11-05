@@ -558,5 +558,6 @@ CHANGELOG = [
     ("15.412", "Added six Japanese Bukijutsu sword schools with automatic level unlocks from 85 to 250. Activate with SWORDSTYLE; each school grants distinct sword accuracy, damage and stamina costs, improves through landed sword hits and persists across relogs. Jigen Ryu at 250 is the most aggressive."),
     ("15.413", "Second Attack now unlocks at level 100 for Ninjutsu, Taijutsu and Genjutsu, and remains level 25 for Bukijutsu. An existing early non-Bukijutsu unlock is held until level 100 without losing its stored proficiency."),
     ("15.414", "Immortal mob flags now protect against direct attacks, jutsu, trap and damage-over-time effects, and any other health decrement. Protected NPCs cannot be killed, looted or farmed for XP, with safeguards on live combat, ticks and defeat resolution."),
+    ("15.415", "Updated group security handling for authorized test and immortal accounts. Ordinary group limits remain enforced, and access denials now use neutral player-facing messages."),
 
 ]
