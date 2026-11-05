@@ -130,7 +130,8 @@ class Session:
         # like pvp_target/combat_target above, since a group only makes
         # sense while its members are online.
         self.group = None                    # groups.Group this session belongs to, if any
-        self.follow_group_leader = False       # opt-in group leader tracking, never saved to disk
+        self.follow_group_leader = False       # compatible group leader tracking, transient
+        self.follow_target = None             # player followed before or after grouping, transient
         self.trade = None                    # trade.Trade this session is currently negotiating, if any
         self.duel = None                     # duel.Duel this session is currently in (proposed or active), if any
         self.pending_cast = None             # combat.PendingCast in progress (hand-sign casting delay), if any
@@ -338,6 +339,13 @@ class Session:
             import groups
             groups.remove_member(self.group, self)
             self.group = None
+        for follower in list(ACTIVE_SESSIONS):
+            if getattr(follower, "follow_target", None) is self:
+                follower.follow_target = None
+                follower.follow_group_leader = False
+                if follower.player:
+                    follower.send("&YYou stop following because your leader has left.&x")
+        self.follow_target = None
         if self.trade is not None:
             import trade as trade_module
             trade_module.cancel_trade(self.trade)
@@ -1106,6 +1114,10 @@ class Session:
                     if self.group.leader is other:
                         self.group.leader = self
                     other.group = None
+                self.follow_target = other.follow_target
+                for follower in list(ACTIVE_SESSIONS):
+                    if getattr(follower, "follow_target", None) is other:
+                        follower.follow_target = self
                 # Retire the dead transport without triggering the real
                 # logout teardown, which would alter this live character.
                 other.state = State.CLOSED

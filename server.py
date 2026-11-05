@@ -253,9 +253,12 @@ async def pulse_loop() -> None:
 
         if elapsed_since_combat >= COMBAT_ROUND_SECONDS:
             elapsed_since_combat = 0.0
+            mob_turns_taken = set()
             for session in list(ACTIVE_SESSIONS):
                 if session.state == State.PLAYING and session.combat_target is not None:
-                    combat.resolve_pulse(session)
+                    mob = session.combat_target
+                    combat.resolve_pulse(session, retaliate=id(mob) not in mob_turns_taken)
+                    mob_turns_taken.add(id(mob))
                     session.send_prompt()
                 if session.state == State.PLAYING and session.pvp_target is not None:
                     combat.resolve_pvp_pulse(session)

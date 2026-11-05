@@ -3,8 +3,7 @@ Player grouping (Section 65).
 
 A group is a purely session-level construct -- not persisted to any
 player's save file, since it only makes sense while its members are
-actually online (much like session.pvp_target/combat_target). Formed
-via 'group invite <player>' (same room required) + 'group accept',
+actually online (much like session.pvp_target/combat_target). Formed by following a player and having that player enter 'group all',
 and its main mechanical effect is splitting a mob kill's XP reward
 evenly across every group member who's in the same room as the kill
 and still alive, rather than the killer alone taking the full reward
@@ -102,6 +101,42 @@ def enforce_join(session, members):
     return True
 
 
+def assist_group_attack(attacker, mob) -> None:
+    """Pull eligible group members into the same NPC fight, not PvP."""
+    group = getattr(attacker, "group", None)
+    if not group or attacker not in group.members or not getattr(attacker, "player", None):
+        return
+    if getattr(mob, "health", 0) <= 0:
+        return
+    import general_skills
+    import element_choice
+    for member in list(group.members):
+        if (member is attacker or getattr(member, "group", None) is not group
+                or not getattr(member, "player", None)
+                or getattr(getattr(member, "state", None), "name", "") != "PLAYING"
+                or getattr(member, "combat_target", None) is not None
+                or getattr(member, "pvp_target", None) is not None):
+            continue
+        player = member.player
+        if (player.room_vnum != mob.room_vnum or player.health <= 0
+                or not xp_eligible(attacker, member)
+                or player.reaper_seal_id or player.izanami_trapped
+                or player.tsukuyomi_frozen or player.downed_by
+                or player.position == "sleeping"
+                or "asleep" in player.active_status_effects
+                or element_choice.in_choice(player)
+                or getattr(member, "controlled_clone", None) is not None):
+            continue
+        if (getattr(mob, "chunin_exam_owner", "")
+                and mob.chunin_exam_owner != player.name):
+            continue
+        general_skills.break_camouflage(member)
+        member.combat_target = mob
+        player.recently_defeated_timer = 0.0
+        member.send(f"&RYou rush to assist your group against {mob.name}!&x")
+        attacker.send(f"&C{player.name} joins your fight against {mob.name}!&x")
+
+
 class Group:
     def __init__(self, leader):
         self.leader = leader
@@ -121,28 +156,34 @@ def disband(group: "Group") -> None:
     for member in list(group.members):
         member.group = None
         member.follow_group_leader = False
+        if getattr(member, "follow_target", None) is group.leader:
+            member.follow_target = None
 
 
 def follow_leader_step(leader, direction: str, previous_room: int, new_room: int) -> None:
-    """Walk consenting group members after a successful leader movement.
+    """Move followers through normal exits, whether grouped or not.
 
-    This uses normal player command dispatch, not a teleport or direct
-    room assignment: the follower must personally meet every door,
-    jail, combat, status, movement cost and room-entry restriction.
-    Followers who are separated stay behind until they catch up.
+    The following relationship can exist before group formation. Every
+    follower still pays stamina and passes ordinary movement restrictions.
     """
-    group = leader.group
-    if group is None or group.leader is not leader:
-        return
+    from session import ACTIVE_SESSIONS
     import commands
-    for member in list(group.members):
-        if (member is leader or member.group is not group
-                or not getattr(member, "follow_group_leader", False)
-                or not member.player or not getattr(member, "state", None)
-                or member.state.name != "PLAYING"
+    for member in list(ACTIVE_SESSIONS):
+        if member is leader:
+            continue
+        direct_follow = getattr(member, "follow_target", None) is leader
+        legacy_follow = (
+            getattr(member, "group", None) is not None
+            and member.group is getattr(leader, "group", None)
+            and member.group.leader is leader
+            and getattr(member, "follow_group_leader", False)
+        )
+        if not (direct_follow or legacy_follow):
+            continue
+        if (not getattr(member, "player", None)
+                or getattr(getattr(member, "state", None), "name", "") != "PLAYING"
                 or member.player.room_vnum != previous_room):
             continue
-        # A follower still fighting somebody must not get dragged away.
         if member.combat_target is not None or member.pvp_target is not None:
             member.send("&YYou cannot follow while fighting!&x")
             continue
@@ -152,8 +193,7 @@ def follow_leader_step(leader, direction: str, previous_room: int, new_room: int
         member.send(f"&CYou follow {leader.player.name} {direction}.&x")
         commands.dispatch(member, direction, [])
         if member.player.room_vnum != new_room:
-            member.send("&YYou could not keep up with your group leader. "
-                        "Catch up to continue following.&x")
+            member.send("&YYou could not keep up with your leader. Catch up to continue following.&x")
 
 
 def remove_member(group: "Group", member) -> None:
@@ -163,6 +203,8 @@ def remove_member(group: "Group", member) -> None:
     (cmd_group) does that for the member who's actually leaving, since
     this function only touches the group's OWN bookkeeping."""
     member.follow_group_leader = False
+    if getattr(member, "follow_target", None) is group.leader:
+        member.follow_target = None
     if member in group.members:
         group.members.remove(member)
     if not group.members:
@@ -170,8 +212,11 @@ def remove_member(group: "Group", member) -> None:
     if group.leader is member:
         group.leader = group.members[0]
         group.leader.follow_group_leader = False
+        group.leader.follow_target = None
         for survivor in group.members:
             if survivor is not group.leader:
+                if survivor.follow_group_leader:
+                    survivor.follow_target = group.leader
                 survivor.send(f"&G{group.leader.player.name} is now the group leader.&x")
     if len(group.members) == 1:
         disband(group)

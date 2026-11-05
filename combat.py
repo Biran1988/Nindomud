@@ -759,6 +759,8 @@ def start_attack(session, mob: Mob) -> None:
     general_skills.break_camouflage(session)
     session.combat_target = mob
     session.player.recently_defeated_timer = 0.0
+    import groups
+    groups.assist_group_attack(session, mob)
 
 
 def jutsu_resource_shortfall(player: Player, jutsu: dict, jutsu_key: str) -> str | None:
@@ -2570,7 +2572,7 @@ def _resolve_summon_round(session, player, mob) -> None:
         player.summon_weapon_buff_active = True
 
 
-def resolve_pulse(session) -> None:
+def resolve_pulse(session, *, retaliate: bool = True) -> None:
     """One automatic-attack round for a session actively fighting a mob.
     Assumes tick_effects_pulse()/tick_all_mob_effects() have already run
     for this pulse (server.py's pulse_loop does this before calling here;
@@ -2595,6 +2597,8 @@ def resolve_pulse(session) -> None:
         session.combat_target = None
         reset_summon_round_state(player)
         return
+    import groups
+    groups.assist_group_attack(session, mob)
 
     # Full multiline fight programs fire while an actual player is
     # fighting this specific live NPC; chance is per script entry.
@@ -2675,6 +2679,10 @@ def resolve_pulse(session) -> None:
     if is_training_dummy(mob):
         # The player still lands genuine hits and gains usage proficiency,
         # but the practice dummy never retaliates or casts any jutsu.
+        return
+    # Shared enemies retaliate once per server round even when multiple
+    # grouped characters each make their normal full round of attacks.
+    if not retaliate:
         return
     if _is_action_blocked(mob):
         session.send(f"{mob.name} is trapped in the illusion and cannot attack this round.")

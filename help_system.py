@@ -329,53 +329,45 @@ DEFAULT_HELP_ENTRIES = [
     {
         "primary_keyword": "follow",
         "keywords": ["follow", "unfollow", "auto follow", "group follow"],
-        "title": "Follow Group Leader",
+        "title": "Follow a Player",
         "body": (
-            "Syntax: follow leader | follow <leader name> | follow off | unfollow | group follow on | group follow off\n"
-            "\n"
-            "Join a group with 'group invite <player>' and 'group accept'. Stand in the same room as its leader, then type 'follow leader' or 'follow <name>' to automatically walk through the same exits when the leader moves. The follower pays normal Stamina costs, can be stopped by closed doors, fighting, status effects, seals and restrictions, and is never teleported to catch up. Following stays enabled if you lag behind; manually catch up and it resumes. Only the group leader can be followed. 'follow off' stops tracking without leaving the party; leaving, being kicked or disbanding turns it off. Reconnecting within the normal link-dead grace period preserves your choice.\n"
-            "\n"
-            "For shared XP and group leadership commands, see 'help group'."
+            "Syntax: follow <player> | follow leader | follow off | unfollow\n\n"
+            "Stand in the same room and type 'follow <player>' to follow them, "
+            "whether or not either of you is already in a group. Following is "
+            "your consent to be recruited when that player types 'group all'. "
+            "You also automatically walk through the same exit when they move, "
+            "paying your own Stamina and obeying all combat, door and movement "
+            "restrictions. Catch up to resume if separated. 'follow off' or "
+            "'unfollow' stops following without leaving any group. "
+            "See 'help group' for group combat and shared experience."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "group",
         "keywords": ["group", "grouping", "party", "shared xp", "shared experience"],
-        "title": "Grouping",
+        "title": "Grouping and Group Combat",
         "body": (
-            "Syntax: group invite <player> | group accept | group follow [on|off] | group | group leave | group kick <player> | group disband\n"
-            "\n"
-            "Description: A group shares experience from mob kills -- form one with a party of up to 6 to level up together, rather than every kill only benefiting whoever lands the final blow. Groups are temporary: they aren't saved, and only exist while members are actually online.\n"
-            "\n"
-            "&Cgroup invite <player>&x - Invites someone in your current room. Starts a new group if you weren't already leading one.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&Cgroup accept&x - Joins the group that just invited you.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&Cfollow leader&x / &Cfollow <leader name>&x - Automatically follow the group leader through normal exits. Each step costs your own Stamina and respects doors, combat, seals and area restrictions. If separated, catch up to resume.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&Cfollow off&x / &Cunfollow&x / &Cgroup follow off&x - Stop automatic following without leaving the group. Use 'follow' to check status.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&Cgroup&x (no arguments) - Shows your group's roster and everyone's current HP.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&Cgroup leave&x - Leaves your current group. If you were the leader, leadership passes to another member automatically.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&Cgroup kick <player>&x / &Cgroup disband&x - Leader-only: removes one member, or dissolves the whole group.\n"
-            "  &G[Active]&x\n"
-            "\n"
-            "&D(Shared XP only -- ryo, loot, and mission progress from a kill still go solely to whoever landed the kill, not split with the group. Only every group member who's in the SAME ROOM as the kill, and still alive, gets a share -- an equal split of the kill's full reward, not everyone getting the full amount.)&x\n"
-            "\n"
-            "Date: 2026-08-17"
+            "Syntax: follow <leader> | group all | group | group leave | "
+            "group kick <player> | group disband\n\n"
+            "Players first type FOLLOW <leader> in the leader's room. "
+            "The leader then enters GROUP ALL to recruit every eligible "
+            "person currently following them in that room, up to 6 total. "
+            "No invitations or accept prompts are required. "
+            "Grouping checks the normal 20-level spread and access rules.\n\n"
+            "Whenever any member starts attacking a mob, eligible group "
+            "members alive in that room automatically join the same fight "
+            "and attack on their own combat turns. A mob retaliates once per "
+            "round, not once per group member. Group auto-assist never "
+            "pulls a member away from another fight and does not initiate PvP.\n\n"
+            "GROUP shows members and HP. GROUP LEAVE leaves; GROUP KICK "
+            "<player> removes a follower; GROUP DISBAND dissolves the party. "
+            "You can keep following or stop following independently of group "
+            "membership. Group members in the same room and eligible for XP "
+            "split mob experience. Loot, Ryo and mission progress remain "
+            "assigned to the killer. See 'help follow'."
         ),
-        "created_by": "System",
-        "updated_by": "System",
-        "updated_at": 0.0,
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "team",
@@ -401,7 +393,7 @@ DEFAULT_HELP_ENTRIES = [
             "&Cteam leave&x / &Cteam disband&x - Leaves your team, or (leader-only) dissolves it entirely for every member. Either way starts a 24-hour cooldown before you (or, for a disband, every member) can join or create another team.\n"
             "  &G[Active]&x\n"
             "\n"
-            "&D(The XP bonus specifically requires BOTH being on the same team AND actively grouped together via 'group invite' -- being teammates alone, with no active group, earns nothing extra.)&x\n"
+            "&D(The XP bonus specifically requires BOTH being on the same team AND actively grouped together via 'group all' -- being teammates alone, with no active group, earns nothing extra.)&x\n"
             "\n"
             "Date: 2026-08-24"
         ),
@@ -4473,7 +4465,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and

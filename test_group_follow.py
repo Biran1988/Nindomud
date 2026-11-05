@@ -47,15 +47,16 @@ class GroupFollowTests(unittest.TestCase):
             self.addCleanup(p.stop)
 
     def make(self, name):
-        client = session_module.Session(Mock(), Mock())
-        client.account = SimpleNamespace(staff_level="player")
+        client = session_module.Session(Mock(), Mock(),
+                                        connection_ip=f"198.51.100.{len(self.clients) + 20}")
+        client.account = SimpleNamespace(name=name, staff_level="player")
         client.player = Player(name=name, account_name=name, village="leaf",
                                room_vnum=75001, stamina=10)
         client.state = session_module.State.PLAYING
         self.clients.append(client)
         return client
 
-    def test_follow_is_opt_in_and_only_group_leader_is_followable(self):
+    def test_follow_is_opt_in_and_group_leader_is_followable(self):
         commands.cmd_move(self.leader, "north")
         self.assertEqual(self.follower.player.room_vnum, 75001)
         self.assertEqual(self.second.player.room_vnum, 75001)
@@ -135,6 +136,47 @@ class GroupFollowTests(unittest.TestCase):
             commands.cmd_move(self.leader, "north")
         self.assertEqual(self.leader.player.room_vnum, 75003)
         self.assertEqual(self.follower.player.room_vnum, 75001)
+
+    def test_follow_before_group_all_and_cooperative_mob_combat(self):
+        leader = self.make("NewLeader")
+        follower = self.make("NewFollower")
+        another = self.make("NewAnother")
+        commands.cmd_follow(follower, ["NewLeader"])
+        commands.cmd_follow(another, ["NewLeader"])
+        self.assertIs(follower.follow_target, leader)
+        self.assertIsNone(follower.group)
+        commands.cmd_move(leader, "north")
+        self.assertEqual(follower.player.room_vnum, 75002)
+        self.assertEqual(another.player.room_vnum, 75002)
+        commands.cmd_group(leader, ["all"])
+        self.assertIsNotNone(leader.group)
+        self.assertEqual(len(leader.group.members), 3)
+        self.assertIs(follower.group, leader.group)
+        self.assertTrue(follower.follow_group_leader)
+        mob = SimpleNamespace(name="a wolf", room_vnum=75002, health=100,
+                              template_vnum=9999, chunin_exam_owner="")
+        with patch.object(combat, "is_immortal_mob", return_value=False):
+            combat.start_attack(leader, mob)
+        self.assertIs(follower.combat_target, mob)
+        self.assertIs(another.combat_target, mob)
+
+    def test_existing_opponent_or_other_room_blocks_group_assist(self):
+        leader = self.make("PartyLead")
+        follower = self.make("PartyMember")
+        commands.cmd_follow(follower, ["PartyLead"])
+        commands.cmd_group(leader, ["all"])
+        other = object()
+        follower.combat_target = other
+        mob = SimpleNamespace(name="boar", room_vnum=75001, health=100,
+                              template_vnum=9998, chunin_exam_owner="")
+        with patch.object(combat, "is_immortal_mob", return_value=False):
+            combat.start_attack(leader, mob)
+        self.assertIs(follower.combat_target, other)
+        follower.combat_target = None
+        follower.player.room_vnum = 75002
+        with patch.object(combat, "is_immortal_mob", return_value=False):
+            combat.start_attack(leader, mob)
+        self.assertIsNone(follower.combat_target)
 
     def test_disconnected_or_distant_leader_cannot_be_followed(self):
         self.leader.player.room_vnum = 75002

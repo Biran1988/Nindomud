@@ -559,5 +559,6 @@ CHANGELOG = [
     ("15.413", "Second Attack now unlocks at level 100 for Ninjutsu, Taijutsu and Genjutsu, and remains level 25 for Bukijutsu. An existing early non-Bukijutsu unlock is held until level 100 without losing its stored proficiency."),
     ("15.414", "Immortal mob flags now protect against direct attacks, jutsu, trap and damage-over-time effects, and any other health decrement. Protected NPCs cannot be killed, looted or farmed for XP, with safeguards on live combat, ticks and defeat resolution."),
     ("15.415", "Updated group security handling for authorized test and immortal accounts. Ordinary group limits remain enforced, and access denials now use neutral player-facing messages."),
+    ("15.416", "Players now FOLLOW before grouping; a leader's GROUP ALL recruits eligible followers. Group members automatically assist each other's mob fights, with one mob retaliation per round."),
 
 ]
