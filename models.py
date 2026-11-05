@@ -185,6 +185,7 @@ class Player:
     reaper_seal_id: str = ""
     reaper_seal_room_vnum: Optional[int] = None
     taijutsu_stance: str = ""  # one active stance; persists across reconnects
+    sword_style: str = ""  # one selected Bukijutsu sword school; saved across logins
     # Each dose tracks elapsed real time and HP already paid out so saving
     # and reconnecting cannot restart or duplicate a course of healing.
     medical_healing: List[dict] = field(default_factory=list)
