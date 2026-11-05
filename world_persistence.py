@@ -140,6 +140,9 @@ def apply_saved_world() -> int:
 
     state = storage.load_world_state()
     if not state:
+        # The built-in world may already contain historical one-way doors.
+        import door_links
+        door_links.reconcile_all()
         return 0
 
     custom_templates = storage.load_custom_templates()
@@ -172,6 +175,10 @@ def apply_saved_world() -> int:
 
     apply_deleted_areas(state)
 
+    # Older saved rooms may define a door on only one side. Upgrade those
+    # pairs in memory without replacing any user-saved area file.
+    import door_links
+    door_links.reconcile_all()
     return restored
 
 
