@@ -2281,10 +2281,12 @@ def _roll_extra_attacks(player) -> int:
     proficiency is its % chance of triggering -- a freshly-granted
     skill at 0% contributes nothing until trained up."""
     extra = 0
-    for skill_name, _level_req, _required_class in data_jutsu.MULTI_ATTACK_SKILLS:
-        if skill_name not in player.learned_skills:
+    for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
+        if (skill_name not in player.learned_skills
+                or (required_class and player.primary_class != required_class)
+                or player.level < data_jutsu.multi_attack_required_level(player, skill_name, level_req)):
             break
-        proficiency = player.skill_proficiencies.get(skill_name, 0)
+        proficiency = max(0, min(100, player.skill_proficiencies.get(skill_name, 0)))
         if random.randint(1, 100) <= proficiency:
             extra += 1
         else:
@@ -2337,7 +2339,7 @@ def _offhand_attack(session, target, target_session=None):
         player.equipment["wielded"] = primary
 
 
-def _player_attack_mob_once(session, player, mob) -> None:
+def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
     """One single attack (to-hit roll through any bleeding tick) from
     player against mob -- extracted so resolve_pulse can call this
     once per attack a player has earned this round (see
@@ -2373,7 +2375,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
     if weapon_skill:
         grow_skill_from_usage(player, weapon_skill, session=session)
-    if random.randint(1, 100) > to_hit:
+    if not guaranteed_hit and random.randint(1, 100) > to_hit:
         session.send(f"You {attack_verb} at {mob.name} but miss!")
         import room_actions
         room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(player.equipment.get('wielded', ''))} at {mob.name} but misses.")
@@ -2397,6 +2399,7 @@ def _player_attack_mob_once(session, player, mob) -> None:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
         session.send(f"{mob.name} bleeds for {damage_messages.describe_damage(bleed)} damage.")
+    return True
 
 
 SHADOW_CLONE_DAMAGE_SCALE = 0.5  # a clone hits for half what the player's own attack would
@@ -2617,10 +2620,18 @@ def resolve_pulse(session) -> None:
         else:
             _player_attack_mob_once(session, player, mob)
             if mob.health > 0:
-                for _ in range(_roll_extra_attacks(player) + sage_mode.extra_attacks(player)):
+                trained_extra = _roll_extra_attacks(player)
+                for attack_index in range(trained_extra + sage_mode.extra_attacks(player)):
                     if mob.health <= 0:
                         break
-                    _player_attack_mob_once(session, player, mob)
+                    if attack_index < trained_extra:
+                        skill_name = data_jutsu.MULTI_ATTACK_SKILLS[attack_index][0]
+                        mastered = player.skill_proficiencies.get(skill_name, 0) >= 100
+                        landed = _player_attack_mob_once(session, player, mob, guaranteed_hit=mastered)
+                        if landed:
+                            grow_skill_from_usage(player, skill_name, session=session)
+                    else:
+                        _player_attack_mob_once(session, player, mob)
             if mob.health > 0:
                 _offhand_attack(session, mob)
             for clone in active_shadow_clones(player):
@@ -3767,7 +3778,7 @@ def start_pvp_attack(session, target_session) -> None:
     target_session.pvp_target = session
 
 
-def _player_attack_target_once(session, player, target_session, target) -> None:
+def _player_attack_target_once(session, player, target_session, target, guaranteed_hit=False) -> bool:
     """One single PvP attack (to-hit roll through the damage/miss/dodge
     messages to both sides) from player against target -- extracted so
     resolve_pvp_pulse can call this once per attack a player has
@@ -3807,7 +3818,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     weapon_skill = data_weapons.skill_for_item(attacker_wielded)
     if weapon_skill:
         grow_skill_from_usage(player, weapon_skill, session=session)
-    if random.randint(1, 100) > to_hit:
+    if not guaranteed_hit and random.randint(1, 100) > to_hit:
         session.send(f"You {attack_verb} at {target.name} but miss!")
         target_session.send(f"&C{player.name} attacks you but misses!&x")
         return
@@ -3825,12 +3836,12 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
         target_session.send(f"&R{player.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) - hidden_mist.advantage(player, target)):
+    if not guaranteed_hit and random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your attack!&x")
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
 
-    if _soto_uke_blocks(target, player.level):
+    if not guaranteed_hit and _soto_uke_blocks(target, player.level):
         session.send(f"&C{target.name} blocks your attack with Soto Uke!&x")
         target_session.send(f"&CYou use Soto Uke to block {player.name}'s attack!&x")
         return
@@ -3853,6 +3864,7 @@ def _player_attack_target_once(session, player, target_session, target) -> None:
     target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg)} damage.")
     import room_actions
     room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} {target.name} for {damage_messages.describe_damage(dmg)} damage.", exclude=(target_session,))
+    return True
 
 
 def _clone_attack_target_once(session, player, target_session, target, clone) -> None:
@@ -4008,10 +4020,18 @@ def resolve_pvp_pulse(session) -> None:
 
     _player_attack_target_once(session, player, target_session, target)
     if target.health > 0:
-        for _ in range(_roll_extra_attacks(player) + sage_mode.extra_attacks(player)):
+        trained_extra = _roll_extra_attacks(player)
+        for attack_index in range(trained_extra + sage_mode.extra_attacks(player)):
             if target.health <= 0:
                 break
-            _player_attack_target_once(session, player, target_session, target)
+            if attack_index < trained_extra:
+                skill_name = data_jutsu.MULTI_ATTACK_SKILLS[attack_index][0]
+                mastered = player.skill_proficiencies.get(skill_name, 0) >= 100
+                landed = _player_attack_target_once(session, player, target_session, target, guaranteed_hit=mastered)
+                if landed:
+                    grow_skill_from_usage(player, skill_name, session=session)
+            else:
+                _player_attack_target_once(session, player, target_session, target)
     if target.health > 0:
         _offhand_attack(session, target, target_session)
     for clone in active_shadow_clones(player):
