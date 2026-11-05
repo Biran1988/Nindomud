@@ -70,6 +70,7 @@ import village_perks
 import olc
 import programs
 import world
+import door_links
 from models import Player
 from data_villages import VILLAGES
 from prompt import PRESETS
@@ -487,6 +488,7 @@ def cmd_open(session, args: List[str]) -> None:
         session.send("It's locked.")
         return
     room.exit_door_open[direction] = True
+    door_links.mirror(room, direction)
     session.send(f"You open the door to the {direction}.")
 
 
@@ -504,6 +506,7 @@ def cmd_close(session, args: List[str]) -> None:
         session.send("It's already closed.")
         return
     room.exit_door_open[direction] = False
+    door_links.mirror(room, direction)
     session.send(f"You close the door to the {direction}.")
 
 
@@ -534,6 +537,7 @@ def cmd_unlock(session, args: List[str]) -> None:
             return
 
     flags_here.remove("locked")
+    door_links.mirror(room, direction)
     session.send(f"You unlock the door to the {direction}.")
 
 
@@ -555,6 +559,7 @@ def cmd_lock(session, args: List[str]) -> None:
         session.send("It's already locked.")
         return
     flags_here.append("locked")
+    door_links.mirror(room, direction)
     session.send(f"You lock the door to the {direction}.")
 
 
