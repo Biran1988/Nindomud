@@ -65,6 +65,7 @@ import roulette
 import slots
 import status_effects
 import sage_mode
+import sword_styles
 import storage
 import village_perks
 import olc
@@ -5516,6 +5517,8 @@ def _categorize_skill(skill_name: str) -> str:
     for jutsu in data_jutsu.JUTSU.values():
         if jutsu["display_name"].lower() == lname:
             return "KKGK" if jutsu.get("kkg_gate") else jutsu["class_requirement"].capitalize()
+    if skill_name in sword_styles.STYLES:
+        return "Bukijutsu"
     if lname in {"sharingan", "mangekyo sharingan", "izanagi"}:
         return "KKGK"
     if lname == "punch":
@@ -5534,6 +5537,8 @@ def _skill_catalog_for_category(category: str) -> list:
         for jutsu in data_jutsu.JUTSU.values():
             if jutsu["class_requirement"] == class_key and not jutsu.get("kkg_gate"):
                 entries.append((jutsu["display_name"], jutsu["level_requirement"]))
+        if category == "Bukijutsu":
+            entries.extend((name, info["level"]) for name, info in sword_styles.STYLES.items())
     elif category == "KKGK":
         # This overrides only PRAC presentation. Jutsu retain their
         # original combat class, chakra costs, and bloodline unlocks.
@@ -5710,6 +5715,8 @@ def _find_gambler(room_vnum: int):
 
 
 def _categorize_underlying_class(skill_name: str) -> str:
+    if skill_name in sword_styles.STYLES:
+        return "Bukijutsu"
     for jutsu in data_jutsu.JUTSU.values():
         if jutsu["display_name"].lower() == skill_name.lower():
             name = jutsu["class_requirement"].capitalize()
@@ -9919,6 +9926,9 @@ COMMANDS = {
     "insert": lightsabers.insert_gem,
     "imms": cmd_imms, "immortal": cmd_imms, "immortals": cmd_imms,
     "sage": sage_mode.command,
+    "swordstyle": sword_styles.command,
+    "sstyle": sword_styles.command,
+    "style": sword_styles.command,
     "summon": sage_mode.summon_command,
     "order": sage_mode.order_command,
     "teach": __import__("player_teaching").command,
