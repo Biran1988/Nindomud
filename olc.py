@@ -1873,6 +1873,7 @@ def _set_player_mangekyo(target, enabled: bool) -> str:
     if any(eye in roster for eye in old_pair):
         target.mangekyo_previous_eyes = [eye for eye in old_pair if eye in roster]
     target.bloodline_mangekyo = False
+    target.susanoo_active = False
     target.mangekyo_eye_1 = None
     target.mangekyo_eye_2 = None
     target.mangekyo_eyes_used.clear()

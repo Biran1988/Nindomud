@@ -736,8 +736,11 @@ def _player_attack_damage(player: Player) -> int:
     import village_perks
     dmg = int(dmg * village_perks.damage_multiplier(player.village))
     import sage_mode
-    return sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg),
-                              weapon=bool(player.equipment.get("wielded")))
+    import susanoo
+    return susanoo.outgoing_damage(
+        player, sage_mode.outgoing(
+            player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg),
+            weapon=bool(player.equipment.get("wielded"))))
 
 
 def _mob_attack_damage(mob: Mob) -> int:
@@ -2392,7 +2395,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + __import__("susanoo").accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -2738,7 +2741,10 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
             else:
                 session.send("&RYou weren't fast enough to counter!&x")
         dmg = commands_module.reduce_weapon_damage(player, data_weapons.weapon_type_for_item(mob.equipment.get("wielded", "")), dmg)
-        dmg = sage_mode.incoming(player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg))
+        import susanoo
+        dmg = susanoo.incoming_damage(
+            player, sage_mode.incoming(
+                player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg)))
         player.health -= dmg
         session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
         import room_actions
@@ -3857,7 +3863,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + __import__("susanoo").accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
@@ -3902,7 +3908,10 @@ def _player_attack_target_once(session, player, target_session, target, guarante
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
     dmg = ninja_arts.weapon_hit(player, target, dmg, session=session)
-    dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
+    import susanoo
+    dmg = susanoo.incoming_damage(
+        target, sage_mode.incoming(
+            target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg)))
     target.health -= dmg
     sword_styles.successful_strike(player, session)
     if is_crit:

@@ -105,8 +105,10 @@ def tick_idle_upkeep(session) -> None:
     import ninja_arts
     import regen
     import sage_mode
+    import susanoo
 
     visible = False
+    visible = susanoo.idle_upkeep(session) or visible
     for message in regen.tick_sharingan_idle(session.player):
         session.send(message)
         visible = True
@@ -254,7 +256,12 @@ async def pulse_loop() -> None:
         if elapsed_since_combat >= COMBAT_ROUND_SECONDS:
             elapsed_since_combat = 0.0
             mob_turns_taken = set()
+            import susanoo
             for session in list(ACTIVE_SESSIONS):
+                if (session.state == State.PLAYING
+                        and (session.combat_target is not None or session.pvp_target is not None)):
+                    if susanoo.combat_upkeep(session):
+                        session.send_prompt()
                 if session.state == State.PLAYING and session.combat_target is not None:
                     mob = session.combat_target
                     combat.resolve_pulse(session, retaliate=id(mob) not in mob_turns_taken)

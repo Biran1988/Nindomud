@@ -296,6 +296,12 @@ class Player:
     # combat abilities are deliberately out of scope, a separate
     # future follow-up.
     bloodline_mangekyo: bool = False
+    # Susanoo belongs to every Mangekyo holder, separate from rolled eyes.
+    # All appearance and combat-kit choices persist in the player save.
+    susanoo_color: str = "purple"
+    susanoo_style: str = "balanced"
+    susanoo_weapon: str = "sword"
+    susanoo_active: bool = False
     # The 2 guaranteed-different real Mangekyo techniques rolled from
     # data_mangekyo.TECHNIQUE_ROSTER the instant bloodline_mangekyo is
     # set (Section 140, per direct confirmation: "each eye gets its

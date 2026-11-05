@@ -133,6 +133,8 @@ def try_cast(session, mob):
     damage = status_effects.reduce_outgoing_damage(mob.active_status_effects, damage)
     damage = sage_mode.incoming(
         player, status_effects.reduce_incoming_damage(player.active_status_effects, damage))
+    import susanoo
+    damage = susanoo.incoming_damage(player, damage)
     import gem_inlays
     damage = gem_inlays.reduce_counter_damage(player, art.get("element", "none"), damage)
     damage = max(1, damage)

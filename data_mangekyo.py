@@ -8,8 +8,8 @@ Confirmed design, locked in piece by piece:
 - Every Mangekyo user (bloodline_mangekyo=True) automatically, always
   has Susanoo -- a real, universal ability tied to having Mangekyo at
   all, NOT part of the rolled roster below, never something a player
-  could "miss." Susanoo's own real combat mechanics are not designed
-  yet (a separate, later follow-up).
+  could "miss." Its live chakra-maintained mechanics, color, combat
+  style and spectral weapon selection are in susanoo.py.
 - On unlock, exactly 2 more techniques are rolled from
   TECHNIQUE_ROSTER below, one "per eye" -- confirmed directly to be
   2 INDEPENDENT rolls, guaranteed different from each other (no

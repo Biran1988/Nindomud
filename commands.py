@@ -9931,6 +9931,8 @@ COMMANDS = {
     "insert": lightsabers.insert_gem,
     "imms": cmd_imms, "immortal": cmd_imms, "immortals": cmd_imms,
     "sage": sage_mode.command,
+    "susanoo": __import__("susanoo").command,
+    "set": __import__("susanoo").command_set,
     "swordstyle": sword_styles.command,
     "sstyle": sword_styles.command,
     "style": sword_styles.command,

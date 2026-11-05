@@ -4422,6 +4422,61 @@ for _release_id, _name in _elemental_kkg.ELEMENTAL_RELEASE_NAMES.items():
 
 
 import sword_styles as _sword_schools
+import susanoo as _susanoo
+DEFAULT_HELP_ENTRIES.extend([
+    {
+        "primary_keyword": "susanoo",
+        "keywords": ["susanoo", "susanoo on", "susanoo off", "susanoo chakra"],
+        "title": "Susanoo (Mangekyo)",
+        "body": (
+            "Syntax: susanoo | susanoo on | susanoo off | set susanoo\\n\\n"
+            "Every Mangekyo Sharingan holder automatically has Susanoo, "
+            "in addition to their two independently rolled Mangekyo eyes. "
+            "SUSANOO ON summons a towering chakra guardian for "
+            + str(_susanoo.ACTIVATION_CHAKRA)
+            + " Chakra, draining "
+            + str(_susanoo.COMBAT_UPKEEP_CHAKRA)
+            + " Chakra per combat round or "
+            + str(_susanoo.IDLE_UPKEEP_CHAKRA)
+            + " Chakra per idle upkeep. Running short of chakra ends the form.\\n\\n"
+            "Use SET SUSANOO to see the menu, then SET SUSANOO COLOR <color>, "
+            "SET SUSANOO STYLE <offensive|defensive|balanced>, and "
+            "SET SUSANOO WEAPON <weapon>. Choices save immediately and "
+            "survive logout, reboot and Mangekyo OFF/ON rerolls. The "
+            "appearance color is cosmetic; style and weapon give the "
+            "current bonuses to ordinary melee damage, accuracy and/or "
+            "incoming damage reduction. "
+            "Offensive: +25% damage and 5% protection; defensive: +5% "
+            "damage and 25% protection; balanced: +12% damage and 15% "
+            "protection. Sword: +10% damage; Bow: +12 accuracy; Shield: "
+            "+10% protection; Dagger: +5% damage/+8 accuracy; "
+            "Spear: +8% damage/+6 accuracy; Axe: +15% damage/-3 accuracy; "
+            "Staff: +5% damage/+3 accuracy/+5% protection; "
+            "Mace: +12% damage/-2 accuracy. "
+            "Active combat style/weapon changes are unavailable in combat. "
+            "This ability is universal to Mangekyo, and is not an eye roll."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "set",
+        "keywords": ["set", "set susanoo", "susanoo settings", "susanoo customization"],
+        "title": "Set Susanoo",
+        "body": (
+            "Syntax: set susanoo | set susanoo colors | "
+            "set susanoo color <name> | set susanoo style "
+            "<offensive|defensive|balanced> | set susanoo weapons | "
+            "set susanoo weapon <sword|bow|shield|dagger|spear|axe|staff|mace>\\n\\n"
+            "SET SUSANOO opens a compact menu with your current color, "
+            "combat style, weapon and active status. Color options: "
+            + ", ".join(_susanoo.COLORS)
+            + ". Style and weapon options affect combat, color changes "
+            "appearance only. Requires Mangekyo Sharingan. Preferences "
+            "save immediately. Activate separately with SUSANOO ON."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+])
 DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "swordstyle",
     "keywords": ["swordstyle", "sword style", "sword schools", "japanese sword styles", "sstyle"],
@@ -4465,7 +4520,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team", "bloodset"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team", "bloodset", "susanoo", "set"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
