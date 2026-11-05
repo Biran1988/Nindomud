@@ -46,6 +46,7 @@ from typing import Dict, List, Optional
 
 import config
 import data_jutsu
+import sword_styles
 import jutsu_balance
 import hyuga
 import data_mangekyo
@@ -2369,7 +2370,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -2381,6 +2382,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
         room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(player.equipment.get('wielded', ''))} at {mob.name} but misses.")
         return
     dmg = _player_attack_damage(player)
+    dmg = sword_styles.damage_bonus(player, dmg)
     dmg = _weapon_expert_damage(player, dmg)
     dmg = int(dmg * (100 + _summon_weapon_buff_damage_percent(player)) / 100)
     is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
@@ -2389,6 +2391,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
     dmg = ninja_arts.weapon_hit(player, mob, dmg)
     mob.health -= dmg
+    sword_styles.successful_strike(player, session)
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
@@ -3811,7 +3814,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
@@ -3824,6 +3827,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
         return
 
     dmg = _player_attack_damage(player)
+    dmg = sword_styles.damage_bonus(player, dmg)
     dmg = _weapon_expert_damage(player, dmg)
     dmg = int(dmg * (100 + _summon_weapon_buff_damage_percent(player)) / 100)
     is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
@@ -3857,6 +3861,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     dmg = ninja_arts.weapon_hit(player, target, dmg)
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     target.health -= dmg
+    sword_styles.successful_strike(player, session)
     if is_crit:
         session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
