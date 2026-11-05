@@ -21,9 +21,9 @@ SECRET_KEYS = {
 COMMAND_OVERRIDES = {
     "group": ("GROUP | GROUP INVITE <player> | GROUP ACCEPT | GROUP LEAVE | GROUP KICK <player> | GROUP DISBAND | GROUP FOLLOW",
               "Only groups within a 20-ninja-level spread can share combat XP. "
-              "Players on the same verified connection IP cannot group: attempting "
-              "to do so disconnects and bans that IP for 30 minutes. An invite and "
-              "its acceptance are both checked. Grouped members must be alive and "
+              "Group access restrictions are enforced at invitation and acceptance. "
+              "Some attempts may cause temporary connection restrictions. "
+              "Grouped members must be alive and "
               "in the kill room to share experience; off-level members receive no "
               "shared XP. FOLLOW helps you travel with your leader, using normal stamina."),
     "examine": ("EXAMINE <carried or equipped item>",
@@ -66,8 +66,8 @@ COMMAND_OVERRIDES = {
               "Base damage is before mastery, chakra-nature and other modifiers."),
     "ban": ("BAN LIST | BAN IP <address|CIDR> [reason] | BAN REMOVE IP <address|CIDR>",
              "Staff-only. IP and country bans are saved independently of "
-             "player data. Automated same-IP grouping bans last 30 minutes "
-             "and expire automatically; BAN LIST shows remaining duration."),
+             "player data. Temporary connection restrictions expire "
+             "automatically; BAN LIST shows remaining duration."),
 }
 
 def _entry(key, title, body, aliases=()):
