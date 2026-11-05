@@ -318,9 +318,10 @@ def grant_experience(player: Player, amount: int) -> List[str]:
         for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
             if required_class and player.primary_class != required_class:
                 continue
-            if player.level >= level_req and skill_name not in player.learned_skills:
+            needed = data_jutsu.multi_attack_required_level(player, skill_name, level_req)
+            if player.level >= needed and skill_name not in player.learned_skills:
                 player.learned_skills.append(skill_name)
-                player.skill_proficiencies[skill_name] = initial_proficiency(player)
+                player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
                 lines.append(f"You have unlocked:\n  {skill_name}")
 
         import hyuga
@@ -404,9 +405,17 @@ def sync_universal_skills(player: Player) -> List[str]:
     for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
         if required_class and player.primary_class != required_class:
             continue
-        if player.level >= level_req and skill_name not in player.learned_skills:
+        needed = data_jutsu.multi_attack_required_level(player, skill_name, level_req)
+        if player.level < needed:
+            # Old saves could already contain level-25 Second Attack on a
+            # non-Bukijutsu character. Retain its proficiency for level 100,
+            # but keep it locked until that level is actually reached.
+            if skill_name == "Second Attack" and skill_name in player.learned_skills:
+                player.learned_skills.remove(skill_name)
+            continue
+        if skill_name not in player.learned_skills:
             player.learned_skills.append(skill_name)
-            player.skill_proficiencies[skill_name] = initial_proficiency(player)
+            player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
             lines.append(f"&Y(New since your last login: you have learned {skill_name}!)&x")
 
     # Per direct request/confirmation (Section 135): "make sure that
