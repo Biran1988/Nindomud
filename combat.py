@@ -135,9 +135,15 @@ DEFAULT_MOB_FIELDS = {
 @dataclass
 class Mob:
     def __setattr__(self, name, value):
-        if (name == "health" and self.__dict__.get("template_vnum") == 6
-                and "max_health" in self.__dict__):
-            value = self.__dict__["max_health"]
+        # Immortal is a true invulnerability flag, not simply a large HP pool.
+        # Guard the health assignment itself so AoE, traps, lingering fire,
+        # summons and other damage paths cannot accidentally kill protected NPCs.
+        if name == "health" and "max_health" in self.__dict__:
+            template_vnum = self.__dict__.get("template_vnum")
+            flags = (MOB_TEMPLATES.get(template_vnum) or {}).get("act_flags", ())
+            if (template_vnum == 6 or any(flag in flags for flag in
+                    ("Immortal", "SummonElder", "Trainer"))):
+                value = max(1, self.__dict__["max_health"])
         object.__setattr__(self, name, value)
 
     instance_id: int
@@ -745,6 +751,10 @@ def _mob_attack_damage(mob: Mob) -> int:
 
 
 def start_attack(session, mob: Mob) -> None:
+    if is_immortal_mob(mob):
+        session.combat_target = None
+        session.send(f"{mob.name.capitalize()} is protected and cannot be attacked.")
+        return
     import general_skills
     general_skills.break_camouflage(session)
     session.combat_target = mob
@@ -1367,6 +1377,16 @@ def tick_all_mob_effects(sessions=None) -> None:
     meaningfully act on, not just players."""
     for room_mobs in list(MOBS_BY_ROOM.values()):
         for mob in list(room_mobs):
+            if is_immortal_mob(mob):
+                # Applies immediately to an existing NPC when staff add the
+                # flag; clear old hostile effects so they cannot linger.
+                mob.health = mob.max_health
+                mob.mangekyo_amaterasu_caster = None
+                for effect in ("burning", "poisoned", "bleeding", "drained", "off_balance"):
+                    mob.active_status_effects.pop(effect, None)
+                for trap in ninja_arts.TRAPS:
+                    mob.active_status_effects.pop(trap, None)
+                continue
             # A defeated beast remains a target for Sealing Jutsu. Its own
             # lifecycle removes it after the capture window; the generic
             # dead-mob cleanup must not erase it on the next pulse.
@@ -2566,6 +2586,11 @@ def resolve_pulse(session) -> None:
     mob = session.combat_target
     if mob is None:
         return
+    if is_immortal_mob(mob):
+        mob.health = mob.max_health
+        session.combat_target = None
+        reset_summon_round_state(player)
+        return
     if mob.room_vnum != player.room_vnum or mob.health <= 0:
         session.combat_target = None
         reset_summon_round_state(player)
@@ -2958,6 +2983,9 @@ def use_barrier(session) -> None:
 
 
 def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> None:
+    if is_immortal_mob(mob):
+        session.send(f"{mob.name.capitalize()} is protected and cannot be attacked.")
+        return
     player = session.player
     if player.reaper_seal_id:
         session.send("The Reaper's binding prevents that attack.")
@@ -3441,6 +3469,13 @@ def _experience_reward(player: Player, mob: Mob) -> int:
 
 
 def handle_mob_defeat(session, mob: Mob) -> None:
+    if is_immortal_mob(mob):
+        # Protect even against effects and scripts that call defeat directly.
+        # No corpse, rewards, rank/quest credit or despawn are produced.
+        mob.health = mob.max_health
+        if getattr(session, "combat_target", None) is mob:
+            session.combat_target = None
+        return
     if is_training_dummy(mob):
         mob.health = mob.max_health
         return  # never corpse, drop, XP, bounty, or despawn
