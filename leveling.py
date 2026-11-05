@@ -324,6 +324,14 @@ def grant_experience(player: Player, amount: int) -> List[str]:
                 player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
                 lines.append(f"You have unlocked:\n  {skill_name}")
 
+        import sword_styles
+        if player.primary_class == "bukijutsu":
+            for school, details in sword_styles.STYLES.items():
+                if player.level >= details["level"] and school not in player.learned_skills:
+                    player.learned_skills.append(school)
+                    player.skill_proficiencies.setdefault(school, initial_proficiency(player))
+                    lines.append(f"You have unlocked:\n  {school}")
+
         import hyuga
         for new_skill in hyuga.sync(player):
             lines.append(f"You have unlocked:\\n  {new_skill}")
@@ -417,6 +425,14 @@ def sync_universal_skills(player: Player) -> List[str]:
             player.learned_skills.append(skill_name)
             player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
             lines.append(f"&Y(New since your last login: you have learned {skill_name}!)&x")
+
+    import sword_styles
+    if player.primary_class == "bukijutsu":
+        for school, details in sword_styles.STYLES.items():
+            if player.level >= details["level"] and school not in player.learned_skills:
+                player.learned_skills.append(school)
+                player.skill_proficiencies.setdefault(school, initial_proficiency(player))
+                lines.append(f"&Y(New since your last login: you have learned {school}!)&x")
 
     # Per direct request/confirmation (Section 135): "make sure that
     # all skills that have been added are being allocated when a
