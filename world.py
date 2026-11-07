@@ -249,6 +249,16 @@ def reconcile_apartment_ownership() -> None:
                             del remaining[room_type]
                             made_progress = True
                             continue
+                        existing = WORLD.get(new_vnum)
+                        if (existing is not None
+                                and not (existing.apartment and existing.owner == player.name
+                                         and existing.apartment_room_type in (room_type, apartments.EMPTY_ROOM_TYPE))):
+                            # Another builder may have reused a freed VNUM.
+                            # Never overwrite an unrelated saved room to
+                            # reconstruct a player's old expansion.
+                            del remaining[room_type]
+                            made_progress = True
+                            continue
                         new_room = Room(
                             new_vnum, f"{player.name}'s {room_type.capitalize()}",
                             apartments.ROOM_TYPE_DESCRIPTIONS[room_type],
