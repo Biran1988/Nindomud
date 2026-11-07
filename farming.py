@@ -39,6 +39,9 @@ FIND_TABLE = [
     ("a watermelon", 30, 15, 40),
     ("a corn", 55, 8, 100),
     ("a pepper", 80, 3, 300),
+    # Rare find in ordinary farmland, using the existing Medicinal Herbs
+    # item (VNUM 9809), not a new food/crop prototype.
+    ("medicinal herbs", 20, 5, 35),
 ]
 
 FAIL_CHANCE_BASE = 20

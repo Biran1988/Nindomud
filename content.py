@@ -338,6 +338,11 @@ def _register_shared_items() -> None:
     # Farming finds (farming.FIND_TABLE) -- single, non-tiered items.
     _CROP_COST = [2, 2, 15, 15, 100, 100, 1000, 10000]
     for _crop_index, (_crop_name, _req, _weight, _xp) in enumerate(farming.FIND_TABLE):
+        # Medicinal Herbs are already registered above as VNUM 9809,
+        # a crafting ingredient. Do not replace or duplicate that item
+        # with an automatically numbered food prototype.
+        if _crop_name == "medicinal herbs":
+            continue
         _crop_vnum = 20306 + _crop_index
         _crop_display = " ".join(word.capitalize() for word in _crop_name.split())
         make(_crop_vnum, _crop_display, "food", _CROP_COST[_crop_index])

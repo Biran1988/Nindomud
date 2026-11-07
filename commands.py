@@ -5338,7 +5338,8 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
 
     known = set(player.learned_skills)
     shortcuts = {info["display_name"]: data_jutsu.JUTSU_SHORTCUTS[key]
-                 for key, info in data_jutsu.JUTSU.items()}
+                 for key, info in data_jutsu.JUTSU.items()
+                 if key in data_jutsu.JUTSU_SHORTCUTS}
     sections = [(name, data_classes.CLASSES[name]["display_name"])
                 for name in classes]
     sections.append(("general", "General Jutsu"))
@@ -5376,7 +5377,8 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
             if info.get("jutsu_id", "").startswith("six_paths_"):
                 conditions.append("Six Paths")
             extra = f" &D[{', '.join(conditions)}]&x" if conditions else ""
-            lines.append(f"  &WLv {level:>3}&x  {color}{name}&x  {status}{extra}  &DShort: {shortcuts[name]}&x")
+            shortcut = f"  &DShort: {shortcuts[name]}&x" if name in shortcuts else ""
+            lines.append(f"  &WLv {level:>3}&x  {color}{name}&x  {status}{extra}{shortcut}")
         lines.append(f"&D{len(entries)} {title.lower()} technique(s)&x")
     lines.append("")
     lines.append("&DType a listed shortcut directly. Use 'jutsu shorts' for learned shortcuts, "
