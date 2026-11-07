@@ -748,15 +748,25 @@ def cmd_olist(session, args: List[str]) -> None:
 
 
 def cmd_rlist(session, args: List[str]) -> None:
+    """List only rooms in the player's current registered area."""
     if not _require_builder(session):
         return
     requested = _requested_vnum_range(session, args, "Usage: rlist [low_vnum high_vnum]")
     if requested is False:
         return
-    rows = sorted(world.WORLD.rooms.items())
-    if requested:
-        rows = [(v, value) for v, value in rows if requested[0] <= v <= requested[1]]
-    session.send("Rooms:\n" + ("\n".join(f"  {v}: {r.name}" for v, r in rows) or "  None"))
+    area = areas.find_area_for_vnum(session.player.room_vnum)
+    if area is None:
+        session.send(f"Room {session.player.room_vnum} isn't within any registered area.")
+        return
+    rows = [
+        (vnum, room) for vnum, room in sorted(world.WORLD.rooms.items())
+        if area.vnum_start <= vnum <= area.vnum_end
+        and (not requested or requested[0] <= vnum <= requested[1])
+    ]
+    session.send(
+        f"Rooms in {area.name} ({area.vnum_start}-{area.vnum_end}):\n"
+        + ("\n".join(f"  {v}: {r.name}" for v, r in rows) or "  None")
+    )
 
 
 def cmd_rstat(session, args: List[str]) -> None:
