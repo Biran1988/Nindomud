@@ -567,5 +567,6 @@ CHANGELOG = [
     ("15.421", "Direct hostile attacks from melee, jutsu, Mangekyo, summons and tailed beast bombs now enter normal combat. Poison and elemental weapon procs apply statuses to their actual mob/player victim and show brief messages to PvP targets."),
     ("15.422", "RLIST now lists only rooms in the builder\'s current area, including when an optional vnum range is supplied."),
     ("15.423", "MLIST and OLIST now show only prototypes associated with your current area. MLIST ALL, OLIST ALL and RLIST ALL show worldwide listings, with optional vnum ranges."),
+    ("15.424", "Apartment hallways are no longer purchasable; expansions can only be built from the main room. Selling removes owned expansion VNUMs and restores the main room to Empty apartment. REDIT FLAGS APARTMENT now works."),
 
 ]
