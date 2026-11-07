@@ -1,63 +1,60 @@
-# Nindo MUD Mainland Road Blueprint — Northern Coastal Revision v3
+# Nindo MUD — geography-corrected mainland road blueprint v4
 
-**Status: planning only; no deployed rooms, exits, gate VNUMs, or changes to `/data`.**
-Map and mark-up editor distributed in ChatGPT as `Nindo_Mainland_Map_Kit_v3.zip`.
+**Status: proposal only.** Do not create or overwrite any live rooms, exits, VNUMs or `/data` content.
 
-## Geographic layout
-- Land of Earth / Stone is in the northwest, WEST of the Great Northern Bay.
-- Land of Lightning / Cloud is far north/northeast, on the opposite peninsula.
-- **Sound Country is relocated to the southern shore of the bay, BETWEEN Grass and Waterfall.** It is not east of Leaf.
-- Fire / Leaf is central-south, Wind / Sand southwest, Water / Mist on offshore eastern islands.
-- Land of Iron / samurai remains a future zone north of Lightning in this Nindo proposal. No roads through Iron yet.
-- Mist will eventually use separate 2D spacecraft travel; no up/down axis and no road in this phase.
+## Broad Naruto geography
 
-## NEW: Coastal road C1 (minor-country connection)
+| Major village | Placement |
+| --- | --- |
+| Stone / Iwagakure | Northwest, within mountainous Land of Earth |
+| Cloud / Kumogakure | Far northeast, on the Lightning peninsula across a northern ocean gulf |
+| Leaf / Konohagakure | Inland in central Land of Fire |
+| Sand / Sunagakure | Southwest, inside desert Land of Wind |
+| Mist / Kirigakure | Eastern offshore islands of the Land of Water; **no ground road** |
 
-**Grass → Sound (32 rooms) → Waterfall (34 rooms), total 66 rooms.**
-This is a continuous overland route along the SOUTH shore of the Great Northern Bay. No open water crossing.
-Existing proposed **Leaf–Sound** and **Sound–Hot Water** links are removed. These segments are no longer geographically appropriate.
+## Minor-country corrections
 
-The 150–250-room requirement applies to named **major-village entrance-to-entrance corridors**, not an individual minor-country link such as C1.
+- **Grass**: inland west/northwest of Leaf and west/southwest of Waterfall; do **not** draw a coast through Grass.
+- **Rain**: western borderland, below Grass. **Birds**: west of Rain, between Earth and Wind.
+- **Rivers**: between Fire and Wind, southwest of Leaf.
+- **Waterfall**: northeast of Grass, north of Leaf. **Sound**: east of Waterfall on northern Fire border, in the region of Valley of the End.
+- **Frost**: southwest of Lightning. **Hot Water**: east/northeast of Fire, south of Frost.
+- **Land of Iron**: exact manga location is not established. The proposed northern-of-Lightning samurai zone is a *custom future Nindo placement*, not canon verification.
 
-## Named major-village corridors
+## Revised Grass–Sound connector
 
-| Route | Villages | Waypoints | Planned navigable rooms |
-|---|---|---|---:|
-| R1 | Stone ↔ Leaf | Grass | 105 + 85 = **190** |
-| R2 | Stone ↔ Leaf | Rain | 123 + 95 = **218** |
-| R3 | Leaf ↔ Sand | Rivers | 95 + 80 = **175** |
-| R4 | Leaf ↔ Sand | Rain | 95 + 113 = **208** |
-| R5 | Leaf ↔ Cloud | Hot Water | 112 + 93 = **205** |
-| R6 | Leaf ↔ Cloud | Waterfall, Frost | 105 + 30 + 45 = **180** |
-| R7 | Stone ↔ Cloud | Grass, Sound, Waterfall, Frost (coastal road) | 105 + 32 + 34 + 30 + 45 = **246** |
-| R8 | Stone ↔ Sand | Birds | 106 + 112 = **218** |
-| R9 | Leaf ↔ Cloud | Grass, Sound, Waterfall, Frost | 85 + 32 + 34 + 30 + 45 = **226** |
+**C1: Grass → Waterfall (36 rooms, inland) → Sound (28 rooms, near southern gulf shore) = 64 rooms total.**
 
-All nine named major village corridors meet the **150–250** room standard. R7 and R9 REUSE the same Grass–Sound and Sound–Waterfall physical rooms as C1; never duplicate the shared road.
+This replaces the inaccurate Grass → Sound → Waterfall shoreline corridor. The 150–250-room rule applies to named *major village entrance-to-entrance corridors*, not short connectors between minor countries.
 
-## Authoritative planned segment graph
+## Proposed major-village routes (150–250 rooms)
 
-- Stone–Grass 105; Grass–Leaf 85
-- Stone–Rain 123; Rain–Leaf 95; Rain–Sand 113
-- Leaf–Rivers 95; Rivers–Sand 80
-- Leaf–Hot Water 112; Hot Water–Cloud 93
-- Leaf–Waterfall 105; Waterfall–Frost 30; Frost–Cloud 45
-- Stone–Birds 106; Birds–Sand 112
-- **Grass–Sound 32; Sound–Waterfall 34 (NEW)**
+| ID | From–to | Via | Planned rooms |
+| --- | --- | --- | ---: |
+| R1 | Stone ↔ Leaf | Grass | 190 |
+| R2 | Stone ↔ Leaf | Rain | 208 |
+| R3 | Leaf ↔ Sand | Rivers | 175 |
+| R4 | Leaf ↔ Sand | Rain | 204 |
+| R5 | Leaf ↔ Cloud | Hot Water | 205 |
+| R6 | Leaf ↔ Cloud | Sound → Frost | 210 |
+| R7 | Stone ↔ Cloud | Grass → Waterfall → Frost | 246 |
+| R8 | Stone ↔ Sand | Birds | 215 |
+| R9 | Leaf ↔ Cloud | Waterfall → Frost | 213 |
 
-All costs are **proposed navigable-room budgets**, not geographic distances or existing game rooms. An alternative route can take a different total number of steps; validate all designated major-village paths after selecting gates.
+Road rooms are planning budgets, not measured distances in the Naruto world. Shared junctions and segments must be built **once**. No road crosses the sea. Audit free VNUMs and existing village entrance room VNUMs before building.
 
-## Deployment requirements
-1. Owner reviews and marks up the v3 map/HTML planner. These lines are a schematic, not a traced or exact canon atlas.
-2. Confirm each village entrance VNUM and minor-country junction.
-3. Allocate unused area/VNUM ranges; audit existing village, Forest of Death, exam, private apartment, and user-created spaces. Do not overwrite any existing `/data`.
-4. Build shared segments once, place landmarks/sidequests, then test bidirectional exits and route counts.
-5. No live world construction until separately requested.
+## Deferred systems
 
-## Geographic reference
+- Mist: separate future **2D spacecraft-navigation** system; no up/down travel axis.
+- Land of Iron: future samurai expansion; do not implement a route or claim a canon location now.
+- No live-world deployment until the map is marked up and approved.
 
-- [User-supplied Reddit researched map by u/DetectiveEvyDevy](https://www.reddit.com/r/Naruto/comments/17lree4/the_map_of_the_naruto_world_based_on_everything_i/)
-- [Naruto geography (Narutopedia)](https://naruto.fandom.com/wiki/Geography)
-- [Wikimedia Naruto World Map](https://commons.wikimedia.org/wiki/File:Naruto_World_Map.svg)
+## Source references and certainty
 
-The Reddit map combines manga, anime, and inferred geography; this blueprint is an original Nindo-specific interpretation, not a claim of exact canon placement.
+- https://naruto.fandom.com/wiki/Five_Great_Shinobi_Countries
+- https://naruto.fandom.com/wiki/Geography
+- https://naruto.fandom.com/wiki/Valley_of_the_End
+- https://commons.wikimedia.org/wiki/File:Naruto_World_Map.svg
+- https://www.reddit.com/r/Naruto/comments/17lree4/the_map_of_the_naruto_world_based_on_everything_i/
+
+**Caveat:** major nation placement is better grounded than exact minor-country borders and individual village coordinates. This remains a Nindo-specific schematic inspired by manga/anime maps and third-party research.
