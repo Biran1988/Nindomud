@@ -153,6 +153,26 @@ class InstallTests(unittest.TestCase):
         self.assertEqual(sum(len(m) for m in combat.MOBS_BY_ROOM.values()), 150)
         self.assertFalse(roadside.install_once())
 
+    def test_repair_restores_missing_camps_after_marker_survives(self):
+        self.assertTrue(roadside.install_once())
+        import json
+        existing = storage.load_world_state()
+        preserved = existing["items"]
+        for vnum in range(22029, 22159):
+            world.WORLD.rooms.pop(vnum)
+            existing["rooms"].pop(str(vnum))
+        storage.save_world_state(existing)
+        old_points = storage.load_spawn_points()
+        old_points["points"].clear()
+        storage.save_spawn_points(old_points)
+        self.assertFalse(roadside.install_once())  # marker already present
+        result = roadside.repair_missing()
+        self.assertEqual(result["restored_rooms"], 130)
+        self.assertEqual(result["restored_spawnpoints"], 150)
+        self.assertEqual(len([v for v in world.WORLD.rooms if 22029 <= v <= 22158]), 130)
+        self.assertEqual(storage.load_world_state()["items"], preserved)
+        self.assertEqual(roadside.repair_missing()["updated_rooms"], 0)
+
     def test_conflict_is_detected_before_any_saved_mutation(self):
         world.WORLD.add_room(world.Room(22029, "Builder's existing room", "Keep me"))
         with self.assertRaises(roadside.RoadsideInstallationError):

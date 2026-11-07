@@ -34,14 +34,20 @@ def main():
     except mainland_roads.RoadInstallationError as error:
         # An existing room or exit is never replaced by the installer.
         print(f"[Mainland roads] Installation skipped: {error}")
-    # Repair the original Leaf gate even when roads already have a marker
-    # or a separate road installation was blocked by a VNUM conflict.
-    if mainland_roads.repair_leaf_gate():
-        print("[Mainland roads] Restored Leaf room 9 south <-> 20501 north.")
-    elif (getattr(__import__("world").WORLD.get(20501), "name", "")
-          != "Konoha Southern Crossroads"):
-        print("[Mainland roads] Room 20501 is not the expected Konoha junction; "
-              "Leaf gate was not auto-connected. Inspect live road rooms.")
+    # A prior one-time marker does not guarantee all saved road rooms survived.
+    # Repair the generated highway and just the missing exits at the existing
+    # Leaf/Anki village entry rooms; never replace a regular village room.
+    import mainland_recovery
+    try:
+        result = mainland_recovery.repair_missing_roads()
+        if result["updated_rooms"]:
+            print(f"[Mainland roads] Repaired {result['updated_rooms']} rooms "
+                  f"({result['restored_rooms']} missing, "
+                  f"{result['replaced_unfinished']} unfinished).")
+        for warning in result["unavailable"]:
+            print(f"[Mainland roads] Unavailable entry: {warning}")
+    except mainland_recovery.RoadRecoveryError as error:
+        print(f"[Mainland roads] Repair safely skipped: {error}")
     # Expand the same reserved mainland area with one-time camp/inn additions.
     # This does not touch the changes board or replace unrelated /data.
     import roadside_encounters
@@ -49,6 +55,12 @@ def main():
         roadside_encounters.install_once()
     except roadside_encounters.RoadsideInstallationError as error:
         print(f"[Roadside encounters] Installation skipped: {error}")
+    try:
+        repaired = roadside_encounters.repair_missing()
+        if any(repaired.values()):
+            print(f"[Roadside encounters] Restored: {repaired}")
+    except roadside_encounters.RoadsideInstallationError as error:
+        print(f"[Roadside encounters] Repair safely skipped: {error}")
     import commands
     commands.COMMANDS["inn"] = roadside_encounters.cmd_inn
     import seasonal_events

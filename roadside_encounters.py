@@ -89,6 +89,14 @@ def _side(road, preferred):
     raise RoadsideInstallationError(f"No spare exit at road {road.vnum}.")
 
 
+def _spur_heading(road, first_room, preferred):
+    """Reuse an already persisted road-to-camp link during recovery."""
+    for direction, destination in road.exits.items():
+        if destination == first_room and direction in REVERSE:
+            return direction
+    return _side(road, preferred)
+
+
 def _road_patrol(roads, center, maximum=8):
     """Only a handful of highway rooms around this camp, never villages."""
     visited = {center}
@@ -160,7 +168,8 @@ def build_plan(road_rooms=None):
 
     for index, (key, name, title, position, preferred, biome) in enumerate(CAMPS):
         anchor = _anchor(roads, title, position)
-        heading = _side(occupied_roads.get(anchor) or roads[anchor], preferred)
+        heading = _spur_heading(occupied_roads.get(anchor) or roads[anchor],
+                                vnum, preferred)
         trail = list(range(vnum, vnum + 4))
         camp = list(range(vnum + 4, vnum + 17))  # 13 actual camp rooms
         vnum += 17
@@ -215,7 +224,8 @@ def build_plan(road_rooms=None):
 
     for index, (key, name, title, position, preferred, biome) in enumerate(INNS):
         anchor = _anchor(roads, title, position)
-        heading = _side(occupied_roads.get(anchor) or roads[anchor], preferred)
+        heading = _spur_heading(occupied_roads.get(anchor) or roads[anchor],
+                                vnum, preferred)
         left, right = _offset(heading, -2), _offset(heading, 2)
         porch, lobby, tea, guest, bath, lane, house1, house2, house3 = range(vnum, vnum+9)
         vnum += 9
@@ -355,6 +365,145 @@ def install_once():
             temporary.unlink()
     return True
 
+
+
+
+def repair_missing():
+    """Recreate missing camps, inns and spawn points even if marker exists.
+
+    Existing edited rooms and templates survive; only our missing rooms,
+    expected reciprocal exits and missing mob/spawn records are restored.
+    Neither prototype settings nor unrelated /data entries are changed.
+    """
+    import areas
+    import combat
+    import spawn_points
+    import storage
+    import world
+
+    area = areas.find_area("Mainland Road Network")
+    if not area or (area.vnum_start, area.vnum_end) != (
+            mainland_roads.FIRST_VNUM, mainland_roads.LAST_VNUM):
+        raise RoadsideInstallationError(
+            "Mainland Road Network 20501-30500 is not registered.")
+    rooms, links, templates, points, details = build_plan(road_rooms=world.WORLD.rooms)
+    state = storage.load_world_state()
+    if not isinstance(state.get("rooms"), dict):
+        raise RoadsideInstallationError("World snapshot has no rooms map.")
+    saved = state["rooms"]
+    live = world.WORLD.rooms
+
+    # Validate the full repair before writing any file.
+    staged = {}
+    added = 0
+    for vnum, reference in rooms.items():
+        existing = live.get(vnum)
+        saved_name = (saved.get(str(vnum)) or {}).get("name")
+        if ((existing and existing.name not in (reference.name, "An Unfinished Room"))
+                or saved_name not in (None, reference.name, "An Unfinished Room")):
+            raise RoadsideInstallationError(
+                f"Roadside VNUM {vnum} contains a custom room; no changes made.")
+        if existing is None or existing.name == "An Unfinished Room":
+            staged[vnum] = deepcopy(reference)
+            added += 1
+        else:
+            staged[vnum] = deepcopy(existing)
+        for direction, destination in reference.exits.items():
+            prior = staged[vnum].exits.get(direction)
+            if prior not in (None, destination) and prior not in rooms:
+                raise RoadsideInstallationError(
+                    f"Roadside room {vnum} has a custom {direction} exit; no changes made.")
+            staged[vnum].exits[direction] = destination
+
+    anchor_patches = {}
+    for anchor, direction, first in links:
+        live_road = live.get(anchor)
+        if live_road is None:
+            raise RoadsideInstallationError(
+                f"Highway anchor {anchor} is missing; repair the mainland roads first.")
+        patched = deepcopy(live_road)
+        if patched.exits.get(direction) not in (None, first):
+            raise RoadsideInstallationError(
+                f"Highway {anchor} uses {direction} for another location.")
+        patched.exits[direction] = first
+        anchor_patches[anchor] = patched
+
+    existing_points = storage.load_spawn_points()
+    existing_templates = storage.load_custom_templates()
+    missing_templates = {}
+    for vnum, reference in templates.items():
+        existing = combat.MOB_TEMPLATES.get(vnum)
+        saved_mob = (state.get("mobs") or {}).get(str(vnum))
+        prior_template = existing_templates.get("mobs", {}).get(str(vnum))
+        for candidate in (existing, saved_mob, prior_template):
+            if candidate and candidate.get("short_desc") != reference["short_desc"]:
+                raise RoadsideInstallationError(
+                    f"Mob VNUM {vnum} belongs to another prototype.")
+        if existing is None:
+            missing_templates[vnum] = deepcopy(prior_template or saved_mob or reference)
+    added_points = {key: deepcopy(point) for key, point in points.items()
+                    if key not in existing_points.get("points", {})}
+
+    combined = {**staged, **anchor_patches}
+    updates = {}
+    merged = deepcopy(state)
+    for vnum, new_room in combined.items():
+        existing = live.get(vnum)
+        if existing is not None and _serializable_room(existing) == _serializable_room(new_room):
+            continue
+        original_record = saved.get(str(vnum))
+        if (existing is not None and existing.name != "An Unfinished Room"
+                and isinstance(original_record, dict)):
+            record = deepcopy(original_record)
+            record["exits"] = deepcopy(new_room.exits)
+        else:
+            record = _serializable_room(new_room)
+        merged["rooms"][str(vnum)] = record
+        updates[vnum] = new_room
+    if missing_templates:
+        merged.setdefault("mobs", {}).update({
+            str(vnum): template for vnum, template in missing_templates.items()
+        })
+
+    if updates or missing_templates:
+        storage.save_world_state(merged)
+    if missing_templates:
+        new_templates = deepcopy(existing_templates)
+        new_templates.setdefault("mobs", {}).update({
+            str(vnum): template for vnum, template in missing_templates.items()
+        })
+        storage.save_custom_templates(new_templates)
+    if added_points:
+        new_points = deepcopy(existing_points)
+        new_points.setdefault("points", {}).update(added_points)
+        storage.save_spawn_points(new_points)
+    if updates:
+        world.WORLD.rooms.update(updates)
+    if missing_templates:
+        combat.MOB_TEMPLATES.update(missing_templates)
+    if updates or missing_templates or added_points:
+        spawn_points.apply_all()
+
+    # A previous marker can remain from a partial snapshot. Keep it, but
+    # ensure new repairs also record their installed region for diagnostics.
+    marker = Path(storage.DATA_DIR) / MARKER
+    if not marker.exists():
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        temporary = marker.with_suffix(".tmp")
+        try:
+            with temporary.open("w", encoding="utf-8") as out:
+                json.dump({"rooms": len(rooms), "first_vnum": min(rooms),
+                           "last_vnum": max(rooms), "camps": details["camps"],
+                           "inns": details["inns"]}, out, indent=2)
+                out.flush()
+                os.fsync(out.fileno())
+            os.replace(temporary, marker)
+        finally:
+            if temporary.exists():
+                temporary.unlink()
+    return {"restored_rooms": added, "updated_rooms": len(updates),
+            "restored_templates": len(missing_templates),
+            "restored_spawnpoints": len(added_points)}
 
 def cmd_inn(session, args):
     """At reception, INN ENTER pays 100 ryo for an accelerated-healing bath."""
