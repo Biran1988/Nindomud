@@ -44,33 +44,23 @@ def owns_expansion_room(player, room_type: str) -> bool:
                 and room.apartment_room_type in (room_type, EMPTY_ROOM_TYPE))
 
 
-def delete_expansion_room(player, room_type: str, sessions=None) -> bool:
-    """Delete just this player's expansion, free its VNUM and sever all links.
-
-    An unrelated builder room that happens to occupy this numerical VNUM
-    is NEVER deleted. Remove room-specific spawn points and live mobs;
-    move connected players to the permanent apartment shell first.
-    """
+def _destroy_expansion_vnum(vnum: int, fallback_vnum: int, sessions=None) -> None:
+    """Delete a verified apartment expansion and remove its live references."""
     import combat
     import spawn_points
     import world
 
-    if player.apartment_room_vnum is None:
-        return False
-    vnum = expansion_room_vnum(player.apartment_room_vnum, room_type)
-    if not owns_expansion_room(player, room_type):
-        return False
     if sessions is None:
         from session import ACTIVE_SESSIONS
         sessions = ACTIVE_SESSIONS
     for connected in sessions:
         occupant = getattr(connected, "player", None)
         if occupant is not None and occupant.room_vnum == vnum:
-            occupant.room_vnum = player.apartment_room_vnum
+            occupant.room_vnum = fallback_vnum
             connected.send("&Y(The apartment room was removed. You return to the main room.)&x")
 
-    # An expansion may have inherited extra builder links, not merely its
-    # original parent connection. Remove EVERY incoming exit and metadata.
+    # Drop all inbound exits AND their door/key flags. Never leave
+    # a valid room pointing at a nonexistent VNUM.
     for other in world.WORLD.rooms.values():
         if other.vnum == vnum:
             continue
@@ -84,6 +74,14 @@ def delete_expansion_room(player, room_type: str, sessions=None) -> bool:
     spawn_points.remove_all_spawn_points(vnum)
     combat.MOBS_BY_ROOM.pop(vnum, None)
     world.WORLD.rooms.pop(vnum, None)
+
+
+def delete_expansion_room(player, room_type: str, sessions=None) -> bool:
+    """Free one owned expansion VNUM, without deleting unrelated builder rooms."""
+    if player.apartment_room_vnum is None or not owns_expansion_room(player, room_type):
+        return False
+    vnum = expansion_room_vnum(player.apartment_room_vnum, room_type)
+    _destroy_expansion_vnum(vnum, player.apartment_room_vnum, sessions)
     return True
 
 
