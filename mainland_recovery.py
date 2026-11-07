@@ -38,8 +38,9 @@ def repair_missing_roads():
     import storage
     import world
 
-    area = areas.find_area("Mainland Road Network")
-    if not area or (area.vnum_start, area.vnum_end) != (
+    area = next((entry for entry in areas.all_areas().values()
+                 if entry.get("name", "").casefold() == "mainland road network"), None)
+    if not area or (area["vnum_start"], area["vnum_end"]) != (
             mainland_roads.FIRST_VNUM, mainland_roads.LAST_VNUM):
         raise RoadRecoveryError(
             "Mainland Road Network area 20501-30500 is missing or mismatched.")
