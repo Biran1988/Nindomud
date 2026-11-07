@@ -2656,7 +2656,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["mission", "mission request", "mission info", "mission fail"],
         "title": "Mission",
         "body": (
-            "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\\n\\n"
+            "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\n\n"
             "Request a target drawn ONLY from Mission-flagged, level-appropriate mobs. "
             "D level 1+, C 10+, B 25+, A 50+, S 80+. "
             "Each mission expires after 30 real-time minutes (even offline). "
@@ -2703,9 +2703,9 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: mission request <d|c|b|a|s> (preferred), request <rank> (legacy)\n"
             "\n"
-            "Description: Requests a C-Rank, B-Rank, A-Rank, or S-Rank mission -- works from anywhere, no need to stand at a village board. Unlike D-Rank ('accept' at a village Mission Board, a fixed posted mission), these ranks are dynamic: a real mob is picked at random from every mob in the game flagged Mission (see 'help flags'), filtered to a level range relative to YOUR OWN current level -- a higher rank reaches for a much higher-level mob than a lower one does, so the same rank can mean something very different depending on how strong you already are. The pool is pulled from globally, not just your own village.\n"
+            "Description: Request D, C, B, A, or S rank hunts anywhere using 'mission request <rank>'. Targets must have the Mission flag and be within the level band for your character and mission rank. D-Rank gathering jobs stay on village mission boards.\n"
             "\n"
-            "Requires a minimum level to request each rank (D-Rank 1, C-Rank 10, B-Rank 25, A-Rank 50, S-Rank 80). Each rank has its own separate cooldown after requesting -- requesting one rank doesn't block requesting a different rank in the meantime. If no Mission-flagged mob exists at your current level for that rank, the request is refused rather than handing you an impossible or absurdly easy target.\n"
+            "Minimum levels: D 1, C 10, B 25, A 50, S 80. A mission expires after 30 real-time minutes, even offline. 'mission info' shows your target, progress and remaining time; 'mission fail' abandons a mission. If no suitable Mission-tagged mob exists, no mission is assigned.\n"
             "\n"
             "Date: 2026-08-17"
         ),
