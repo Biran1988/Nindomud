@@ -2652,13 +2652,28 @@ DEFAULT_HELP_ENTRIES = [
         "updated_at": 0.0,
     },
     {
+        "primary_keyword": "mission",
+        "keywords": ["mission", "mission request", "mission info", "mission fail"],
+        "title": "Mission",
+        "body": (
+            "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\\n\\n"
+            "Request a target drawn ONLY from Mission-flagged, level-appropriate mobs. "
+            "D level 1+, C 10+, B 25+, A 50+, S 80+. "
+            "Each mission expires after 30 real-time minutes (even offline). "
+            "Mission info shows mob name, level, progress, and remaining time. "
+            "Mission fail abandons the most recently accepted mission, or a specific rank. "
+            "D-Rank gathering jobs remain available at the village mission board."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "missions",
         "keywords": ["missions"],
         "title": "Missions",
         "body": (
             "Syntax: missions\n"
             "\n"
-            "Description: At a village Mission Board, lists every D-Rank mission posted there and whether you've already accepted it or it's on cooldown. Away from the board, shows your active mission journal and progress instead -- both D-Rank and any dynamic C-Rank+ mission you've requested. For C-Rank and above, see 'help request' -- those aren't posted on any board.\n"
+            "Description: At a village Mission Board, lists every D-Rank mission posted there and whether you've already accepted it or it's on cooldown. Away from the board, shows your active mission journal and progress instead -- both D-Rank and any dynamic C-Rank+ mission you've requested. For hunts and deadlines use 'mission request <rank>' and 'mission info'.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -2673,7 +2688,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: accept <keyword>\n"
             "\n"
-            "Description: At a village Mission Board, accepts a posted D-Rank mission matching the keyword (e.g. 'accept clear' or 'accept weed'). Refused if it's already active, still on cooldown from your last completion, or your level is below that mission's requirement. For C-Rank and above, see 'help request' instead -- those aren't posted on any board.\n"
+            "Description: At a village Mission Board, accepts a posted D-Rank mission matching the keyword (e.g. 'accept clear' or 'accept weed'). Refused if it's already active, still on cooldown from your last completion, or your level is below that mission's requirement. For level-appropriate hunts, see 'help mission'.\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -2686,11 +2701,11 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["request", "request mission"],
         "title": "Request",
         "body": (
-            "Syntax: request <c-rank|b-rank|a-rank|s-rank>\n"
+            "Syntax: mission request <d|c|b|a|s> (preferred), request <rank> (legacy)\n"
             "\n"
             "Description: Requests a C-Rank, B-Rank, A-Rank, or S-Rank mission -- works from anywhere, no need to stand at a village board. Unlike D-Rank ('accept' at a village Mission Board, a fixed posted mission), these ranks are dynamic: a real mob is picked at random from every mob in the game flagged Mission (see 'help flags'), filtered to a level range relative to YOUR OWN current level -- a higher rank reaches for a much higher-level mob than a lower one does, so the same rank can mean something very different depending on how strong you already are. The pool is pulled from globally, not just your own village.\n"
             "\n"
-            "Requires a minimum level to request each rank (C-Rank 10, B-Rank 25, A-Rank 50, S-Rank 80). Each rank has its own separate cooldown after requesting -- requesting one rank doesn't block requesting a different rank in the meantime. If no Mission-flagged mob exists at your current level for that rank, the request is refused rather than handing you an impossible or absurdly easy target.\n"
+            "Requires a minimum level to request each rank (D-Rank 1, C-Rank 10, B-Rank 25, A-Rank 50, S-Rank 80). Each rank has its own separate cooldown after requesting -- requesting one rank doesn't block requesting a different rank in the meantime. If no Mission-flagged mob exists at your current level for that rank, the request is refused rather than handing you an impossible or absurdly easy target.\n"
             "\n"
             "Date: 2026-08-17"
         ),

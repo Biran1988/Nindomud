@@ -4,8 +4,8 @@
     "accept"
   ],
   "title": "Accept",
-  "body": "Syntax: accept <keyword>\n\nDescription: At a village Mission Board, accepts a posted D-Rank mission matching the keyword (e.g. 'accept clear' or 'accept weed'). Refused if it's already active, still on cooldown from your last completion, or your level is below that mission's requirement. For C-Rank and above, see 'help request' instead -- those aren't posted on any board.\n\nDate: 2026-08-17",
+  "body": "Syntax: accept <keyword>\n\nDescription: At a village mission board, accepts a posted D-Rank mission. Kill targets are selected ONLY from mobs tagged Mission and of a suitable level; gather objectives work as before. All missions have a 30-minute real-time deadline. Use mission info to check progress or mission fail to abandon.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }

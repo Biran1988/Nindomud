@@ -1159,6 +1159,17 @@ class Session:
 
         self.player = player
         self.state = State.PLAYING
+        # Real-time mission deadlines survive logout/reboot. Inform a
+        # returning player immediately about missions that timed out.
+        import missions
+        old_missions = [(e.get("mission_id"), e.get("expires_at"))
+                        for e in player.active_missions]
+        expired_missions = missions.expire_missions(player)
+        if old_missions != [(e.get("mission_id"), e.get("expires_at"))
+                            for e in player.active_missions]:
+            storage.save_player(player)
+        for message in expired_missions:
+            self.send(message)
         # Restore final-trial stage after reconnect/reboot without charging
         # the scrolls again or forcing combat before the player's first move.
         import chunin_exam

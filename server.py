@@ -233,6 +233,20 @@ async def pulse_loop() -> None:
         # outside combat or after the fight that applied them ended.
         combat.tick_all_mob_effects(list(ACTIVE_SESSIONS))
         combat.tick_pending_casts()
+        # The real-time mission timer also runs while idle/outside combat.
+        import missions
+        for session in list(ACTIVE_SESSIONS):
+            if session.state == State.PLAYING and session.player:
+                before = [(e.get("mission_id"), e.get("expires_at"))
+                          for e in session.player.active_missions]
+                expired = missions.expire_missions(session.player)
+                after = [(e.get("mission_id"), e.get("expires_at"))
+                         for e in session.player.active_missions]
+                if before != after:
+                    storage.save_player(session.player)
+                for message in expired:
+                    session.send(message)
+                    session.send_prompt()
         for session in list(ACTIVE_SESSIONS):
             if session.state == State.PLAYING:
                 import element_choice

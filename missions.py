@@ -168,9 +168,12 @@ MISSIONS = {
 # ("Keep the low level static missions for players to get started
 # with"), it stays exactly as it always was.
 #
+MISSION_DURATION_SECONDS = 30 * 60  # Real time; keeps counting while offline.
+
 # (rank, id_suffix, min_level, target_count, reward_xp, reward_ryo,
 #  reward_mission_points, cooldown_seconds)
 _HIGHER_RANK_DEFS = [
+    ("D-Rank", "d1", 1, 3, 200, 40, 1, 600),
     ("C-Rank", "c1", 10, 2, 500, 100, 2, 900),
     ("B-Rank", "b1", 25, 2, 1200, 250, 3, 1200),
     ("A-Rank", "a1", 50, 1, 3000, 600, 5, 1800),
@@ -186,6 +189,7 @@ _HIGHER_RANK_BY_NAME = {d[0]: d for d in _HIGHER_RANK_DEFS}
 # higher-level mob (the request's own worked example: a level 10
 # player requesting S-Rank should get "a much higher level mob").
 RANK_LEVEL_OFFSETS = {
+    "D-Rank": (-5, 5),
     "C-Rank": (5, 20),
     "B-Rank": (10, 40),
     "A-Rank": (20, 70),
@@ -256,7 +260,7 @@ def request_mission(player: Player, rank: str) -> str:
     rank = f"{rank_letter.upper()}-Rank"
     rank_def = _HIGHER_RANK_BY_NAME.get(rank)
     if not rank_def:
-        return f"'{rank}' isn't a valid mission rank. Valid: C-Rank, B-Rank, A-Rank, S-Rank."
+        return f"'{rank}' isn't a valid mission rank. Valid: D-Rank, C-Rank, B-Rank, A-Rank, S-Rank."
     _, _, min_level, target_count, reward_xp, reward_ryo, reward_mp, cooldown_seconds = rank_def
 
     if player.level < min_level:
@@ -266,7 +270,8 @@ def request_mission(player: Player, rank: str) -> str:
     remaining = cooldown_remaining(player, cooldown_key)
     if remaining > 0:
         return f"You've requested a {rank} mission too recently. You can request another in {_format_duration(remaining)}."
-    if any(m.get("dynamic_rank") == rank for m in player.active_missions):
+    if any((_resolve_mission(m) or {}).get("rank") == rank
+           for m in player.active_missions):
         return f"You already have an active {rank} mission -- finish or abandon it first."
 
     mob_vnum, mob = pick_mission_mob(player, rank)
@@ -284,15 +289,19 @@ def request_mission(player: Player, rank: str) -> str:
             f"Defeat {target_count} of the following: {mob['short_desc']} (level {mob.get('level', '?')})."
         ),
         "target_mob_template": mob_vnum,
+        "target_level": mob.get("level", 1),
         "target_count": target_count,
         "reward_xp": reward_xp, "reward_ryo": reward_ryo, "reward_mission_points": reward_mp,
         "min_level": min_level,
         "cooldown_seconds": cooldown_seconds,
     }
 
-    player.active_missions.append({"mission_id": mission["mission_id"], "progress": 0, "dynamic": mission})
-    player.mission_cooldowns[cooldown_key] = time_module.time() + cooldown_seconds
-    return f"Mission requested: {mission['title']} ({rank}) -- {mission['description']}"
+    now = time_module.time()
+    player.active_missions.append({"mission_id": mission["mission_id"], "progress": 0,
+                                   "dynamic": mission, "expires_at": now + MISSION_DURATION_SECONDS})
+    player.mission_cooldowns[cooldown_key] = now + cooldown_seconds
+    return (f"Mission requested: {mission['title']} ({rank}) -- {mission['description']}"
+            " You have 30 minutes. Use 'mission info' for your target and deadline.")
 
 
 def missions_for_village(village: str) -> List[dict]:
@@ -330,14 +339,101 @@ def accept_mission(player: Player, village: str, mission_id: str) -> str:
     remaining = cooldown_remaining(player, mission["mission_id"])
     if remaining > 0:
         return f"This mission is on cooldown. You can accept it again in {_format_duration(remaining)}."
-    player.active_missions.append({"mission_id": mission["mission_id"], "progress": 0})
-    result = f"Mission accepted: {mission['title']} ({mission['rank']}) -- {mission['description']}"
+    entry = {"mission_id": mission["mission_id"], "progress": 0,
+             "expires_at": time.time() + MISSION_DURATION_SECONDS}
+    if mission.get("mission_type", "kill") == "kill":
+        # Static D-Rank kill templates can refer to Kage NPCs; never
+        # assign untagged or level-inappropriate mobs to a hunt.
+        vnum, mob = pick_mission_mob(player, "D-Rank")
+        if mob is None:
+            return "No suitable D-Rank Mission-tagged enemy is available for your level."
+        chosen = dict(mission)
+        chosen["target_mob_template"] = vnum
+        chosen["target_level"] = mob.get("level", 1)
+        chosen["title"] = f"Hunt: {mob['short_desc']}"
+        chosen["description"] = (f"Defeat {mission['target_count']} "
+                                  f"of {mob['short_desc']} (level {mob.get('level', '?')}).")
+        entry["dynamic"] = chosen
+        mission = chosen
+    player.active_missions.append(entry)
+    result = (f"Mission accepted: {mission['title']} ({mission['rank']}) -- "
+              f"{mission['description']} You have 30 minutes.")
     if mission.get("mission_type") == "gather":
         import combat
         delivery_proto = combat.MOB_TEMPLATES.get(mission["delivery_mob_template"])
         delivery_name = delivery_proto["short_desc"] if delivery_proto else "the right NPC"
         result += f"\nOnce you have enough, type 'deliver' at {delivery_name} to turn it in -- gathering the items alone doesn't finish it."
     return result
+
+
+def expire_missions(player: Player, now=None) -> List[str]:
+    """Fail overdue missions on real wall-clock time, including offline time.
+
+    Old active mission entries lacking a deadline get one fresh window on
+    upgrade, then that deadline is persisted with the player.
+    """
+    now = time.time() if now is None else now
+    failed = []
+    for entry in list(player.active_missions):
+        deadline = entry.get("expires_at")
+        if deadline is None:
+            entry["expires_at"] = now + MISSION_DURATION_SECONDS
+            continue
+        if now >= deadline:
+            player.active_missions.remove(entry)
+            mission = _resolve_mission(entry)
+            title = mission["title"] if mission else entry.get("mission_id", "Unknown mission")
+            failed.append(f"&RMission failed (30-minute time limit): {title}.&x")
+    return failed
+
+
+def fail_mission(player: Player, rank_or_id="") -> str:
+    """Abandon the most recent mission or select one by rank/ID/title."""
+    if not player.active_missions:
+        return "You have no active mission to fail."
+    query = rank_or_id.strip().lower()
+    matches = []
+    for entry in player.active_missions:
+        mission = _resolve_mission(entry)
+        rank = (mission or {}).get("rank", "").lower()
+        title = (mission or {}).get("title", "").lower()
+        names = {entry.get("mission_id", "").lower(), title, rank,
+                 rank.removesuffix("-rank")}
+        if not query or query in names:
+            matches.append(entry)
+    if not matches:
+        return f"No active mission matches {rank_or_id!r}. Use 'mission info'."
+    entry = matches[-1]
+    mission = _resolve_mission(entry)
+    player.active_missions.remove(entry)
+    title = mission["title"] if mission else entry.get("mission_id", "Unknown mission")
+    return f"&RMission failed: {title}. No rewards were given.&x"
+
+
+def mission_info(player: Player, now=None) -> str:
+    """Show which mob to hunt, mob level/VNUM, progress and the clock."""
+    now = time.time() if now is None else now
+    if not player.active_missions:
+        return "You have no active missions. Use 'mission request <rank>'."
+    lines = ["&WActive missions (30-minute deadline):&x"]
+    for entry in player.active_missions:
+        mission = _resolve_mission(entry)
+        if not mission:
+            continue
+        remaining = max(0, entry.get("expires_at", now + MISSION_DURATION_SECONDS) - now)
+        lines.append(f"  &Y{mission['title']}&x ({mission['rank']})")
+        if mission.get("mission_type", "kill") == "kill":
+            import combat
+            template = combat.MOB_TEMPLATES.get(mission["target_mob_template"], {})
+            target = template.get("short_desc", mission["title"].removeprefix("Hunt: "))
+            level = mission.get("target_level", template.get("level", "?"))
+            lines.append(f"    Hunt: {target} (level {level}, mob VNUM {mission['target_mob_template']})")
+        else:
+            lines.append(f"    Objective: {mission['description']}")
+        lines.append(f"    Progress: {entry.get('progress', 0)}/{mission['target_count']}")
+        lines.append(f"    Time remaining: {_format_duration(remaining)}")
+        lines.append(f"    To abandon: mission fail {mission['rank'].lower().replace('-rank', '')}")
+    return "\n".join(lines)
 
 
 def journal_text(player: Player) -> str:
@@ -458,7 +554,7 @@ def on_mob_defeated(player: Player, template_vnum: int) -> List[str]:
     completion. Only "kill"-type missions respond to this -- a
     "gather"-type mission's progress comes from commands.cmd_deliver
     instead (see on_weeds_delivered below)."""
-    lines = []
+    lines = expire_missions(player)
     for entry in list(player.active_missions):
         mission = _resolve_mission(entry)
         if not mission:
@@ -480,7 +576,7 @@ def on_weeds_delivered(player: Player, delivery_mob_template: int, delivered_cou
     (commands.cmd_deliver hands over everything the player is
     carrying at once, not one at a time), capped at the mission's
     target_count so over-delivering doesn't overshoot."""
-    lines = []
+    lines = expire_missions(player)
     for entry in list(player.active_missions):
         mission = _resolve_mission(entry)
         if not mission:

@@ -4789,7 +4789,7 @@ def cmd_missions(session, args: List[str]) -> None:
             already_active = any(am["mission_id"] == m["mission_id"] for am in player.active_missions)
             remaining = missions.cooldown_remaining(player, m["mission_id"])
             if already_active:
-                status = "already accepted -- check 'missions' for journal progress"
+                status = "already accepted -- check 'mission info' for progress"
             elif remaining > 0:
                 status = f"on cooldown, ready in {missions._format_duration(remaining)}"
             else:
@@ -4802,11 +4802,11 @@ def cmd_missions(session, args: List[str]) -> None:
                 else:
                     status = f"type 'accept {first_word}' to take it"
             lines.append(f"  &Y{m['title']}&x ({m['rank']}): {m['description']}\n    ({status})")
-        lines.append("\n&D(Looking for something tougher? C-Rank and up aren't posted here -- see 'help request'.)&x")
+        lines.append("\n&D(Request a level-appropriate Mission-tagged hunt with 'mission request <rank>'.)&x")
         session.send("\n".join(lines))
         return
 
-    session.send(missions.journal_text(player))
+    session.send(missions.mission_info(player))
 
 
 def cmd_accept(session, args: List[str]) -> None:
@@ -4835,6 +4835,41 @@ def cmd_accept(session, args: List[str]) -> None:
     session.send(missions.accept_mission(player, player.village, matched["mission_id"]))
 
 
+def cmd_mission(session, args: List[str]) -> None:
+    """Mission request, info and fail; enforce persistent 30-minute limits."""
+    player = session.player
+    before = [(e.get("mission_id"), e.get("expires_at"))
+              for e in player.active_missions]
+    expired = missions.expire_missions(player)
+    for message in expired:
+        session.send(message)
+    after = [(e.get("mission_id"), e.get("expires_at"))
+             for e in player.active_missions]
+    if before != after:
+        storage.save_player(player)
+    if not args:
+        session.send("Usage: mission request <d|c|b|a|s> | mission info | mission fail [rank]")
+        return
+    action, rest = args[0].lower(), args[1:]
+    if action == "request":
+        if not rest:
+            session.send("Request which rank? Usage: mission request <d|c|b|a|s>")
+            return
+        result = missions.request_mission(player, " ".join(rest))
+        session.send(result)
+        if result.startswith("Mission requested:"):
+            storage.save_player(player)
+    elif action in ("info", "status"):
+        session.send(missions.mission_info(player))
+    elif action == "fail":
+        result = missions.fail_mission(player, " ".join(rest))
+        session.send(result)
+        if result.startswith("&RMission failed:"):
+            storage.save_player(player)
+    else:
+        session.send("Usage: mission request <d|c|b|a|s> | mission info | mission fail [rank]")
+
+
 def cmd_request(session, args: List[str]) -> None:
     """'request <rank>' -- requests a dynamic C/B/A/S mission, per
     direct request ("instead of a static board you request what
@@ -4849,7 +4884,7 @@ def cmd_request(session, args: List[str]) -> None:
         session.send("Request which rank? Usage: request <c-rank|b-rank|a-rank|s-rank>")
         return
     rank = " ".join(args)
-    session.send(missions.request_mission(session.player, rank))
+    cmd_mission(session, ["request", rank])
 
 
 
@@ -10039,6 +10074,7 @@ COMMANDS = {
     "wimpy": cmd_wimpy,
     "perform": cmd_perform,
     "per": cmd_perform,
+    "mission": cmd_mission,
     "missions": cmd_missions,
     "exam": cmd_chunin_exam,
     "submit": cmd_submit_scrolls,

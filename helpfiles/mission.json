@@ -1,0 +1,14 @@
+{
+  "primary_keyword": "mission",
+  "keywords": [
+    "mission",
+    "mission request",
+    "mission info",
+    "mission fail"
+  ],
+  "title": "Mission",
+  "body": "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\n\nRequest a level-appropriate hunt from Mission-flagged NPCs anywhere in the MUD. Each accepted mission must be completed within 30 real-time minutes, including time spent logged off. Mission info shows exactly which enemy to hunt, its level and VNUM, your progress, and time remaining. Mission fail abandons the most recently accepted active mission (or a specified rank). Posted D-Rank gathering missions still use accept at a board.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
