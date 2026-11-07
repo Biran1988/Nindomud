@@ -574,4 +574,6 @@ CHANGELOG = [
     ("15.427", "Farming level 20+ can now occasionally harvest Medicinal Herbs from farmland using a hoe. The rare find yields the existing medicinal crafting ingredient, with 35 Farming XP per harvest."),
     ("15.428", "Added Info Scrolls to village general stores. WRITE INFO SCROLL opens the multiline editor; EXAMINE INFO SCROLL reveals the author's saved message. Each copy retains its own writing through trading, dropping and restarts. Jutsu-learning scrolls remain separate."),
     ("15.429", "LOOK <player>, LOOK SELF and LOOK <mob> now show equipped armor, accessories, wielded swords, off-hand weapons and held tools. Hidden characters remain hidden, and inventory contents are never exposed."),
+    ("15.430", "Mission-tagged mobs now receive a single non-overlapping rank relative to the requesting player's level: D covers weaker mobs and up to +5 levels, C +6-20, B +21-40, A +41-70 and S +71 or higher. Mobs move toward D as players level; rank request minimums, timers and rewards remain unchanged."),
+    ("15.431", "OOC messages and OOC emotes now have a blank line before each post, so conversations are easier to read. CHATLOG also separates historical posts with blank lines, without changing stored chat data or in-character messages."),
 ]

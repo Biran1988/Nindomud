@@ -181,66 +181,79 @@ _HIGHER_RANK_DEFS = [
 ]
 _HIGHER_RANK_BY_NAME = {d[0]: d for d in _HIGHER_RANK_DEFS}
 
-# Each rank's level-range window, as an offset from the REQUESTING
-# player's own current level (confirmed design: a level range, not a
-# multiplier) -- e.g. C-Rank looks for a mob between player_level+5
-# and player_level+20. Windows widen substantially with rank, so a
-# low-level player requesting a high rank is offered a genuinely much
-# higher-level mob (the request's own worked example: a level 10
-# player requesting S-Rank should get "a much higher level mob").
+# Each Mission-tagged mob has ONE rank relative to the requesting player.
+# These bands deliberately never overlap. As the player levels up,
+# the same mob naturally moves S -> A -> B -> C -> D; once it has
+# become easier than D's upper boundary, it remains eligible for D.
+# A minimum ninja level still applies when requesting each rank.
+#
+# Rank bands are keyed by (mob_level - player_level):
+#     D: <= +5 (including any weaker enemy)
+#     C: +6 through +20
+#     B: +21 through +40
+#     A: +41 through +70
+#     S: +71 or higher
+# The maximum mob level is 250; levels 1..250 remain classifiable at
+# every player level without wrapping top-level enemies into S-rank.
 RANK_LEVEL_OFFSETS = {
-    "D-Rank": (-5, 5),
-    "C-Rank": (5, 20),
-    "B-Rank": (10, 40),
-    "A-Rank": (20, 70),
-    "S-Rank": (40, 100),
+    "D-Rank": (None, 5),
+    "C-Rank": (6, 20),
+    "B-Rank": (21, 40),
+    "A-Rank": (41, 70),
+    "S-Rank": (71, None),
 }
 MAX_CHARACTER_LEVEL = 250
 
 
 def level_window_for_rank(player_level: int, rank: str):
-    """The [low, high] mob-level window for a rank, relative to
-    player_level. If the raw window would exceed MAX_CHARACTER_LEVEL,
-    the WHOLE window shifts down to still fit rather than just
-    clamping the high end -- clamping alone can invert the window
-    (low > high) for a high-level player requesting a high rank,
-    which was a real bug caught and fixed while designing this
-    (verified against every rank at its own minimum request level,
-    including a level-80 player requesting S-Rank, before shipping)."""
+    """Inclusive mob-level range for the requested rank.
+
+    A missing lower offset means every weaker mob remains D-rank;
+    a missing upper offset means every harder mob is S-rank. Ranges
+    may be empty at very high ninja levels, which correctly means
+    there are no higher-level Mission-tagged enemies in the world.
+    """
     lo_offset, hi_offset = RANK_LEVEL_OFFSETS[rank]
-    window_lo = player_level + lo_offset
-    window_hi = player_level + hi_offset
-    if window_hi > MAX_CHARACTER_LEVEL:
-        shift = window_hi - MAX_CHARACTER_LEVEL
-        window_lo -= shift
-        window_hi = MAX_CHARACTER_LEVEL
-    window_lo = max(1, window_lo)
-    return window_lo, window_hi
+    lo = 1 if lo_offset is None else player_level + lo_offset
+    hi = MAX_CHARACTER_LEVEL if hi_offset is None else min(
+        MAX_CHARACTER_LEVEL, player_level + hi_offset)
+    return lo, hi
+
+
+def mission_rank_for_levels(player_level: int, mob_level: int):
+    """Classify a real mob once, exclusively, relative to a ninja."""
+    if not isinstance(mob_level, int) or not 1 <= mob_level <= MAX_CHARACTER_LEVEL:
+        return None
+    for rank in RANK_LEVEL_OFFSETS:
+        lo, hi = level_window_for_rank(player_level, rank)
+        if lo <= mob_level <= hi:
+            return rank
+    return None
 
 
 def pick_mission_mob(player: Player, rank: str):
-    """Picks one random Mission-flagged mob template whose own level
-    falls within `rank`'s level-range window relative to the
-    player's CURRENT level (see level_window_for_rank) -- confirmed
-    design: pooled GLOBALLY across every village's Mission-flagged
-    mobs, not scoped to the player's own village. Returns (vnum,
-    template dict), or (None, None) if the pool is genuinely empty
-    for this player/rank combination (e.g. no Mission mob exists yet
-    in that level window -- a real possibility for a rank/level
-    combination nobody's built content for, handled gracefully rather
-    than crashing)."""
+    """Choose among globally registered Mission-flagged mobs in ONE band.
+
+    No mob can match two ranks for the same player. A target's rank is
+    computed when the mission is assigned; a current active mission
+    keeps its chosen target, progress, and rewards if the player levels.
+    """
     import random
     import combat
 
+    if rank not in RANK_LEVEL_OFFSETS:
+        return None, None
     window_lo, window_hi = level_window_for_rank(player.level, rank)
     candidates = [
         (vnum, t) for vnum, t in combat.MOB_TEMPLATES.items()
-        if "Mission" in t.get("act_flags", []) and window_lo <= t.get("level", 0) <= window_hi
+        if ("Mission" in t.get("act_flags", [])
+            and isinstance(t.get("level"), int)
+            and window_lo <= t["level"] <= window_hi
+            and 1 <= t["level"] <= MAX_CHARACTER_LEVEL)
     ]
     if not candidates:
         return None, None
     return random.choice(candidates)
-
 
 def request_mission(player: Player, rank: str) -> str:
     """Requests a dynamic C/B/A/S rank mission (see module docstring

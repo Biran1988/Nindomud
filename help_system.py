@@ -1139,7 +1139,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Sends a message on the server-wide out-of-character channel -- everyone online sees it, regardless of room or village.\n"
             "\n"
-            "The last 25 OOC messages are saved -- see 'help chatlog' to review them.\n"
+            "OOC posts and OOC emotes are separated by a blank line for readability. The last 25 OOC messages are saved -- see 'help chatlog' to review them.\n"
             "\n"
             "Filtered words are automatically censored. Sending too many messages too quickly (say/ooc/village chat combined) triggers an automatic 10-minute silence -- see 'help silence'.\n"
             "\n"
@@ -1156,7 +1156,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: chatlog\n"
             "\n"
-            "Description: Shows the last 25 messages sent on the 'ooc' channel, oldest first. Persists across server restarts -- the log isn't lost when the server reboots.\n"
+            "Description: Shows the last 25 messages sent on the 'ooc' channel, oldest first, with a blank line between messages. Persists across server restarts -- the log isn't lost when the server reboots.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -2672,7 +2672,7 @@ DEFAULT_HELP_ENTRIES = [
         "title": "Mission",
         "body": (
             "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\n\n"
-            "Request a target drawn ONLY from Mission-flagged, level-appropriate mobs. "
+            "Request a target drawn ONLY from Mission-flagged mobs. Each mob falls into exactly one player-relative rank: D is anything up to 5 levels above you (including weaker mobs), C is 6-20 above, B 21-40, A 41-70 and S 71+ above. As you level up, the same mob shifts toward D-Rank. "
             "D level 1+, C 10+, B 25+, A 50+, S 80+. "
             "Each mission expires after 30 real-time minutes (even offline). "
             "Mission info shows mob name, level, progress, and remaining time. "
@@ -2718,7 +2718,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: mission request <d|c|b|a|s> (preferred), request <rank> (legacy)\n"
             "\n"
-            "Description: Request D, C, B, A, or S rank hunts anywhere using 'mission request <rank>'. Targets must have the Mission flag and be within the level band for your character and mission rank. D-Rank gathering jobs stay on village mission boards.\n"
+            "Description: Request D, C, B, A, or S rank hunts anywhere using 'mission request <rank>'. Only Mission-flagged mobs are chosen. Each one belongs to exactly one difficulty rank relative to your current ninja level: D <=+5 (including all weaker enemies), C +6..20, B +21..40, A +41..70, S +71 or higher. A mob moves to lower ranks as you become stronger, never appearing in two ranks at once. D-Rank gathering jobs stay on village mission boards.\n"
             "\n"
             "Minimum levels: D 1, C 10, B 25, A 50, S 80. A mission expires after 30 real-time minutes, even offline. 'mission info' shows your target, progress and remaining time; 'mission fail' abandons a mission. If no suitable Mission-tagged mob exists, no mission is assigned.\n"
             "\n"

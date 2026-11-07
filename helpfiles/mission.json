@@ -7,7 +7,7 @@
     "mission fail"
   ],
   "title": "Mission",
-  "body": "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\n\nRequest a level-appropriate hunt from Mission-flagged NPCs anywhere in the MUD. Each accepted mission must be completed within 30 real-time minutes, including time spent logged off. Mission info shows exactly which enemy to hunt, its level and VNUM, your progress, and time remaining. Mission fail abandons the most recently accepted active mission (or a specified rank). Posted D-Rank gathering missions still use accept at a board.",
+  "body": "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\n\nAll hunt targets must have the Mission flag. Each mob fits exactly one rank relative to your ninja level: D = up to 5 levels above you (or any lower level), C = 6-20 above, B = 21-40 above, A = 41-70 above, S = 71+ above. As you level up, that mob shifts down toward D without overlapping ranks. Minimum levels to request: D 1, C 10, B 25, A 50, S 80. Mission info shows your hunt target, level, VNUM, progress and time remaining. Complete your mission in 30 real-time minutes (including offline), otherwise it fails. Mission fail abandons it. D-Rank gathering missions are still accepted at village boards.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0

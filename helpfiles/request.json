@@ -5,7 +5,7 @@
     "request mission"
   ],
   "title": "Request",
-  "body": "Syntax: mission request <d|c|b|a|s>\n\nDescription: New preferred syntax. The old request <rank> command remains as a compatibility alias. A random Mission-tagged mob appropriate to your level and rank is selected. The mission fails after 30 real-time minutes. Use mission info for the target and timer, mission fail to abandon.",
+  "body": "Syntax: mission request <d|c|b|a|s>\n\nThe legacy request <rank> alias still works. Only Mission-tagged mobs can be assigned. Each mob belongs to one rank for your current ninja level: D = <=5 levels above or weaker; C = 6-20 above; B = 21-40 above; A = 41-70 above; S = 71+ above. Targets automatically move to lower mission ranks as you level. Your chosen mission remains assigned when you gain levels. All hunts expire after 30 real-time minutes. Use mission info and mission fail.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0

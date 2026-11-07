@@ -20,7 +20,7 @@ class RecentChangesTests(unittest.TestCase):
             for term in terms:
                 with self.subTest(version=version, term=term):
                     self.assertIn(term, entries[version])
-        self.assertEqual([version for version, _ in changelog.CHANGELOG[-5:]],
+        self.assertEqual([version for version, _ in changelog.CHANGELOG[-7:-2]],
                          list(expected))
 
     def test_changes_command_outputs_newest_entries(self):
@@ -35,7 +35,7 @@ class RecentChangesTests(unittest.TestCase):
         self.assertLess(pages[0].index("15.429"), pages[0].index("15.425"))
 
     def test_road_migration_omitted_from_new_changelog_entries(self):
-        text = "\n".join(summary for _, summary in changelog.CHANGELOG[-5:]).lower()
+        text = "\n".join(summary for _, summary in changelog.CHANGELOG[-7:]).lower()
         self.assertNotIn("mainland road", text)
         self.assertNotIn("bandit camp", text)
         self.assertNotIn("road junction", text)

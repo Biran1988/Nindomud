@@ -1691,7 +1691,9 @@ def cmd_emote(session, args: List[str], ooc: bool = False) -> None:
         session.send("&D(You're talking too fast! You have been silenced for 10 minutes.)&x")
         return
     own, other = phrases
-    prefix = "&M[OOC]&x " if ooc else ""
+    # OOC messages always begin with a blank separator line; in-room
+    # emotes retain their original compact layout.
+    prefix = "\n&M[OOC]&x " if ooc else ""
     session.send(f"{prefix}You {own}")
     if ooc:
         # Titles are character-display decorations, not OOC chat labels.
@@ -1717,8 +1719,10 @@ def cmd_ooc(session, args: List[str]) -> None:
         return
     message = chat_moderation.censor(" ".join(args))
     player = session.player
-    session.send(f"&M[OOC] You:&x {message}")
-    session.broadcast_all(f"&M[OOC] {player.name}:&x {message}", exclude_self=True)
+    # Separate consecutive OOC posts visibly for senders and readers.
+    # Keep the underlying chatlog message completely unchanged.
+    session.send(f"\n&M[OOC] You:&x {message}")
+    session.broadcast_all(f"\n&M[OOC] {player.name}:&x {message}", exclude_self=True)
     import chatlog
     chatlog.record(player.name, message)
 
@@ -1752,7 +1756,7 @@ def cmd_chatlog(session, args: List[str]) -> None:
     # Historical OOC entries may retain old title metadata, but never show
     # it: titles are excluded from OOC including persisted chat history.
     lines = [f"&M[OOC] {entry['speaker']}:&x {entry['message']}" for entry in chatlog.ENTRIES]
-    session.send("\n".join(lines))
+    session.send("\n\n".join(lines))
 
 
 def cmd_ask(session, args: List[str]) -> None:
