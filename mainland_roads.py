@@ -112,7 +112,7 @@ def _headings(first, last, steps):
     for i in range(steps):
         t = i / max(1, steps - 1)
         # One broad arc in each direction, at most 45 degrees off course.
-        bend = math.sin(2 * math.pi * t) * 0.65 if steps >= 18 else 0
+        bend = math.sin(2 * math.pi * t) * 0.9 if steps >= 18 else 0
         index = round(start + delta * t + bend) % 8
         headings.append(HEADINGS[index])
     headings[0], headings[-1] = first, last
@@ -243,9 +243,9 @@ def install_once():
     merged = deepcopy(state)
     merged_rooms = merged.setdefault("rooms", {})
     for vnum, room in roads.items():
-        merged_rooms[str(vnum)] = asdict(room)
+        merged_rooms[str(vnum)] = {k: v for k, v in asdict(room).items() if k != "ground_ryo"}
     for vnum, room in staged_entrances.items():
-        merged_rooms[str(vnum)] = asdict(room)
+        merged_rooms[str(vnum)] = {k: v for k, v in asdict(room).items() if k != "ground_ryo"}
 
     # Uses the normal atomic world write and .bak backup.
     storage.save_world_state(merged)
