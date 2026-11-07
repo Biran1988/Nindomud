@@ -38,6 +38,10 @@ def main():
     # or a separate road installation was blocked by a VNUM conflict.
     if mainland_roads.repair_leaf_gate():
         print("[Mainland roads] Restored Leaf room 9 south <-> 20501 north.")
+    elif (getattr(__import__("world").WORLD.get(20501), "name", "")
+          != "Konoha Southern Crossroads"):
+        print("[Mainland roads] Room 20501 is not the expected Konoha junction; "
+              "Leaf gate was not auto-connected. Inspect live road rooms.")
     # Expand the same reserved mainland area with one-time camp/inn additions.
     # This does not touch the changes board or replace unrelated /data.
     import roadside_encounters

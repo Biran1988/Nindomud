@@ -177,6 +177,19 @@ class OneTimeInstallTests(unittest.TestCase):
         self.assertEqual(storage.load_world_state()["rooms"]["9"]["exits"]["inside"], 8)
         self.assertFalse(roads.repair_leaf_gate())
 
+    def test_repair_refuses_unfinished_room_20501(self):
+        self.assertTrue(roads.install_once())
+        world.WORLD.rooms[20501].name = "An Unfinished Room"
+        world.WORLD.rooms[9].exits.pop("south")
+        saved = storage.load_world_state()
+        saved["rooms"]["20501"]["name"] = "An Unfinished Room"
+        saved["rooms"]["9"]["exits"].pop("south")
+        storage.save_world_state(saved)
+        self.assertFalse(roads.repair_leaf_gate())
+        self.assertNotIn("south", world.WORLD.rooms[9].exits)
+        self.assertNotIn("south", storage.load_world_state()["rooms"]["9"]["exits"])
+        self.assertEqual(world.WORLD.rooms[20501].name, "An Unfinished Room")
+
     def test_repair_leaf_gate_preserves_occupied_south_exit(self):
         self.assertTrue(roads.install_once())
         world.WORLD.rooms[9].exits["south"] = 10

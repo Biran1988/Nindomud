@@ -210,6 +210,17 @@ def repair_leaf_gate():
     leaf, road = world.WORLD.get(9), world.WORLD.get(FIRST_VNUM)
     if leaf is None or road is None:
         return False
+    # A saved placeholder can occupy 20501 even while other road rooms
+    # exist. Never connect the village to that unrelated/unfinished room.
+    # A legitimate crossroads must match the named road junction and have
+    # real onward routes, not merely the numeric VNUM reservation.
+    if road.name != "Konoha Southern Crossroads":
+        return False
+    onward = [destination for heading, destination in road.exits.items()
+              if heading != "north" and FIRST_VNUM <= destination <= LAST_VNUM
+              and world.WORLD.get(destination) is not None]
+    if len(set(onward)) < 2:
+        return False
     if (leaf.exits.get("south") not in (None, FIRST_VNUM)
             or road.exits.get("north") not in (None, 9)):
         return False  # Existing builder links win; report conflicts separately.
@@ -222,7 +233,10 @@ def repair_leaf_gate():
         return False
     # The saved snapshot is authoritative: do not overrule any saved exit.
     saved_leaf = state["rooms"]["9"].get("exits", {})
-    saved_road = state["rooms"][str(FIRST_VNUM)].get("exits", {})
+    saved_road_data = state["rooms"][str(FIRST_VNUM)]
+    if saved_road_data.get("name") != "Konoha Southern Crossroads":
+        return False
+    saved_road = saved_road_data.get("exits", {})
     if (saved_leaf.get("south") not in (None, FIRST_VNUM)
             or saved_road.get("north") not in (None, 9)):
         return False
