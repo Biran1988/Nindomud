@@ -1125,6 +1125,36 @@ def _format_exits(room, is_staff: bool = False) -> List[str]:
     return [f"{ui_palette.EXIT_COLOR}Exits:&x {colored}"]
 
 
+_LOOK_EQUIPMENT_ORDER = (
+    "head", "neck", "piercing", "body", "back", "hands",
+    "finger", "waist", "legs", "feet", "chakra aura",
+    "wielded", "offhand", "tool",
+)
+
+
+def _visible_equipment_lines(target) -> List[str]:
+    """Show worn armor, accessories, primary/off-hand weapons and tools.
+
+    Read the character's existing slot-to-item mapping directly; no
+    inventory contents, stats, hidden item metadata or made-up equipment.
+    Preserve unusual extra equipment slots after the regular display order.
+    """
+    equipment = getattr(target, "equipment", {}) or {}
+    slots = [slot for slot in _LOOK_EQUIPMENT_ORDER if equipment.get(slot)]
+    slots.extend(sorted(slot for slot, item in equipment.items()
+                        if slot not in _LOOK_EQUIPMENT_ORDER and item))
+    lines = ["&WEquipment:&x"]
+    if not slots:
+        return lines + ["  &D(nothing equipped)&x"]
+    labels = {"wielded": "Wielded weapon", "offhand": "Off-hand weapon",
+              "tool": "Held tool", "chakra aura": "Chakra aura"}
+    for slot in slots:
+        label = labels.get(slot, slot.replace("_", " ").title())
+        item = tool_durability.display_name(equipment[slot])
+        lines.append(f"  &D<{label}>&x {rarity_colored_name(item)}")
+    return lines
+
+
 def cmd_look(session, args: List[str]) -> None:
     import genjutsu
     player = session.player
@@ -1182,11 +1212,14 @@ def cmd_look(session, args: List[str]) -> None:
             # To the pilot, examining their body looks the same as
             # examining any other player. Never expose a control status.
             description = original_body.description or f"{original_body.name} hasn't set a description."
-            session.send(f"&C{original_body.name}&x\n{description}")
+            lines = [f"&C{original_body.name}&x", description]
+            lines.extend(_visible_equipment_lines(original_body))
+            session.send("\n".join(lines))
             return
         if query in ("self", "me") or query in player.name.lower():
             lines = [f"&C{player.name}&x"]
             lines.append(player.description if player.description else "You haven't set a description.")
+            lines.extend(_visible_equipment_lines(player))
             session.send("\n".join(lines))
             return
         for other in session.active_sessions():
@@ -1199,6 +1232,7 @@ def cmd_look(session, args: List[str]) -> None:
                 apparent = genjutsu.apparent_name(target)
                 lines = [f"&C{apparent}&x"]
                 lines.append(target.description if target.description else f"{apparent} hasn't set a description.")
+                lines.extend(_visible_equipment_lines(target))
                 if target.genjutsu_item_illusions:
                     lines.append("Apparent item: " + ", ".join(
                         entry["alias"] for item, entry in target.genjutsu_item_illusions.items()
@@ -1212,6 +1246,7 @@ def cmd_look(session, args: List[str]) -> None:
             mob_description = mob_template.get("description")
             lines = [f"&C{mob.name}&x"]
             lines.append(mob_description if mob_description else f"{mob.name} hasn't set a description.")
+            lines.extend(_visible_equipment_lines(mob))
             session.send("\n".join(lines))
             return
         inv_match = find_indexed_item(query, player.inventory)

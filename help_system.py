@@ -733,7 +733,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: look  |  look <name>  |  look self  |  look me\n"
             "\n"
-            "Description: Shows the room you're in: its name, anyone/anything present, and its exits. 'look <name>' examines a player, mob, or item in the room or your own inventory instead -- 'look self' or 'look me' shows your own description.\n"
+            "Description: Shows the room you're in: its name, anyone/anything present, and its exits. 'look <name>' examines a player, mob, or item in the room or your own inventory instead. Looking at a player or mob also shows their worn armor, accessories, wielded sword/weapon, off-hand weapon and held tool (but not their inventory). 'look self' or 'look me' shows your own description and equipment.\n"
             "\n"
             "Date: 2026-08-17"
         ),

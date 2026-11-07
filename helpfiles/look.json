@@ -5,8 +5,8 @@
     "l"
   ],
   "title": "Look",
-  "body": "Syntax: look  |  look <name>  |  look self  |  look me\n\nDescription: Shows the room you're in: its name, anyone/anything present, and its exits. 'look <name>' examines a player, mob, or item in the room or your own inventory instead -- 'look self' or 'look me' shows your own description.\n\nDate: 2026-08-17",
+  "body": "Syntax: look  |  look <name>  |  look self  |  look me\n\nDescription: Shows the room you're in: its name, anyone/anything present, and its exits. 'look <name>' examines a player, mob, or item in the room or your own inventory instead. Looking at a player or mob now shows their visible armor, accessories, swords, wielded and off-hand weapons, and held tools without showing inventory. 'look self' or 'look me' also lists your own equipped gear.\n\nDate: 2026-08-17",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
