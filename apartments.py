@@ -144,6 +144,8 @@ def setup_expansion_room(room, room_type: str) -> None:
     apart -- whichever one creates the room, this is what makes it
     actually behave like its type, not just display a name."""
     room.apartment_room_type = room_type
+    if "apartment" not in room.flags:
+        room.flags.append("apartment")
     if room_type == "bedroom":
         if "accelerated_healing" not in room.flags:
             room.flags.append("accelerated_healing")
