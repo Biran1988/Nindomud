@@ -26,11 +26,18 @@ def main():
     # builder rooms or a previously occupied gate exit.
     import mainland_roads
     try:
+        mainland_roads.ensure_live_mainland_area()
+    except mainland_roads.RoadInstallationError as error:
+        print(f"[Mainland roads] Area kept unchanged: {error}")
+    try:
         mainland_roads.install_once()
     except mainland_roads.RoadInstallationError as error:
-        # Keep the game running if one gate or room conflicts with a
-        # player's live world; the installer has made no changes.
+        # An existing room or exit is never replaced by the installer.
         print(f"[Mainland roads] Installation skipped: {error}")
+    # Repair the original Leaf gate even when roads already have a marker
+    # or a separate road installation was blocked by a VNUM conflict.
+    if mainland_roads.repair_leaf_gate():
+        print("[Mainland roads] Restored Leaf room 9 south <-> 20501 north.")
     # Expand the same reserved mainland area with one-time camp/inn additions.
     # This does not touch the changes board or replace unrelated /data.
     import roadside_encounters

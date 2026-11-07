@@ -150,6 +150,43 @@ class OneTimeInstallTests(unittest.TestCase):
         self.assertEqual(storage.load_world_state()["rooms"]["20501"]["name"],
                          "Custom player road title")
 
+    def test_converts_only_mainland_area_from_prototype_to_live(self):
+        entries = registered_areas()
+        entries["mainland road network"]["prototype"] = True
+        entries["mainland road network"]["prototype_owner"] = "biran"
+        entries["leaf"]["prototype"] = True
+        storage.save_areas(entries)
+        self.assertTrue(roads.ensure_live_mainland_area())
+        stored = storage.load_areas()
+        self.assertIs(stored["mainland road network"]["prototype"], False)
+        self.assertEqual(stored["mainland road network"]["prototype_owner"], "biran")
+        self.assertTrue(stored["leaf"]["prototype"])
+        self.assertFalse(roads.ensure_live_mainland_area())
+
+    def test_repair_leaf_gate_without_overwriting_builder_rooms(self):
+        self.assertTrue(roads.install_once())
+        original = world.WORLD.rooms[9].description
+        world.WORLD.rooms[9].exits.pop("south")
+        saved = storage.load_world_state()
+        saved["rooms"]["9"]["exits"].pop("south")
+        storage.save_world_state(saved)
+        self.assertTrue(roads.repair_leaf_gate())
+        self.assertEqual(world.WORLD.rooms[9].exits["south"], 20501)
+        self.assertEqual(world.WORLD.rooms[20501].exits["north"], 9)
+        self.assertEqual(world.WORLD.rooms[9].description, original)
+        self.assertEqual(storage.load_world_state()["rooms"]["9"]["exits"]["inside"], 8)
+        self.assertFalse(roads.repair_leaf_gate())
+
+    def test_repair_leaf_gate_preserves_occupied_south_exit(self):
+        self.assertTrue(roads.install_once())
+        world.WORLD.rooms[9].exits["south"] = 10
+        saved = storage.load_world_state()
+        saved["rooms"]["9"]["exits"]["south"] = 10
+        storage.save_world_state(saved)
+        self.assertFalse(roads.repair_leaf_gate())
+        self.assertEqual(world.WORLD.rooms[9].exits["south"], 10)
+        self.assertEqual(storage.load_world_state()["rooms"]["9"]["exits"]["south"], 10)
+
     def test_occupied_road_vnum_refuses_entire_migration(self):
         world.WORLD.add_room(world.Room(20501, "Player already built here", "Do not delete"))
         with self.assertRaises(roads.RoadInstallationError):

@@ -150,16 +150,17 @@ def _spawn_entry(points, template_vnum, room_vnum, total=1):
     }
 
 
-def build_plan():
-    """Pure, deterministic plan: (rooms, links, templates, spawns, metadata)."""
+def build_plan(road_rooms=None):
+    """Deterministic construction plan; optional live road graph for safe spurs."""
     roads, hubs = mainland_roads.build_rooms()
+    occupied_roads = road_rooms if road_rooms is not None else roads
     rooms, links, templates, spawns = {}, [], {}, {}
     camp_info, inn_info = {}, {}
     vnum = FIRST_NEW_ROOM
 
     for index, (key, name, title, position, preferred, biome) in enumerate(CAMPS):
         anchor = _anchor(roads, title, position)
-        heading = _side(roads[anchor], preferred)
+        heading = _side(occupied_roads.get(anchor) or roads[anchor], preferred)
         trail = list(range(vnum, vnum + 4))
         camp = list(range(vnum + 4, vnum + 17))  # 13 actual camp rooms
         vnum += 17
@@ -214,7 +215,7 @@ def build_plan():
 
     for index, (key, name, title, position, preferred, biome) in enumerate(INNS):
         anchor = _anchor(roads, title, position)
-        heading = _side(roads[anchor], preferred)
+        heading = _side(occupied_roads.get(anchor) or roads[anchor], preferred)
         left, right = _offset(heading, -2), _offset(heading, 2)
         porch, lobby, tea, guest, bath, lane, house1, house2, house3 = range(vnum, vnum+9)
         vnum += 9
@@ -282,7 +283,10 @@ def install_once():
             or area["vnum_end"] != mainland_roads.LAST_VNUM):
         raise RoadsideInstallationError("Mainland Road Network 20501-30500 must exist.")
 
-    rooms, links, templates, points, details = build_plan()
+    # Builder-created highway exits may occupy the original preferred
+    # attachment direction. Choose another genuinely available direction
+    # on the live roads instead of aborting all five camps and inns.
+    rooms, links, templates, points, details = build_plan(road_rooms=world.WORLD.rooms)
     state = storage.load_world_state()
     saved_rooms = state.get("rooms", {})
     saved_mobs = state.get("mobs", {})

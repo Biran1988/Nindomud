@@ -174,6 +174,67 @@ def build_rooms():
     return roads, hubs
 
 
+def ensure_live_mainland_area():
+    """Mark only the reserved mainland road area live, including old installations.
+
+    This changes areas.json metadata, NOT any area boundaries or saved rooms.
+    Preserve builders and prototype ownership records for auditing; only
+    the prototype restriction itself is turned off.
+    """
+    import storage
+    registry = storage.load_areas()
+    key = next((key for key, entry in registry.items()
+                if entry.get("name", "").casefold() == "mainland road network"), None)
+    if key is None:
+        return False  # A missing area cannot be invented without inspecting reservations.
+    entry = registry[key]
+    if (entry.get("vnum_start"), entry.get("vnum_end")) != (FIRST_VNUM, LAST_VNUM):
+        raise RoadInstallationError(
+            "Mainland Road Network reservation differs from 20501-30500; area left unchanged.")
+    if entry.get("prototype") is False:
+        return False
+    updated = deepcopy(registry)
+    updated[key]["prototype"] = False
+    storage.save_areas(updated)
+    return True
+
+
+def repair_leaf_gate():
+    """Repair a missing Leaf south -> 20501 / road north -> 9 connection.
+
+    Do this even after the original one-time installer marker exists. Never
+    steal an occupied exit or recreate/overwrite either room's other fields.
+    """
+    import storage
+    import world
+    leaf, road = world.WORLD.get(9), world.WORLD.get(FIRST_VNUM)
+    if leaf is None or road is None:
+        return False
+    if (leaf.exits.get("south") not in (None, FIRST_VNUM)
+            or road.exits.get("north") not in (None, 9)):
+        return False  # Existing builder links win; report conflicts separately.
+    if leaf.exits.get("south") == FIRST_VNUM and road.exits.get("north") == 9:
+        return False
+    state = storage.load_world_state()
+    if not isinstance(state.get("rooms"), dict):
+        return False
+    if str(9) not in state["rooms"] or str(FIRST_VNUM) not in state["rooms"]:
+        return False
+    # The saved snapshot is authoritative: do not overrule any saved exit.
+    saved_leaf = state["rooms"]["9"].get("exits", {})
+    saved_road = state["rooms"][str(FIRST_VNUM)].get("exits", {})
+    if (saved_leaf.get("south") not in (None, FIRST_VNUM)
+            or saved_road.get("north") not in (None, 9)):
+        return False
+    merged = deepcopy(state)
+    merged["rooms"]["9"]["exits"]["south"] = FIRST_VNUM
+    merged["rooms"][str(FIRST_VNUM)]["exits"]["north"] = 9
+    storage.save_world_state(merged)
+    leaf.exits["south"] = FIRST_VNUM
+    road.exits["north"] = 9
+    return True
+
+
 def _validate_areas():
     import areas
     actual = {entry["name"].casefold(): entry for entry in areas.all_areas().values()}

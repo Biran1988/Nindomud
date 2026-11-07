@@ -76,6 +76,19 @@ class GeometryTests(unittest.TestCase):
                 self.assertIn(camp["anchor"], template["roadside_patrol_vnums"])
                 self.assertIn(camp["camp"][0], template["roadside_patrol_vnums"])
 
+    def test_spur_avoids_builder_occupied_highway_exit(self):
+        roads, _ = mainland_roads.build_rooms()
+        initial_rooms, original_links, _, _, _ = roadside.build_plan()
+        anchor, originally_preferred, first = original_links[0]
+        custom_road = roads[anchor]
+        custom_road.exits[originally_preferred] = 99999  # builder-owned spur
+        changed_rooms, changed_links, _, _, _ = roadside.build_plan(road_rooms=roads)
+        new_anchor, new_direction, new_first = changed_links[0]
+        self.assertEqual((new_anchor, new_first), (anchor, first))
+        self.assertNotEqual(new_direction, originally_preferred)
+        self.assertEqual(custom_road.exits[originally_preferred], 99999)
+        self.assertEqual(changed_rooms[first].exits[roadside.REVERSE[new_direction]], anchor)
+
     def test_inns_charge_for_unlinked_safe_hospital_bath(self):
         rooms, _, _, _, info = roadside.build_plan()
         for inn in info["inns"].values():
