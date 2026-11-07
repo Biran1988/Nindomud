@@ -23,7 +23,8 @@ class JutsuShortcutTests(unittest.TestCase):
 
     def test_complete_unique_and_no_command_abbreviation_collisions(self):
         mapping = data_jutsu.JUTSU_SHORTCUTS
-        self.assertEqual(set(mapping), set(data_jutsu.JUTSU))
+        self.assertEqual(set(mapping), {key for key, data in data_jutsu.JUTSU.items()
+                                        if data.get("jutsu_type") != "track_upgrade"})
         self.assertEqual(len(set(mapping.values())), len(mapping))
         words = set(commands.COMMANDS) | set(world.DIRECTION_ALIASES) | set(world.OPPOSITE_DIRECTION)
         reserved = {word[:n] for word in words for n in range(1, len(word) + 1)}

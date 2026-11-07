@@ -195,8 +195,13 @@ SHORTCUT_JUTSU = {short: key for key, short in JUTSU_SHORTCUTS.items()}
 
 def validate_shortcuts(jutsu, legacy_aliases, reserved_words):
     """Fail clearly if a new technique or command creates a collision."""
-    if set(JUTSU_SHORTCUTS) != set(jutsu):
-        raise ValueError("Every jutsu must have an explicit one-word shortcut")
+    # Passive scroll upgrades are learned abilities, not separately castable
+    # techniques. They intentionally share an existing command and cannot
+    # acquire a one-word active shortcut.
+    active_jutsu = {key for key, data in jutsu.items()
+                    if data.get("jutsu_type") != "track_upgrade"}
+    if set(JUTSU_SHORTCUTS) != active_jutsu:
+        raise ValueError("Every active jutsu must have an explicit one-word shortcut")
     if len(SHORTCUT_JUTSU) != len(JUTSU_SHORTCUTS):
         raise ValueError("Jutsu shortcuts must be unique")
     for key, short in JUTSU_SHORTCUTS.items():
