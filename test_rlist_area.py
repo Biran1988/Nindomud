@@ -53,4 +53,4 @@ class RlistAreaTests(TestCase):
 
     def test_invalid_range_shows_usage(self):
         output = self.run_rlist(["150"], self.area)
-        self.assertIn("Usage: rlist [low_vnum high_vnum]", output)
+        self.assertIn("Usage: rlist [all] [low_vnum high_vnum]", output)
