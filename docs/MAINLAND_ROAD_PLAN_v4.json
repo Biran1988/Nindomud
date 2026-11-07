@@ -1,0 +1,268 @@
+{
+  "version": 4,
+  "status": "planning, not deployed",
+  "source_placement": "Naruto region geography with minor-country fan interpretation",
+  "direct_major_min": 150,
+  "direct_major_max": 250,
+  "major_routes": [
+    {
+      "id": "R1",
+      "from": "Stone",
+      "to": "Leaf",
+      "via": [
+        "Stone",
+        "Grass",
+        "Leaf"
+      ],
+      "segments": [
+        105,
+        85
+      ],
+      "rooms": 190
+    },
+    {
+      "id": "R2",
+      "from": "Stone",
+      "to": "Leaf",
+      "via": [
+        "Stone",
+        "Rain",
+        "Leaf"
+      ],
+      "segments": [
+        118,
+        90
+      ],
+      "rooms": 208
+    },
+    {
+      "id": "R3",
+      "from": "Leaf",
+      "to": "Sand",
+      "via": [
+        "Leaf",
+        "Rivers",
+        "Sand"
+      ],
+      "segments": [
+        95,
+        80
+      ],
+      "rooms": 175
+    },
+    {
+      "id": "R4",
+      "from": "Leaf",
+      "to": "Sand",
+      "via": [
+        "Leaf",
+        "Rain",
+        "Sand"
+      ],
+      "segments": [
+        90,
+        114
+      ],
+      "rooms": 204
+    },
+    {
+      "id": "R5",
+      "from": "Leaf",
+      "to": "Cloud",
+      "via": [
+        "Leaf",
+        "Hot Water",
+        "Cloud"
+      ],
+      "segments": [
+        112,
+        93
+      ],
+      "rooms": 205
+    },
+    {
+      "id": "R6",
+      "from": "Leaf",
+      "to": "Cloud",
+      "via": [
+        "Leaf",
+        "Sound",
+        "Frost",
+        "Cloud"
+      ],
+      "segments": [
+        80,
+        55,
+        75
+      ],
+      "rooms": 210
+    },
+    {
+      "id": "R7",
+      "from": "Stone",
+      "to": "Cloud",
+      "via": [
+        "Stone",
+        "Grass",
+        "Waterfall",
+        "Frost",
+        "Cloud"
+      ],
+      "segments": [
+        105,
+        36,
+        30,
+        75
+      ],
+      "rooms": 246
+    },
+    {
+      "id": "R8",
+      "from": "Stone",
+      "to": "Sand",
+      "via": [
+        "Stone",
+        "Birds",
+        "Sand"
+      ],
+      "segments": [
+        108,
+        107
+      ],
+      "rooms": 215
+    },
+    {
+      "id": "R9",
+      "from": "Leaf",
+      "to": "Cloud",
+      "via": [
+        "Leaf",
+        "Waterfall",
+        "Frost",
+        "Cloud"
+      ],
+      "segments": [
+        108,
+        30,
+        75
+      ],
+      "rooms": 213
+    }
+  ],
+  "minor_connector": {
+    "id": "C1",
+    "via": [
+      "Grass",
+      "Waterfall",
+      "Sound"
+    ],
+    "segments": [
+      36,
+      28
+    ],
+    "rooms": 64
+  },
+  "segments": [
+    {
+      "a": "Stone",
+      "b": "Grass",
+      "rooms": 105
+    },
+    {
+      "a": "Grass",
+      "b": "Leaf",
+      "rooms": 85
+    },
+    {
+      "a": "Stone",
+      "b": "Rain",
+      "rooms": 118
+    },
+    {
+      "a": "Rain",
+      "b": "Leaf",
+      "rooms": 90
+    },
+    {
+      "a": "Rain",
+      "b": "Sand",
+      "rooms": 114
+    },
+    {
+      "a": "Leaf",
+      "b": "Rivers",
+      "rooms": 95
+    },
+    {
+      "a": "Rivers",
+      "b": "Sand",
+      "rooms": 80
+    },
+    {
+      "a": "Leaf",
+      "b": "Hot Water",
+      "rooms": 112
+    },
+    {
+      "a": "Hot Water",
+      "b": "Cloud",
+      "rooms": 93
+    },
+    {
+      "a": "Leaf",
+      "b": "Sound",
+      "rooms": 80
+    },
+    {
+      "a": "Sound",
+      "b": "Frost",
+      "rooms": 55
+    },
+    {
+      "a": "Frost",
+      "b": "Cloud",
+      "rooms": 75
+    },
+    {
+      "a": "Leaf",
+      "b": "Waterfall",
+      "rooms": 108
+    },
+    {
+      "a": "Waterfall",
+      "b": "Frost",
+      "rooms": 30
+    },
+    {
+      "a": "Stone",
+      "b": "Birds",
+      "rooms": 108
+    },
+    {
+      "a": "Birds",
+      "b": "Sand",
+      "rooms": 107
+    },
+    {
+      "a": "Grass",
+      "b": "Waterfall",
+      "rooms": 36
+    },
+    {
+      "a": "Waterfall",
+      "b": "Sound",
+      "rooms": 28
+    }
+  ],
+  "flags": {
+    "grass_is_inland": true,
+    "no_roads_to_mist": true,
+    "no_water_crossing": true,
+    "land_of_iron_is_future_custom_placement": true
+  },
+  "source_urls": [
+    "https://naruto.fandom.com/wiki/Geography",
+    "https://commons.wikimedia.org/wiki/File:Naruto_World_Map.svg",
+    "https://www.reddit.com/r/Naruto/comments/17lree4/the_map_of_the_naruto_world_based_on_everything_i/"
+  ]
+}
