@@ -569,4 +569,9 @@ CHANGELOG = [
     ("15.423", "MLIST and OLIST now show only prototypes associated with your current area. MLIST ALL, OLIST ALL and RLIST ALL show worldwide listings, with optional vnum ranges."),
     ("15.424", "Apartment hallways are no longer purchasable; expansions can only be built from the main room. Selling removes owned expansion VNUMs and restores the main room to Empty apartment. REDIT FLAGS APARTMENT now works."),
 
+    ("15.425", "Missions now use MISSION REQUEST <rank>, MISSION INFO and MISSION FAIL [rank]. Hunt targets are chosen only from level-appropriate mobs flagged Mission. Each mission has a 30-minute real-time deadline, including time offline; unfinished missions fail without rewards."),
+    ("15.426", "Advanced Tracking is a level-20 scroll-learned upgrade to the existing PERFORM TRACK command. Learned users can follow reachable targets across area boundaries; normal Track keeps its area limit, and blocked or disconnected routes remain impassable."),
+    ("15.427", "Farming level 20+ can now occasionally harvest Medicinal Herbs from farmland using a hoe. The rare find yields the existing medicinal crafting ingredient, with 35 Farming XP per harvest."),
+    ("15.428", "Added Info Scrolls to village general stores. WRITE INFO SCROLL opens the multiline editor; EXAMINE INFO SCROLL reveals the author's saved message. Each copy retains its own writing through trading, dropping and restarts. Jutsu-learning scrolls remain separate."),
+    ("15.429", "LOOK <player>, LOOK SELF and LOOK <mob> now show equipped armor, accessories, wielded swords, off-hand weapons and held tools. Hidden characters remain hidden, and inventory contents are never exposed."),
 ]
