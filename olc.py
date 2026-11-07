@@ -723,50 +723,134 @@ def cmd_rfind(session, args: List[str]) -> None:
     session.send("Room matches:\n" + ("\n".join(f"  {v}: {r.name}" for v, r in matches) or "  None"))
 
 
+def _builder_list_scope(session, args: List[str], command: str):
+    """Resolve current-area listings, or an explicit global 'all' listing."""
+    global_scope = bool(args and args[0].lower() == "all")
+    range_args = args[1:] if global_scope else args
+    requested = _requested_vnum_range(
+        session, range_args, f"Usage: {command} [all] [low_vnum high_vnum]"
+    )
+    if requested is False:
+        return False
+    if global_scope:
+        return None, requested
+    area = areas.find_area_for_vnum(session.player.room_vnum)
+    if area is None:
+        session.send(f"Room {session.player.room_vnum} isn't within any registered area.")
+        return False
+    return area, requested
+
+
+def _area_prototype_vnums(area, kind: str) -> set:
+    """Resolve mob/item prototypes actually associated with rooms in this area.
+
+    Mobile and object VNUMs are independent of ROOM VNUMs, so testing
+    whether a prototype's number lies in the area's room range would
+    silently mislabel templates belonging to other places. Use actual
+    spawn-point placements, live mobs, and local shops/ground items.
+    """
+    def in_area(room_vnum):
+        return area.vnum_start <= room_vnum <= area.vnum_end
+
+    vnums = {
+        point["vnum"] for point in spawn_points.list_spawn_points()
+        if point["kind"] == kind and in_area(point["room_vnum"])
+    }
+    local_mobs = [
+        mob
+        for room_vnum, mobs in combat.MOBS_BY_ROOM.items()
+        if in_area(room_vnum)
+        for mob in mobs
+    ]
+    if kind == "mob":
+        vnums.update(mob.template_vnum for mob in local_mobs)
+    else:
+        # Stock of shopkeepers in this area is associated with this area
+        # even if it isn't dropped in a room or separately spawned.
+        for mob in local_mobs:
+            vnums.update(
+                vnum for vnum in combat.MOB_TEMPLATES.get(mob.template_vnum, {}).get("shop_items", [])
+                if isinstance(vnum, int)
+            )
+
+        # OSET LOAD deposits a display-name-only item in a room.
+        # Match those names only when the prototype name is unique;
+        # otherwise there is no reliable VNUM to attribute to it.
+        names = {
+            str(item).casefold()
+            for room_vnum, room in world.WORLD.rooms.items()
+            if in_area(room_vnum)
+            for item in room.ground_items
+        }
+        if names:
+            by_name = {}
+            for vnum, template in OBJECT_TEMPLATES.items():
+                by_name.setdefault(template.get("short_desc", "").casefold(), []).append(vnum)
+            for name in names:
+                candidates = by_name.get(name, ())
+                if len(candidates) == 1:
+                    vnums.add(candidates[0])
+    return vnums
+
+
 def cmd_mlist(session, args: List[str]) -> None:
     if not _require_builder(session):
         return
-    requested = _requested_vnum_range(session, args, "Usage: mlist [low_vnum high_vnum]")
-    if requested is False:
+    scope = _builder_list_scope(session, args, "mlist")
+    if scope is False:
         return
-    rows = sorted(combat.MOB_TEMPLATES.items())
-    if requested:
-        rows = [(v, value) for v, value in rows if requested[0] <= v <= requested[1]]
-    session.send("Mobile prototypes:\n" + ("\n".join(f"  {v}: {m['short_desc']} (level {m['level']})" for v, m in rows) or "  None"))
+    area, requested = scope
+    members = _area_prototype_vnums(area, "mob") if area else None
+    rows = [
+        (vnum, mob) for vnum, mob in sorted(combat.MOB_TEMPLATES.items())
+        if (members is None or vnum in members)
+        and (not requested or requested[0] <= vnum <= requested[1])
+    ]
+    heading = f"Mobile prototypes in {area.name}:" if area else "Mobile prototypes (all areas):"
+    session.send(heading + "\n" + ("\n".join(
+        f"  {v}: {m['short_desc']} (level {m['level']})" for v, m in rows
+    ) or "  None"))
 
 
 def cmd_olist(session, args: List[str]) -> None:
     if not _require_builder(session):
         return
-    requested = _requested_vnum_range(session, args, "Usage: olist [low_vnum high_vnum]")
-    if requested is False:
+    scope = _builder_list_scope(session, args, "olist")
+    if scope is False:
         return
-    rows = sorted(OBJECT_TEMPLATES.items())
-    if requested:
-        rows = [(v, value) for v, value in rows if requested[0] <= v <= requested[1]]
-    session.send("Object prototypes:\n" + ("\n".join(f"  {v}: {o['short_desc']} ({o['item_type']})" for v, o in rows) or "  None"))
+    area, requested = scope
+    members = _area_prototype_vnums(area, "item") if area else None
+    rows = [
+        (vnum, obj) for vnum, obj in sorted(OBJECT_TEMPLATES.items())
+        if (members is None or vnum in members)
+        and (not requested or requested[0] <= vnum <= requested[1])
+    ]
+    heading = f"Object prototypes in {area.name}:" if area else "Object prototypes (all areas):"
+    session.send(heading + "\n" + ("\n".join(
+        f"  {v}: {o['short_desc']} ({o['item_type']})" for v, o in rows
+    ) or "  None"))
 
 
 def cmd_rlist(session, args: List[str]) -> None:
-    """List only rooms in the player's current registered area."""
+    """List rooms in the current area, or the entire world via 'rlist all'."""
     if not _require_builder(session):
         return
-    requested = _requested_vnum_range(session, args, "Usage: rlist [low_vnum high_vnum]")
-    if requested is False:
+    scope = _builder_list_scope(session, args, "rlist")
+    if scope is False:
         return
-    area = areas.find_area_for_vnum(session.player.room_vnum)
-    if area is None:
-        session.send(f"Room {session.player.room_vnum} isn't within any registered area.")
-        return
+    area, requested = scope
     rows = [
         (vnum, room) for vnum, room in sorted(world.WORLD.rooms.items())
-        if area.vnum_start <= vnum <= area.vnum_end
+        if (area is None or area.vnum_start <= vnum <= area.vnum_end)
         and (not requested or requested[0] <= vnum <= requested[1])
     ]
-    session.send(
-        f"Rooms in {area.name} ({area.vnum_start}-{area.vnum_end}):\n"
-        + ("\n".join(f"  {v}: {r.name}" for v, r in rows) or "  None")
+    heading = (
+        f"Rooms in {area.name} ({area.vnum_start}-{area.vnum_end}):"
+        if area else "Rooms (all areas):"
     )
+    session.send(heading + "\n" + ("\n".join(
+        f"  {v}: {r.name}" for v, r in rows
+    ) or "  None"))
 
 
 def cmd_rstat(session, args: List[str]) -> None:
