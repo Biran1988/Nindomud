@@ -3535,11 +3535,23 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if jutsu_key == "shadow clone jutsu":
             combat.use_shadow_clone_jutsu(session)
         return
+    if jutsu_data.get("jutsu_type") == "track_upgrade":
+        jutsu_colors.send(session, "Advanced Tracking is a passive upgrade. Use 'perform track <target>'.")
+        return
     if jutsu_data.get("jutsu_type") == "track":
         import tracking
         import areas
         import session as session_module
 
+        # A real learned scroll (or staff powers) is required; merely
+        # knowing the command name must never grant free tracking.
+        advanced = tracking.has_advanced_tracking(player)
+        normal = (player.level >= jutsu_data["level_requirement"]
+                  and jutsu_data["display_name"] in player.learned_skills)
+        if not (advanced or normal or combat._staff_testing_mangekyo(player)):
+            jutsu_colors.send(session, "You must learn Track or Advanced Tracking from a scroll "
+                              "and meet the technique's level requirement.")
+            return
         if not target_words:
             jutsu_colors.send(session, "Track who or what?")
             return
@@ -3564,7 +3576,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
 
         target_room_vnum = target_mob.room_vnum if target_mob else target_player_session.player.room_vnum
         area = areas.find_area_for_vnum(target_room_vnum)
-        if area is None:
+        if area is None and not advanced:
             jutsu_colors.send(session, "You can't get a fix on their location.")
             return
 
@@ -3574,10 +3586,12 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             player,
             target_mob=target_mob,
             target_player_name=target_player_session.player.name if target_player_session else None,
-            area_name=area.name,
+            area_name=area.name if area else None,
         )
         target_name = target_mob.name if target_mob else target_player_session.player.name
-        jutsu_colors.send(session, f"&YYou focus your senses and pick up {target_name}'s trail...&x")
+        message = (f"&YYour advanced senses follow {target_name}'s trail across country borders...&x"
+                   if advanced else f"&YYou focus your senses and pick up {target_name}'s trail...&x")
+        jutsu_colors.send(session, message)
         return
     if jutsu_data.get("jutsu_type") == "sealing":
         if not target_words:
@@ -8550,6 +8564,10 @@ def cmd_read(session, args: List[str]) -> None:
         session.send(f"You already know {display}.")
         return
 
+    if jutsu_key == "advanced tracking" and player.level < 20:
+        session.send("You must be level 20 to study the Advanced Tracking Scroll.")
+        return
+
     player.learned_skills.append(display)
     player.skill_proficiencies[display] = leveling.initial_proficiency(player)
     import skill_training
@@ -8562,6 +8580,9 @@ def cmd_read(session, args: List[str]) -> None:
             player.skill_proficiencies[reverse] = leveling.initial_proficiency(player)
             skill_training.grant_without_practice(player, reverse)
         storage.save_player(player)
+    # Scroll grants persist immediately even if the server restarts before
+    # its next normal autosave (especially important for rare scrolls).
+    storage.save_player(player)
     session.send(f"You study {match} carefully... you have learned &Y{display}&x!")
 
 

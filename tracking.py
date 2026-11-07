@@ -73,6 +73,15 @@ def find_online_player_anywhere(session_module, query: str, viewer=None):
 
 
 TRACK_UPKEEP_PER_PULSE = 5  # a small, real, ongoing chakra cost -- mirrors Shadow Clone Jutsu's own established upkeep pattern
+ADVANCED_TRACK_SKILL = "Advanced Tracking"
+ADVANCED_TRACK_LEVEL = 20
+
+
+def has_advanced_tracking(player) -> bool:
+    """A scroll unlock: level 20+, learned Advanced Tracking, all classes."""
+    return (player.level >= ADVANCED_TRACK_LEVEL
+            and ADVANCED_TRACK_SKILL in player.learned_skills)
+
 
 
 def _room_exits_are_passable(room, direction: str) -> bool:
@@ -88,45 +97,49 @@ def _room_exits_are_passable(room, direction: str) -> bool:
 
 
 def find_path(world_module, start_vnum: int, target_vnum: int, area) -> Optional[list]:
-    """A genuine breadth-first search for the shortest real path from
-    start_vnum to target_vnum, using only rooms within `area`'s own
-    registered vnum range (area.vnum_start to area.vnum_end
-    inclusive) -- confirmed directly to never search the whole map,
-    only the target's own area. Respects closed/locked doors exactly
-    like ordinary movement (_room_exits_are_passable). Returns a list
-    of direction strings (e.g. ["north", "north", "east"]) for the
-    caller to walk one at a time, or None if no real path exists at
-    all within that area (a genuinely disconnected room, or
-    start_vnum/target_vnum not actually within the area's own
-    range)."""
-    if not (area.vnum_start <= start_vnum <= area.vnum_end):
-        return None
-    if not (area.vnum_start <= target_vnum <= area.vnum_end):
+    """Shortest walkable route. Area restricts normal Track; None is global.
+
+    World-wide Track still follows actual connected, existing rooms and
+    refuses locked/closed doors. Predecessor pointers avoid copying long
+    candidate paths for every room on a large cross-country route.
+    """
+    if area is not None:
+        if not (area.vnum_start <= start_vnum <= area.vnum_end):
+            return None
+        if not (area.vnum_start <= target_vnum <= area.vnum_end):
+            return None
+    if world_module.WORLD.get(start_vnum) is None or world_module.WORLD.get(target_vnum) is None:
         return None
     if start_vnum == target_vnum:
         return []
 
-    visited = {start_vnum}
-    queue = deque([(start_vnum, [])])
+    # Each node records its predecessor and direction used to reach it.
+    predecessor = {start_vnum: None}
+    queue = deque([start_vnum])
     while queue:
-        current_vnum, path_so_far = queue.popleft()
+        current_vnum = queue.popleft()
         room = world_module.WORLD.get(current_vnum)
         if room is None:
             continue
         for direction, next_vnum in room.exits.items():
-            if next_vnum in visited:
+            if next_vnum in predecessor:
                 continue
-            if not (area.vnum_start <= next_vnum <= area.vnum_end):
+            if area is not None and not (area.vnum_start <= next_vnum <= area.vnum_end):
                 continue
-            if not _room_exits_are_passable(room, direction):
+            if world_module.WORLD.get(next_vnum) is None or not _room_exits_are_passable(room, direction):
                 continue
-            new_path = path_so_far + [direction]
+            predecessor[next_vnum] = (current_vnum, direction)
             if next_vnum == target_vnum:
-                return new_path
-            visited.add(next_vnum)
-            queue.append((next_vnum, new_path))
+                path = []
+                node = next_vnum
+                while node != start_vnum:
+                    previous, heading = predecessor[node]
+                    path.append(heading)
+                    node = previous
+                path.reverse()
+                return path
+            queue.append(next_vnum)
     return None
-
 
 def _resolve_target_room_vnum(player, combat_module, session_module) -> Optional[int]:
     """The real, current room vnum of whatever this player is
@@ -173,6 +186,7 @@ def stop_tracking(player) -> None:
     when nothing is actually being tracked."""
     import upkeep_reports
     upkeep_reports.stop_maintaining(player, "Track")
+    upkeep_reports.stop_maintaining(player, ADVANCED_TRACK_SKILL)
     player.tracking_target_mob_id = None
     player.tracking_target_player_name = None
     player.tracking_area_name = None
@@ -241,13 +255,17 @@ def tick_tracking(session) -> None:
         stop_tracking(player)
         return
 
+    advanced = has_advanced_tracking(player)
     area = areas.find_area_for_vnum(target_vnum)
-    if area is None or area.name != player.tracking_area_name:
+    if not advanced and (area is None or area.name != player.tracking_area_name):
         session.send("&YYour target has slipped out of range -- you lose the trail.&x")
         stop_tracking(player)
         return
 
-    path = find_path(world, player.room_vnum, target_vnum, area)
+    # Advanced Tracking walks the SAME graph without the area constraint;
+    # it cannot teleport, traverse missing links or ignore closed doors.
+    path = find_path(world, player.room_vnum, target_vnum,
+                     None if advanced else area)
     if not path:
         session.send("&YYou lose the trail -- there's no way to reach your target from here.&x")
         stop_tracking(player)
@@ -257,6 +275,7 @@ def tick_tracking(session) -> None:
     import upkeep_reports
     for message in upkeep_reports.record(player, "Tracking", TRACK_UPKEEP_PER_PULSE):
         session.send(message)
-    upkeep_reports.maintain_skill(player, "Track")
+    upkeep_reports.maintain_skill(
+        player, ADVANCED_TRACK_SKILL if advanced else "Track", session=session)
     direction = path[0]
     commands_module.cmd_move(session, direction)

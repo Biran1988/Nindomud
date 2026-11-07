@@ -211,6 +211,15 @@ JUTSU = {
         # ("Track can only be learned from a scroll by any class" ->
         # confirmed display category: "General Skills").
     },
+    "advanced tracking": {
+        "jutsu_id": "general_advanced_tracking", "display_name": "Advanced Tracking",
+        "class_requirement": "general", "level_requirement": 20,
+        "chakra_cost": 0, "stamina_cost": 0, "cooldown": 0.0,
+        "jutsu_type": "track_upgrade", "damage": None, "damage_type": None,
+        "effect": None, "tier": 2, "element": "none", "scroll_only": True,
+        # Learned ONLY by reading a scroll. Grants world-wide range to
+        # the EXISTING 'perform track' command; no new active command.
+    },
     "sealing jutsu": {
         "jutsu_id": "general_sealing_jutsu", "display_name": "Sealing Jutsu",
         "class_requirement": "general", "level_requirement": 100,

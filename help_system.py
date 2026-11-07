@@ -1566,17 +1566,22 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: perform track <mob or player name>\n"
             "\n"
-            "Description: A scroll-taught technique (learn it from a Track Scroll) that picks up a trail and follows it automatically. Name any mob or player anywhere in the world -- you don't need to be near them -- and your character will walk itself, one room per pulse, toward wherever they currently are.\n"
+            "Normal Track (level 30) follows the target automatically only inside the target's area. Advanced Tracking is a separate scroll-learned upgrade available from level 20. Read an Advanced Tracking Scroll to unlock cross-area pathfinding on the exact same PERFORM TRACK command; no second command is needed.\n"
             "\n"
-            "Tracking is scoped to the target's own area -- it won't path across the whole map, only within the region they're actually in. It respects closed and locked doors just like normal movement. It runs quietly in the background, so you can keep doing other things while it walks you there, but it automatically pauses the instant you're in a fight (PvE or PvP) and picks back up the moment that fight ends.\n"
-            "\n"
-            "It costs 5 Chakra every pulse it's active, summarized with other upkeep every six minutes, and stops on its own if you run out. Paid maintenance can improve Track mastery by 1% on a successful roll outside combat. It also ends cleanly -- with a message telling you so -- the moment the trail goes cold: your target logs off, dies, leaves their own area, or you simply arrive.\n"
-            "\n"
-            "Date: 2026-09-03"
+            "With Advanced Tracking learned, you can follow a mob or online player through any connected areas as long as an actual walkable route exists. It does not teleport, open closed doors, or bypass locked exits. Your character moves one room per pulse, pauses during combat and resumes afterward. If your target vanishes, the route is blocked, you arrive, or your chakra runs out, tracking stops. Tracking costs 5 Chakra per pulse plus the ordinary Track cast cost and cooldown. Normal Track still follows its original area restriction.\n"
         ),
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "advanced tracking",
+        "keywords": ["advanced tracking", "advanced track"],
+        "title": "Advanced Tracking",
+        "body": (
+            "Scroll-only upgrade, level 20 minimum. READ an Advanced Tracking Scroll to learn it. There is no separate tracking command: type 'perform track <mob or player>' exactly as before. With Advanced Tracking learned, Track follows connected rooms across all area borders instead of staying inside one area. Closed doors and unreachable regions remain blocked. Normal Track still has its original area limit. Five Chakra are charged per tracking pulse.\n"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "summon",
