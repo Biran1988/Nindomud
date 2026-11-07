@@ -5858,8 +5858,8 @@ def cmd_buy(session, args: List[str]) -> None:
         if player.apartment_room_vnum is None:
             session.send("You need to own an apartment first -- try 'buy apartment'.")
             return
-        if not apartments.owns_room_at(player, player.room_vnum):
-            session.send("You have to be standing inside your own apartment (or one of its rooms) to buy a new room.")
+        if player.room_vnum != player.apartment_room_vnum:
+            session.send("New rooms must be built from your main apartment room, not from another room.")
             return
         current_room = WORLD.get(player.room_vnum)
         if not current_room or current_room.owner != player.name:
@@ -5885,13 +5885,21 @@ def cmd_buy(session, args: List[str]) -> None:
         if direction in current_room.exits:
             session.send(f"There's already an exit to the {direction} from here.")
             return
+        new_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
+        existing = WORLD.get(new_vnum)
+        if existing is not None:
+            # Earlier versions left disconnected placeholders after a sale.
+            if existing.owner == player.name and existing.apartment_room_type == apartments.EMPTY_ROOM_TYPE:
+                apartments.delete_expansion_room(player, room_type)
+            else:
+                session.send(f"Room VNUM {new_vnum} is already occupied. Contact a builder.")
+                return
         cost = apartments.expansion_cost(len(player.apartment_expansions))
         if player.ryo < cost:
             session.send(f"A {room_type} costs {cost:,} ryo -- you have {player.ryo:,}.")
             return
 
         player.ryo -= cost
-        new_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
         new_room = world.Room(
             new_vnum, f"{player.name}'s {room_type.capitalize()}",
             apartments.ROOM_TYPE_DESCRIPTIONS[room_type],
@@ -5905,8 +5913,11 @@ def cmd_buy(session, args: List[str]) -> None:
         if room_type == "storage":
             new_room.ground_items = player.storage_room_items
         player.apartment_expansions[room_type] = {
-            "direction": direction, "cost": cost, "parent_vnum": current_room.vnum,
+            "direction": direction, "cost": cost, "parent_vnum": player.apartment_room_vnum,
         }
+        storage.save_player(player)
+        import world_autosave
+        world_autosave.mark_dirty()
         session.send(
             f"You pay {cost:,} ryo and build a {room_type} to the {direction}. "
             f"{apartments.ROOM_TYPE_DESCRIPTIONS[room_type]}"
@@ -6245,21 +6256,34 @@ def cmd_sell(session, args: List[str]) -> None:
             session.send(f"You don't have a {room_type} to sell.")
             return
 
+        room_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
+        # Older apartments could have children built off a hallway/bedroom.
+        # Don't orphan those rooms by selling their parent alone.
+        children = [
+            name for name, entry in player.apartment_expansions.items()
+            if name != room_type and entry.get("parent_vnum", player.apartment_room_vnum) == room_vnum
+        ]
+        if children:
+            session.send(f"Sell the connected room(s) first: {', '.join(children)}.")
+            return
+        room = WORLD.get(room_vnum)
+        if room and not apartments.owns_expansion_room(player, room_type):
+            session.send(f"Room VNUM {room_vnum} has been reassigned. Contact a builder.")
+            return
+
         entry = player.apartment_expansions.pop(room_type)
         refund = apartments.refund_for_cost(entry["cost"])
         player.ryo += refund
-        room_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
-        room = WORLD.get(room_vnum)
-        if room:
-            apartments.reset_room_to_empty(
-                room, clear_owner=False,
-                parent_vnum=entry.get("parent_vnum", player.apartment_room_vnum),
-                direction=entry["direction"],
-            )
+        apartments.delete_expansion_room(player, room_type)
+        if player.room_vnum == room_vnum:
+            player.room_vnum = player.apartment_room_vnum
         if room_type == "storage":
             player.storage_room_items = []
+        storage.save_player(player)
+        import world_autosave
+        world_autosave.mark_dirty()
         session.send(
-            f"You tear out the {room_type} and receive {refund:,} ryo "
+            f"You tear out the {room_type}, freeing VNUM {room_vnum}, and receive {refund:,} ryo "
             f"(50% of the {entry['cost']:,} ryo it cost)."
         )
         return
@@ -6269,28 +6293,38 @@ def cmd_sell(session, args: List[str]) -> None:
             session.send("You don't own an apartment to sell.")
             return
         room = WORLD.get(player.apartment_room_vnum)
+        if room is None or room.owner != player.name:
+            session.send("Your apartment deed doesn't match the main room. Contact a builder.")
+            return
         total_refund = apartments.refund_for_cost(config.APARTMENT_COST_RYO)
-        for room_type, entry in player.apartment_expansions.items():
+        for entry in player.apartment_expansions.values():
             total_refund += apartments.refund_for_cost(entry["cost"])
+
+        # Verify every registered room before making any changes: a
+        # builder may have reused a VNUM, which we must never delete.
+        for room_type in apartments.APARTMENT_VNUM_TYPES:
             expansion_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
-            expansion_room = WORLD.get(expansion_vnum)
-            if expansion_room:
-                apartments.reset_room_to_empty(
-                    expansion_room, clear_owner=True,
-                    parent_vnum=entry.get("parent_vnum", player.apartment_room_vnum),
-                    direction=entry["direction"],
-                )
-        if room:
-            apartments.reset_room_to_empty(room, clear_owner=True)
+            expansion = WORLD.get(expansion_vnum)
+            if expansion and not apartments.owns_expansion_room(player, room_type):
+                session.send(f"Room VNUM {expansion_vnum} is no longer yours. Contact a builder.")
+                return
+
+        apartments.clear_apartment_expansions(player)
+        if player.room_vnum != player.apartment_room_vnum and apartments.owns_room_at(player, player.room_vnum):
+            player.room_vnum = player.apartment_room_vnum
+        apartments.reset_vacant_apartment(room)
         player.apartment_room_vnum = None
         player.apartment_name = None
         player.apartment_description = None
         player.apartment_expansions = {}
         player.storage_room_items = []
         player.ryo += total_refund
+        storage.save_player(player)
+        import world_autosave
+        world_autosave.mark_dirty()
         session.send(
-            f"You sign over the deed (and every room you built) and receive {total_refund:,} ryo "
-            f"(50% of what each room cost)."
+            f"You sign over the deed and receive {total_refund:,} ryo (50% of what each room cost). "
+            "The expansion rooms and their VNUMs are freed; the main room is now Empty apartment."
         )
         return
 
