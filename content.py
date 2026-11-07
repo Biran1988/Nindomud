@@ -110,6 +110,7 @@ _ITEM_VNUMS = {
     "glue_pot": 9808,
     "medicinal_herbs": 9809,
     "death_scroll": 9810,
+    "info_scroll": 9811,
 }
 
 
@@ -147,6 +148,14 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["mighty_fan"], "A Mighty Fan", "weapon", 180, weapon_type="exotic")
     make(_ITEM_VNUMS["glue_pot"], "A Pot of Glue", "misc", 50)
     make(_ITEM_VNUMS["medicinal_herbs"], "Medicinal Herbs", "misc", 150)
+    # Blank writing scrolls are distinct from jutsu-teaching scrolls.
+    # Existing saved object prototypes always take precedence on boot.
+    make(_ITEM_VNUMS["info_scroll"], "An Info Scroll", "scroll", 25)
+    info_proto = olc.OBJECT_TEMPLATES.get(_ITEM_VNUMS["info_scroll"])
+    if (info_proto and info_proto.get("short_desc") == "An Info Scroll"
+            and info_proto.get("item_type") == "scroll"
+            and not info_proto.get("scroll_jutsu")):
+        info_proto["scroll_message_writable"] = True
     if _ITEM_VNUMS["death_scroll"] not in olc.OBJECT_TEMPLATES:
         make(_ITEM_VNUMS["death_scroll"], "A Scroll of 1000 Years of Death", "scroll", 0)
         olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "1000 years of death"
@@ -549,7 +558,7 @@ def populate() -> None:
         idx = village_index[village]
         _make_shopkeeper(
             6000 + idx * 10 + 1, f"a {short} general store shopkeeper", rooms["shop"],
-            ["kunai", "shuriken", "exploding_note", "smoke_bomb", "poison_gas_bomb", "exploding_clay", "glue_pot", "medicinal_herbs", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
+            ["kunai", "shuriken", "exploding_note", "smoke_bomb", "poison_gas_bomb", "exploding_clay", "glue_pot", "medicinal_herbs", "info_scroll", "salve", "pill", "chakra_paper", "rice_ball", "ramen", "canteen", "tea",
              "rod_kindling", "axe_copper", "pickaxe_copper", "pot_copper", "hoe_copper", "chisel_copper"],
             buys_categories=[],
         )
@@ -697,6 +706,13 @@ def populate() -> None:
             stock = general_store.setdefault("shop_items", [])
             if _ITEM_VNUMS["medicinal_herbs"] not in stock:
                 stock.append(_ITEM_VNUMS["medicinal_herbs"])
+            # Add Info Scrolls to existing general stores without touching
+            # unrelated builder-created items at the reserved item VNUM.
+            blank = olc.OBJECT_TEMPLATES.get(_ITEM_VNUMS["info_scroll"])
+            if (blank and blank.get("short_desc") == "An Info Scroll"
+                    and blank.get("item_type") == "scroll"
+                    and _ITEM_VNUMS["info_scroll"] not in stock):
+                stock.append(_ITEM_VNUMS["info_scroll"])
 
     # Persistent Teams (Section 82, per explicit request) -- loads
     # whatever teams already exist in teams.json back into memory.

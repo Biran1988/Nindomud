@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "write",
+  "keywords": [
+    "write",
+    "write scroll",
+    "scroll message"
+  ],
+  "title": "Write on a Scroll",
+  "body": "Syntax: write <scroll name>\n\nWrite your own multi-line message on an Info Scroll from a village general store. Jutsu-learning scrolls cannot be written on. The familiar room-description editor opens. Type text and use '.' or '/s' to save, '/a' to abort, '/c' to clear, '/l' to list. Maximum 2,500 characters or 35 lines. Each physical written scroll keeps its own message through giving, dropping, trading and restarts. Anyone can read the message with 'examine <scroll>', regardless of their Examine skill. A technique scroll still teaches its jutsu via 'read <scroll>', which consumes it on successful learning.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

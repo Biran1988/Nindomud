@@ -99,6 +99,8 @@ DEFAULT_OBJECT_FIELDS = {
     # jutsu be delivered as a discoverable/craftable item rather than
     # only ever granted at character creation.
     "scroll_jutsu": "",
+    # Only specially marked Info Scrolls accept player-authored messages.
+    "scroll_message_writable": False,
     # A container's own real capacity (Section 158, per direct
     # request: "have we added backpocks yet that can hold items" ->
     # confirmed a genuinely SEPARATE container with its own capacity,

@@ -2242,7 +2242,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: examine <item>\n"
             "\n"
-            "Description: Inspects an item closely. Requires Examine (unlocked at character level 20) -- how much detail you see scales with your Examine proficiency, from just its rarity at low proficiency up to full set bonus details at 80%+. At 40%+, shows the item's type, its real wear location, and a full stat breakdown -- every category (Armor Class, Hitroll, Damroll, Max Health/Chakra/Stamina, and each attribute) on its own line, never hidden in the item's own name or description.\n"
+            "Description: Inspects an item closely. A player-written scroll message can always be read using 'examine <scroll>', even without the Examine skill. For other item details, Examine is required (unlocked at character level 20) -- how much detail you see scales with your Examine proficiency, from just its rarity at low proficiency up to full set bonus details at 80%+. At 40%+, shows the item's type, its real wear location, and a full stat breakdown -- every category (Armor Class, Hitroll, Damroll, Max Health/Chakra/Stamina, and each attribute) on its own line, never hidden in the item's own name or description.\n"
             "\n"
             "Date: 2026-08-27"
         ),
@@ -2426,6 +2426,16 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "write",
+        "keywords": ["write", "write scroll", "scroll message"],
+        "title": "Write on a Scroll",
+        "body": (
+            "Syntax: write <scroll name>\n\n"
+            "Opens the same multi-line editor used for room descriptions. Type text, then '.' or '/s' to save; '/a' aborts, '/c' clears, '/l' lists. Messages have a 2,500-character/35-line limit. Only Info Scrolls you carry can be written on; jutsu-learning scrolls are not writable. Each written scroll has its own message, which follows the scroll through trades, drops, backpacks and server restarts. Other players can use 'examine <scroll>' to read the message without needing Examine training. This is separate from learning a jutsu with 'read <scroll>'.\n"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "read",

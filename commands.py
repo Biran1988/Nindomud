@@ -5455,13 +5455,35 @@ def cmd_examine(session, args: List[str]) -> None:
         return
 
     query = " ".join(args).lower()
+    import scroll_writing
     candidates = list(player.inventory) + list(player.equipment.values())
     match = find_indexed_item(query, candidates)
+    if not match:
+        # Written notes lying on the ground are readable too, without
+        # letting ordinary ground-item appraisal bypass inventory rules.
+        room = WORLD.get(player.room_vnum)
+        found_on_ground = find_indexed_item(query, room.ground_items) if room else None
+        if found_on_ground:
+            ground_proto = _find_object_prototype_by_name(found_on_ground)
+            if (ground_proto and ground_proto.get("scroll_message_writable")
+                    and scroll_writing.inscription(found_on_ground)):
+                match = found_on_ground
     if not match:
         session.send(f"You aren't carrying or wearing anything like '{query}'.")
         return
 
+    proto = _find_object_prototype_by_name(match)
+    note = (scroll_writing.inscription(match)
+            if proto and proto.get("scroll_message_writable") else None)
+    written_lines = []
+    if note:
+        written_lines = [f"&YWritten on this scroll by {note.get('author', 'Unknown')}:&x",
+                         note.get("text", "")]
+
     if "Examine" not in player.learned_skills:
+        if written_lines:
+            session.send("\n".join([f"You examine {rarity_colored_name(match)}."] + written_lines))
+            return
         session.send(
             f"You don't know how to examine items that closely yet -- "
             f"Examine unlocks at level {data_jutsu.APPRAISAL_LEVEL_REQUIREMENT}."
@@ -5470,10 +5492,12 @@ def cmd_examine(session, args: List[str]) -> None:
 
     import skill_training
     if skill_training.needs_first_practice(player, "Examine"):
+        if written_lines:
+            session.send("\n".join([f"You examine {rarity_colored_name(match)}."] + written_lines))
+            return
         session.send("Practice Examine with a teacher at least once before using it.")
         return
     appraisal_pct = player.skill_proficiencies.get("Examine", 0)
-    proto = _find_object_prototype_by_name(match)
     import ninja_arts
 
     def complete_examination():
@@ -5481,6 +5505,7 @@ def cmd_examine(session, args: List[str]) -> None:
         combat.grow_skill_from_usage(player, "Examine", session=session)
 
     lines = [f"You examine {rarity_colored_name(match)}."]
+    lines.extend(written_lines)
     element = ninja_arts.element_of(match)
     art = ninja_arts.property_of(match)
     if element:
@@ -8180,7 +8205,8 @@ def _find_object_prototype_by_name(item_name: str):
     corresponds to (for scroll_jutsu, etc.) we match on short_desc --
     same substring-match convention used everywhere else in this file."""
     import technique_names
-    query = technique_names.scroll_name(item_name).lower()
+    import scroll_writing
+    query = technique_names.scroll_name(scroll_writing.plain_name(item_name)).lower()
     for proto in olc.OBJECT_TEMPLATES.values():
         if query == proto["short_desc"].lower():
             return proto
@@ -8525,6 +8551,51 @@ def cmd_channel(session, args: List[str]) -> None:
     )
 
 
+def cmd_write(session, args: List[str]) -> None:
+    """Use the room-description-style editor on one real scroll instance."""
+    player = session.player
+    if not args:
+        session.send("Usage: write <info scroll> (for example: write info scroll)")
+        return
+    item_query = " ".join(args).lower()
+    match = find_indexed_item(item_query, player.inventory)
+    if match is None:
+        session.send("You must be carrying the scroll you want to write on.")
+        return
+    proto = _find_object_prototype_by_name(match)
+    if (not proto or proto.get("item_type") != "scroll"
+            or not proto.get("scroll_message_writable")
+            or proto.get("scroll_jutsu")):
+        session.send("You can only write on an Info Scroll, not a jutsu-learning scroll.")
+        return
+
+    import scroll_writing
+    old_note = scroll_writing.inscription(match)
+
+    def save_message(text: str) -> None:
+        # A pending trade/staff action might have removed the scroll while
+        # its author was editing. Never create a message on a lost item.
+        if match not in player.inventory:
+            session.send("You no longer have that scroll. Nothing was written.")
+            return
+        try:
+            new_name = scroll_writing.write(match, text, player.name)
+        except ValueError as error:
+            session.send(str(error))
+            return
+        slot = player.inventory.index(match)
+        player.inventory[slot] = new_name
+        storage.save_player(player)
+        session.send("Your words are written on this scroll. "
+                     "Another player can read them with 'examine <scroll>'.")
+
+    session.enter_editor(
+        save_message,
+        initial_text=old_note.get("text", "") if old_note else "",
+        header="Write your message on the scroll. You may use multiple lines.",
+    )
+
+
 def cmd_read(session, args: List[str]) -> None:
     """Learn a jutsu from a scroll (item_type 'scroll' with a
     scroll_jutsu set via oset) -- an alternate way to obtain a jutsu
@@ -8544,6 +8615,10 @@ def cmd_read(session, args: List[str]) -> None:
     proto = _find_object_prototype_by_name(match)
     if not proto or proto.get("item_type") != "scroll":
         session.send(f"You can't read {match}.")
+        return
+    if proto.get("scroll_message_writable"):
+        session.send("That's an Info Scroll. Use 'examine <scroll>' to view its message "
+                     "or 'write <scroll>' to leave one. It doesn't teach jutsu.")
         return
 
     jutsu_key = proto.get("scroll_jutsu", "")
@@ -10115,6 +10190,7 @@ COMMANDS = {
     "skills": cmd_skills,
     "jutsu": cmd_jutsu,
     "examine": cmd_examine,
+    "write": cmd_write,
     "clan": cmd_clan,
     "list": cmd_list,
     "sell": cmd_sell,
