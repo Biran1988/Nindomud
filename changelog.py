@@ -566,5 +566,6 @@ CHANGELOG = [
     ("15.420", "Every Mangekyo holder can summon a chakra-maintained Susanoo. SET SUSANOO opens a saved color/style/weapon menu with offensive, defensive, balanced and eight spectral weapons; choices affect melee damage, accuracy and protection."),
     ("15.421", "Direct hostile attacks from melee, jutsu, Mangekyo, summons and tailed beast bombs now enter normal combat. Poison and elemental weapon procs apply statuses to their actual mob/player victim and show brief messages to PvP targets."),
     ("15.422", "RLIST now lists only rooms in the builder\'s current area, including when an optional vnum range is supplied."),
+    ("15.423", "MLIST and OLIST now show only prototypes associated with your current area. MLIST ALL, OLIST ALL and RLIST ALL show worldwide listings, with optional vnum ranges."),
 
 ]
