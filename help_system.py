@@ -3251,7 +3251,7 @@ DEFAULT_HELP_ENTRIES = [
             "        mfind/ofind/rfind <keyword>\n"
             "        mlist/olist/rlist [first vnum] [last vnum]\n"
             "\n"
-            "Description: Familiar SMAUG-style shortcuts for creating, copying, finding, listing, and invoking prototypes. 'mcopy'/'ocopy' duplicate every prototype field into a free VNUM, including flags, stats, programs, and shop stock, without spawning an instance or sharing mutable lists with the source. The create commands use the same validated prototypes as mset/oset/rset. Invoke places a mob or object in your current room. Find searches names and keywords and always displays matching vnums. List optionally limits output to an inclusive vnum range.\n"
+            "Description: Familiar SMAUG-style shortcuts for creating, copying, finding, listing, and invoking prototypes. 'mcopy'/'ocopy' duplicate every prototype field into a free VNUM, including flags, stats, programs, and shop stock, without spawning an instance or sharing mutable lists with the source. The create commands use the same validated prototypes as mset/oset/rset. Invoke places a mob or object in your current room. Find searches names and keywords and always displays matching vnums. List optionally limits output to an inclusive vnum range. RLIST always shows only rooms in the area you are standing in, even when a vnum range is supplied.\n"
             "\n"
             "Use mstat, ostat, or rstat to inspect the result. Changes become reboot-safe when an Implementor runs 'save world'. Mob experience is calculated automatically from level and cannot be set on a prototype.\n"
             "\n"
