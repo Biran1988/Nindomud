@@ -17,7 +17,11 @@ CLONE_ATTACK_SECONDS = 5.0
 _clone_attack_due = {}
 
 
-def targets_player(template, player):
+def targets_player(template, player, mob_level=None):
+    # Roadside bandits ignore shinobi at twice their own level or higher.
+    if (template.get("roadside_camp") and mob_level is not None
+            and getattr(player, "level", 1) >= 2 * mob_level):
+        return False
     flags = set(template.get("act_flags") or ())
     if "aggressive_everyone" in flags:
         return True
@@ -83,7 +87,7 @@ def process_aggression(now=None):
             import general_skills
             if general_skills.concealed_from(mob, player):
                 continue
-            if (_valid_attacker(mob, room) and targets_player(template, player)):
+            if (_valid_attacker(mob, room) and targets_player(template, player, mob.level)):
                 combat.start_attack(session, mob)
                 session.send(f"&R{mob.name} recognizes you and attacks without warning!&x")
                 break
@@ -103,7 +107,7 @@ def process_aggression(now=None):
             if mob is clone or not _valid_attacker(mob, room):
                 continue
             template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
-            if not targets_player(template, session.player):
+            if not targets_player(template, session.player, mob.level):
                 continue
             key = (mob.instance_id, clone.instance_id)
             live_ids.add(key)

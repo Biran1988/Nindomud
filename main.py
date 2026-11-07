@@ -31,6 +31,15 @@ def main():
         # Keep the game running if one gate or room conflicts with a
         # player's live world; the installer has made no changes.
         print(f"[Mainland roads] Installation skipped: {error}")
+    # Expand the same reserved mainland area with one-time camp/inn additions.
+    # This does not touch the changes board or replace unrelated /data.
+    import roadside_encounters
+    try:
+        roadside_encounters.install_once()
+    except roadside_encounters.RoadsideInstallationError as error:
+        print(f"[Roadside encounters] Installation skipped: {error}")
+    import commands
+    commands.COMMANDS["inn"] = roadside_encounters.cmd_inn
     import seasonal_events
     seasonal_events.sync_visitors()
     from world import reconcile_apartment_ownership

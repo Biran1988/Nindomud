@@ -405,6 +405,10 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         chakra_nature=biomes.roll_chakra_nature(),
         strength=derived_strength, dexterity=derived_dexterity,
     )
+    # Persistent roadside weapon loadout: apply on every fresh spawn,
+    # including post-death respawns, rather than only on first install.
+    if t.get("roadside_weapon"):
+        mob.equipment["wielded"] = t["roadside_weapon"]
     MOBS_BY_ROOM.setdefault(room_vnum, []).append(mob)
     if is_wandering(mob) and not mob.tailed_beast_key:
         # Startup/area resets may spawn dozens of instances during one
@@ -622,6 +626,10 @@ def process_wander() -> None:
             if world.WORLD.get(dest) and world.WORLD.get(dest).enabled
             and not world.WORLD.get(dest).apartment
             and "no_wander" not in world.WORLD.get(dest).flags
+            and (not MOB_TEMPLATES.get(mob.template_vnum, {}).get("roadside_patrol_vnums")
+                 or dest in MOB_TEMPLATES[mob.template_vnum]["roadside_patrol_vnums"])
+            and (not MOB_TEMPLATES.get(mob.template_vnum, {}).get("roadside_camp")
+                 or not world.WORLD.get(dest).safe)
         ]
         if not candidates:
             _schedule_next_wander(mob, now)
