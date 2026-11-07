@@ -1,47 +1,63 @@
-# Mainland road network — planning draft (not deployed)
+# Nindo MUD Mainland Road Blueprint — Northern Coastal Revision v3
 
-This is a **proposed** Nindo MUD overworld graph. It does not create or change any live area rooms, exits, or `/data` files. The illustrated companion map is `Nindo_Mainland_Road_Planner.html`, intended for review and markup before implementation.
+**Status: planning only; no deployed rooms, exits, gate VNUMs, or changes to `/data`.**
+Map and mark-up editor distributed in ChatGPT as `Nindo_Mainland_Map_Kit_v3.zip`.
 
-## Rules
+## Geographic layout
+- Land of Earth / Stone is in the northwest, WEST of the Great Northern Bay.
+- Land of Lightning / Cloud is far north/northeast, on the opposite peninsula.
+- **Sound Country is relocated to the southern shore of the bay, BETWEEN Grass and Waterfall.** It is not east of Leaf.
+- Fire / Leaf is central-south, Wind / Sand southwest, Water / Mist on offshore eastern islands.
+- Land of Iron / samurai remains a future zone north of Lightning in this Nindo proposal. No roads through Iron yet.
+- Mist will eventually use separate 2D spacecraft travel; no up/down axis and no road in this phase.
 
-- Four mainland great villages: Stone (Iwagakure), Leaf (Konohagakure), Sand (Sunagakure), Cloud (Kumogakure).
-- A single planned major-village-to-major-village corridor must contain **150 to 250 navigable steps/rooms between the selected gate rooms** (gate VNUMs will be chosen before deployment).
-- Multiple routes to the same village are allowed, including routes through **minor countries**. The segment counts in the table are route budgets, not graphical scale.
-- A shared physical segment or junction is built **once**, with the same VNUMs regardless of which named route uses it.
-- Mist / Kirigakure is **offshore and unconnected by roads**. A future Star Wars-style 2D starship travel plane may connect to it, with no mandatory up/down axis. That is not part of this rollout.
-- The hidden Whirlpool village remains separate, unless explicitly approved for roads.
-- Reserve fresh road areas/VNUM blocks and audit collisions before building, especially against forest, exam, village, and apartment VNUM ranges. Do not overwrite `/data` as part of the draft.
-- Roads should branch into optional camps, merchants, bandit patrols, mini-dungeons, and side quests in the minor countries, but those detours do not count toward the direct gate-to-gate standard unless they are part of a designated route.
+## NEW: Coastal road C1 (minor-country connection)
 
-## Proposed direct village corridors
+**Grass → Sound (32 rooms) → Waterfall (34 rooms), total 66 rooms.**
+This is a continuous overland route along the SOUTH shore of the Great Northern Bay. No open water crossing.
+Existing proposed **Leaf–Sound** and **Sound–Hot Water** links are removed. These segments are no longer geographically appropriate.
 
-| ID | From | To | Stopovers | Rooms |
-| --- | --- | --- | --- | ---: |
-| R1 | Stone | Leaf | Grass | 105 + 85 = **190** |
-| R2 | Stone | Leaf | Rain | 123 + 95 = **218** |
-| R3 | Leaf | Sand | Rivers | 95 + 80 = **175** |
-| R4 | Leaf | Sand | Rain | 95 + 113 = **208** |
-| R5 | Leaf | Cloud | Hot Water | 112 + 93 = **205** |
-| R6 | Leaf | Cloud | Waterfall, Frost | 95 + 65 + 78 = **238** |
-| R7 | Stone | Cloud | Iron | 118 + 117 = **235** |
-| R8 | Stone | Sand | Birds | 106 + 112 = **218** |
-| R9 | Leaf | Cloud | Sound, Hot Water | 80 + 35 + 93 = **208** |
+The 150–250-room requirement applies to named **major-village entrance-to-entrance corridors**, not an individual minor-country link such as C1.
 
-The Land of Rain stopover provides another implicit Stone–Sand corridor: Stone → Rain (123) + Rain → Sand (113) = **236** rooms. Sand to Cloud currently has **no direct corridor**; travel is possible by connecting at Leaf (175 + 205 = 380) or Stone (218 + 235 = 453), which is intentionally a multi-journey route. The 150–250 specification applies to direct named corridors, not every possible multi-stop journey.
+## Named major-village corridors
 
-## Shared segment budget
+| Route | Villages | Waypoints | Planned navigable rooms |
+|---|---|---|---:|
+| R1 | Stone ↔ Leaf | Grass | 105 + 85 = **190** |
+| R2 | Stone ↔ Leaf | Rain | 123 + 95 = **218** |
+| R3 | Leaf ↔ Sand | Rivers | 95 + 80 = **175** |
+| R4 | Leaf ↔ Sand | Rain | 95 + 113 = **208** |
+| R5 | Leaf ↔ Cloud | Hot Water | 112 + 93 = **205** |
+| R6 | Leaf ↔ Cloud | Waterfall, Frost | 105 + 30 + 45 = **180** |
+| R7 | Stone ↔ Cloud | Grass, Sound, Waterfall, Frost (coastal road) | 105 + 32 + 34 + 30 + 45 = **246** |
+| R8 | Stone ↔ Sand | Birds | 106 + 112 = **218** |
+| R9 | Leaf ↔ Cloud | Grass, Sound, Waterfall, Frost | 85 + 32 + 34 + 30 + 45 = **226** |
 
-- Stone–Grass **105**, Grass–Leaf **85**
-- Stone–Rain **123**, Rain–Leaf **95**, Rain–Sand **113**
-- Leaf–Rivers **95**, Rivers–Sand **80**
-- Leaf–Hot Water **112**, Hot Water–Cloud **93**
-- Leaf–Waterfall **95**, Waterfall–Frost **65**, Frost–Cloud **78**
-- Stone–Iron **118**, Iron–Cloud **117**
-- Stone–Birds **106**, Birds–Sand **112**
-- Leaf–Sound **80**, Sound–Hot Water **35**
+All nine named major village corridors meet the **150–250** room standard. R7 and R9 REUSE the same Grass–Sound and Sound–Waterfall physical rooms as C1; never duplicate the shared road.
 
-Suggested later junctions: Grass–Rain, Rain–Rivers, Frost–Iron. They are **not** included in the distance sums above until their room budgets are allocated and validated.
+## Authoritative planned segment graph
 
-## Next step after marking up the map
+- Stone–Grass 105; Grass–Leaf 85
+- Stone–Rain 123; Rain–Leaf 95; Rain–Sand 113
+- Leaf–Rivers 95; Rivers–Sand 80
+- Leaf–Hot Water 112; Hot Water–Cloud 93
+- Leaf–Waterfall 105; Waterfall–Frost 30; Frost–Cloud 45
+- Stone–Birds 106; Birds–Sand 112
+- **Grass–Sound 32; Sound–Waterfall 34 (NEW)**
 
-Choose village entrance VNUMs, confirm minor-country positions and route junctions, then allocate collision-free area blocks and generate linked rooms from this exact route graph. Run automated pathfinding checks for each direct corridor before applying changes to the MUD. Keep edits to `/data` opt-in.
+All costs are **proposed navigable-room budgets**, not geographic distances or existing game rooms. An alternative route can take a different total number of steps; validate all designated major-village paths after selecting gates.
+
+## Deployment requirements
+1. Owner reviews and marks up the v3 map/HTML planner. These lines are a schematic, not a traced or exact canon atlas.
+2. Confirm each village entrance VNUM and minor-country junction.
+3. Allocate unused area/VNUM ranges; audit existing village, Forest of Death, exam, private apartment, and user-created spaces. Do not overwrite any existing `/data`.
+4. Build shared segments once, place landmarks/sidequests, then test bidirectional exits and route counts.
+5. No live world construction until separately requested.
+
+## Geographic reference
+
+- [User-supplied Reddit researched map by u/DetectiveEvyDevy](https://www.reddit.com/r/Naruto/comments/17lree4/the_map_of_the_naruto_world_based_on_everything_i/)
+- [Naruto geography (Narutopedia)](https://naruto.fandom.com/wiki/Geography)
+- [Wikimedia Naruto World Map](https://commons.wikimedia.org/wiki/File:Naruto_World_Map.svg)
+
+The Reddit map combines manga, anime, and inferred geography; this blueprint is an original Nindo-specific interpretation, not a claim of exact canon placement.
