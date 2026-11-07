@@ -5338,3 +5338,23 @@ if not any(e['primary_keyword'].casefold() == 'food shop' for e in DEFAULT_HELP_
 
 # Help catalogs are extended by commands.py after command registration.
 # Refresh only system-owned generated help; live staff-authored pages survive.
+
+# Roadside inns are player-accessible recovery services, not village hospitals.
+# A dedicated default page also keeps command/help parity after startup.
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "inn",
+    "keywords": ["inn", "bathhouse", "roadside inn", "inn enter", "inn leave"],
+    "title": "Roadside Inns and Healing Bathhouses",
+    "body": (
+        "Syntax: inn | inn enter | inn leave\n\n"
+        "Description: Five inns lie off the mainland highways. Enter an inn's "
+        "reception and type INN ENTER to pay 100 carried ryo and enter the "
+        "healing bathhouse. This is a one-time fee per entrance. The bathhouse "
+        "is a safe room with the same accelerated healing as a village "
+        "hospital: at least 10x ordinary regeneration, or 30x while sleeping. "
+        "Use OUTSIDE or INN LEAVE to return to reception. Inns also have "
+        "free-to-visit tea houses, guest rooms and civilian cottages nearby. "
+        "The baths cannot be entered without paying the innkeeper."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
