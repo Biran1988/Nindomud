@@ -214,7 +214,8 @@ def reconcile_apartment_ownership() -> None:
     import storage
     deleted_ranges = [(entry["start"], entry["end"])
                       for entry in storage.load_world_state().get("deleted_areas", [])]
-    for player in storage.all_players():
+    saved_players = storage.all_players()
+    for player in saved_players:
         if player.apartment_room_vnum is not None:
             room = WORLD.get(player.apartment_room_vnum)
             if room and room.apartment:
@@ -235,6 +236,10 @@ def reconcile_apartment_ownership() -> None:
                 while remaining:
                     made_progress = False
                     for room_type, entry in list(remaining.items()):
+                        if room_type not in apartments.APARTMENT_VNUM_TYPES:
+                            del remaining[room_type]
+                            made_progress = True
+                            continue
                         parent_vnum = entry.get("parent_vnum", player.apartment_room_vnum)
                         if WORLD.get(parent_vnum) is None:
                             continue  # parent not built yet this pass -- try again next pass
@@ -277,3 +282,41 @@ def reconcile_apartment_ownership() -> None:
                 if shopkeeper:
                     shopkeeper.player_shop_owner = player.name
                     shopkeeper.name = f"{player.name}'s shopkeeper"
+
+    # A sale removes expansion rooms from the live map, but an older
+    # save-world generation may still contain them on disk. Reconcile
+    # the durable deeds here so sold rooms cannot return after reboot.
+    valid_expansions = {
+        (player.apartment_room_vnum, room_type): player.name.casefold()
+        for player in saved_players
+        if player.apartment_room_vnum is not None
+        for room_type in player.apartment_expansions
+        if room_type in apartments.APARTMENT_VNUM_TYPES
+    }
+    for vnum, room in list(WORLD.rooms.items()):
+        room_type = room.apartment_room_type
+        if not room.apartment or room_type not in (*apartments.APARTMENT_VNUM_TYPES, apartments.EMPTY_ROOM_TYPE):
+            continue
+        base_vnum, offset = divmod(vnum, 10)
+        if offset >= len(apartments.APARTMENT_VNUM_TYPES):
+            continue
+        slot_type = apartments.APARTMENT_VNUM_TYPES[offset]
+        base = WORLD.get(base_vnum)
+        if (not base or not base.apartment
+                or room_type not in (slot_type, apartments.EMPTY_ROOM_TYPE)):
+            continue  # Not one of the generated apartment expansion slots.
+        expected_owner = valid_expansions.get((base_vnum, slot_type))
+        if room_type == slot_type and expected_owner == (room.owner or "").casefold():
+            continue
+        apartments._destroy_expansion_vnum(vnum, base_vnum)
+
+    # A stale saved snapshot can also restore a sold main apartment's
+    # old custom name/deed. The base shell itself stays in the world.
+    current_deeds = {
+        player.apartment_room_vnum for player in saved_players
+        if player.apartment_room_vnum is not None
+    }
+    for room in WORLD.rooms.values():
+        if (room.apartment and room.apartment_room_type is None
+                and room.owner and room.vnum not in current_deeds):
+            apartments.reset_vacant_apartment(room)
