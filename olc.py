@@ -869,7 +869,7 @@ def cmd_rstat(session, args: List[str]) -> None:
         _rule(),
         f"&WVnum:&x {vnum}   &WSector:&x {room.sector}",
         f"&WExits:&x " + (", ".join(f"{d}->{v}" for d, v in room.exits.items()) or "None"),
-        f"&WFlags:&x {_fmt_list(room.flags)}",
+        f"&WFlags:&x {_fmt_list(room.flags + (['apartment'] if room.apartment and 'apartment' not in room.flags else []))}",
         f"&WEnabled:&x {'&Gyes&x' if room.enabled else '&Rno&x'}",
     ]
     if room.apartment:
