@@ -900,6 +900,7 @@ VALID_ROOM_FLAGS = {
     "accelerated_healing",  # regen.py -- faster regen in this room
     "no_wander",            # prevent ambient Wander mobs and roaming tailed beasts entering via exits
     "safe",                 # PvP safety; synchronized with legacy room.safe for compatibility
+    "apartment",            # room.apartment -- marks a purchasable apartment shell
 }
 VALID_ITEM_EXTRA_FLAGS = {
     "invis",  # commands.py -- hidden from room look and directional scan
@@ -1395,8 +1396,9 @@ def cmd_rset(session, args: List[str]) -> None:
             "Usage: rset create|goto|name|desc|sector|exit|bexit|bunlink|flags|apartment|biome|resetmsg|exitflag|show ...\n"
             "rset always acts on the room you're standing in. 'create'/'goto' teleport you to the target room first, so every other subcommand naturally follows.\n"
             "'rset name' or 'rset desc' with no text opens an interactive editor.\n"
-            "'rset apartment on|off' marks this room as a purchasable apartment shell "
-            "(see 'buy apartment' and 'recall').\n"
+            "'rset flags apartment' toggles a purchasable apartment shell, or use "
+            "'rset apartment on|off' to set it explicitly.\n"
+
             f"'rset biome <type>' tags this room for elemental jutsu affinity. Valid: {', '.join(biomes.BIOME_TYPES)}.\n"
             "'rset resetmsg <text|off>' sets this room's own atmospheric flavor line, shown periodically -- overrides its area's own reset message (see 'area set <name> resetmsg') if that area has one too.\n"
             "'rset flags safe' toggles PvP safety in this room (blocks attacking other players here).\n"
@@ -1718,11 +1720,16 @@ def cmd_rset(session, args: List[str]) -> None:
 
     if sub == "apartment":
         if not rest or rest[0].lower() not in ("on", "off"):
-            session.send("Usage: rset apartment on|off  (marks this room as a purchasable apartment shell)")
+            session.send("Usage: rset apartment on|off  (or 'redit flags apartment' to toggle)")
             return
-        room.apartment = rest[0].lower() == "on"
-        if not room.apartment:
-            room.owner = None  # un-flagging a room also releases any claim on it
+        enable = rest[0].lower() == "on"
+        if not enable and room.owner:
+            session.send("This apartment is owned. Its owner must sell it before you remove the apartment flag.")
+            return
+        room.apartment = enable
+        room.flags = [flag for flag in room.flags if flag != "apartment"]
+        if enable:
+            room.flags.append("apartment")
         _log(session.player.name, "room", room.vnum, f"apartment set to {room.apartment}")
         session.send(f"Room {room.vnum} apartment flag is now {'on' if room.apartment else 'off'}.")
         return
@@ -1746,6 +1753,19 @@ def cmd_rset(session, args: List[str]) -> None:
                 action = "added to"
             else:
                 room.flags = [flag for flag in room.flags if flag != "safe"]
+                action = "removed from"
+        elif canonical == "apartment":
+            # Older rooms may have apartment=True without the text flag.
+            # Toggle the REAL housing property and keep the saved flag in sync.
+            if room.apartment and room.owner:
+                session.send("This apartment is owned. Its owner must sell it before you remove the apartment flag.")
+                return
+            room.apartment = not room.apartment
+            room.flags = [flag for flag in room.flags if flag != "apartment"]
+            if room.apartment:
+                room.flags.append("apartment")
+                action = "added to"
+            else:
                 action = "removed from"
         elif canonical in room.flags:
             room.flags.remove(canonical)
