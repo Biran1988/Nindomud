@@ -97,8 +97,13 @@ class InfoScrollTests(unittest.TestCase):
         self.assertEqual(scroll_writing.inscription(first)["text"], "First message.")
         self.assertEqual(scroll_writing.inscription(second)["text"], "Second message.")
         self.assertEqual(scroll_writing.inscription(self.session.player.inventory[2]), None)
-        # Rewrite the exact scroll; the other copy must stay unchanged.
-        self._write("Revised first message.")
+        # The editor reopens the existing text, just like room desc.
+        # Use /c to replace rather than append to that old buffer.
+        commands.cmd_write(self.session, ["info", "scroll"])
+        self.assertEqual(self.session.state, State.EDITING)
+        self.session._handle_editing("/c")
+        self.session._handle_editing("Revised first message.")
+        self.session._handle_editing("/s")
         self.assertEqual(self.session.player.inventory[0], first)
         self.assertEqual(scroll_writing.inscription(first)["text"], "Revised first message.")
         self.assertEqual(scroll_writing.inscription(second)["text"], "Second message.")
