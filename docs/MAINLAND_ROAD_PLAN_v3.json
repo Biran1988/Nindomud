@@ -1,0 +1,276 @@
+{
+  "version": 3,
+  "status": "proposal - not deployed",
+  "rules": {
+    "major_corridor_min": 150,
+    "major_corridor_max": 250,
+    "minor_connector_exempt": true,
+    "shared_segment_single_vnum_chain": true
+  },
+  "geo": {
+    "sound": "between Grass and Waterfall on south shore of Great Northern Bay",
+    "cloud": "north-northeast peninsula",
+    "stone": "northwest west of bay",
+    "iron": "future north of Cloud",
+    "mist": "future 2D spacecraft"
+  },
+  "segments": [
+    {
+      "a": "Stone",
+      "b": "Grass",
+      "rooms": 105
+    },
+    {
+      "a": "Grass",
+      "b": "Leaf",
+      "rooms": 85
+    },
+    {
+      "a": "Stone",
+      "b": "Rain",
+      "rooms": 123
+    },
+    {
+      "a": "Rain",
+      "b": "Leaf",
+      "rooms": 95
+    },
+    {
+      "a": "Rain",
+      "b": "Sand",
+      "rooms": 113
+    },
+    {
+      "a": "Leaf",
+      "b": "Rivers",
+      "rooms": 95
+    },
+    {
+      "a": "Rivers",
+      "b": "Sand",
+      "rooms": 80
+    },
+    {
+      "a": "Leaf",
+      "b": "Hot Water",
+      "rooms": 112
+    },
+    {
+      "a": "Hot Water",
+      "b": "Cloud",
+      "rooms": 93
+    },
+    {
+      "a": "Leaf",
+      "b": "Waterfall",
+      "rooms": 105
+    },
+    {
+      "a": "Waterfall",
+      "b": "Frost",
+      "rooms": 30
+    },
+    {
+      "a": "Frost",
+      "b": "Cloud",
+      "rooms": 45
+    },
+    {
+      "a": "Stone",
+      "b": "Birds",
+      "rooms": 106
+    },
+    {
+      "a": "Birds",
+      "b": "Sand",
+      "rooms": 112
+    },
+    {
+      "a": "Grass",
+      "b": "Sound",
+      "rooms": 32
+    },
+    {
+      "a": "Sound",
+      "b": "Waterfall",
+      "rooms": 34
+    }
+  ],
+  "major_routes": [
+    {
+      "id": "R1",
+      "from": "Stone",
+      "to": "Leaf",
+      "via": [
+        "Stone",
+        "Grass",
+        "Leaf"
+      ],
+      "segments": [
+        105,
+        85
+      ],
+      "rooms": 190
+    },
+    {
+      "id": "R2",
+      "from": "Stone",
+      "to": "Leaf",
+      "via": [
+        "Stone",
+        "Rain",
+        "Leaf"
+      ],
+      "segments": [
+        123,
+        95
+      ],
+      "rooms": 218
+    },
+    {
+      "id": "R3",
+      "from": "Leaf",
+      "to": "Sand",
+      "via": [
+        "Leaf",
+        "Rivers",
+        "Sand"
+      ],
+      "segments": [
+        95,
+        80
+      ],
+      "rooms": 175
+    },
+    {
+      "id": "R4",
+      "from": "Leaf",
+      "to": "Sand",
+      "via": [
+        "Leaf",
+        "Rain",
+        "Sand"
+      ],
+      "segments": [
+        95,
+        113
+      ],
+      "rooms": 208
+    },
+    {
+      "id": "R5",
+      "from": "Leaf",
+      "to": "Cloud",
+      "via": [
+        "Leaf",
+        "Hot Water",
+        "Cloud"
+      ],
+      "segments": [
+        112,
+        93
+      ],
+      "rooms": 205
+    },
+    {
+      "id": "R6",
+      "from": "Leaf",
+      "to": "Cloud",
+      "via": [
+        "Leaf",
+        "Waterfall",
+        "Frost",
+        "Cloud"
+      ],
+      "segments": [
+        105,
+        30,
+        45
+      ],
+      "rooms": 180
+    },
+    {
+      "id": "R7",
+      "from": "Stone",
+      "to": "Cloud",
+      "via": [
+        "Stone",
+        "Grass",
+        "Sound",
+        "Waterfall",
+        "Frost",
+        "Cloud"
+      ],
+      "segments": [
+        105,
+        32,
+        34,
+        30,
+        45
+      ],
+      "rooms": 246
+    },
+    {
+      "id": "R8",
+      "from": "Stone",
+      "to": "Sand",
+      "via": [
+        "Stone",
+        "Birds",
+        "Sand"
+      ],
+      "segments": [
+        106,
+        112
+      ],
+      "rooms": 218
+    },
+    {
+      "id": "R9",
+      "from": "Leaf",
+      "to": "Cloud",
+      "via": [
+        "Leaf",
+        "Grass",
+        "Sound",
+        "Waterfall",
+        "Frost",
+        "Cloud"
+      ],
+      "segments": [
+        85,
+        32,
+        34,
+        30,
+        45
+      ],
+      "rooms": 226
+    }
+  ],
+  "minor_links": [
+    {
+      "id": "C1",
+      "via": [
+        "Grass",
+        "Sound",
+        "Waterfall"
+      ],
+      "segments": [
+        32,
+        34
+      ],
+      "rooms": 66
+    }
+  ],
+  "removed_links": [
+    [
+      "Leaf",
+      "Sound"
+    ],
+    [
+      "Sound",
+      "Hot Water"
+    ]
+  ],
+  "reference": "https://www.reddit.com/r/Naruto/comments/17lree4/the_map_of_the_naruto_world_based_on_everything_i/"
+}
