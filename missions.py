@@ -333,6 +333,19 @@ def request_item_mission(player: Player, rank: str) -> str:
     return roadside_item_missions.new_recovery(player, rank_name, rank_def)
 
 
+def request_courier_mission(player: Player, rank: str) -> str:
+    """Give the requesting player a sealed parcel bound to a live NPC."""
+    import courier_missions
+    rank_input = rank.strip()
+    if rank_input.lower().endswith("-rank"):
+        rank_input = rank_input[:-len("-rank")]
+    rank_name = f"{rank_input.upper()}-Rank"
+    rank_def = _HIGHER_RANK_BY_NAME.get(rank_name)
+    if not rank_def:
+        return "Choose a delivery mission rank: D, C, B, A, or S."
+    return courier_missions.request(player, rank_name, rank_def)
+
+
 def missions_for_village(village: str) -> List[dict]:
     return MISSIONS[village]
 
@@ -420,6 +433,8 @@ def expire_missions(player: Player, now=None) -> List[str]:
             continue
         if now >= deadline:
             player.active_missions.remove(entry)
+            import courier_missions
+            courier_missions.cleanup(player, mission)
             import roadside_item_missions
             roadside_item_missions.forget(entry.get("mission_id", ""))
             mission = _resolve_mission(entry)
@@ -447,6 +462,8 @@ def fail_mission(player: Player, rank_or_id="") -> str:
     entry = matches[-1]
     mission = _resolve_mission(entry)
     player.active_missions.remove(entry)
+    import courier_missions
+    courier_missions.cleanup(player, mission)
     import roadside_item_missions
     roadside_item_missions.forget(entry.get("mission_id", ""))
     title = mission["title"] if mission else entry.get("mission_id", "Unknown mission")
@@ -465,7 +482,11 @@ def mission_info(player: Player, now=None) -> str:
             continue
         remaining = max(0, entry.get("expires_at", now + MISSION_DURATION_SECONDS) - now)
         lines.append(f"  &Y{mission['title']}&x ({mission['rank']})")
-        if mission.get("mission_type") == "retrieve":
+        if mission.get("mission_type") == "courier":
+            lines.append(f"    Parcel: {mission['quest_item_name']}")
+            lines.append(f"    Deliver to: {mission['delivery_mob_name']} in {mission['delivery_room_name']} (VNUM {mission['delivery_room_vnum']})")
+            lines.append("    Use DELIVER beside this mob, or GIVE PARCEL <npc>.")
+        elif mission.get("mission_type") == "retrieve":
             lines.append(f"    Recover: {mission['quest_item_name']}")
             lines.append(f"    Clue: {mission['quest_region']} (mainland road or roadside inn)")
             lines.append("    Find the item and GET it. No mob or NPC turn-in required.")
@@ -493,6 +514,8 @@ def journal_text(player: Player) -> str:
             f"  {mission['title']} ({mission['rank']}) - "
             f"{entry['progress']}/{mission['target_count']} complete"
         )
+        if mission.get("mission_type") == "courier":
+            line += f"\\n    (deliver the sealed parcel to {mission['delivery_mob_name']} in {mission['delivery_room_name']})"
         if mission.get("mission_type") == "retrieve":
             line += f"\n    (search around {mission['quest_region']} and GET {mission['quest_item_name']})"
         if mission.get("mission_type") == "gather":
