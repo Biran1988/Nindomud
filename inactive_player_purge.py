@@ -38,11 +38,15 @@ def purge_inactive(now=None):
     from session import ACTIVE_SESSIONS
     storage.ensure_dirs()
     now = time.time() if now is None else float(now)
-    connected = {
-        str(s.player.name).casefold()
-        for s in list(ACTIVE_SESSIONS)
-        if getattr(s, "player", None) is not None
-    }
+    # Protect even a player currently typing their password, before a
+    # Player object has been attached to their live session.
+    connected = set()
+    for s in list(ACTIVE_SESSIONS):
+        for name in (getattr(getattr(s, "player", None), "name", ""),
+                     getattr(getattr(s, "account", None), "name", ""),
+                     getattr(s, "_pending_name", "")):
+            if name:
+                connected.add(str(name).casefold())
     deleted = []
     for filename in sorted(os.listdir(storage.PLAYERS_DIR)):
         if not filename.endswith(".json"):
@@ -71,9 +75,11 @@ def purge_inactive(now=None):
             if last_login > cutoff_for_months(now, months):
                 continue
             # A connection might have appeared during a filesystem scan.
-            if any(getattr(s, "player", None) is not None
-                   and s.player.name.casefold() == name.casefold()
-                   for s in list(ACTIVE_SESSIONS)):
+            if any(name.casefold() in {
+                    str(getattr(getattr(s, "player", None), "name", "")).casefold(),
+                    str(getattr(getattr(s, "account", None), "name", "")).casefold(),
+                    str(getattr(s, "_pending_name", "")).casefold(),
+                    } for s in list(ACTIVE_SESSIONS)):
                 continue
             storage.delete_character(name, account_name)
             deleted.append(name)
