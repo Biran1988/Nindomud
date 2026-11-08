@@ -16,6 +16,7 @@ OPTIONS = (
     ("focused mind", True),
     ("sensory detect", True),
     ("samurai sabre", True),
+    ("eight gates", False),
     ("sharingan", False),
     ("byakugan", False),
     ("celestial byakugan", False),
@@ -40,6 +41,8 @@ ALIASES = {
     "focus": "focused mind",
     "sensory": "sensory detect",
     "sabre": "samurai sabre",
+    "gates": "eight gates",
+    "gate": "eight gates",
     "sage": "sage mode",
     "eyes": "sharingan",
     "mist": "hidden mist jutsu",
@@ -69,6 +72,9 @@ def _active(player, key):
         return status_effects.has_effect(player.active_status_effects, "barrier")
     if key == "samurai sabre":
         return bool(player.samurai_sabre_active)
+    if key == "eight gates":
+        import eight_gates
+        return eight_gates.active(player) > 0
     if key == "sharingan":
         return bool(player.sharingan_active)
     if key == "byakugan":
@@ -134,6 +140,9 @@ def _available(player, key):
     if key == "susanoo":
         import susanoo
         return susanoo.eligible(player)
+    if key == "eight gates":
+        import eight_gates
+        return bool(eight_gates.highest_safe(player))
     if key == "six paths mode":
         import six_paths
         return six_paths.eligible(player)
@@ -198,6 +207,9 @@ def _cast(session, key):
         commands.cmd_use_jutsu(session, key, ["on"] if key != "barrier" else [])
     elif key == "samurai sabre":
         commands.cmd_use_jutsu(session, key, [])
+    elif key == "eight gates":
+        import eight_gates
+        eight_gates.command(session, ["safe"])
     elif key == "sharingan":
         commands.cmd_sharingan(session, [])
     elif key == "byakugan":
