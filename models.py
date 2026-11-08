@@ -185,6 +185,11 @@ class Player:
     reaper_seal_id: str = ""
     reaper_seal_room_vnum: Optional[int] = None
     taijutsu_stance: str = ""  # one active stance; persists across reconnects
+    # Eight Inner Gates: persisted active tier, real-time upkeep/death and exhaustion.
+    gates_open: int = 0
+    gates_last_upkeep_at: float = 0.0
+    gates_eighth_expires_at: float = 0.0
+    gates_cooldown_until: float = 0.0
     sword_style: str = ""  # one selected Bukijutsu sword school; saved across logins
     # Each dose tracks elapsed real time and HP already paid out so saving
     # and reconnecting cannot restart or duplicate a course of healing.
