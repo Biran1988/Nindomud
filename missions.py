@@ -33,8 +33,8 @@ MISSIONS = {
         {
             "mission_id": "whirlpool_d1", "rank": "D-Rank", "village": "whirlpool",
             "mission_type": "kill", "title": "Guard the Coast",
-            "description": "Defeat one wandering bandit near the Uzushio coast.",
-            "target_mob_template": 5006, "target_count": 1,
+            "description": "Defeat one assigned Mission-flagged enemy.",
+            "target_mob_template": None, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -52,8 +52,8 @@ MISSIONS = {
             "mission_id": "leaf_d1", "rank": "D-Rank", "village": "leaf",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat one wandering bandit near the Konoha outskirts.",
-            "target_mob_template": 5001, "target_count": 1,
+            "description": "Defeat one assigned Mission-flagged enemy.",
+            "target_mob_template": None, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -73,8 +73,8 @@ MISSIONS = {
             "mission_id": "stone_d1", "rank": "D-Rank", "village": "stone",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat one wandering bandit near the Iwa outskirts.",
-            "target_mob_template": 5002, "target_count": 1,
+            "description": "Defeat one assigned Mission-flagged enemy.",
+            "target_mob_template": None, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -94,8 +94,8 @@ MISSIONS = {
             "mission_id": "water_d1", "rank": "D-Rank", "village": "water",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat one wandering bandit near the Kiri outskirts.",
-            "target_mob_template": 5003, "target_count": 1,
+            "description": "Defeat one assigned Mission-flagged enemy.",
+            "target_mob_template": None, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -115,8 +115,8 @@ MISSIONS = {
             "mission_id": "cloud_d1", "rank": "D-Rank", "village": "cloud",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat one wandering bandit near the Kumo outskirts.",
-            "target_mob_template": 5004, "target_count": 1,
+            "description": "Defeat one assigned Mission-flagged enemy.",
+            "target_mob_template": None, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -136,8 +136,8 @@ MISSIONS = {
             "mission_id": "sand_d1", "rank": "D-Rank", "village": "sand",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat one wandering bandit near the Suna outskirts.",
-            "target_mob_template": 5005, "target_count": 1,
+            "description": "Defeat one assigned Mission-flagged enemy.",
+            "target_mob_template": None, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -240,13 +240,15 @@ def pick_mission_mob(player: Player, rank: str):
     """
     import random
     import combat
+    import legacy_mission_mobs
 
     if rank not in RANK_LEVEL_OFFSETS:
         return None, None
     window_lo, window_hi = level_window_for_rank(player.level, rank)
     candidates = [
         (vnum, t) for vnum, t in combat.MOB_TEMPLATES.items()
-        if ("Mission" in t.get("act_flags", [])
+        if (not legacy_mission_mobs.is_legacy_mob(vnum)
+            and "Mission" in t.get("act_flags", [])
             and isinstance(t.get("level"), int)
             and window_lo <= t["level"] <= window_hi
             and 1 <= t["level"] <= MAX_CHARACTER_LEVEL)
@@ -400,7 +402,18 @@ def expire_missions(player: Player, now=None) -> List[str]:
     """
     now = time.time() if now is None else now
     failed = []
+    import legacy_mission_mobs
     for entry in list(player.active_missions):
+        mission = _resolve_mission(entry)
+        # Old saves may still contain missions targeting deleted bandits or
+        # rank-tier mobs. Retire these safely rather than leaving an
+        # unfinishable hunt or awarding credit for a nonexistent target.
+        if (mission and mission.get("mission_type", "kill") == "kill"
+                and (legacy_mission_mobs.is_legacy_mob(mission.get("target_mob_template"))
+                     or mission.get("target_mob_template") is None)):
+            player.active_missions.remove(entry)
+            failed.append("&YAn old hunt has been retired because its target no longer exists. Request a new mission.&x")
+            continue
         deadline = entry.get("expires_at")
         if deadline is None:
             entry["expires_at"] = now + MISSION_DURATION_SECONDS
