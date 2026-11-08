@@ -14,6 +14,7 @@ import jutsu_balance
 import data_weapons
 import status_effects
 import world
+import samurai_sabre_progression
 
 PROPERTIES = ("flaming", "frost", "life", "sharp", "vorpal", "shocking", "poison")
 # Permanent *item-bound* chakra imbuements use the same inventory/equipment
@@ -244,7 +245,8 @@ def use_samurai_sabre(session):
         return
     player.active_status_effects.pop("samurai_sabre", None)
     player.samurai_sabre_active = True
-    jutsu_colors.send(session, "&CChakra envelops your sword. Sword strikes deal 20% more damage while you sustain Samurai Sabre. Use it again to turn it off.&x")
+    bonus = samurai_sabre_progression.damage_bonus_percent(player)
+    jutsu_colors.send(session, f"&CChakra envelops your sword. Sword strikes deal {bonus}% more damage while you sustain Samurai Sabre. Use it again to turn it off.&x")
 
 
 SABRE_IDLE_CHAKRA_UPKEEP = 4
@@ -318,9 +320,9 @@ def weapon_hit(attacker, victim, damage, *, session=None, target_session=None):
     """
     wielded = attacker.equipment.get("wielded", "")
     prop = property_of(wielded)
-    if (damage > 0 and getattr(attacker, "samurai_sabre_active", False)
-            and data_weapons.weapon_type_for_item(base_item(wielded)) == "sword"):
-        damage = max(1, damage * 120 // 100)
+    sabre_bonus = samurai_sabre_progression.damage_bonus_percent(attacker)
+    if damage > 0 and sabre_bonus:
+        damage = max(1, damage * (100 + sabre_bonus) // 100)
     element = element_of(wielded)
     # The elemental bonus is usable only by a Bukijutsu wielder whose
     # own revealed chakra nature matches the enchantment.
