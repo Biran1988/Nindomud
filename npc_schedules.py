@@ -25,14 +25,14 @@ def shop_is_open(mob, hour=None):
     if getattr(mob, "player_shop_owner", None):
         return True
     import combat
-    proto = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
+    proto = combat.MOB_TEMPLATES.get(getattr(mob, "template_vnum", None), {})
     return within_hours(proto.get("shop_open_hour", -1),
                         proto.get("shop_close_hour", -1), hour)
 
 
 def shop_closed_message(mob):
     import combat
-    proto = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
+    proto = combat.MOB_TEMPLATES.get(getattr(mob, "template_vnum", None), {})
     opening = proto.get("shop_open_hour", -1)
     closing = proto.get("shop_close_hour", -1)
     return (f"{mob.name.capitalize()} is closed. "
