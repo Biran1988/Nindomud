@@ -77,7 +77,7 @@ def new_recovery(player, rank, rank_def):
     vnum = random.choice(choices)
     item_name, story = random.choice(RECOVERY_ITEMS)
     now = time.time()
-    mission_id = "recovery_" + uuid.uuid4().hex
+    mission_id = f"dynamic_{rank}_recovery_{uuid.uuid4().hex}"
     location = world.WORLD.get(vnum)
     # The named road segment / inn gives a meaningful clue without
     # exposing the precise room or a teleport shortcut.
