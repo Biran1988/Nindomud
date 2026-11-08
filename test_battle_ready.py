@@ -92,6 +92,42 @@ class BattleReadyTests(unittest.TestCase):
         self.assertNotIn("samurai sabre", [x.args[1] for x in cast.call_args_list])
         self.assertTrue(self.player.samurai_sabre_active)
 
+    def test_real_one_command_activation_uses_actual_resources_and_does_not_toggle_off(self):
+        import combat
+        import data_jutsu
+        import skill_training
+        from session import Session, State, ACTIVE_SESSIONS
+        p = Player("Prepared", "Prepared", level=50, primary_class="bukijutsu")
+        p.maximum_chakra = p.chakra = 5000
+        p.maximum_stamina = p.stamina = 5000
+        p.equipment["wielded"] = "A Basic Sword"
+        p.practice_gate_enabled = True
+        for key in ("barrier", "focused mind", "sensory detect", "samurai sabre"):
+            spec = data_jutsu.JUTSU[key]
+            p.learned_skills.append(spec["display_name"])
+            p.skill_proficiencies[spec["display_name"]] = 50
+            skill_training.mark_practiced(p, spec["display_name"])
+        lines = []
+        live = Session(lines.append, lambda: None)
+        live.state = State.PLAYING
+        live.player = p
+        try:
+            with (patch.object(combat, "grow_skill_from_usage"),
+                  patch("storage.save_player")):
+                battle_ready.command(live, ["ready"])
+            self.assertTrue(status_effects.has_effect(p.active_status_effects, "barrier"))
+            self.assertTrue(status_effects.has_effect(p.active_status_effects, "focused_mind"))
+            self.assertTrue(status_effects.has_effect(p.active_status_effects, "sensory_detect"))
+            self.assertTrue(p.samurai_sabre_active)
+            self.assertLess(p.chakra, 5000)
+            spent_chakra, spent_stamina = p.chakra, p.stamina
+            battle_ready.command(live, ["ready"])
+            self.assertEqual((p.chakra, p.stamina), (spent_chakra, spent_stamina))
+            self.assertTrue(p.samurai_sabre_active)
+        finally:
+            if live in ACTIVE_SESSIONS:
+                ACTIVE_SESSIONS.remove(live)
+
     def test_help_description_registered(self):
         import help_system
         pages = [p for p in help_system.DEFAULT_HELP_ENTRIES
