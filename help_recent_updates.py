@@ -97,13 +97,6 @@ PAGES = [
          "even without the Examine skill. Info Scrolls are different "
          "from jutsu-learning scrolls.",
          "written scroll", "write scroll", "message scroll"),
-    page("medicinal herbs", "Harvesting Medicinal Herbs",
-         "Syntax: farm\n\n"
-         "At Farming level 20 and above, using a hoe in a farmland biome "
-         "has a small chance to harvest Medicinal Herbs in addition to "
-         "regular crop farming. Each herb harvest grants 35 Farming XP. "
-         "Herbs are used in existing medicinal pill crafting.",
-         "herb farming", "herbs"),
     page("look equipment", "Viewing Other Players' Equipment",
          "Syntax: look <player>\n"
          "        look self\n"
