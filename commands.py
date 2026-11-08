@@ -7251,25 +7251,12 @@ def cmd_farm(session, args: List[str]) -> None:
 
 
 def cmd_cook(session, args: List[str]) -> None:
-    """Cooking (cooking.py) -- reworked per the same explicit request
-    as fishing/mining/lumberjack/farming's own reworks: needs one of 6
-    tiered cooking pots actually HELD (same requirement as fishing
-    rods/pickaxes/axes/hoes), or standing in your own apartment
-    kitchen (which needs no pot at all -- treated as the lowest,
-    Copper tier for quality odds, since there's no specific pot item
-    to gate there). A raw fish (from Fishing) is named as the argument
-    -- no biome/location requirement otherwise, unlike the gathering
-    jobs, since cooking works anywhere. Takes COOK_DELAY_SECONDS to
-    resolve, with a real chance to burn the dish entirely; on success,
-    the resulting dish's quality tier is shown as a suffix (e.g.
-    "(Rare)"), same pattern crafting.py uses for a crafted item's stat
-    bonus suffix -- and, per the rework, the pot's own tier shifts the
-    odds toward better quality the same tier-distance way a rod/
-    pickaxe/axe/hoe shifts catch rarity, so only the top pot gives a
-    real shot at a Legendary dish. The ingredient is consumed either
-    way (burned or not) -- re-checked at resolution time in case it
-    was spent elsewhere during the delay, same pattern crafting.py
-    uses for its own materials."""
+    """Cook a raw fish or harvested crop with a held pot or owned kitchen.
+
+    Ingredients are consumed when the timed action resolves. Cooking uses
+    the regular burn chance, costs, tool wear, and Cooking job XP for
+    either kind of ingredient. Medicinal Herbs are not food.
+    """
     player = session.player
 
     if session.is_busy():
@@ -7286,7 +7273,7 @@ def cmd_cook(session, args: List[str]) -> None:
         return
 
     if not args:
-        session.send("Usage: cook <fish>")
+        session.send("Usage: cook <fish or crop>")
         return
 
     query = " ".join(args).lower()
