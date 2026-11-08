@@ -15,6 +15,9 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- **15.445 Courier missions:** `mission request delivery <rank>` gives a unique sealed parcel bound to the requesting ninja. Deliver it to a real village NPC using `deliver` or `give parcel <npc>` within 30 minutes. Cargo cannot be dropped, traded, auctioned, sold or stored. This feature changes only source; all live `data/` files are preserved.
+- **15.444 Eight Inner Gates:** Taijutsu levels 20/40/65/90/120/155/195/240 gain eight progressively stronger Gates with Stamina upkeep and higher-tier Health drain; the final Gate lasts 30 seconds and is fatal to the user. Six follow-up moves unlock across the Gates. `gates status`, `gates <1-8>`, `gates off`, `gates safe`; Eighth Gate requires explicit `gates 8 confirm`. Battle Ready only selects Gates 1-7 and is OFF by default.
+
 - Visual area builder version 15.312: named browser autosave drafts, explicit save,
   a switchable project library, and portable `*.nindo-project.json` backup
   files. Work-in-progress backups are separate from game-ready area exports.
@@ -72,7 +75,8 @@ existing server installation, keeping the server's `data/` directory intact.
   bleeding, and deals 15% more damage with Wind chakra nature. Both work
   against mobs; Flying Swallow also works against players where PvP is allowed.
 - Taijutsu gains Empi (level 20) and Nidan Kyten Geri (level 30) as
-  direct stamina strikes. Gates and their follow-ups remain on hold.
+  direct stamina strikes. Eight Inner Gates and follow-up attacks are
+  implemented as of version 15.444 (see above).
 - Bukijutsu weapon arts now enchant, poison, or disenchant a wielded weapon
   directly. The property stays on that individual equipped item.
 - Ninjutsu level 100 gains Nanairo no Rasengan: one cast sends seven
