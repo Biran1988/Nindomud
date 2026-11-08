@@ -4,8 +4,8 @@
     "samurai sabre"
   ],
   "title": "Samurai Sabre",
-  "body": "Syntax: samurai sabre\n\nDescription: Toggle a chakra edge on a wielded sword. Ordinary sword hits deal 20% more damage while active. Costs 4 Chakra per idle 10 seconds, or 6 Chakra and 2 Stamina per combat round. Switch weapons or use it again to turn it off. Requires a wielded sword. Bukijutsu unlocks at level 35. Costs 35 Chakra and 10 Stamina; 25 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: samurai sabre | samurai sabre (again to turn off)\n\nBukijutsu level 35. Wield a sword and activate the chakra edge to deal +5% damage with ordinary sword strikes. The original technique costs 35 Chakra and 10 Stamina to activate, and 4 Chakra per idle upkeep or 6 Chakra and 2 Stamina each combat round. It ends if the sword is removed or resources run out.\n\nPassive mastery upgrades unlock automatically by LEVEL (no scroll and no separate command or training):\n  Samurai Sabre 2 - Level 85: +5% (10% total)\n  Samurai Sabre 3 - Level 140: +5% (15% total)\n  Samurai Sabre 4 - Level 195: +5% (20% total)\n  Samurai Sabre 5 - Level 250: +5% (25% total)\n\nThe passives only increase damage while the original Samurai Sabre toggle is ON and a sword is equipped. Costs and upkeep do not change. Bonuses stack multiplicatively with eligible Chakra Steel elemental weapon enchantments (+50%); Samurai Sabre does not activate on kunai, polearms or other non-swords. Use SKILLS or PRAC to see unlocked tiers; EXAMINE to inspect any weapon enchantment.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
