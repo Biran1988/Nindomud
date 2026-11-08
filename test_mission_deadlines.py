@@ -100,9 +100,12 @@ class MissionCommandTests(unittest.TestCase):
         self.assertEqual(ninja.active_missions[0]["dynamic"]["target_mob_template"], 7004)
         self.assertEqual(ninja.active_missions[0]["expires_at"] > 0, True)
         no_tagged = {7002: self.templates[7002]}
-        with patch.object(combat, "MOB_TEMPLATES", no_tagged):
+        with patch.object(combat, "MOB_TEMPLATES", no_tagged), \
+                patch.object(missions, "_fallback_noncombat_mission",
+                             return_value="Mission requested: Recovery") as fallback:
             another = missions.accept_mission(player(level=6), "leaf", "leaf_d1")
-        self.assertIn("No suitable D-Rank Mission-tagged", another)
+        self.assertIn("Mission requested: Recovery", another)
+        fallback.assert_called_once()
 
     def test_existing_active_mission_receives_a_single_upgrade_deadline(self):
         ninja = player()

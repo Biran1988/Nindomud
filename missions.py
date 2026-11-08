@@ -19,6 +19,7 @@ completions still count toward things like the Kage promotion ladder's
 "completed mission count" requirement.
 """
 
+import random
 import time
 from typing import List
 
@@ -257,6 +258,35 @@ def pick_mission_mob(player: Player, rank: str):
         return None, None
     return random.choice(candidates)
 
+def _fallback_noncombat_mission(player: Player, rank: str,
+                                cooldown_key=None, cooldown_seconds=0) -> str:
+    """Offer a real noncombat objective when this rank has no eligible hunt.
+
+    Randomize recovery vs courier, and try the other type if the first
+    cannot be issued (missing roads, no live NPC, cooldown, full inventory).
+    Failed attempts do not consume the normal hunt-request cooldown.
+    """
+    options = [
+        ("item recovery", request_item_mission),
+        ("delivery", request_courier_mission),
+    ]
+    random.shuffle(options)
+    failures = []
+    for kind, request in options:
+        result = request(player, rank)
+        if result.startswith("Mission requested:"):
+            if cooldown_key:
+                player.mission_cooldowns[cooldown_key] = (
+                    time.time() + cooldown_seconds
+                )
+            return (result
+                    + "\n&Y(No eligible Mission-flagged enemy was available; "
+                      "a noncombat mission was assigned instead.)&x")
+        failures.append(f"{kind}: {result}")
+    return ("No suitable Mission-flagged enemy or noncombat fallback is "
+            f"currently available for {rank}. " + " ".join(failures))
+
+
 def request_mission(player: Player, rank: str) -> str:
     """Requests a dynamic C/B/A/S rank mission (see module docstring
     at the top of this file's C/B/A/S section) -- picks a real
@@ -286,13 +316,14 @@ def request_mission(player: Player, rank: str) -> str:
     if remaining > 0:
         return f"You've requested a {rank} mission too recently. You can request another in {_format_duration(remaining)}."
     if any((_resolve_mission(m) or {}).get("rank") == rank
-           and (_resolve_mission(m) or {}).get("mission_type", "kill") == "kill"
            for m in player.active_missions):
         return f"You already have an active {rank} mission -- finish or abandon it first."
 
     mob_vnum, mob = pick_mission_mob(player, rank)
     if not mob:
-        return f"No {rank} mission is available for your level right now -- try again later, or a different rank."
+        return _fallback_noncombat_mission(
+            player, rank, cooldown_key, cooldown_seconds
+        )
 
     mission = {
         "mission_id": f"dynamic_{rank}_{mob_vnum}_{int(time_module.time())}",
@@ -388,7 +419,13 @@ def accept_mission(player: Player, village: str, mission_id: str) -> str:
         # assign untagged or level-inappropriate mobs to a hunt.
         vnum, mob = pick_mission_mob(player, "D-Rank")
         if mob is None:
-            return "No suitable D-Rank Mission-tagged enemy is available for your level."
+            if any((_resolve_mission(e) or {}).get("rank") == "D-Rank"
+                   for e in player.active_missions):
+                return "You already have an active D-Rank mission -- finish or abandon it first."
+            return _fallback_noncombat_mission(
+                player, "D-Rank", mission["mission_id"],
+                mission_cooldown_seconds(mission)
+            )
         chosen = dict(mission)
         chosen["target_mob_template"] = vnum
         chosen["target_level"] = mob.get("level", 1)
@@ -499,6 +536,7 @@ def mission_info(player: Player, now=None) -> str:
         else:
             lines.append(f"    Objective: {mission['description']}")
         lines.append(f"    Progress: {entry.get('progress', 0)}/{mission['target_count']}")
+        lines.append("    Mission points on completion: random 1-5")
         lines.append(f"    Time remaining: {_format_duration(remaining)}")
         lines.append(f"    To abandon: mission fail {mission['rank'].lower().replace('-rank', '')}")
     return "\n".join(lines)
@@ -603,8 +641,11 @@ def _complete_mission(player: Player, mission: dict, entry: dict) -> List[str]:
     ryo_mult = village_perks.ryo_multiplier(player.village)
     ryo_reward = int(mission["reward_ryo"] * ryo_mult)
     player.ryo += ryo_reward
-    player.mission_points += mission["reward_mission_points"]
-    player.mission_points_earned_total += mission["reward_mission_points"]
+    # Each successful mission independently rolls 1-5 points, regardless of
+    # rank or mission type. Keep spendable and lifetime balances in sync.
+    mission_points_reward = random.randint(1, 5)
+    player.mission_points += mission_points_reward
+    player.mission_points_earned_total += mission_points_reward
     player.village_reputation[player.village] = (
         player.village_reputation.get(player.village, 0) + 5
     )
@@ -625,7 +666,7 @@ def _complete_mission(player: Player, mission: dict, entry: dict) -> List[str]:
     lines.append(
         f"&GMission complete: {mission['title']}!&x\n"
         f"You receive {earned_xp} experience, {ryo_reward} ryo, "
-        f"and {mission['reward_mission_points']} mission point(s)."
+        f"and {mission_points_reward} mission point(s)."
         + perk_suffix + cap_note + "\n"
         f"This mission can be accepted again in {_format_duration(cooldown)}."
     )

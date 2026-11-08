@@ -40,6 +40,22 @@ PAGES = [
          "option, which opens only the highest learned safe Gate (1-7), "
          "never the Eighth Gate.",
          "gates", "gate", "inner gates", "eight inner gates", "gate of death"),
+    page("mission rewards", "Mission Points and Automatic Fallbacks",
+         "Every completed mission, including hunts, gathering, lost-item "
+         "recovery, and courier delivery, rewards a randomly rolled 1-5 "
+         "mission points. The same amount counts toward your current "
+         "spendable balance and lifetime total. XP and Ryo still scale "
+         "with mission rank.\\n\\n"
+         "When MISSION REQUEST <rank> cannot find a Mission-flagged enemy "
+         "in your rank's level band, it automatically chooses a roadside "
+         "lost-item recovery or courier delivery mission at that rank. "
+         "If the first option is unavailable, it tries the other. "
+         "Posted D-Rank hunts have the same fallback. Item recovery takes "
+         "place on mainland roads or roadside inns and is completed by GET; "
+         "deliveries give you a sealed parcel for a real reachable NPC. "
+         "Mission deadlines, minimum levels, and cooldowns still apply.",
+         "mission fallback", "mission points", "automatic mission"),
+
     page("delivery missions", "Sealed Courier Delivery Missions",
          "Syntax: mission request delivery <d|c|b|a|s>\\n"
          "        mission info\\n"

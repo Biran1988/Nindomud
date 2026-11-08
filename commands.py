@@ -4904,7 +4904,10 @@ def cmd_accept(session, args: List[str]) -> None:
     available = missions.missions_for_village(player.village)
     if not args:
         if len(available) == 1:
-            session.send(missions.accept_mission(player, player.village, available[0]["mission_id"]))
+            result = missions.accept_mission(player, player.village, available[0]["mission_id"])
+            session.send(result)
+            if result.startswith(("Mission accepted:", "Mission requested:")):
+                storage.save_player(player)
             return
         session.send(
             "Accept which mission? " + ", ".join(m["title"] for m in available)
@@ -4918,7 +4921,10 @@ def cmd_accept(session, args: List[str]) -> None:
     if not matched:
         session.send(f"No mission here matches '{' '.join(args)}'.")
         return
-    session.send(missions.accept_mission(player, player.village, matched["mission_id"]))
+    result = missions.accept_mission(player, player.village, matched["mission_id"])
+    session.send(result)
+    if result.startswith(("Mission accepted:", "Mission requested:")):
+        storage.save_player(player)
 
 
 def cmd_mission(session, args: List[str]) -> None:
