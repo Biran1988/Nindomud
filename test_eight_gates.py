@@ -92,6 +92,25 @@ class EightGatesTests(unittest.TestCase):
         self.assertTrue(eight_gates.strike_unlocked(self.player, data_jutsu.JUTSU["daytime tiger"]))
         self.assertFalse(eight_gates.strike_unlocked(self.player, data_jutsu.JUTSU["night guy"]))
 
+    def test_gate_healing_and_extra_attacks_have_real_effects(self):
+        self.player.health = 4000
+        eight_gates.open_gate(self.session, 2)
+        self.assertEqual(self.player.health, 4250)
+        self.assertEqual(eight_gates.dodge(self.player), 3)
+        self.assertEqual(eight_gates.extra_attacks(self.player), 0)
+        eight_gates.open_gate(self.session, 3)
+        self.assertEqual(eight_gates.extra_attacks(self.player), 1)
+        eight_gates.open_gate(self.session, 7)
+        self.assertEqual(eight_gates.extra_attacks(self.player), 2)
+        self.assertEqual(eight_gates.dodge(self.player), 14)
+
+    def test_gate_eight_stamina_exhaustion_still_defeats_caster(self):
+        eight_gates.open_gate(self.session, 8, confirm=True)
+        self.player.stamina = 0
+        eight_gates.tick(self.session, now=self.player.gates_last_upkeep_at + 3)
+        self.assertEqual(eight_gates.active(self.player), 0)
+        self.assertEqual(self.player.health, 0)
+
     def test_eighth_gate_state_survives_save_restore(self):
         eight_gates.open_gate(self.session, 8, confirm=True)
         restored = Player.from_dict(self.player.to_dict())
