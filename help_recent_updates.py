@@ -87,15 +87,6 @@ PAGES = [
          "Door states are synchronized in both directions; unscheduled "
          "NPCs and doors are left alone. Use TIME to inspect the current hour.",
          "gate hours", "shop hours", "gate guards"),
-    page("advanced tracking", "Advanced Tracking Jutsu",
-         "Syntax: perform track <target>\n\n"
-         "Advanced Tracking is a scroll-learned jutsu available starting "
-         "at level 20. Once learned it extends the existing Track ability "
-         "across area boundaries, as long as the target is reachable by "
-         "connected exits. It does not bypass impassable doors, disconnected "
-         "areas, or other movement restrictions. Without the upgrade, "
-         "normal Track stays inside the current area.",
-         "advanced track", "tracking scroll"),
     page("info scroll", "Player-Written Info Scrolls",
          "Syntax: write info scroll\n"
          "        examine <info scroll>\n\n"
