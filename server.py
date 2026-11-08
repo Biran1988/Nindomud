@@ -133,6 +133,7 @@ async def pulse_loop() -> None:
     import regen
     import storage
     import weather
+    import npc_schedules
     import auction
     import areas
     import territory
@@ -225,7 +226,13 @@ async def pulse_loop() -> None:
 
         if elapsed_since_time_of_day >= weather.DAY_NIGHT_INTERVAL_SECONDS:
             elapsed_since_time_of_day = 0.0
-            weather.tick_time_of_day()
+            phase_changed = weather.tick_time_of_day()
+            npc_schedules.apply_all(announce=True)
+            if phase_changed:
+                if weather.time_of_day() == "day":
+                    _broadcast_all("&YSunrise brightens the shinobi world. Gates and markets stir.&x")
+                else:
+                    _broadcast_all("&DThe sun sets over the shinobi world. Night falls.&x")
 
         # Status effects tick down every pulse for everyone, independent of
         # combat state -- this used to only happen inside resolve_pulse()
