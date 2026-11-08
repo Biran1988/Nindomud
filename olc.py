@@ -463,6 +463,18 @@ def cmd_mstat(session, args: List[str]) -> None:
         buys = ", ".join(sorted(allowed)) if allowed else "anything"
         lines.append(f"&WShopkeeper:&x &Gyes&x   &WType:&x {specialty}   &WBuys:&x {buys}")
         lines.append(f"&WStock:&x {_fmt_list(stock_names)}")
+        import npc_schedules
+        opening = t.get("shop_open_hour", -1)
+        closing = t.get("shop_close_hour", -1)
+        if 0 <= opening <= 23 and 0 <= closing <= 23:
+            lines.append(f"&WHours:&x {npc_schedules.hour_label(opening)} - {npc_schedules.hour_label(closing)} (world time)")
+        else:
+            lines.append("&WHours:&x 24 hours")
+    if t.get("gate_room_vnum") and t.get("gate_direction"):
+        import npc_schedules
+        lines.append(f"&WGate guard:&x room {t['gate_room_vnum']} {t['gate_direction']} / "
+                     f"{npc_schedules.hour_label(t.get('gate_open_hour', 6))} - "
+                     f"{npc_schedules.hour_label(t.get('gate_close_hour', 18))}")
     if t.get("gambler", False):
         lines.append("&WGambler:&x &Gyes&x &D(runs chou-han -- see the 'gamble' command)&x")
     if t.get("teacher", ""):
@@ -1883,7 +1895,8 @@ MOB_STRING_FIELDS = {"short_desc", "long_desc", "description", "sex",
                       "teacher", "primary_class", "summon_family", "aggro_village", "aggro_clan",
                       "shop_type"}
 MOB_INT_FIELDS = {"level", "alignment", "mana", "move", "armor_class", "hit_roll",
-                   "damage_roll", "attacks", "gold", "ryo_reward"}
+                   "damage_roll", "attacks", "gold", "ryo_reward",
+                   "shop_open_hour", "shop_close_hour", "gate_open_hour", "gate_close_hour"}
 MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defenses",
                     "resistant", "immune", "susceptible", "body_parts", "speaks",
                     "speaking", "loot_items", "shop_buys_categories"}
@@ -1946,6 +1959,9 @@ def _mset_field_reference(player: bool = False) -> str:
         "&DUse 'mset <vnum> <field>' for its current value and valid options.&x",
         "&DShop stock: mset additem <mob vnum> <object vnum>. XP comes from mob level.&x",
         "&DFood buyer: mset <vnum> shopkeeper on | mset <vnum> shoptype food.&x",
+        "&DShops: mset <vnum> shopopen 8 | shopclose 20 (off = 24/7).&x",
+        "&DGates: mset <vnum> gate <room vnum> <direction> | gate off.&x",
+        "&DThen mset <vnum> gateopen 6 | gateclose 18.&x",
         "&DOlder underscore spellings still work; use 'mset fields player' for players.&x",
     ])
 
@@ -2328,6 +2344,11 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
         return f"'{display}' is on/off. Current: {'on' if current else 'off'}.\nUsage: mset <vnum> {display} on|off"
     if field in MOB_ATTR_FIELDS:
         return f"'{display}' is a number (attribute). Current: {t['attributes'].get(field, 0)}.\nUsage: mset <vnum> {display} <number>"
+    if field in {"shop_open_hour", "shop_close_hour", "gate_open_hour", "gate_close_hour"}:
+        current = t.get(field, -1)
+        return (f"'{display}' uses a 24-hour world-clock hour (0-23). "
+                f"Current: {current}.\nUsage: mset <vnum> {display} <0-23>"
+                + (" or off (24/7)" if field.startswith("shop_") else ""))
     if field in MOB_INT_FIELDS:
         return f"'{display}' is a number. Current: {t.get(field, 0)}.\nUsage: mset <vnum> {display} <number>"
     if field == "shop_buys_categories":
@@ -2763,6 +2784,38 @@ def cmd_mset(session, args: List[str]) -> None:
     if len(args) < 2:
         session.send("Usage: mset <vnum> <field> <value...>\nUse 'mset fields' to see every field, or 'mset <vnum> <field>' to see one field's options.")
         return
+    # A gate is attached to a real, existing DOOR exit, never created or
+    # linked automatically. This respects assigned builder VNUM ranges.
+    if args[1].lower() == "gate":
+        template = combat.MOB_TEMPLATES[vnum]
+        if len(args) == 2:
+            room_no = template.get("gate_room_vnum")
+            facing = template.get("gate_direction", "")
+            session.send(f"Gate: {room_no or 'off'} {facing}. Usage: mset <vnum> gate <room_vnum> <direction> | off")
+            return
+        if len(args) == 3 and args[2].lower() == "off":
+            template["gate_room_vnum"] = None
+            template["gate_direction"] = ""
+            _log(session.player.name, "mobile", vnum, "gate schedule disabled")
+            session.send("Gate guard schedule disabled.")
+            return
+        if len(args) != 4 or not args[2].isdigit():
+            session.send("Usage: mset <vnum> gate <room_vnum> <direction> | gate off")
+            return
+        room_vnum = int(args[2])
+        if not _require_assigned_vnum(session, room_vnum):
+            return
+        direction = world.normalize_direction(args[3])
+        room = world.WORLD.get(room_vnum)
+        if (not room or not direction or direction not in room.exits or
+                "door" not in room.exit_flags.get(direction, ())):
+            session.send("That room must have a real door-flagged exit in that direction.")
+            return
+        template["gate_room_vnum"] = room_vnum
+        template["gate_direction"] = direction
+        _log(session.player.name, "mobile", vnum, f"guarding {room_vnum} {direction}")
+        session.send(f"Guard assigned to room {room_vnum}'s {direction} gate.")
+        return
     field_display_name = args[1].lower()
     field_name = _builder_field(field_display_name, MOB_STRING_FIELDS | MOB_INT_FIELDS |
                                 MOB_LIST_FIELDS | MOB_ATTR_FIELDS | MOB_BOOL_FIELDS,
@@ -2876,8 +2929,17 @@ def cmd_mset(session, args: List[str]) -> None:
         return
 
     if field in MOB_INT_FIELDS:
+        if field in {"shop_open_hour", "shop_close_hour"} and value_text.lower() == "off":
+            t[field] = -1
+            _log(session.player.name, "mobile", vnum, f"{field} disabled")
+            session.send(f"{field}: 24-hour trading enabled.")
+            return
         if not value_text.lstrip("-").isdigit():
             session.send(f"{field} must be a number.")
+            return
+        if (field in {"shop_open_hour", "shop_close_hour", "gate_open_hour", "gate_close_hour"}
+                and not 0 <= int(value_text) <= 23):
+            session.send("Scheduled hours must be between 0 and 23.")
             return
         t[field] = int(value_text)
         _log(session.player.name, "mobile", vnum, f"{field} set to {value_text}")
