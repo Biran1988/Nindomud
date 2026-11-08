@@ -648,6 +648,10 @@ def _scale_base_damage_to_level() -> None:
     for jutsu in JUTSU.values():
         if jutsu.get("damage") is None:
             continue
+        # Gate-exclusive techniques use deliberately authored high-level
+        # physical damage ranges, not the legacy level-100 jutsu ladder.
+        if jutsu.get("jutsu_type") == "gate_strike":
+            continue
         original_low, original_high = jutsu["damage"]
         if jutsu.get("jutsu_type") == "hyuga_strike":
             # Hyuga strikes use same-level regular-mob HP as the reference
