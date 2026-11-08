@@ -4193,6 +4193,9 @@ def cmd_deliver(session, args: List[str]) -> None:
     progress (missions.on_weeds_delivered) -- partial delivery across
     multiple trips works fine, since progress accumulates rather than
     requiring the full target_count in one go."""
+    import courier_missions
+    if courier_missions.try_deliver(session, " ".join(args)):
+        return
     player = session.player
     villager = _find_villager(player.room_vnum)
     if not villager:
@@ -4877,7 +4880,7 @@ def cmd_missions(session, args: List[str]) -> None:
                 else:
                     status = f"type 'accept {first_word}' to take it"
             lines.append(f"  &Y{m['title']}&x ({m['rank']}): {m['description']}\n    ({status})")
-        lines.append("\n&D(Request a level-appropriate Mission-tagged hunt with 'mission request <rank>'.)&x")
+        lines.append("\n&D(Request a hunt with 'mission request <rank>', roadside item with 'mission request item <rank>', or delivery with 'mission request delivery <rank>'.)&x")
         session.send("\n".join(lines))
         return
 
@@ -4923,15 +4926,17 @@ def cmd_mission(session, args: List[str]) -> None:
     if before != after:
         storage.save_player(player)
     if not args:
-        session.send("Usage: mission request <d|c|b|a|s> | mission request item [d|c|b|a|s] | mission info | mission fail [rank]")
+        session.send("Usage: mission request <rank> | mission request item <rank> | mission request delivery <rank> | mission info | mission fail [rank]")
         return
     action, rest = args[0].lower(), args[1:]
     if action == "request":
         if not rest:
-            session.send("Request which rank? Usage: mission request <d|c|b|a|s> or mission request item [rank]")
+            session.send("Request which rank? Usage: mission request <rank> | mission request item <rank> | mission request delivery <rank>")
             return
         if rest[0].lower() in ("item", "recover", "recovery"):
             result = missions.request_item_mission(player, " ".join(rest[1:]) or "d")
+        elif rest[0].lower() in ("delivery", "courier", "parcel"):
+            result = missions.request_courier_mission(player, " ".join(rest[1:]) or "d")
         else:
             result = missions.request_mission(player, " ".join(rest))
         session.send(result)
@@ -4945,7 +4950,7 @@ def cmd_mission(session, args: List[str]) -> None:
         if result.startswith("&RMission failed:"):
             storage.save_player(player)
     else:
-        session.send("Usage: mission request <d|c|b|a|s> | mission request item [rank] | mission info | mission fail [rank]")
+        session.send("Usage: mission request <rank> | mission request item <rank> | mission request delivery <rank> | mission info | mission fail [rank]")
 
 
 def cmd_request(session, args: List[str]) -> None:
@@ -7780,6 +7785,11 @@ def cmd_give(session, args: List[str]) -> None:
     )
 
     item_query = " ".join(args[:-1]).lower()
+    import courier_missions
+    parcel = find_indexed_item(item_query, player.inventory)
+    if parcel and courier_missions.is_parcel(parcel):
+        courier_missions.try_deliver(session, target_query)
+        return
 
     if not target_session:
         shopkeeper = next(
@@ -7999,6 +8009,10 @@ def cmd_drop(session, args: List[str]) -> None:
         return
     player = session.player
     room = WORLD.get(player.room_vnum)
+    import courier_missions
+    if any(courier_missions.is_parcel(item) for item in player.inventory) and (not args or args[0].lower() == "all"):
+        session.send("Your sealed courier parcel cannot be dropped. Deliver it or abandon the mission.")
+        return
     if any(item.endswith(" [glued]") for item in player.inventory) and (not args or args[0].lower() == "all"):
         session.send("Remove your glued items before dropping everything.")
         return
@@ -8023,6 +8037,9 @@ def cmd_drop(session, args: List[str]) -> None:
     match = find_indexed_item(query, player.inventory)
     if not match:
         session.send("You aren't carrying that.")
+        return
+    if courier_missions.is_parcel(match):
+        session.send("The sealed courier parcel is mission-bound and cannot be dropped.")
         return
     if match.endswith(" [glued]"):
         session.send("That item is glued to you and cannot be dropped.")
@@ -8196,6 +8213,10 @@ def cmd_put(session, args: List[str]) -> None:
         return
     item_position = item_matches[item_index - 1]
     match = player.inventory[item_position]
+    import courier_missions
+    if courier_missions.is_parcel(match):
+        session.send("Keep the courier parcel in your inventory until delivery.")
+        return
     if match.endswith(" [glued]"):
         session.send("That item is glued to you and cannot be stored.")
         return
