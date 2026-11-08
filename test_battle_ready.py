@@ -128,6 +128,109 @@ class BattleReadyTests(unittest.TestCase):
             if live in ACTIVE_SESSIONS:
                 ACTIVE_SESSIONS.remove(live)
 
+
+    def test_additional_jutsu_options_start_disabled_and_save_per_character(self):
+        additional = (
+            "hidden mist jutsu", "six paths mode", "tailed beast mode", "bijuu cloak",
+            "celestial byakugan", "tenseigan chakra mode", "kamui intangibility",
+            "sanchin dachi", "neko ashi dachi", "kihon dachi",
+        )
+        original_defaults = {"barrier", "focused mind", "sensory detect", "samurai sabre"}
+        settings = battle_ready.settings(self.player)
+        self.assertEqual({k for k, v in settings.items() if v}, original_defaults)
+        for key in additional:
+            self.assertIn(key, settings)
+            self.assertFalse(settings[key], key)
+        with patch("storage.save_player"):
+            battle_ready.command(self.session, ["ready", "hidden", "mist", "jutsu", "on"])
+            commands.cmd_config(self.session, ["battle", "ready", "sixpaths", "on"])
+            battle_ready.command(self.session, ["ready", "sanchin", "dachi", "on"])
+        restored = Player.from_dict(self.player.to_dict())
+        self.assertTrue(battle_ready.settings(restored)["hidden mist jutsu"])
+        self.assertTrue(battle_ready.settings(restored)["six paths mode"])
+        self.assertTrue(battle_ready.settings(restored)["sanchin dachi"])
+
+    def test_advanced_jutsu_use_real_commands_not_free_effects(self):
+        import bijuu_chakra
+        import hyuga
+        import six_paths
+        with (patch.object(commands, "cmd_use_jutsu") as perform,
+              patch.object(commands, "cmd_tailed_beast_mode") as beast,
+              patch.object(hyuga, "cast") as bloodline,
+              patch.object(six_paths, "command") as six,
+              patch.object(bijuu_chakra, "command") as bijuu):
+            battle_ready._cast(self.session, "hidden mist jutsu")
+            perform.assert_called_with(self.session, "hidden mist jutsu", ["on"])
+            battle_ready._cast(self.session, "sanchin dachi")
+            perform.assert_called_with(self.session, "sanchin dachi", [])
+            battle_ready._cast(self.session, "kamui intangibility")
+            perform.assert_called_with(self.session, "kamui intangibility", [])
+            battle_ready._cast(self.session, "celestial byakugan")
+            bloodline.assert_called_with(self.session, "celestial byakugan", ["on"])
+            battle_ready._cast(self.session, "tenseigan chakra mode")
+            bloodline.assert_called_with(self.session, "tenseigan chakra mode", ["on"])
+            battle_ready._cast(self.session, "six paths mode")
+            six.assert_called_with(self.session, ["on"])
+            battle_ready._cast(self.session, "tailed beast mode")
+            beast.assert_called_with(self.session, [])
+            battle_ready._cast(self.session, "bijuu cloak")
+            bijuu.assert_called_with(self.session, ["cloak"])
+
+    def test_existing_stance_never_replaced(self):
+        self.player.battle_ready_settings = {
+            "sanchin dachi": True, "kihon dachi": True,
+        }
+        self.player.taijutsu_stance = "neko ashi dachi"
+        with (patch.object(battle_ready, "_available", return_value=True),
+              patch.object(battle_ready, "_cast") as cast):
+            battle_ready.command(self.session, ["ready"])
+        self.assertEqual(self.player.taijutsu_stance, "neko ashi dachi")
+        self.assertFalse(any(x.args[1] in ("sanchin dachi", "kihon dachi")
+                             for x in cast.call_args_list))
+
+    def test_only_one_enabled_stance_starts_highest_first(self):
+        self.player.battle_ready_settings = {
+            "sanchin dachi": True, "kihon dachi": True,
+        }
+        self.player.taijutsu_stance = ""
+        used = []
+        def cast(session, key):
+            used.append(key)
+            if key == "sanchin dachi":
+                self.player.taijutsu_stance = key
+        with (patch.object(battle_ready, "_available",
+                           side_effect=lambda player, key: key.endswith("dachi")),
+              patch.object(battle_ready, "_cast", side_effect=cast)):
+            battle_ready.command(self.session, ["ready"])
+        self.assertEqual(used, ["sanchin dachi"])
+
+    def test_delayed_jutsu_stops_before_another_delayed_cast(self):
+        self.player.battle_ready_settings = {
+            "chisei": True, "hidden mist jutsu": True,
+        }
+        attempted = []
+        def cast(session, key):
+            attempted.append(key)
+            if key == "chisei":
+                self.session.pending_cast = object()
+        with (patch.object(battle_ready, "_available",
+                           side_effect=lambda player, key: key in ("chisei", "hidden mist jutsu")),
+              patch.object(battle_ready, "_cast", side_effect=cast)):
+            battle_ready.command(self.session, ["ready"])
+        self.assertEqual(attempted, ["chisei"])
+        self.assertTrue(any("forming hand signs" in line for line in self.out))
+        self.assertTrue(any("BATTLE READY again" in line for line in self.out))
+
+    def test_modes_do_not_overwrite_stronger_bijuu_form(self):
+        self.player.bijuu_form = 4
+        self.assertTrue(battle_ready._active(self.player, "bijuu cloak"))
+        self.player.bijuu_form = 0
+        self.assertFalse(battle_ready._active(self.player, "bijuu cloak"))
+        self.player.six_paths_active = True
+        self.assertTrue(battle_ready._active(self.player, "six paths mode"))
+        self.player.kamui_intangibility_rounds_left = 3
+        self.assertTrue(battle_ready._active(self.player, "kamui intangibility"))
+
     def test_help_description_registered(self):
         import help_system
         pages = [p for p in help_system.DEFAULT_HELP_ENTRIES
