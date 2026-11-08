@@ -75,6 +75,23 @@ def _recipients(player, rank):
                                 if template == mob.template_vnum), None)
                 if village:
                     candidates.append((mob, vnum, room, village))
+    # Some worlds have builder-placed shops and trainers but no village
+    # villager spawn points. Fall back to other stationary, peaceful NPCs,
+    # never a fightable mission mob, garrison, trap or player-owned shop.
+    if not candidates:
+        for vnum in sorted(reachable):
+            room = world.WORLD.get(vnum)
+            if room is None or room.player_shop or room.apartment:
+                continue
+            for mob in combat.mobs_in_room(vnum):
+                template = combat.MOB_TEMPLATES.get(mob.template_vnum, {})
+                flags = {str(flag).casefold() for flag in template.get("act_flags", ())}
+                if (mob.health <= 0 or getattr(mob, "player_shop_owner", None)
+                        or "sentinel" not in flags
+                        or flags.intersection({"mission", "garrison", "trap", "wander"})
+                        or template.get("level", 1) > 10):
+                    continue
+                candidates.append((mob, vnum, room, "shinobi world"))
     if rank == "D-Rank":
         preferred = [c for c in candidates if c[3] == player.village]
     else:
