@@ -4,8 +4,8 @@
     "disenchantment"
   ],
   "title": "Disenchantment",
-  "body": "Syntax: disenchantment <weapon>\n\nDescription: Removes the item-bound Ninja Art property from a carried or wielded weapon. Bukijutsu unlocks at level 45. Costs 30 Chakra and 12 Stamina; 7 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: disenchantment <weapon> | examine <weapon>\n\nBukijutsu level 45, 30 Chakra, 12 Stamina, 7-second cooldown (before level-based scaling). Removes the weapon's current bound poison, conventional art, or elemental property, even while the weapon is wielded. The weapon is not consumed, its durability is unchanged, and permanent gem inlays remain attached. This frees its one Ninja Art property slot so a new TOXIN BINDING or WEAPON ENCHANTMENT may be applied. EXAMINE displays the current enchantment and durability; regular item names remain free of suffixes. See HELP ENCHANTMENTS.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
