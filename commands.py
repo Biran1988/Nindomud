@@ -9009,7 +9009,8 @@ def cmd_config(session, args: List[str]) -> None:
         for key, description in CONFIG_OPTIONS.items():
             state = "&Gon&x" if getattr(player, key) else "&Doff&x"
             lines.append(f"  {key:16s} [{state}]  {description}")
-        lines.append("Usage: config <name> on|off")
+        lines.extend(("  Battle Ready: use 'config battle ready' for per-jutsu on/off selections.",
+                      "Usage: config <name> on|off"))
         session.send("\n".join(lines))
         return
 
