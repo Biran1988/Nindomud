@@ -48,6 +48,7 @@ PROTOTYPE_SELL_FRACTION = 0.1
 # Check these BEFORE weapon name heuristics: "A Swordfish" is not a sword.
 RAW_FOOD_NAMES = frozenset(
     name.lower() for name, *_rest in (*fishing.FIND_TABLE, *farming.FIND_TABLE)
+    if name.lower() != "medicinal herbs"
 )
 
 
