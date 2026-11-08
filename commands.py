@@ -5566,6 +5566,9 @@ def cmd_examine(session, args: List[str]) -> None:
     durability = equipment_durability.state(proto) if proto else None
     if durability is not None:
         lines.append(f"&WDurability:&x {durability[0]:,} / {durability[1]:,}")
+    elif proto and proto.get("item_type") == "tool":
+        left, capacity = tool_durability.uses_left(match)
+        lines.append(f"&WDurability:&x {left:,} / {capacity:,}")
     element = ninja_arts.element_of(match)
     art = ninja_arts.property_of(match)
     if element:
@@ -8530,7 +8533,7 @@ def rarity_colored_name(item_name: str) -> str:
     _examine_rarity_colored_name below."""
     import lightsabers
     import ninja_arts
-    clean_name = ninja_arts.base_item(item_name)
+    clean_name = tool_durability.base_name(ninja_arts.base_item(item_name))
     themed = legendary_items.styled_name(clean_name)
     return themed if themed is not None else lightsabers.display_name(clean_name)
 
