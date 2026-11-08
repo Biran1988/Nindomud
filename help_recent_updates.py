@@ -69,7 +69,7 @@ PAGES = [
          "traded, sold, auctioned, dropped or put in a backpack. "
          "The mission and parcel expire after 30 real minutes, including "
          "offline time; abandonment removes the parcel without reward. "
-         "Completing a delivery pays the normal rank-scaled XP, Ryo, "
+         "Completing a delivery pays rank-scaled XP and Ryo, randomly rolled 1-5 "
          "mission points and village reputation. These missions are "
          "independent of hunts, roadside item recovery and weed delivery.",
          "courier missions", "courier", "parcel delivery", "mission delivery"),
