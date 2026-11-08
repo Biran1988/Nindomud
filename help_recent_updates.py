@@ -79,7 +79,7 @@ PAGES = [
          "day and night", "nighttime", "npc schedules"),
     page("scheduled gates", "Shop Hours and Gate Schedules",
          "Staff setup: mset <mob vnum> shopopen <hour> / shopclose <hour>\n"
-         "             mset <mob vnum> gate <exit>\n"
+         "             mset <mob vnum> gate <room vnum> <direction>\n"
          "             mset <mob vnum> gateopen <hour> / gateclose <hour>\n\n"
          "A configured NPC can open or close a real linked gate depending "
          "on the 24-hour game clock, and merchants can close their shops. "
