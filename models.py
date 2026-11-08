@@ -234,6 +234,7 @@ class Player:
     auto_loot_gear: bool = True
     auto_sac_corpse: bool = True
     tips: bool = True                 # periodic tip-of-the-day display (tips.py) -- default on, per explicit request
+    battle_ready_settings: dict = field(default_factory=dict)  # per-character selected preparations
     wizinvis: bool = False         # staff-only, saved wizard invisibility toggle
     staff_show_vnums: bool = True     # staff-only config -- room-header vnum/flags display specifically, separate from access-control uses of staff status
     staff_notify_reports: bool = True  # staff-only config -- live ping when a player submits 'report'
