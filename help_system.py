@@ -4550,6 +4550,20 @@ DEFAULT_HELP_ENTRIES.append({
 })
 
 
+# New pages install into data/help without replacing staff-written pages.
+from help_recent_updates import PAGES as _RECENT_GAMEPLAY_PAGES
+DEFAULT_HELP_ENTRIES.extend(_RECENT_GAMEPLAY_PAGES)
+
+for _help_entry in DEFAULT_HELP_ENTRIES:
+    if _help_entry["primary_keyword"] == "craft":
+        _help_entry["body"] += (
+            "\n\nCrafted combat gear wears out: Iron 2,500, Steel 5,000, "
+            "Chakra Steel 10,000. Equipment breaks at zero durability. "
+            "Use EXAMINE to see the remaining/max value; item names never "
+            "receive a durability suffix. See HELP DURABILITY."
+        )
+
+
 def seed_default_help() -> None:
     old_death_page = _path("100 years of death")
     if os.path.isfile(old_death_page):
@@ -4569,7 +4583,7 @@ def seed_default_help() -> None:
         elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
                                            | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
                                            | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team", "bloodset", "susanoo", "set"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team", "bloodset", "susanoo", "set", "craft"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
             if (existing.get("updated_by") == "System" and
