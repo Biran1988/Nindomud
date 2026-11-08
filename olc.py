@@ -2811,6 +2811,9 @@ def cmd_mset(session, args: List[str]) -> None:
                 "door" not in room.exit_flags.get(direction, ())):
             session.send("That room must have a real door-flagged exit in that direction.")
             return
+        if "locked" in room.exit_flags.get(direction, ()):
+            session.send("Remove the locked exit flag first. The guard handles closing and reopening this door automatically.")
+            return
         template["gate_room_vnum"] = room_vnum
         template["gate_direction"] = direction
         _log(session.player.name, "mobile", vnum, f"guarding {room_vnum} {direction}")
