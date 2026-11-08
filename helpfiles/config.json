@@ -4,8 +4,8 @@
     "config"
   ],
   "title": "Config",
-  "body": "Syntax: config [setting] [on|off]\n\nDescription: Shows or changes your personal settings, such as auto-looting ryo/gear from corpses, auto-sacrificing them, or the periodic tip-of-the-day broadcast. Run 'config' alone to see every available setting and its current state. Every setting defaults on for a brand-new character, and is reset back on for every character at the start of every server session -- you can still turn any of them off yourself any time, it just isn't remembered as your starting state across a restart.\n\nStaff have their own, separate set -- see 'help staffconfig'.\n\nDate: 2026-08-17",
+  "body": "Syntax: config [setting] [on|off]\n        config battle ready [<jutsu name> on|off]\n        battle ready config\n\nRun CONFIG to see and change your saved personal preferences for automatically looting ryo and gear, auto-sacrificing corpses and displaying tips. Settings persist on your character across logins and server restarts.\n\nBattle Ready has its own saved per-jutsu on/off list: CONFIG BATTLE READY opens the menu, and CONFIG BATTLE READY SAMURAI SABRE ON (for example) enables that ability in the one-command combat preparation. Enabling a selection does not grant the technique: you still need to learn it and pay its normal costs. See HELP BATTLE READY.\n\nStaff have separate options: HELP STAFFCONFIG.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
