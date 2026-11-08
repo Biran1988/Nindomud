@@ -303,6 +303,8 @@ def _prepare(session):
         if (getattr(session, "pending_cast", None) is not None
                 or getattr(session, "pending_action", None) is not None
                 or getattr(session, "is_busy", lambda: False)()):
+            if getattr(session, "pending_cast", None) is not None:
+                session.send("You are forming hand signs; finish casting before another preparation.")
             session.send("Finish your hand signs or current action, then use BATTLE READY again for remaining preparations.")
             break
     def label(items):
