@@ -2687,7 +2687,7 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
             _player_attack_mob_once(session, player, mob)
             if mob.health > 0:
                 trained_extra = _roll_extra_attacks(player)
-                for attack_index in range(trained_extra + sage_mode.extra_attacks(player)):
+                for attack_index in range(trained_extra + sage_mode.extra_attacks(player) + eight_gates.extra_attacks(player)):
                     if mob.health <= 0:
                         break
                     if attack_index < trained_extra:
@@ -2754,7 +2754,7 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
         session.send(f"&R{mob.name}'s attack passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player) + hyuga.dodge(player):
+    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player) + hyuga.dodge(player) + eight_gates.dodge(player):
         session.send(f"&CYou dodge {mob.name}'s attack!&x")
         return
 
@@ -3365,7 +3365,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
             jutsu_colors.send(target_session, f"&R{player.name}'s {colored_name} passes straight through you!&x")
         return
 
-    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) - hidden_mist.advantage(player, target)):
+    if random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) + eight_gates.dodge(target) - hidden_mist.advantage(player, target)):
         jutsu_colors.send(session, f"&C{target.name} dodges your {colored_name}!&x")
         if not silent_to_target:
             jutsu_colors.send(target_session, f"&CYou dodge {player.name}'s {colored_name}!&x")
@@ -3978,7 +3978,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
         target_session.send(f"&R{player.name}'s attack passes straight through you!&x")
         return
 
-    if not guaranteed_hit and random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) - hidden_mist.advantage(player, target)):
+    if not guaranteed_hit and random.randint(1, 100) <= max(0, derived_stats.dodge_chance(target, target_set_bonus + data_personality.personality_bonus_percent(target, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) + eight_gates.dodge(target) - hidden_mist.advantage(player, target)):
         session.send(f"&C{target.name} dodges your attack!&x")
         target_session.send(f"&CYou dodge {player.name}'s attack!&x")
         return
@@ -4038,7 +4038,7 @@ def _clone_attack_target_once(session, player, target_session, target, clone) ->
     if target.kamui_intangibility_rounds_left > 0:
         target.kamui_intangibility_rounds_left -= 1
         return
-    if random.randint(1, 100) <= derived_stats.dodge_chance(target) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target):
+    if random.randint(1, 100) <= derived_stats.dodge_chance(target) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(target) + hyuga.dodge(target) + eight_gates.dodge(target):
         target_session.send(f"&CYou dodge {player.name}'s {label}!&x")
         return
     if not engage_damage_attack(session, target, target_session):
@@ -4173,7 +4173,7 @@ def resolve_pvp_pulse(session) -> None:
     _player_attack_target_once(session, player, target_session, target)
     if target.health > 0:
         trained_extra = _roll_extra_attacks(player)
-        for attack_index in range(trained_extra + sage_mode.extra_attacks(player)):
+        for attack_index in range(trained_extra + sage_mode.extra_attacks(player) + eight_gates.extra_attacks(player)):
             if target.health <= 0:
                 break
             if attack_index < trained_extra:
