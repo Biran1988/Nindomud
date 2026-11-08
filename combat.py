@@ -3137,6 +3137,10 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         dmg, was_explosive = roll_jutsu_damage(jutsu)
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, mob, dmg)
+    if jutsu.get("jutsu_type") == "kkgk_taijutsu_strike":
+        # Hand-to-hand KKGK strikes resolve instantly and consume mostly
+        # stamina; trade 15% of base technique power for that advantage.
+        dmg = max(1, dmg * 85 // 100)
     dmg += _jutsu_damage_bonus(player)
     breakthrough_pct = mastered_jutsu_breakthrough_percent(player, jutsu)
     if breakthrough_pct:
@@ -3382,6 +3386,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
         dmg, was_explosive = roll_jutsu_damage(jutsu)
         sevenfold_effects = []
     dmg = _mirror_illusion_damage(jutsu, target, dmg)
+    if jutsu.get("jutsu_type") == "kkgk_taijutsu_strike":
+        dmg = max(1, dmg * 85 // 100)
     dmg += _jutsu_damage_bonus(player)
     breakthrough_pct = mastered_jutsu_breakthrough_percent(player, jutsu)
     if breakthrough_pct:
