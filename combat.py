@@ -111,6 +111,9 @@ DEFAULT_MOB_FIELDS = {
     # "weapon" and "armor", to act as a combined weapon/blacksmith keeper).
     "shopkeeper": False, "shop_items": [], "shop_buys_categories": [],
     "shop_type": "general",  # optional named specialty; custom buys list overrides
+    "shop_open_hour": -1, "shop_close_hour": -1,  # -1 = always open (legacy)
+    "gate_room_vnum": None, "gate_direction": "",  # explicit guarded door
+    "gate_open_hour": 6, "gate_close_hour": 18,
     # Gambler/dealer flag -- a builder places a chou-han dealer anywhere
     # the same way (mset <vnum> gambler on). Like shopkeepers, gamblers
     # can't be attacked. See commands.cmd_gamble.
