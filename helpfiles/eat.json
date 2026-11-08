@@ -4,7 +4,7 @@
     "eat"
   ],
   "title": "Eat",
-  "body": "Syntax: eat <item>\n\nDescription: Eats food for immediate recovery or consumes medicine using the same effects as 'use'. Medicinal pills, antidotes, soldier pills and other medical items can be eaten. Medical healing still takes its configured duration and antidotes are preserved if you are not poisoned. Halloween Town candy also uses 'eat' for its healing and 15-minute experience bonus. Use 'eat 2.pill' to select an individual pill.\n\nDate: 2026-08-17",
+  "body": "Syntax: eat <item>\n\nDescription: Eats food for immediate recovery or consumes medicine using the same effects as 'use'. Medicinal pills, antidotes, soldier pills and other medical items can be eaten. Medical healing still takes its configured duration and antidotes are preserved if you are not poisoned. Halloween Town candy also uses 'eat' for its healing and 15-minute experience bonus. Use 'eat 2.pill' to select an individual pill.\n\nDate: 2026-08-17\n\nRaw Farming crops (Carrot, Potato, Tomato, Onion, Pumpkin, Watermelon, Corn and Pepper) are edible. Cooked versions restore more Stamina than fresh crops. Use COOK <crop> with a held Cooking Pot or an owned apartment kitchen to prepare a stronger meal. Medicinal Herbs are not food.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
