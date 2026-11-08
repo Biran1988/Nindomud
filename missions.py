@@ -34,7 +34,7 @@ MISSIONS = {
             "mission_id": "whirlpool_d1", "rank": "D-Rank", "village": "whirlpool",
             "mission_type": "kill", "title": "Guard the Coast",
             "description": "Defeat 3 wandering bandits near the Uzushio coast.",
-            "target_mob_template": 5006, "target_count": 3,
+            "target_mob_template": 5006, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -53,7 +53,7 @@ MISSIONS = {
             "mission_type": "kill",
             "title": "Clear the Outskirts",
             "description": "Defeat 3 wandering bandits near the Konoha outskirts.",
-            "target_mob_template": 5001, "target_count": 3,
+            "target_mob_template": 5001, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -74,7 +74,7 @@ MISSIONS = {
             "mission_type": "kill",
             "title": "Clear the Outskirts",
             "description": "Defeat 3 wandering bandits near the Iwa outskirts.",
-            "target_mob_template": 5002, "target_count": 3,
+            "target_mob_template": 5002, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -95,7 +95,7 @@ MISSIONS = {
             "mission_type": "kill",
             "title": "Clear the Outskirts",
             "description": "Defeat 3 wandering bandits near the Kiri outskirts.",
-            "target_mob_template": 5003, "target_count": 3,
+            "target_mob_template": 5003, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -116,7 +116,7 @@ MISSIONS = {
             "mission_type": "kill",
             "title": "Clear the Outskirts",
             "description": "Defeat 3 wandering bandits near the Kumo outskirts.",
-            "target_mob_template": 5004, "target_count": 3,
+            "target_mob_template": 5004, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -137,7 +137,7 @@ MISSIONS = {
             "mission_type": "kill",
             "title": "Clear the Outskirts",
             "description": "Defeat 3 wandering bandits near the Suna outskirts.",
-            "target_mob_template": 5005, "target_count": 3,
+            "target_mob_template": 5005, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
         {
@@ -173,9 +173,9 @@ MISSION_DURATION_SECONDS = 30 * 60  # Real time; keeps counting while offline.
 # (rank, id_suffix, min_level, target_count, reward_xp, reward_ryo,
 #  reward_mission_points, cooldown_seconds)
 _HIGHER_RANK_DEFS = [
-    ("D-Rank", "d1", 1, 3, 200, 40, 1, 600),
-    ("C-Rank", "c1", 10, 2, 500, 100, 2, 900),
-    ("B-Rank", "b1", 25, 2, 1200, 250, 3, 1200),
+    ("D-Rank", "d1", 1, 1, 200, 40, 1, 600),
+    ("C-Rank", "c1", 10, 1, 500, 100, 2, 900),
+    ("B-Rank", "b1", 25, 1, 1200, 250, 3, 1200),
     ("A-Rank", "a1", 50, 1, 3000, 600, 5, 1800),
     ("S-Rank", "s1", 80, 1, 8000, 1500, 10, 2700),
 ]
@@ -364,8 +364,7 @@ def accept_mission(player: Player, village: str, mission_id: str) -> str:
         chosen["target_mob_template"] = vnum
         chosen["target_level"] = mob.get("level", 1)
         chosen["title"] = f"Hunt: {mob['short_desc']}"
-        chosen["description"] = (f"Defeat {mission['target_count']} "
-                                  f"of {mob['short_desc']} (level {mob.get('level', '?')}).")
+        chosen["description"] = f"Defeat {mob['short_desc']} (level {mob.get('level', '?')})."
         entry["dynamic"] = chosen
         mission = chosen
     player.active_missions.append(entry)
@@ -487,9 +486,21 @@ def _resolve_mission(entry: dict):
     _find_mission(entry["mission_id"]) directly now goes through this
     instead, so dynamic missions track and complete correctly too."""
     if isinstance(entry, dict) and entry.get("dynamic"):
-        return entry["dynamic"]
-    mission_id = entry["mission_id"] if isinstance(entry, dict) else entry
-    return _find_mission(mission_id)
+        mission = entry["dynamic"]
+    else:
+        mission_id = entry["mission_id"] if isinstance(entry, dict) else entry
+        mission = _find_mission(mission_id)
+    # Existing saved hunts may still carry the old multi-kill target count.
+    # Normalize at read time so active missions finish after one kill without
+    # altering gather/delivery objectives or persisted player data.
+    if mission and mission.get("mission_type", "kill") == "kill" and mission.get("target_count") != 1:
+        mission = dict(mission, target_count=1)
+        template = mission.get("target_mob_template")
+        import combat
+        name = combat.MOB_TEMPLATES.get(template, {}).get("short_desc")
+        if name:
+            mission["description"] = f"Defeat {name} (level {mission.get('target_level', '?')})."
+    return mission
 
 
 def completed_counts_by_rank(player: Player) -> dict:
