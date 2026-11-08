@@ -44,6 +44,21 @@ FIND_TABLE = [
     ("medicinal herbs", 20, 5, 35),
 ]
 
+# Farm produce is edible fresh, but Cooking turns it into a more
+# restorative meal. All eight normal harvests are included; Medicinal
+# Herbs remain a distinct crafting/medical ingredient, not food.
+# Keep these recipes together so Eating and Cooking always agree.
+EDIBLE_CROPS = {
+    "a carrot": {"dish": "A Cooked Carrot", "raw_stamina": 8, "cooked_stamina": 20, "sell_price": 4, "cooking_xp": 10},
+    "a potato": {"dish": "A Cooked Potato", "raw_stamina": 10, "cooked_stamina": 25, "sell_price": 5, "cooking_xp": 10},
+    "a tomato": {"dish": "A Cooked Tomato", "raw_stamina": 10, "cooked_stamina": 26, "sell_price": 25, "cooking_xp": 18},
+    "an onion": {"dish": "A Cooked Onion", "raw_stamina": 8, "cooked_stamina": 22, "sell_price": 25, "cooking_xp": 18},
+    "a pumpkin": {"dish": "A Cooked Pumpkin", "raw_stamina": 18, "cooked_stamina": 45, "sell_price": 150, "cooking_xp": 45},
+    "a watermelon": {"dish": "A Cooked Watermelon", "raw_stamina": 20, "cooked_stamina": 48, "sell_price": 150, "cooking_xp": 45},
+    "a corn": {"dish": "A Cooked Corn", "raw_stamina": 22, "cooked_stamina": 55, "sell_price": 1500, "cooking_xp": 100},
+    "a pepper": {"dish": "A Cooked Pepper", "raw_stamina": 26, "cooked_stamina": 65, "sell_price": 15000, "cooking_xp": 250},
+}
+
 FAIL_CHANCE_BASE = 20
 FAIL_CHANCE_FLOOR = 3
 FAIL_CHANCE_LEVEL_DIVISOR = 4  # genuinely different from fishing/mining/lumberjack's own 2 -- preserved exactly
