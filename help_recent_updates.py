@@ -113,4 +113,41 @@ PAGES = [
          "It does not reveal the contents of their inventory or bypass "
          "invisibility and concealment.",
          "inspect gear", "worn equipment", "look player"),
+
+    page("poison", "Weapon Poison and Toxins",
+         "Syntax: toxin binding <weapon> | poison gas bomb <target> | "
+         "disenchantment <weapon> | examine <weapon>\n\n"
+         "Bukijutsu level 30 can permanently bind poison to one owned weapon "
+         "using TOXIN BINDING (45 Chakra, 15 Stamina, 8-second cooldown). "
+         "A successful damaging strike has a 30% chance to poison its target, "
+         "dealing damage over subsequent pulses. Poison works on mobs and "
+         "players, and sends combat feedback when it activates. The poison "
+         "is not consumed on hit. Only one item property can be bound; "
+         "DISENCHANTMENT removes it. Bukijutsu level 40 can use POISON GAS "
+         "BOMB to attach a two-pulse delayed toxic trap using a consumed "
+         "bomb item. Craft and USE an Antidote Pill to clear Poisoned. "
+         "EXAMINE shows a weapon's poison property and durability; the "
+         "item name never displays poison or enchantment suffixes.",
+         "toxins", "poison weapons", "poisoned weapons", "toxin"),
+    page("enchantments", "Weapon Enchantments and Effects",
+         "Syntax: weapon enchantment <weapon> <property> | "
+         "toxin binding <weapon> | disenchantment <weapon> | examine <weapon>\n\n"
+         "Bukijutsu level 55 can apply one permanent property to a carried "
+         "or wielded weapon. Traditional properties: FLAMING (25% burning), "
+         "FROST (25% off balance), SHOCKING (20% stunned), LIFE (heal "
+         "up to 10% of damage dealt), SHARP (+10% damage) or VORPAL "
+         "(approximately +16.7% damage). Toxin Binding applies POISON "
+         "(30% chance to poison) from level 30. Properties activate on "
+         "successful damaging weapon strikes, including PvP. Colored "
+         "combat text appears only when an effect activates.\n\n"
+         "Fire, Water, Wind, Lightning and Earth elemental enchantments "
+         "require a genuinely Chakra Steel-forged weapon and the "
+         "enchanter's revealed chakra nature. A matching Bukijutsu wielder "
+         "gains +50% weapon damage and the element's combat effect. "
+         "Samurai Sabre can stack on swords, adding +5% at level 35, "
+         "increasing by 5% per passive tier to +25% at level 250. "
+         "DISENCHANTMENT removes a weapon's current property. "
+         "EXAMINE shows it, not the visible item name. Durability and "
+         "permanent gem inlays remain separate.",
+         "weapon enchantments", "enchantment effects", "enchanted weapons"),
 ]
