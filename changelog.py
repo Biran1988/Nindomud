@@ -583,5 +583,6 @@ CHANGELOG = [
     ("15.436", "Forge-crafted weapons and armor now decay through combat. Iron has 2,500 durability; Steel 5,000; Chakra Steel 10,000. Broken custom items vanish and release their VNUM for reuse. EXAMINE shows durability, including job tool uses, without name suffixes."),
     ("15.437", "Automatic cleanup of inactive accounts and pfiles: levels 1-49 after 6 months, 50-99 after 9 months and 100-249 after 12 months. Level 250 and staff are exempt. Currently connected players are protected; old files without login timestamps use their file modified time."),
     ("15.438", "New in-game HELP topics cover durability, inactivity policy, dynamic mission ranks, roadside recovery, day/night NPC schedules, gate and shop hours, advanced tracking, Info Scrolls, medicinal herbs and equipment viewing."),
+    ("15.439", "Samurai Sabre begins at +5% damage and gains automatic passive Samurai Sabre 2/3/4/5 at levels 85, 140, 195 and 250. Each passive adds 5% while the base sword technique is on (up to +25%). Updated poison/toxin/enchantment help and separate Sabre tier pages; no scrolls, item-name tags or additional upkeep."),
 
 ]
