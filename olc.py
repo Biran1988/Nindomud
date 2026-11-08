@@ -2819,7 +2819,9 @@ def cmd_mset(session, args: List[str]) -> None:
     field_display_name = args[1].lower()
     field_name = _builder_field(field_display_name, MOB_STRING_FIELDS | MOB_INT_FIELDS |
                                 MOB_LIST_FIELDS | MOB_ATTR_FIELDS | MOB_BOOL_FIELDS,
-                                MOB_FIELD_NAMES, {"act": "act_flags"})
+                                MOB_FIELD_NAMES, {"act": "act_flags",
+                                                  "shopopen": "shop_open_hour", "shopclose": "shop_close_hour",
+                                                  "gateopen": "gate_open_hour", "gateclose": "gate_close_hour"})
     if field_display_name == "act":
         field_display_name = "act_flags"  # preserve the established act hint
     if field_name in {"exp", "experience", "experience_reward"}:
