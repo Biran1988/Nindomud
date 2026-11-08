@@ -8994,6 +8994,15 @@ CONFIG_OPTIONS = {
 
 
 def cmd_config(session, args: List[str]) -> None:
+    # Let the normal CONFIG workflow manage each Battle Ready selection.
+    if args and args[0].lower() in ("battle_ready", "battleready"):
+        import battle_ready
+        battle_ready.command(session, ["config"] + args[1:])
+        return
+    if len(args) >= 2 and [part.lower() for part in args[:2]] == ["battle", "ready"]:
+        import battle_ready
+        battle_ready.command(session, ["config"] + args[2:])
+        return
     player = session.player
     if not args:
         lines = ["&WYour settings:&x"]
@@ -10197,6 +10206,9 @@ COMMANDS = {
     "sage": sage_mode.command,
     "susanoo": __import__("susanoo").command,
     "set": __import__("susanoo").command_set,
+    "battle": __import__("battle_ready").command,
+    "battleready": __import__("battle_ready").command,
+    "bready": __import__("battle_ready").command,
     "swordstyle": sword_styles.command,
     "sstyle": sword_styles.command,
     "style": sword_styles.command,
