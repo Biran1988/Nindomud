@@ -42,6 +42,8 @@ import apartments
 import auction
 import playershops
 import weather
+import roadside_item_missions
+import npc_schedules
 import data_appearance
 import data_clans
 import biomes
@@ -1254,6 +1256,8 @@ def cmd_look(session, args: List[str]) -> None:
             session.send(f"{rarity_colored_name(inv_match)}\nYou are carrying it.")
             return
         ground_match = find_indexed_item(query, room.ground_items)
+        if not ground_match:
+            ground_match = find_indexed_item(query, roadside_item_missions.visible_items(room.vnum))
         if ground_match and not _is_invisible_item(ground_match):
             session.send(f"{rarity_colored_name(ground_match)}\nIt's lying here on the ground.")
             return
@@ -1356,6 +1360,8 @@ def cmd_look(session, args: List[str]) -> None:
             else:
                 shown = f"{rarity_colored_name(name)} (x{count})" if count > 1 else rarity_colored_name(name)
                 lines.append(f"  {shown} is lying here.{_staff_vnum_suffix(session, item_name=name)}")
+    for name in roadside_item_missions.visible_items(room.vnum):
+        lines.append(f"  &Y{name}&x is lying here.")
     for amount in getattr(room, "ground_ryo", ()):
         lines.append(f"  &Y{amount:,} Ryo&x is lying here.")
     for decoy in genjutsu.decoys_in_room(room.vnum):
@@ -4901,14 +4907,17 @@ def cmd_mission(session, args: List[str]) -> None:
     if before != after:
         storage.save_player(player)
     if not args:
-        session.send("Usage: mission request <d|c|b|a|s> | mission info | mission fail [rank]")
+        session.send("Usage: mission request <d|c|b|a|s> | mission request item [d|c|b|a|s] | mission info | mission fail [rank]")
         return
     action, rest = args[0].lower(), args[1:]
     if action == "request":
         if not rest:
-            session.send("Request which rank? Usage: mission request <d|c|b|a|s>")
+            session.send("Request which rank? Usage: mission request <d|c|b|a|s> or mission request item [rank]")
             return
-        result = missions.request_mission(player, " ".join(rest))
+        if rest[0].lower() in ("item", "recover", "recovery"):
+            result = missions.request_item_mission(player, " ".join(rest[1:]) or "d")
+        else:
+            result = missions.request_mission(player, " ".join(rest))
         session.send(result)
         if result.startswith("Mission requested:"):
             storage.save_player(player)
@@ -4920,7 +4929,7 @@ def cmd_mission(session, args: List[str]) -> None:
         if result.startswith("&RMission failed:"):
             storage.save_player(player)
     else:
-        session.send("Usage: mission request <d|c|b|a|s> | mission info | mission fail [rank]")
+        session.send("Usage: mission request <d|c|b|a|s> | mission request item [rank] | mission info | mission fail [rank]")
 
 
 def cmd_request(session, args: List[str]) -> None:
@@ -8019,11 +8028,18 @@ def cmd_get(session, args: List[str]) -> None:
 
     room = WORLD.get(player.room_vnum)
 
+    # Quest objects are a separate temporary overlay: they cannot enter a
+    # normal inventory, be stolen, traded, or persist into saved world data.
+    if full_query != "all" and not full_query.startswith("all "):
+        if roadside_item_missions.try_pickup(session, full_query):
+            return
+
     # "get all" picks up every portable object on the floor, while
     # "get all sardine" limits the pickup to matching ground items.
     # Ryo remains a separate currency pile and occupies no inventory slot.
     if full_query == "all" or full_query.startswith("all "):
         keyword = full_query[4:].strip() if full_query != "all" else ""
+        recovered_quest = roadside_item_missions.try_pickup(session, keyword, all_mode=True)
         candidates = [
             item for item in list(room.ground_items)
             if not keyword or _item_matches(keyword, item)
@@ -8059,7 +8075,7 @@ def cmd_get(session, args: List[str]) -> None:
             room_actions.bulk_items(session, len(picked), "picks up", picked[0] if len(picked) == 1 else None)
         if has_ryo:
             currency_piles.pickup(session, "all ryo")
-        if not picked and not has_ryo:
+        if not picked and not has_ryo and not recovered_quest:
             session.send("There is nothing here you can pick up.")
         if full or fixed or denied_count:
             session.send(
