@@ -176,6 +176,11 @@ def _register_shared_items() -> None:
             _proto["wear_loc"] = "tool"
             _proto["item_type"] = "tool"
             _proto["max_uses"] = data_crafting.TOOL_RECIPES[_tier]["uses"]
+    # New cooked farm dishes use a separate, unused prototype range.
+    # Register missing dishes even on established worlds; make() skips
+    # existing VNUMs, preserving all saved /data and builder edits.
+    for _crop_index, _crop_recipe in enumerate(farming.EDIBLE_CROPS.values()):
+        make(21050 + _crop_index, _crop_recipe["dish"], "food", _crop_recipe["sell_price"])
     if had_shared_items:
         return  # old templates are registered; preserve other builder edits
     make(_ITEM_VNUMS["war_club"], "A Wooden War Club", "weapon", 35, weapon_type="blunt")
@@ -252,8 +257,11 @@ def _register_shared_items() -> None:
         _display = " ".join(word.capitalize() for word in _fish_name.split())
         make(_fish_vnum, _display, "misc", _FISH_COST[_fish_index])
 
-    # Cooked fish dishes (cooking.INGREDIENTS)
-    for _dish_index, (_raw, _data) in enumerate(cooking.INGREDIENTS.items()):
+    # Cooked fish dishes keep their existing VNUMs. Farm dishes are
+    # registered independently above, so these identifiers never shift.
+    for _dish_index, (_raw, _data) in enumerate(
+            (pair for pair in cooking.INGREDIENTS.items()
+             if pair[0] not in farming.EDIBLE_CROPS)):
         _dish_vnum = 20050 + _dish_index
         make(_dish_vnum, _data["dish"], "food", _data["base_cost"])
 
