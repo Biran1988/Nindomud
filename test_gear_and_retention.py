@@ -13,9 +13,18 @@ import inactive_player_purge as purge
 import olc
 import session
 import storage
+import tool_durability
 
 
 class DurabilityTests(unittest.TestCase):
+    def test_job_tool_display_keeps_counts_out_of_item_names(self):
+        self.assertEqual(
+            tool_durability.display_name("A Copper Hoe [249/250 uses]"),
+            "A Copper Hoe",
+        )
+        self.assertEqual(tool_durability.uses_left("A Copper Hoe [249/250 uses]"),
+                         (249, 250))
+
     def test_metal_tiers_and_legacy_forge(self):
         for metal, expected in (("iron ingot", 2500),
                                 ("steel ingot", 5000),
