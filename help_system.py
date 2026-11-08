@@ -2085,6 +2085,8 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Shows or changes your personal settings, such as auto-looting ryo/gear from corpses, auto-sacrificing them, or the periodic tip-of-the-day broadcast. Run 'config' alone to see every available setting and its current state. Every setting defaults on for a brand-new character. Your on/off choices are saved immediately and remain unchanged after quit/login, disconnects and server reboots.\n"
             "\n"
+            "Battle Ready has per-jutsu saved selections: 'config battle ready' displays them, and 'config battle ready samurai sabre on' enables that specific preparation. Run 'battle ready' to activate selected learned buffs while paying their normal costs. See 'help battle ready'.\n"
+            "\n"
             "Staff have their own, separate set -- see 'help staffconfig'.\n"
             "\n"
             "Date: 2026-08-17"
