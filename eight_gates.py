@@ -90,6 +90,18 @@ def accuracy(player):
     return GATES[gate - 1][5] if gate else 0
 
 
+def dodge(player):
+    """Gates allow true physical evasiveness without granting an eye trait."""
+    gate = active(player)
+    return (0, 0, 3, 4, 6, 8, 10, 14, 20)[gate]
+
+
+def extra_attacks(player):
+    """Fast Taijutsu rounds: only meaningful after mastering several Gates."""
+    gate = active(player)
+    return 3 if gate >= 8 else 2 if gate >= 7 else 1 if gate >= 3 else 0
+
+
 def physical_damage(player, amount, jutsu=None):
     """Gate power affects normal strikes and Taijutsu, not unrelated Ninjutsu."""
     gate = active(player)
@@ -165,6 +177,12 @@ def open_gate(session, gate, *, confirm=False):
         return False
     player.stamina -= cost
     player.gates_open = gate
+    if current < 2 <= gate:
+        recovered = min(player.maximum_health - player.health,
+                        max(1, player.maximum_health * 5 // 100))
+        if recovered > 0:
+            player.health += recovered
+            session.send(f"&GThe Gate of Healing knits {recovered} Health back into your body.&x")
     player.gates_last_upkeep_at = now
     player.gates_eighth_expires_at = now + GATE_EIGHT_SECONDS if gate == 8 else 0.0
     import combat
