@@ -5562,6 +5562,10 @@ def cmd_examine(session, args: List[str]) -> None:
 
     lines = [f"You examine {rarity_colored_name(match)}."]
     lines.extend(written_lines)
+    import equipment_durability
+    durability = equipment_durability.state(proto) if proto else None
+    if durability is not None:
+        lines.append(f"&WDurability:&x {durability[0]:,} / {durability[1]:,}")
     element = ninja_arts.element_of(match)
     art = ninja_arts.property_of(match)
     if element:
@@ -7459,21 +7463,24 @@ _NEXT_CRAFTED_ITEM_VNUM = None  # lazily initialized on first real craft, see _a
 
 
 def _allocate_crafted_item_vnum() -> int:
-    """A genuinely unique, real, persistent vnum for a newly crafted
-    item -- starting at 500000 (confirmed genuinely free via a direct
-    scan of every real vnum already in use), incrementing by 1 each
-    real craft. Lazily scans for the highest already-used vnum in this
-    dedicated range on first use, so it correctly resumes past
-    whatever's already registered rather than always restarting at
-    500000 (e.g. after a server restart where earlier crafted items
-    were already saved into OBJECT_TEMPLATES via world-save/reload)."""
+    """Choose the first unused crafted-object VNUM; reuse destroyed gear IDs."""
     global _NEXT_CRAFTED_ITEM_VNUM
     if _NEXT_CRAFTED_ITEM_VNUM is None:
-        existing = [v for v in olc.OBJECT_TEMPLATES if v >= 500000]
-        _NEXT_CRAFTED_ITEM_VNUM = (max(existing) + 1) if existing else 500000
-    vnum = _NEXT_CRAFTED_ITEM_VNUM
+        _NEXT_CRAFTED_ITEM_VNUM = 500000
+    while _NEXT_CRAFTED_ITEM_VNUM in olc.OBJECT_TEMPLATES:
+        _NEXT_CRAFTED_ITEM_VNUM += 1
+    result = _NEXT_CRAFTED_ITEM_VNUM
     _NEXT_CRAFTED_ITEM_VNUM += 1
-    return vnum
+    return result
+
+
+def reclaim_crafted_item_vnum(vnum: int) -> None:
+    """Make a destroyed custom forge VNUM eligible for the next craft."""
+    global _NEXT_CRAFTED_ITEM_VNUM
+    if vnum < 500000:
+        return
+    if _NEXT_CRAFTED_ITEM_VNUM is None or vnum < _NEXT_CRAFTED_ITEM_VNUM:
+        _NEXT_CRAFTED_ITEM_VNUM = vnum
 
 
 def _craft_gathering_tool(session, args: List[str]) -> None:
@@ -7701,6 +7708,8 @@ def cmd_craft(session, args: List[str]) -> None:
             proto["description"] = (f"A crafted {kind} named {item_name}, "
                                     f"forged from {metal} and {metal}.")
             proto["craft_materials"] = [metal, metal]
+            import equipment_durability
+            equipment_durability.initialise(proto)
             import crafted_provenance
             crafted_provenance.stamp(proto, session)
             if kind == "weapon":
