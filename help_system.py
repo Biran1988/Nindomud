@@ -1382,9 +1382,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["weather", "time of day", "day", "night"],
         "title": "Weather",
         "body": (
-            "Syntax: weather\n"
+            "Syntax: weather | time\n"
             "\n"
-            "Description: Reports the current world-wide weather (clear/rain/storm/snow/fog) and time of day (day/night). Both change periodically on their own schedule, not per-room.\n"
+            "Description: WEATHER reports clear/rain/storm/snow/fog plus the current shinobi clock hour. TIME shows a 24-hour day/night schedule that continues across server restarts. Each in-game hour is 75 real seconds; the sun rises at 6 AM and sets at 6 PM.\n"
             "\n"
             "These aren't just flavor text: Rain/Storm improve the odds at every gathering job (Fishing/Mining/Lumberjack/Farming/Cooking); Snow worsens them; Storm/Fog reduce combat accuracy for everyone, player and mob alike; and Night gives players a small Dodge Chance boost.\n"
             "\n"
@@ -1393,6 +1393,18 @@ DEFAULT_HELP_ENTRIES = [
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "time",
+        "keywords": ["time", "world clock", "shinobi clock"],
+        "title": "Shinobi World Clock",
+        "body": (
+            "Syntax: time\n\n"
+            "A full shinobi day lasts 30 real minutes. Sunrise is 6 AM and sunset 6 PM. "
+            "NPC shops can close at night, and configured gate guards open and close door exits. "
+            "TIME and WEATHER show the same shared clock, which never resets on reboot."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "auction",
@@ -2671,11 +2683,14 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["mission", "mission request", "mission info", "mission fail"],
         "title": "Mission",
         "body": (
-            "Syntax: mission request <d|c|b|a|s> | mission info | mission fail [rank]\n\n"
+            "Syntax: mission request <d|c|b|a|s> | mission request item [rank] | mission info | mission fail [rank]\n\n"
             "Request a target drawn ONLY from Mission-flagged mobs. Each mob falls into exactly one player-relative rank: D is anything up to 5 levels above you (including weaker mobs), C is 6-20 above, B 21-40, A 41-70 and S 71+ above. As you level up, the same mob shifts toward D-Rank. "
             "D level 1+, C 10+, B 25+, A 50+, S 80+. "
+            "Each hunt requires one kill. Recovery missions generate a lost item at a random mainland road or roadside inn, never inside a main village. "
+            "Examples include lost jutsu scrolls, research notes and the Hokage's missing underwear. "
+            "Use MISSION REQUEST ITEM D to begin a D-Rank recovery, MISSION INFO for the road/inn clue, and GET <item> when found to finish automatically. No mob or NPC delivery is required. "
             "Each mission expires after 30 real-time minutes (even offline). "
-            "Mission info shows mob name, level, progress, and remaining time. "
+            "Mission info shows the target or recovery clue, progress, and remaining time. "
             "Mission fail abandons the most recently accepted mission, or a specific rank. "
             "D-Rank gathering jobs remain available at the village mission board."
         ),
@@ -3259,7 +3274,8 @@ DEFAULT_HELP_ENTRIES = [
             "Syntax: mset create <vnum> <name>  |  mset <vnum> <field> <value>  |  mset spawn <vnum> <room>  |  mset list\n"
             "        mset fields [mob|player]  |  mset <vnum> <field> (show current value and options)\n"
             "\n"
-            "Description: Creates and edits mob prototypes field by field -- level, stats, damage dice, flags, shop/gambler/teacher fields, mob programs, and more. 'mset fields' shows grouped mob fields; 'mset fields player' shows player fields. Use 'mset <vnum> flags Wander' for mob flags. Field names can be typed without underscores; the older names still work. See 'mstat <vnum>' to review a prototype.\n"
+            "Description: Creates and edits mob prototypes field by field -- level, stats, damage dice, flags, shop/gambler/teacher fields, mob programs, and more. "MSET <vnum> SHOPOPEN 8 and SHOPCLOSE 20 schedule an NPC merchant (0-23 world hours). "
+            "MSET <vnum> GATE <room vnum> <direction> attaches a guard to an existing door; GATEOPEN 6 and GATECLOSE 18 set its daily shift. GATE OFF disables it. "  'mset fields' shows grouped mob fields; 'mset fields player' shows player fields. Use 'mset <vnum> flags Wander' for mob flags. Field names can be typed without underscores; the older names still work. See 'mstat <vnum>' to review a prototype.\n"
             "\n"
             "&D(Staff only.)&x\n"
             "\n"
