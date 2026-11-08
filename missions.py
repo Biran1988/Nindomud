@@ -515,7 +515,7 @@ def journal_text(player: Player) -> str:
             f"{entry['progress']}/{mission['target_count']} complete"
         )
         if mission.get("mission_type") == "courier":
-            line += f"\\n    (deliver the sealed parcel to {mission['delivery_mob_name']} in {mission['delivery_room_name']})"
+            line += f"\n    (deliver the sealed parcel to {mission['delivery_mob_name']} in {mission['delivery_room_name']})"
         if mission.get("mission_type") == "retrieve":
             line += f"\n    (search around {mission['quest_region']} and GET {mission['quest_item_name']})"
         if mission.get("mission_type") == "gather":
