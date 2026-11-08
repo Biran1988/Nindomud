@@ -33,7 +33,7 @@ MISSIONS = {
         {
             "mission_id": "whirlpool_d1", "rank": "D-Rank", "village": "whirlpool",
             "mission_type": "kill", "title": "Guard the Coast",
-            "description": "Defeat 3 wandering bandits near the Uzushio coast.",
+            "description": "Defeat one wandering bandit near the Uzushio coast.",
             "target_mob_template": 5006, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
@@ -52,7 +52,7 @@ MISSIONS = {
             "mission_id": "leaf_d1", "rank": "D-Rank", "village": "leaf",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat 3 wandering bandits near the Konoha outskirts.",
+            "description": "Defeat one wandering bandit near the Konoha outskirts.",
             "target_mob_template": 5001, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
@@ -73,7 +73,7 @@ MISSIONS = {
             "mission_id": "stone_d1", "rank": "D-Rank", "village": "stone",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat 3 wandering bandits near the Iwa outskirts.",
+            "description": "Defeat one wandering bandit near the Iwa outskirts.",
             "target_mob_template": 5002, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
@@ -94,7 +94,7 @@ MISSIONS = {
             "mission_id": "water_d1", "rank": "D-Rank", "village": "water",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat 3 wandering bandits near the Kiri outskirts.",
+            "description": "Defeat one wandering bandit near the Kiri outskirts.",
             "target_mob_template": 5003, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
@@ -115,7 +115,7 @@ MISSIONS = {
             "mission_id": "cloud_d1", "rank": "D-Rank", "village": "cloud",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat 3 wandering bandits near the Kumo outskirts.",
+            "description": "Defeat one wandering bandit near the Kumo outskirts.",
             "target_mob_template": 5004, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
@@ -136,7 +136,7 @@ MISSIONS = {
             "mission_id": "sand_d1", "rank": "D-Rank", "village": "sand",
             "mission_type": "kill",
             "title": "Clear the Outskirts",
-            "description": "Defeat 3 wandering bandits near the Suna outskirts.",
+            "description": "Defeat one wandering bandit near the Suna outskirts.",
             "target_mob_template": 5005, "target_count": 1,
             "reward_xp": 200, "reward_ryo": 40, "reward_mission_points": 1,
         },
@@ -317,6 +317,19 @@ def request_mission(player: Player, rank: str) -> str:
             " You have 30 minutes. Use 'mission info' for your target and deadline.")
 
 
+def request_item_mission(player: Player, rank: str) -> str:
+    """Request a road/inn-only missing-object mission instead of a hunt."""
+    import roadside_item_missions
+    rank_input = rank.strip()
+    if rank_input.lower().endswith("-rank"):
+        rank_input = rank_input[:-len("-rank")]
+    rank_name = f"{rank_input.upper()}-Rank"
+    rank_def = _HIGHER_RANK_BY_NAME.get(rank_name)
+    if not rank_def:
+        return "Choose an item mission rank: D, C, B, A, or S."
+    return roadside_item_missions.new_recovery(player, rank_name, rank_def)
+
+
 def missions_for_village(village: str) -> List[dict]:
     return MISSIONS[village]
 
@@ -393,6 +406,8 @@ def expire_missions(player: Player, now=None) -> List[str]:
             continue
         if now >= deadline:
             player.active_missions.remove(entry)
+            import roadside_item_missions
+            roadside_item_missions.forget(entry.get("mission_id", ""))
             mission = _resolve_mission(entry)
             title = mission["title"] if mission else entry.get("mission_id", "Unknown mission")
             failed.append(f"&RMission failed (30-minute time limit): {title}.&x")
@@ -418,6 +433,8 @@ def fail_mission(player: Player, rank_or_id="") -> str:
     entry = matches[-1]
     mission = _resolve_mission(entry)
     player.active_missions.remove(entry)
+    import roadside_item_missions
+    roadside_item_missions.forget(entry.get("mission_id", ""))
     title = mission["title"] if mission else entry.get("mission_id", "Unknown mission")
     return f"&RMission failed: {title}. No rewards were given.&x"
 
@@ -434,7 +451,11 @@ def mission_info(player: Player, now=None) -> str:
             continue
         remaining = max(0, entry.get("expires_at", now + MISSION_DURATION_SECONDS) - now)
         lines.append(f"  &Y{mission['title']}&x ({mission['rank']})")
-        if mission.get("mission_type", "kill") == "kill":
+        if mission.get("mission_type") == "retrieve":
+            lines.append(f"    Recover: {mission['quest_item_name']}")
+            lines.append(f"    Clue: {mission['quest_region']} (mainland road or roadside inn)")
+            lines.append("    Find the item and GET it. No mob or NPC turn-in required.")
+        elif mission.get("mission_type", "kill") == "kill":
             import combat
             template = combat.MOB_TEMPLATES.get(mission["target_mob_template"], {})
             target = template.get("short_desc", mission["title"].removeprefix("Hunt: "))
@@ -458,6 +479,8 @@ def journal_text(player: Player) -> str:
             f"  {mission['title']} ({mission['rank']}) - "
             f"{entry['progress']}/{mission['target_count']} complete"
         )
+        if mission.get("mission_type") == "retrieve":
+            line += f"\n    (search around {mission['quest_region']} and GET {mission['quest_item_name']})"
         if mission.get("mission_type") == "gather":
             import combat
             delivery_proto = combat.MOB_TEMPLATES.get(mission["delivery_mob_template"])
