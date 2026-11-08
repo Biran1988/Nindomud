@@ -70,8 +70,7 @@ def _recipients(player, rank):
         if room is None or room.player_shop or room.apartment:
             continue
         for mob in combat.mobs_in_room(vnum):
-            if (mob.template_vnum in allowed and mob.health > 0
-                    and not combat.is_immortal_mob(mob)):
+            if mob.template_vnum in allowed and mob.health > 0:
                 village = next((k for k, template in VILLAGER_IDS.items()
                                 if template == mob.template_vnum), None)
                 if village:
