@@ -44,17 +44,17 @@ SHOPS = {}
 
 _VILLAGE_ROOMS = {
     "whirlpool": dict(square=None, hospital=None, kage=80001, board=None, outskirts=None, shop=None,
-                      weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5006),
+                      weapons_shop=None, blacksmith=None, apartment_district=None),
     "leaf": dict(square=None, hospital=None, kage=1, board=None, outskirts=None, shop=None,
-                 weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5001),
+                 weapons_shop=None, blacksmith=None, apartment_district=None),
     "stone": dict(square=None, hospital=None, kage=2501, board=None, outskirts=None, shop=None,
-                  weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5002),
+                  weapons_shop=None, blacksmith=None, apartment_district=None),
     "water": dict(square=None, hospital=None, kage=5001, board=None, outskirts=None, shop=None,
-                  weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5003),
+                  weapons_shop=None, blacksmith=None, apartment_district=None),
     "cloud": dict(square=None, hospital=None, kage=7501, board=None, outskirts=None, shop=None,
-                  weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5004),
+                  weapons_shop=None, blacksmith=None, apartment_district=None),
     "sand": dict(square=None, hospital=None, kage=10001, board=None, outskirts=None, shop=None,
-                 weapons_shop=None, blacksmith=None, apartment_district=None, mob_template=5005),
+                 weapons_shop=None, blacksmith=None, apartment_district=None),
 }
 
 # Shared object prototypes every village's shopkeepers draw from -- one
@@ -440,9 +440,9 @@ def populate() -> None:
         # build (mission board, shops, gambling den, roulette room,
         # apartments, Main Street, gathering spots) is genuinely gone
         # -- confirmed directly this is fine to wipe entirely. Every
-        # real MOB TEMPLATE below is confirmed to STAY registered
-        # exactly as before (shopkeeper, villager, banker, gambling
-        # attendant, bandit, mission targets, etc.) -- they simply
+        # ordinary MOB TEMPLATES below (shopkeeper, villager, banker,
+        # gambling attendant, etc.) stay registered, but the old
+        # village mission bandits and rogue tiers are retired. Survivors
         # won't spawn anywhere until staff places them via
         # 'spawnpoint add' at whatever new rooms they build.
         kage_room = Room(rooms["kage"], f"{short} Kage Chamber",
@@ -507,53 +507,8 @@ def populate() -> None:
             shopkeeper_template["shop_buys_categories"] = []
             combat.MOB_TEMPLATES[playershops.SHOPKEEPER_TEMPLATE_VNUM] = shopkeeper_template
 
-        combat.register_template(
-            rooms["mob_template"], f"a wandering bandit near {short}",
-            level=3, max_health=40, min_damage=3, max_damage=6,
-            experience_reward=70, ryo_reward=10,
-            loot_items=["A Basic Kunai"],
-        )
-        # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add',
-        # and can set its own spawn caps via 'spawnpoint cap' at that point.
-
-        # Higher mission-rank targets (Section 69) -- C/B/A/S, one each,
-        # reusing the existing Outskirts room rather than building new
-        # areas. Mob-granted xp/ryo stay modest since the MISSION itself
-        # layers a much bigger bonus reward on top, same as D-Rank.
-        # All 4 flagged Mission (Section: dynamic rank-request missions)
-        # -- these form the real pool missions.pick_mission_mob() draws
-        # from when a player requests a C/B/A/S rank mission.
-        combat.register_template(
-            rooms["mob_template"] + 100, f"a rogue ninja near {short}",
-            level=15, max_health=150, min_damage=8, max_damage=14,
-            experience_reward=150, ryo_reward=30,
-        )
-        combat.MOB_TEMPLATES[rooms["mob_template"] + 100]["act_flags"] = ["Npc", "Mission"]
-        # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add'.
-
-        combat.register_template(
-            rooms["mob_template"] + 200, f"a missing-nin near {short}",
-            level=30, max_health=350, min_damage=15, max_damage=25,
-            experience_reward=400, ryo_reward=80,
-        )
-        combat.MOB_TEMPLATES[rooms["mob_template"] + 200]["act_flags"] = ["Npc", "Mission"]
-        # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add'.
-
-        combat.register_template(
-            rooms["mob_template"] + 300, f"an elite mercenary near {short}",
-            level=55, max_health=700, min_damage=30, max_damage=45,
-            experience_reward=1000, ryo_reward=200,
-        )
-        combat.MOB_TEMPLATES[rooms["mob_template"] + 300]["act_flags"] = ["Npc", "Mission"]
-        # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add'.
-
-        combat.register_template(
-            rooms["mob_template"] + 400, f"a legendary rogue near {short}",
-            level=85, max_health=1500, min_damage=60, max_damage=90,
-            experience_reward=3000, ryo_reward=500,
-        )
-        combat.MOB_TEMPLATES[rooms["mob_template"] + 400]["act_flags"] = ["Npc", "Mission"]
-        # No hardcoded spawn point (Section 138) -- staff adds it via 'spawnpoint add'.
+        # Original rank-specific bandits/rogues have been retired. Only
+        # staff-marked Mission prototypes from the current world qualify.
 
         idx = village_index[village]
         _make_shopkeeper(
@@ -684,6 +639,10 @@ def populate() -> None:
     # items. This ordering prevents a stale world snapshot from making a
     # registered spawn disappear after reboot.
     spawn_points.restore_custom_templates()
+    # Retire only the 30 obsolete mission mob IDs from old builder snapshots
+    # and saved spawn points; preserve every unrelated saved /data record.
+    import legacy_mission_mobs
+    legacy_mission_mobs.retire_saved_mobs()
     # VNUM 6 remains fully builder-editable, and existing /data saves win.
     # Guarantee an available prototype for installations without one.
     if 6 not in combat.MOB_TEMPLATES:
@@ -806,9 +765,7 @@ def register_default_spawn_points_for_testing() -> None:
         spawn_points.add_spawn_point("mob", 6000 + idx * 10 + 4, kage_room)
         spawn_points.add_spawn_point("mob", 6000 + idx * 10 + 8, kage_room)
         spawn_points.add_spawn_point("mob", 6000 + idx * 10 + 9, kage_room)  # stat trainer
-        # 5 mission-target tiers.
-        for offset in (0, 100, 200, 300, 400):
-            spawn_points.add_spawn_point("mob", rooms["mob_template"] + offset, kage_room)
+        # Historical mission-target mobs are retired and no longer spawned.
 
     # Chunin Exam forest guardians.
     import chunin_exam
