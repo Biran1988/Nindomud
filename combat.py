@@ -48,6 +48,7 @@ import config
 import data_jutsu
 import sword_styles
 import jutsu_balance
+import eight_gates
 import hyuga
 import data_mangekyo
 import data_passives
@@ -748,10 +749,10 @@ def _player_attack_damage(player: Player) -> int:
     dmg = int(dmg * village_perks.damage_multiplier(player.village))
     import sage_mode
     import susanoo
-    return susanoo.outgoing_damage(
+    return eight_gates.physical_damage(player, susanoo.outgoing_damage(
         player, sage_mode.outgoing(
             player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg),
-            weapon=bool(player.equipment.get("wielded"))))
+            weapon=bool(player.equipment.get("wielded")))))
 
 
 def _mob_attack_damage(mob: Mob) -> int:
@@ -1373,6 +1374,7 @@ def tick_effects_pulse(session) -> None:
     for name in status_effects.break_genjutsu_effects(player.active_status_effects, player):
         session.send(f"&CYour Willpower tears through the {status_effects.EFFECT_DEFS[name]['display_name']} illusion!&x")
 
+    eight_gates.tick(session)
     expired = status_effects.tick_effects(player.active_status_effects)
     for name in expired:
         if name == "chisei" and player.chisei_chakra_bonus:
@@ -2416,7 +2418,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + __import__("susanoo").accuracy_bonus(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + eight_gates.accuracy(player) + __import__("susanoo").accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -2838,6 +2840,8 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     if (jutsu.get("jutsu_type") == "kkgk_taijutsu_strike"
             and player.primary_class != "taijutsu"):
         return False
+    if jutsu.get("jutsu_type") == "gate_strike" and not eight_gates.strike_unlocked(player, jutsu):
+        return False
     if jutsu.get("jutsu_type") == "whirlpool_seal":
         return whirlpool_fuinjutsu.eligible(player) and player.level >= jutsu["level_requirement"] and jutsu["display_name"] in player.learned_skills
     if jutsu.get("jutsu_type") == "reaper_seal":
@@ -3115,6 +3119,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     import sage_mode
     to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
     to_hit += _genjutsu_hit_bonus(player, jutsu) + jutsu.get("accuracy_bonus", 0)
+    if jutsu.get("class_requirement") == "taijutsu":
+        to_hit += eight_gates.accuracy(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         jutsu_colors.send(session, f"You use {colored_name} on {mob.name}, but it misses!")
@@ -3170,6 +3176,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
         dmg = int(dmg * biome_mult)
 
     dmg = sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg), jutsu=True)
+    dmg = eight_gates.physical_damage(player, dmg, jutsu)
     dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     mob.health -= dmg
     hyuga.on_strike(session, mob, jutsu)
@@ -3427,6 +3434,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
 
     dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
     dmg = sage_mode.outgoing(player, dmg, jutsu=True)
+    dmg = eight_gates.physical_damage(player, dmg, jutsu)
     dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     # A fire inlay resists water, earth resists lightning, etc.
@@ -3764,6 +3772,7 @@ def handle_player_defeat(session) -> None:
     if player.reaper_seal_id:
         player.health = max(1, player.health)
         return
+    eight_gates.end(player, forced=True)
     import genjutsu
     genjutsu.clear_chisei(player)
     import hidden_mist
@@ -3941,7 +3950,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + __import__("susanoo").accuracy_bonus(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + eight_gates.accuracy(player) + __import__("susanoo").accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)
