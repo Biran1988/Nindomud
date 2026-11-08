@@ -25,6 +25,7 @@ strict schedule (a real place doesn't randomly skip nightfall).
 """
 
 import random
+import time
 
 WEATHER_STATES = ["clear", "rain", "storm", "snow", "fog"]
 TIME_OF_DAY_STATES = ["day", "night"]
@@ -38,10 +39,38 @@ WEATHER_DESCRIPTIONS = {
 }
 
 CURRENT_WEATHER = "clear"
-CURRENT_TIME_OF_DAY = "day"
+# Preserve the old 15-minute day / 15-minute night pacing, now divided
+# into an actual 24-hour shinobi clock that survives server restarts.
+SECONDS_PER_GAME_HOUR = 75
+HOURS_PER_DAY = 24
+SUNRISE_HOUR = 6
+SUNSET_HOUR = 18
+
+
+def game_hour(now=None) -> int:
+    now = time.time() if now is None else now
+    return int(now // SECONDS_PER_GAME_HOUR) % HOURS_PER_DAY
+
+
+def time_of_day(now=None) -> str:
+    return "day" if SUNRISE_HOUR <= game_hour(now) < SUNSET_HOUR else "night"
+
+
+def formatted_time(now=None) -> str:
+    hour = game_hour(now)
+    return f"{hour % 12 or 12}:00 {'AM' if hour < 12 else 'PM'}"
+
+
+def clock_status(now=None) -> str:
+    return (f"&WShinobi time:&x &Y{formatted_time(now)}&x ({time_of_day(now)}). "
+            "One complete shinobi day takes 30 real minutes. "
+            "Sunrise 6 AM; sunset 6 PM.")
+
+
+CURRENT_TIME_OF_DAY = time_of_day()
 
 WEATHER_CHANGE_INTERVAL_SECONDS = 1800  # 30 minutes real-time
-DAY_NIGHT_INTERVAL_SECONDS = 900  # 15 minutes real-time
+DAY_NIGHT_INTERVAL_SECONDS = 1  # sample the world clock once per pulse
 
 
 def tick_weather() -> None:
@@ -52,10 +81,12 @@ def tick_weather() -> None:
     CURRENT_WEATHER = random.choice(WEATHER_STATES)
 
 
-def tick_time_of_day() -> None:
-    """Alternates day/night on its own fixed schedule -- not random."""
+def tick_time_of_day() -> bool:
+    """Update compatibility state and return True when sunrise/sunset occurs."""
     global CURRENT_TIME_OF_DAY
-    CURRENT_TIME_OF_DAY = "night" if CURRENT_TIME_OF_DAY == "day" else "day"
+    old = CURRENT_TIME_OF_DAY
+    CURRENT_TIME_OF_DAY = time_of_day()
+    return old != CURRENT_TIME_OF_DAY
 
 
 def gathering_fail_chance_modifier() -> int:
@@ -83,10 +114,10 @@ def combat_accuracy_modifier() -> int:
 def night_dodge_bonus() -> int:
     """Added to a player's dodge_chance() bonus_percent argument --
     0 during the day, a small boost at night."""
-    return 4.5 if CURRENT_TIME_OF_DAY == "night" else 0
+    return 4.5 if time_of_day() == "night" else 0
 
 
 def status_line() -> str:
     weather_desc = WEATHER_DESCRIPTIONS[CURRENT_WEATHER]
-    time_desc = "It is daytime." if CURRENT_TIME_OF_DAY == "day" else "It is nighttime."
-    return f"{weather_desc} {time_desc}"
+    phase = "daytime" if time_of_day() == "day" else "nighttime"
+    return f"{weather_desc} It is {phase} ({formatted_time()})."
