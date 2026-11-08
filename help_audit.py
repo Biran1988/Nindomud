@@ -308,3 +308,10 @@ def populate(entries, commands):
         COVERED.add(topic)
 
     return COVERED
+
+
+    # Generated jutsu help is added by populate() after help_system's first
+    # annotation pass. Enrich these new pages too, while preserving staff
+    # authored help text and the live authoritative jutsu stats.
+    import help_annotations
+    help_annotations.enrich(entries, data_jutsu.JUTSU)
