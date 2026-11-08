@@ -199,4 +199,31 @@ PAGES = [
          "your techniques, then HELP <name> for costs and effects. "
          "A first teacher practice may be required by normal skill rules.",
          "kkgk taijutsu", "taijutsu kekkei genkai", "elemental martial arts"),
+
+    page("battle ready", "Battle Ready — Personal Combat Preparations",
+         "Syntax: battle ready\\n"
+         "        battle ready config\\n"
+         "        battle ready <jutsu name> on|off\\n"
+         "        battle ready status\\n"
+         "        config battle ready [<jutsu name> on|off]\\n"
+         "        bready [config|status]\\n\\n"
+         "Battle Ready activates your selected known preparation abilities "
+         "in one command, with no extra macro cost. Each ability pays its "
+         "own normal Chakra/Stamina, obeys cooldown and first teacher-practice "
+         "requirements, and must be available to your level/class/bloodline. "
+         "Unlearned or locked jutsu are skipped. An already-active buff is "
+         "NEVER re-cast or toggled off. The macro does not override silenced, "
+         "stunned, pending casts or other combat restrictions.\\n\\n"
+         "Initially enabled: Barrier, Focused Mind, Sensory Detect and "
+         "Samurai Sabre (only if you qualify and wield a sword). "
+         "You can separately enable Sharingan, Byakugan, Sage Mode, "
+         "Susanoo, Silent Movement, Camouflage and Chisei. Each selection "
+         "is saved on your individual player account. Camouflage "
+         "cannot activate during combat, and Chisei is performed last "
+         "because it may require hand signs and a casting delay. "
+         "Use BATTLE READY CONFIG to see which options are enabled, "
+         "active, learned or locked; selecting a locked option in advance "
+         "does not unlock it. Example: battle ready samurai sabre on. "
+         "See HELP BARRIER, HELP SAMURAI SABRE and HELP FOCUSED MIND.",
+         "battleready", "bready", "combat preparations", "battle readiness"),
 ]
