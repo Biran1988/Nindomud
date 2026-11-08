@@ -222,6 +222,22 @@ JUTSU_SHORTCUTS = {
     'celestial byakugan': 'cbyak',
     'fate sight': 'hfate',
     'tenseigan chakra mode': 'tmode',
+    # Inner Gates and follow-up strikes keep their own stable, explicit
+    # one-word shortcuts rather than colliding with older jutsu.
+    'gate of opening': 'gopen',
+    'gate of healing': 'gheal',
+    'gate of life': 'glife',
+    'gate of pain': 'gpain',
+    'gate of limit': 'glimit',
+    'gate of view': 'gview',
+    'gate of wonder': 'gwonder',
+    'gate of death': 'gdeath',
+    'front lotus': 'flotus',
+    'reverse lotus': 'rlotus',
+    'morning peacock': 'mpeac',
+    'daytime tiger': 'dtiger',
+    'evening elephant': 'eelephant',
+    'night guy': 'nguy',
 }
 
 SHORTCUT_JUTSU = {short: key for key, short in JUTSU_SHORTCUTS.items()}
