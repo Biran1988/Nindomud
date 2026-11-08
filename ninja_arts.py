@@ -36,6 +36,8 @@ TRAPS = {
 
 
 def property_of(item):
+    if not item:
+        return None
     for prop in PROPERTIES:
         if item.lower().endswith(" [art:" + prop + "]"):
             return prop
@@ -53,6 +55,8 @@ def element_of(item):
 
 
 def base_item(item):
+    if not item:
+        return ""
     element = element_of(item)
     if element:
         return item[:-len(f" [element:{element}]")]
