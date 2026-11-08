@@ -67,6 +67,13 @@ def main():
     seasonal_events.sync_visitors()
     from world import reconcile_apartment_ownership
     reconcile_apartment_ownership()
+    # Restore existing player-bound lost items without modifying world files.
+    import roadside_item_missions
+    roadside_item_missions.restore_active_items()
+    # Enforce saved gate-guard shifts immediately on boot (before the first
+    # scheduled pulse). Existing door links and area data are respected.
+    import npc_schedules
+    npc_schedules.apply_all()
     # Money piles have their own automatic ledger; never replace world/area saves.
     import currency_piles
     currency_piles.restore_piles()
