@@ -682,6 +682,10 @@ def cmd_auction(session, args: List[str]) -> None:
         if not match:
             session.send("You aren't carrying that.")
             return
+        import courier_missions
+        if courier_missions.is_parcel(match):
+            session.send("Mission parcels cannot be auctioned. Deliver them to the assigned NPC.")
+            return
 
         import crafted_provenance
         if crafted_provenance.denied(match, player, session=session):
@@ -4649,6 +4653,10 @@ def cmd_trade(session, args: List[str]) -> None:
         if not match:
             session.send(f"You aren't carrying anything like '{item_query}'.")
             return
+        import courier_missions
+        if courier_missions.is_parcel(match):
+            session.send("Mission parcels are bound to their courier and cannot be traded.")
+            return
         if match.endswith(" [glued]"):
             session.send("That item is glued to you and cannot be traded.")
             return
@@ -6510,6 +6518,10 @@ def cmd_sell(session, args: List[str]) -> None:
         if not match:
             session.send(f"You aren't carrying anything like '{query}'.")
             return
+        import courier_missions
+        if courier_missions.is_parcel(match):
+            session.send("You cannot sell mission cargo. Deliver it to the recipient.")
+            return
         if match.endswith(" [glued]"):
             session.send("That item is glued to you and cannot be sold.")
             return
@@ -6540,6 +6552,10 @@ def cmd_sell(session, args: List[str]) -> None:
     match = find_indexed_item(query, player.inventory)
     if not match:
         session.send(f"You aren't carrying anything like '{query}'.")
+        return
+    import courier_missions
+    if courier_missions.is_parcel(match):
+        session.send("You cannot sell mission cargo. Deliver it to the recipient.")
         return
     if match.endswith(" [glued]"):
         session.send("That item is glued to you and cannot be sold.")
@@ -6607,8 +6623,9 @@ def _sell_multiple(session, args: List[str]) -> None:
     buys_categories = combat.mob_shop_buys_categories(shopkeeper) if shopkeeper else None
 
     # Descending order keeps the original indices of pending candidates valid.
+    import courier_missions
     for index, item in reversed(selected):
-        if item.endswith(" [glued]") or player.backpack_contents.get(str(index)):
+        if courier_missions.is_parcel(item) or item.endswith(" [glued]") or player.backpack_contents.get(str(index)):
             skipped += 1
             continue
         category = item_types.classify_item(item)
