@@ -17,6 +17,47 @@ def page(key, title, body, *aliases):
 
 
 PAGES = [
+
+    page("eight gates", "The Eight Inner Gates",
+         "Syntax: gates [status|safe|off|1..8 [confirm]]\\n"
+         "        perform gate of opening | perform gate of death confirm\\n"
+         "        perform front lotus <target> (and the other gate attacks)\\n\\n"
+         "Eight learnable, Taijutsu-only Inner Gates unlock at levels "
+         "20, 40, 65, 90, 120, 155, 195 and 240. Learn and practice "
+         "each with a teacher first. The Gates increase physical melee "
+         "and Taijutsu damage and accuracy, not unrelated Ninjutsu. "
+         "They consume Stamina every three real seconds. Gates 6 and 7 "
+         "also damage their own user. The Eighth Gate dramatically "
+         "increases power, drains Health, and inevitably defeats the caster "
+         "after 30 real seconds with normal defeat penalties; it CANNOT "
+         "be closed. 'gates 8 confirm' is always required to open it. "
+         "Ordinary Gates can be closed but impose exhaustion cooldowns. "
+         "The six follow-up attacks are Front Lotus (Gate 1), Reverse "
+         "Lotus (Gate 3), Morning Peacock (Gate 6), Daytime Tiger "
+         "(Gate 7), Evening Elephant (Gate 8), and Night Guy "
+         "(Gate 8, level 250). Gates also work in PvP. "
+         "BATTLE READY CONFIG allows Eight Gates as an OFF-by-default "
+         "option, which opens only the highest learned safe Gate (1-7), "
+         "never the Eighth Gate.",
+         "gates", "gate", "inner gates", "eight inner gates", "gate of death"),
+    page("delivery missions", "Sealed Courier Delivery Missions",
+         "Syntax: mission request delivery <d|c|b|a|s>\\n"
+         "        mission info\\n"
+         "        deliver\\n"
+         "        give parcel <npc>\\n"
+         "        mission fail [rank]\\n\\n"
+         "You receive a unique sealed parcel immediately when the mission "
+         "is assigned. Bring it to the specified LIVE village NPC in the "
+         "destination room shown by MISSION INFO. DELIVER while standing "
+         "beside them, or GIVE PARCEL <NPC>. Courier parcels cannot be "
+         "traded, sold, auctioned, dropped or put in a backpack. "
+         "The mission and parcel expire after 30 real minutes, including "
+         "offline time; abandonment removes the parcel without reward. "
+         "Completing a delivery pays the normal rank-scaled XP, Ryo, "
+         "mission points and village reputation. These missions are "
+         "independent of hunts, roadside item recovery and weed delivery.",
+         "courier missions", "courier", "parcel delivery", "mission delivery"),
+
     page("durability", "Crafted Weapon and Armor Durability",
          "Syntax: examine <crafted item>\n\n"
          "Every uniquely forged weapon or armor piece has durability stored on its object, "
@@ -213,9 +254,11 @@ PAGES = [
          "Susanoo, Silent Movement, Camouflage and Chisei, plus additional "
          "existing learned techniques: Sanchin Dachi, Neko Ashi Dachi, "
          "Kihon Dachi, Celestial Byakugan, Tenseigan Chakra Mode, "
-         "Six Paths Mode, Tailed Beast Mode, Bijuu Cloak, "
+         "Six Paths Mode, Tailed Beast Mode, Bijuu Cloak, Eight Gates, "
          "Kamui Intangibility and Hidden Mist Jutsu. These additional "
          "selections begin OFF and never grant an unlearned ability. "
+         "Eight Gates automatically selects the best practiced Gate from 1-7; "
+         "it NEVER opens the irreversible Eighth Gate. "
          "Taijutsu stances never overwrite an active stance; higher "
          "Byakugan forms require their prerequisite eyes. Sage Mode and "
          "Six Paths Mode cannot be combined. An existing stronger "
