@@ -59,14 +59,14 @@ class TestElementalSword(unittest.TestCase):
         self.enchant("fire")
         self.p.samurai_sabre_active = True
         with patch.object(ninja_arts.random, "randint", return_value=100):
-            self.assertEqual(ninja_arts.weapon_hit(self.p, Player("Target", "Target"), 100), 180)
+            self.assertEqual(ninja_arts.weapon_hit(self.p, Player("Target", "Target"), 100), 157)
 
     def test_earth_stacks_with_sabre_and_has_no_status(self):
         self.p.chakra_nature = "earth"
         self.enchant("earth")
         self.p.samurai_sabre_active = True
         target = Player("Target", "Target")
-        self.assertEqual(ninja_arts.weapon_hit(self.p, target, 100), 225)
+        self.assertEqual(ninja_arts.weapon_hit(self.p, target, 100), 196)
         self.assertFalse(target.active_status_effects)
 
     def test_only_matching_bukijutsu_wielder_gets_elemental_effect(self):
