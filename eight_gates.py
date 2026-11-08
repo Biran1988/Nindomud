@@ -184,8 +184,13 @@ def tick(session, *, now=None):
     now = time.time() if now is None else now
     if gate == 8 and now >= player.gates_eighth_expires_at:
         end(player, forced=True)
-        player.health = 0
-        session.send("&RThe Gate of Death consumes your final heartbeat. You collapse!&x")
+        import combat
+        if combat.is_immortal_immune_to_defeat(session):
+            player.health = max(1, player.health)
+            session.send("&RYour immortal body survives the Gate of Death's collapse.&x")
+        else:
+            player.health = 0
+            session.send("&RThe Gate of Death consumes your final heartbeat. You collapse!&x")
         return
     if now - getattr(player, "gates_last_upkeep_at", now) < TICK_SECONDS:
         return
