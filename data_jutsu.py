@@ -753,6 +753,9 @@ JUTSU.update({
 
 import elemental_release_arts
 JUTSU.update(elemental_release_arts.jutsu_entries())
+# Every elemental Ninjutsu KKGK release has a three-move physical Taijutsu mirror.
+import taijutsu_elemental_release_arts
+JUTSU.update(taijutsu_elemental_release_arts.jutsu_entries())
 import six_paths
 JUTSU.update(six_paths.jutsu_entries())
 import reaper_seal
@@ -762,6 +765,12 @@ JUTSU.update(whirlpool_fuinjutsu.jutsu_entries())
 import hyuga
 JUTSU.update(hyuga.registry())
 _scale_base_damage_to_level()
+# Hand-to-hand KKGK attacks resolve instantly. Keep their scaled damage
+# slightly below ranged/hand-sign Ninjutsu of the same level to balance speed.
+for _jutsu in JUTSU.values():
+    if _jutsu.get("jutsu_type") == "kkgk_taijutsu_strike":
+        _low, _high = _jutsu["damage"]
+        _jutsu["damage"] = (max(1, _low * 85 // 100), max(1, _high * 85 // 100))
 
 # The universal starting kit -- every player gets exactly these,
 # regardless of class. Used by both session.py's chargen AND
