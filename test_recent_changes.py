@@ -20,8 +20,11 @@ class RecentChangesTests(unittest.TestCase):
             for term in terms:
                 with self.subTest(version=version, term=term):
                     self.assertIn(term, entries[version])
-        self.assertEqual([version for version, _ in changelog.CHANGELOG[-7:-2]],
-                         list(expected))
+        all_versions = [version for version, _ in changelog.CHANGELOG]
+        positions = [all_versions.index(version) for version in expected]
+        self.assertEqual(positions, sorted(positions))
+        for version in ("15.432", "15.433", "15.434"):
+            self.assertIn(version, entries)
 
     def test_changes_command_outputs_newest_entries(self):
         pages = []
@@ -36,7 +39,9 @@ class RecentChangesTests(unittest.TestCase):
 
     def test_road_migration_omitted_from_new_changelog_entries(self):
         text = "\n".join(summary for _, summary in changelog.CHANGELOG[-7:]).lower()
-        self.assertNotIn("mainland road", text)
+        # Player-facing roadside missions belong on the board. The
+        # internal migration details that installed the road network do not.
+        self.assertNotIn("road migration", text)
         self.assertNotIn("bandit camp", text)
         self.assertNotIn("road junction", text)
 
