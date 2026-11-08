@@ -4,8 +4,8 @@
     "toxin binding"
   ],
   "title": "Toxin Binding",
-  "body": "Syntax: toxin binding <weapon>\n\nDescription: Permanently binds poison to one carried or wielded weapon. A poisoned hit can inflict Poisoned. Disenchant the weapon before binding a different property. Bukijutsu unlocks at level 30. Costs 45 Chakra and 15 Stamina; 8 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: toxin binding <weapon> | examine <weapon>\n\nBukijutsu level 30, 45 Chakra, 15 Stamina, 8-second cooldown (before normal level-based cost scaling). Permanently binds poison to one carried or wielded weapon. Each successful damaging weapon hit has a 30% chance to apply Poisoned to the actual mob or player struck, dealing damage over its normal status duration. The game displays a brief message when it takes effect. Poison uses no charges. A weapon may have only one bound Ninja Art property; remove it using DISENCHANTMENT before applying another. The binding survives saves and transfers, but is lost when the item breaks. The visible item name never displays poison or property markers. EXAMINE shows the bound poison and remaining durability. See HELP POISON and HELP ENCHANTMENTS.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
