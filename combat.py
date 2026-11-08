@@ -2835,6 +2835,9 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
         return False
     if _staff_testing_mangekyo(player):
         return True
+    if (jutsu.get("jutsu_type") == "kkgk_taijutsu_strike"
+            and player.primary_class != "taijutsu"):
+        return False
     if jutsu.get("jutsu_type") == "whirlpool_seal":
         return whirlpool_fuinjutsu.eligible(player) and player.level >= jutsu["level_requirement"] and jutsu["display_name"] in player.learned_skills
     if jutsu.get("jutsu_type") == "reaper_seal":
