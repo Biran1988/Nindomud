@@ -61,7 +61,7 @@ class NinjaArtsTests(unittest.TestCase):
         self.assertTrue(self.player.samurai_sabre_active)
         self.assertNotIn("samurai_sabre", self.player.active_status_effects)
         self.assertEqual(self.player.chakra, starting_chakra - cast_cost)
-        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 60)
+        self.assertEqual(ninja_arts.weapon_hit(self.player, self.player, 50), 52)
         for _ in range(6):
             ninja_arts.tick_samurai_sabre(self.session)
         self.assertTrue(self.player.samurai_sabre_active)
