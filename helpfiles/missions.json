@@ -4,7 +4,7 @@
     "missions"
   ],
   "title": "Missions",
-  "body": "Syntax: mission info | missions\n\nDescription: Mission info shows active objectives, enemy mob names/levels/VNUMs, progress and the 30-minute countdown. Missions lists posted D-Rank jobs when standing at a village mission board. Hunt missions are available via mission request <rank> anywhere.",
+  "body": "Syntax: mission info | missions\n\nDescription: Mission info shows active objectives, enemy mob names/levels/VNUMs, progress and the 30-minute countdown. Missions lists posted D-Rank jobs when standing at a village mission board. Hunt missions are available via mission request <rank> anywhere.\\n\\nCourier option: MISSION REQUEST DELIVERY <rank>. You receive a mission-bound sealed parcel to deliver to a real village NPC.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
