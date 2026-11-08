@@ -611,9 +611,9 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: <jutsu name> <target>\n"
             "\n"
-            "Description: One of the four primary classes (see 'help classes'). Taijutsu techniques are pure physical combat -- no hand signs, no chakra cost, and no casting delay, unlike Ninjutsu/Genjutsu. Used directly by name rather than through 'perform'.\n"
+            "Description: One of the four primary classes (see 'help classes'). Basic Taijutsu is physical combat fueled by Stamina, without hand signs or casting delay. Elemental KKGK Taijutsu also uses some Chakra while remaining a hand-to-hand physical strike. Used directly by name rather than through 'perform'.\n"
             "\n"
-            "Beyond Dynamic Entry, Taijutsu unlocks Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Empi, Kumade, Nidan Kyten Geri, and Tamashiwara, plus Kihon, Neko Ashi, and Sanchin stances. See 'help <technique name>' for individual damage, costs, and effects.\n"
+            "Beyond Dynamic Entry, Taijutsu unlocks Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Empi, Kumade, Nidan Kyten Geri, and Tamashiwara, plus Kihon, Neko Ashi, and Sanchin stances. Taijutsu characters with a nature-based elemental Kekkei Genkai also unlock three dedicated physical chakra-infused strikes at levels 25, 45, and 70 for their release (Dust Release at level 100), for 33 additional arts across all releases. See 'help elemental taijutsu'. See 'help <technique name>' for individual damage, costs, and effects.\n"
             "\n"
             "Date: 2026-08-26"
         ),
@@ -1192,7 +1192,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "&WSharingan&x unlocks its active eye toggle and tomoe growth through combat. &WByakugan&x unlocks an active chakra-vision toggle at level 25 after awakening, granting accuracy, dodge and directional chakra sensing; Gentle Fist and Eight Trigrams techniques unlock at later levels through practice and combat mastery. Exceptionally rare higher eye evolutions may exist, but their capabilities remain TOP SECRET until unlocked. See 'help sharingan' and 'help hyuga'.\n"
             "\n"
-            "Element combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. Elemental releases have their own playable techniques.\n"
+            "Element combinations: Water + Wind = Ice; Water + Earth = Wood; Water + Lightning = Storm; Water + Fire = Boil; Earth + Fire = Lava; Fire + Wind = Scorch; Earth + Wind = Magnet; Earth + Lightning = Explosion; Fire + Lightning = Flashfire; Wind + Lightning = Tempest. Three natures (Earth + Wind + Fire) yield the higher tier Dust Release, a Kekkei Tota. A third Chakra Paper at level 100 reveals a third distinct nature. Elemental releases have both Ninjutsu attacks and a matching 33-move Taijutsu suite. The Taijutsu branch requires the Taijutsu class and uses physical damage, Stamina, some Chakra and no hand signs. See 'help elemental taijutsu'.\n"
             "\n"
             "Staff: see 'help bloodstat' and 'help bloodset' for the tools to inspect and edit a player's hidden Kekkei Genkai state, and 'help awaken' for force-awakening one directly.\n"
             "\n"
