@@ -1,6 +1,6 @@
 """
 Cooking (Section 67) -- a job on jobs.py's framework. Takes a raw
-fish (Fishing's own catches) and produces a cooked dish.
+fish (Fishing's own catches) or edible Farming produce and makes a cooked dish.
 
 REDESIGNED per explicit request (same "Minecraft-style" crafting
 revamp as the other 4 jobs): ONE tool (a copper cooking pot), no
@@ -10,10 +10,12 @@ fish (which Fishing's own level gating unlocks) produce more valuable
 dishes, not a quality roll on the same dish.
 
 Requires a cooking pot held (or standing in own apartment kitchen),
-and a raw fish in inventory.
+and a raw fish or farm crop in inventory.
 """
 
 import random
+
+import farming
 
 BURN_CHANCE_BASE = 25
 BURN_CHANCE_FLOOR = 3
@@ -36,7 +38,12 @@ INGREDIENTS = {
     "a leviathan": {"dish": "A Leviathan Fillet", "base_cost": 20000},
 }
 
-# XP from cooking scales with the fish's own level requirement
+# Farming's edible crop recipes participate in the same Cooking job.
+# Medicinal Herbs deliberately have no cooked dish.
+INGREDIENTS.update({raw: {"dish": recipe["dish"], "base_cost": recipe["sell_price"]}
+                    for raw, recipe in farming.EDIBLE_CROPS.items()})
+
+# XP from cooking scales with the ingredient's level requirement
 # (higher-level fish are worth more to cook), matching the pattern
 # the gathering jobs use.
 COOKING_XP = {
@@ -49,6 +56,10 @@ COOKING_XP = {
     "a koi": 200,
     "a leviathan": 500,
 }
+
+
+COOKING_XP.update({raw: recipe["cooking_xp"]
+                   for raw, recipe in farming.EDIBLE_CROPS.items()})
 
 
 def pot_required_level(pot_name: str):
