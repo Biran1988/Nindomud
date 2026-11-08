@@ -4555,6 +4555,12 @@ from help_recent_updates import PAGES as _RECENT_GAMEPLAY_PAGES
 DEFAULT_HELP_ENTRIES.extend(_RECENT_GAMEPLAY_PAGES)
 
 for _help_entry in DEFAULT_HELP_ENTRIES:
+    if _help_entry["primary_keyword"] == "examine":
+        _help_entry["body"] += (
+            "\n\nEXAMINE displays remaining/max durability of crafted "
+            "weapons, crafted armor and gathering tools. The counter "
+            "is not part of an item's name."
+        )
     if _help_entry["primary_keyword"] == "craft":
         _help_entry["body"] += (
             "\n\nCrafted combat gear wears out: Iron 2,500, Steel 5,000, "
