@@ -92,5 +92,6 @@ def _wear(session, slot, expected_type):
         commands.reclaim_crafted_item_vnum(vnum)
         session.send(f"&RYour {item} breaks apart and is destroyed!&x")
     world_autosave.mark_dirty()
-    storage.save_player(session.player)
+    if remaining == 0:
+        storage.save_player(session.player)
     return True
