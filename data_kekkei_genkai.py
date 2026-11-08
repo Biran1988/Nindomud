@@ -197,8 +197,10 @@ def sync_elemental_techniques(player) -> bool:
         if release_id not in ELEMENTAL_RELEASE_NAMES:
             continue
         name = jutsu["display_name"]
+        taijutsu_only = jutsu.get("jutsu_type") == "kkgk_taijutsu_strike"
+        correct_class = (not taijutsu_only or player.primary_class == "taijutsu")
         eligible = (getattr(player, "_immortal_skill_mastery", False)
-                    or (has_elemental_release(player, release_id)
+                    or (correct_class and has_elemental_release(player, release_id)
                         and player.level >= jutsu["level_requirement"]))
         if eligible and name not in player.learned_skills:
             player.learned_skills.append(name)
