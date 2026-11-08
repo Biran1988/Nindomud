@@ -584,5 +584,8 @@ CHANGELOG = [
     ("15.437", "Automatic cleanup of inactive accounts and pfiles: levels 1-49 after 6 months, 50-99 after 9 months and 100-249 after 12 months. Level 250 and staff are exempt. Currently connected players are protected; old files without login timestamps use their file modified time."),
     ("15.438", "New in-game HELP topics cover durability, inactivity policy, dynamic mission ranks, roadside recovery, day/night NPC schedules, gate and shop hours, advanced tracking, Info Scrolls, medicinal herbs and equipment viewing."),
     ("15.439", "Samurai Sabre begins at +5% damage and gains automatic passive Samurai Sabre 2/3/4/5 at levels 85, 140, 195 and 250. Each passive adds 5% while the base sword technique is on (up to +25%). Updated poison/toxin/enchantment help and separate Sabre tier pages; no scrolls, item-name tags or additional upkeep."),
+    ("15.440", "Added 33 close-range elemental Kekkei Genkai Taijutsu techniques, three for each of eleven elemental releases. They use the matching revealed natures, Taijutsu class, physical damage, higher Stamina/lower Chakra costs, existing status effects and no hand signs. Added individual help pages and one-word shortcuts."),
+    ("15.441", "Added configurable BATTLE READY combat preparation. Use BATTLE READY CONFIG or CONFIG BATTLE READY to switch Barrier, Focused Mind, Sensory Detect, Samurai Sabre, Sharingan, Byakugan, Sage Mode, Susanoo, Silent Movement, Camouflage and Chisei on or off independently. Character selections persist, and activated buffs obey normal costs and restrictions without toggling existing buffs off."),
+
 
 ]
