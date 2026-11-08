@@ -1159,6 +1159,8 @@ class Session:
 
         self.player = player
         self.state = State.PLAYING
+        player.last_login_at = time.time()
+        storage.save_player(player)
         # Real-time mission deadlines survive logout/reboot. Inform a
         # returning player immediately about missions that timed out.
         import missions
