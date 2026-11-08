@@ -68,6 +68,7 @@ import slots
 import status_effects
 import sage_mode
 import sword_styles
+import samurai_sabre_progression
 import storage
 import village_perks
 import olc
@@ -5324,6 +5325,8 @@ def _skill_unlock_level(skill_name: str) -> Optional[int]:
     for name, level_req, _required_class in data_jutsu.MULTI_ATTACK_SKILLS:
         if name == skill_name:
             return level_req
+    if skill_name in samurai_sabre_progression.PASSIVE_UNLOCKS:
+        return samurai_sabre_progression.PASSIVE_UNLOCKS[skill_name]
     import data_handsigns
     if skill_name == "Handsigns":
         return data_handsigns.HANDSIGNS_MIN_LEVEL
@@ -5663,7 +5666,7 @@ def _categorize_skill(skill_name: str) -> str:
     for jutsu in data_jutsu.JUTSU.values():
         if jutsu["display_name"].lower() == lname:
             return "KKGK" if jutsu.get("kkg_gate") else jutsu["class_requirement"].capitalize()
-    if skill_name in sword_styles.STYLES:
+    if skill_name in sword_styles.STYLES or skill_name in samurai_sabre_progression.PASSIVE_UNLOCKS:
         return "Bukijutsu"
     if skill_name in {name for name, _, required_class in data_jutsu.MULTI_ATTACK_SKILLS
                       if required_class == "bukijutsu"}:
@@ -5687,6 +5690,7 @@ def _skill_catalog_for_category(category: str) -> list:
             if jutsu["class_requirement"] == class_key and not jutsu.get("kkg_gate"):
                 entries.append((jutsu["display_name"], jutsu["level_requirement"]))
         if category == "Bukijutsu":
+            entries.extend(samurai_sabre_progression.PASSIVE_UNLOCKS.items())
             entries.extend((name, info["level"]) for name, info in sword_styles.STYLES.items())
             entries.extend((name, level_req)
                            for name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS
