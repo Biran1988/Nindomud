@@ -4,8 +4,8 @@
     "poison gas bomb"
   ],
   "title": "Poison Gas Bomb",
-  "body": "Syntax: poison gas bomb <target>\n\nDescription: Attaches a consumed Poison Gas Bomb. After two combat pulses it deals 12-23 damage and poisons the target unless disabled. Requires a carried poison gas bomb. Bukijutsu unlocks at level 40. Costs 40 Chakra and 15 Stamina; 8 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: poison gas bomb <target>\n\nBukijutsu level 40, 40 Chakra, 15 Stamina, 8-second cooldown (before level-based scaling). Requires a carried Poison Gas Bomb, which is consumed when a toxic trap is attached to the target. After two combat pulses, the trap detonates for 12-23 base damage and inflicts Poisoned unless disabled. This is a one-use item-based technique, separate from the persistent TOXIN BINDING property on a weapon. See HELP POISON and HELP TRAP DISABLING.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
