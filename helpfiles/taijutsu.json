@@ -4,8 +4,8 @@
     "taijutsu"
   ],
   "title": "Taijutsu",
-  "body": "Syntax: <jutsu name> <target>\n\nDescription: One of the four primary classes (see 'help classes'). Taijutsu techniques are pure physical combat -- no hand signs, no chakra cost, and no casting delay, unlike Ninjutsu/Genjutsu. Used directly by name rather than through 'perform'.\n\nBeyond Dynamic Entry, Taijutsu unlocks Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Empi, Kumade, Nidan Kyten Geri, and Tamashiwara, plus Kihon, Neko Ashi, and Sanchin stances. See 'help <technique name>' for individual damage, costs, and effects.\n\nDate: 2026-08-26",
+  "body": "Syntax: <jutsu name> <target>\n\nDescription: One of the four primary classes (see 'help classes'). Basic Taijutsu uses Stamina with no hand signs or casting delay. Elemental KKGK Taijutsu uses mostly Stamina plus some Chakra while still dealing physical contact damage. Used directly by name rather than through 'perform'.\n\nBeyond Dynamic Entry, Taijutsu unlocks Choku Zuki, Mae Geri, Oi Zuki, Sokuto, Empi, Kumade, Nidan Kyten Geri, and Tamashiwara, plus Kihon, Neko Ashi, and Sanchin stances. Taijutsu characters with a qualifying elemental Kekkei Genkai gain three physical chakra-infused attacks for their release at levels 25, 45 and 70 (Dust Release at level 100), with 33 new attacks in total. These unlock automatically and use the matching elemental release requirements. See 'help elemental taijutsu' and 'help <technique name>' for costs and effects.\n\nDate: 2026-08-26",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
