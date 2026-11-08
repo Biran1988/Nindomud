@@ -110,7 +110,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"wizinvis", "setallprac", "ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"wizinvis", "setallprac", "ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "time", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -486,6 +486,9 @@ def cmd_open(session, args: List[str]) -> None:
         return
     if room.exit_door_open.get(direction, False):
         session.send("It's already open.")
+        return
+    if npc_schedules.gate_scheduled_closed(room, direction):
+        session.send("The gate guards are keeping this gate closed until opening hours.")
         return
     if "locked" in room.exit_flags.get(direction, []):
         session.send("It's locked.")
@@ -3215,6 +3218,11 @@ def _consider_verdict(level_diff: int) -> str:
     return CONSIDER_THRESHOLDS[-1][1]
 
 
+def cmd_time(session, args: List[str]) -> None:
+    """Show the continuously advancing shinobi world clock."""
+    session.send(weather.clock_status())
+
+
 def cmd_weather(session, args: List[str]) -> None:
     """Reports the current world-wide weather and time of day
     (weather.py) -- both change periodically via the main pulse loop,
@@ -5900,6 +5908,9 @@ def cmd_list(session, args: List[str]) -> None:
         return
 
     shopkeeper = _find_shopkeeper(player.room_vnum)
+    if shopkeeper and not npc_schedules.shop_is_open(shopkeeper):
+        session.send(npc_schedules.shop_closed_message(shopkeeper))
+        return
     if shopkeeper and shopkeeper.player_shop_owner:
         lines = [f"&W{shopkeeper.name.capitalize()} offers for sale:&x"]
         stock = playershops.stock_for_display(shopkeeper)
@@ -6151,6 +6162,9 @@ def cmd_buy(session, args: List[str]) -> None:
         return
 
     shopkeeper = _find_shopkeeper(player.room_vnum)
+    if shopkeeper and not npc_schedules.shop_is_open(shopkeeper):
+        session.send(npc_schedules.shop_closed_message(shopkeeper))
+        return
     if shopkeeper and shopkeeper.player_shop_owner:
         if not args:
             session.send("Buy what?")
@@ -6253,6 +6267,9 @@ def _buy_multiple(session, args: List[str]) -> None:
         return
 
     shopkeeper = _find_shopkeeper(player.room_vnum)
+    if shopkeeper and not npc_schedules.shop_is_open(shopkeeper):
+        session.send(npc_schedules.shop_closed_message(shopkeeper))
+        return
     shop = None if shopkeeper else content.SHOPS.get(player.room_vnum)
     if not shopkeeper and not shop:
         session.send("There is nothing to buy here.")
@@ -6458,6 +6475,9 @@ def cmd_sell(session, args: List[str]) -> None:
         return
 
     shopkeeper = _find_shopkeeper(player.room_vnum)
+    if shopkeeper and not npc_schedules.shop_is_open(shopkeeper):
+        session.send(npc_schedules.shop_closed_message(shopkeeper))
+        return
     if shopkeeper:
         if not args:
             session.send("Sell what?")
@@ -6537,6 +6557,9 @@ def _sell_multiple(session, args: List[str]) -> None:
         return
 
     shopkeeper = _find_shopkeeper(player.room_vnum)
+    if shopkeeper and not npc_schedules.shop_is_open(shopkeeper):
+        session.send(npc_schedules.shop_closed_message(shopkeeper))
+        return
     shop = None if shopkeeper else content.SHOPS.get(player.room_vnum)
     if not shopkeeper and not shop:
         session.send("There is nowhere to sell that here.")
@@ -10215,6 +10238,7 @@ COMMANDS = {
     "attack": cmd_attack, "kill": cmd_attack,
     "consider": cmd_consider,
     "weather": cmd_weather,
+    "time": cmd_time,
     "flee": cmd_flee,
     "yes": cmd_finish_downed_yes,
     "release": cmd_release,
