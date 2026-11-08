@@ -82,6 +82,21 @@ leaks through action announcements. See `docs/ROOM_INTERACTIONS.md`.
 
 ## Current release
 
+Version 15.434: Shinobi time is a continuous 24-hour clock (one full day
+every 30 real minutes). TIME shows the hour, while NPC shopkeepers may
+be assigned business hours with MSET SHOPOPEN / SHOPCLOSE and gate guards
+may operate existing two-sided doors with MSET GATE / GATEOPEN / GATECLOSE.
+Unconfigured merchants and doors retain their prior behavior.
+
+All kill-mission ranks now require exactly one mob, including older
+accepted hunts. MISSION REQUEST ITEM <rank> starts a mob-free recovery
+mission, generating a player-bound lost item on the mainland highways
+or at a roadside inn (never in any of the five main villages). MISSION
+INFO gives the road/inn clue; GET the object to finish and earn its
+normal rank reward. Quest props are temporary overlays, not persistent
+room items. The normal release archive still excludes all of /data.
+
+
 Version 15.331 includes **two new gameplay changes**: each real 1%
 increase in a skill's proficiency awards **10 character EXP**, through
 practice, successful combat improvement, passive training and Shadow
