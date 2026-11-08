@@ -10,6 +10,7 @@ from typing import List
 
 import config
 import data_jutsu
+import samurai_sabre_progression
 import storage
 import shinobi_notices
 from models import Player
@@ -324,6 +325,9 @@ def grant_experience(player: Player, amount: int) -> List[str]:
                 player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
                 lines.append(f"You have unlocked:\n  {skill_name}")
 
+        for passive in samurai_sabre_progression.sync_passives(player):
+            lines.append(f"You have unlocked:\n  {passive} (passive +5% Samurai Sabre damage)")
+
         import sword_styles
         if player.primary_class == "bukijutsu":
             for school, details in sword_styles.STYLES.items():
@@ -433,6 +437,9 @@ def sync_universal_skills(player: Player) -> List[str]:
             player.learned_skills.append(skill_name)
             player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
             lines.append(f"&Y(New since your last login: you have learned {skill_name}!)&x")
+
+    for passive in samurai_sabre_progression.sync_passives(player):
+        lines.append(f"&Y(New since your last login: you have learned {passive}!)&x")
 
     import sword_styles
     if player.primary_class == "bukijutsu":
