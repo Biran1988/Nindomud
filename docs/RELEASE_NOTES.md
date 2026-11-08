@@ -67,8 +67,7 @@ existing server installation, keeping the server's `data/` directory intact.
   expansion pages show actual damage, costs, cooldowns, and effects. System
   pages refresh on login while staff-written help text is preserved.
 - Bukijutsu gains `samurai sabre` at level 35 while wielding a sword:
-  it costs 35 Chakra and 10 Stamina and boosts normal sword hits 5% at level 35, with four automatic +5% passive tiers at levels 85, 140, 195 and 250 (maximum +25%) for
-  five pulses. `flying swallow <target>` at level 45 requires a sword or
+  it costs 35 Chakra and 10 Stamina and boosts normal sword hits 5% at level 35, with four automatic +5% passive tiers at levels 85, 140, 195 and 250 (maximum +25%) while the chakra upkeep is maintained. `flying swallow <target>` at level 45 requires a sword or
   kunai, costs 30 Chakra and 18 Stamina, gains +15 accuracy, can cause
   bleeding, and deals 15% more damage with Wind chakra nature. Both work
   against mobs; Flying Swallow also works against players where PvP is allowed.
