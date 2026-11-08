@@ -37,7 +37,7 @@ import olc                 # noqa: E402
 # Older smoke scenarios still refer to a disposable NPC VNUM 5001.
 combat.register_template(5001, "a wandering bandit near Konoha",
                          level=3, max_health=80, min_damage=1,
-                         max_damage=4, experience_reward=100, ryo_reward=5)
+                         max_damage=4, experience_reward=100, ryo_reward=10)
 combat.MOB_TEMPLATES[5001]["long_desc"] = "A wandering bandit near Konoha is here."
 assert content._ITEM_VNUMS["hoe_copper"] == 20802
 assert content._ITEM_VNUMS["chisel_copper"] == 20803
