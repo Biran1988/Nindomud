@@ -631,6 +631,7 @@ class Player:
     total_play_seconds: float = 0.0
 
     created_at: float = field(default_factory=time.time)
+    last_login_at: float = 0.0  # authenticated world entry; independent of autosaves
 
     def to_dict(self) -> dict:
         return asdict(self)
