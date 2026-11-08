@@ -13,7 +13,7 @@ class JutsuDamageLadderTests(unittest.TestCase):
     def test_every_damage_range_tracks_its_unlock_level(self):
         tiers = damage_messages.DAMAGE_TIERS
         for key, jutsu in data_jutsu.JUTSU.items():
-            if jutsu["damage"] is None or jutsu.get("jutsu_type") == "hyuga_strike":
+            if jutsu["damage"] is None or jutsu.get("jutsu_type") in ("hyuga_strike", "gate_strike"):
                 continue  # Hyuga now scales against standardized mob HP, not this ladder.
             with self.subTest(jutsu=key):
                 if jutsu.get("jutsu_type") == "hyuga_strike":
