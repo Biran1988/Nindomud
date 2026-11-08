@@ -2380,6 +2380,9 @@ def _offhand_attack(session, target, target_session=None):
         else:
             _player_attack_target_once(session, player, target_session, target)
     finally:
+        # The durability callback may have destroyed the temporarily wielded
+        # off-hand blade; do not restore a broken duplicate into its real slot.
+        player.equipment["offhand"] = player.equipment.get("wielded")
         player.equipment["wielded"] = primary
 
 
@@ -2447,6 +2450,8 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
         session.send(f"{mob.name} bleeds for {damage_messages.describe_damage(bleed)} damage.")
+    import equipment_durability
+    equipment_durability.wear_weapon(session)
     return True
 
 
@@ -2770,6 +2775,9 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
             player, sage_mode.incoming(
                 player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg)))
         player.health -= dmg
+        if dmg > 0:
+            import equipment_durability
+            equipment_durability.wear_armor(session)
         session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
         import room_actions
         room_actions.emit(session, f"{mob.name} strikes {player.name} for {damage_messages.describe_damage(dmg)} damage.")
@@ -3984,6 +3992,10 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg)} damage.")
     import room_actions
     room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} {target.name} for {damage_messages.describe_damage(dmg)} damage.", exclude=(target_session,))
+    import equipment_durability
+    equipment_durability.wear_weapon(session)
+    if dmg > 0:
+        equipment_durability.wear_armor(target_session)
     return True
 
 
