@@ -28,7 +28,8 @@ PAGES = [
          "item VNUM is released for future crafting. Examine displays the exact "
          "remaining and maximum durability, regardless of Examine proficiency. "
          "The item name, inventory line and equipment name never gain a durability "
-         "counter or suffix. Ordinary non-crafted gear is unaffected.",
+         "counter or suffix. Gathering tool remaining uses also appear in EXAMINE "
+         "without a visible name suffix. Ordinary non-crafted combat gear is unaffected.",
          "gear durability", "armor durability", "weapon durability", "breaking equipment"),
     page("inactive characters", "Inactive Character and Account Cleanup",
          "Characters are automatically removed after a long period with no "
