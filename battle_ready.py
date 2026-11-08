@@ -7,8 +7,10 @@ accidentally switch any toggle off or refresh a paid buff.
 """
 import time
 
-# Ordered so instant defenses happen first; delayed Chisei hand signs last.
-# Heavy transformations and stealth are opt-in rather than automatic.
+# Existing default preparations stay unchanged. Extra learned jutsu are opt-in.
+# Advanced bloodline/tailed-beast modes retain their real activation gates.
+# Mutually exclusive stances are ordered strongest first; never replace an
+# already active stance. Hand-sign casts go last so they cannot interrupt buffs.
 OPTIONS = (
     ("barrier", True),
     ("focused mind", True),
@@ -16,11 +18,21 @@ OPTIONS = (
     ("samurai sabre", True),
     ("sharingan", False),
     ("byakugan", False),
+    ("celestial byakugan", False),
+    ("tenseigan chakra mode", False),
     ("sage mode", False),
+    ("six paths mode", False),
+    ("tailed beast mode", False),
+    ("bijuu cloak", False),
     ("susanoo", False),
+    ("kamui intangibility", False),
+    ("sanchin dachi", False),
+    ("neko ashi dachi", False),
+    ("kihon dachi", False),
     ("silent movement", False),
     ("camouflage", False),
     ("chisei", False),
+    ("hidden mist jutsu", False),
 )
 
 OPTION_DEFAULTS = dict(OPTIONS)
@@ -30,6 +42,15 @@ ALIASES = {
     "sabre": "samurai sabre",
     "sage": "sage mode",
     "eyes": "sharingan",
+    "mist": "hidden mist jutsu",
+    "sixpaths": "six paths mode",
+    "six paths": "six paths mode",
+    "beast mode": "tailed beast mode",
+    "tailed beast": "tailed beast mode",
+    "cloak": "bijuu cloak",
+    "tenseigan": "tenseigan chakra mode",
+    "celestial": "celestial byakugan",
+    "intangibility": "kamui intangibility",
 }
 
 
@@ -52,6 +73,25 @@ def _active(player, key):
         return bool(player.sharingan_active)
     if key == "byakugan":
         return bool(player.byakugan_active)
+    if key == "celestial byakugan":
+        return bool(player.celestial_byakugan_active)
+    if key == "tenseigan chakra mode":
+        return bool(player.tenseigan_active)
+    if key == "six paths mode":
+        return bool(player.six_paths_active)
+    if key == "tailed beast mode":
+        return bool(player.tailed_beast_mode_active)
+    if key == "bijuu cloak":
+        # Never replace a stronger Bijuu form with the weaker cloak.
+        return getattr(player, "bijuu_form", 0) >= 2
+    if key in ("sanchin dachi", "neko ashi dachi", "kihon dachi"):
+        return player.taijutsu_stance == key
+    if key == "kamui intangibility":
+        return getattr(player, "kamui_intangibility_rounds_left", 0) > 0
+    if key == "hidden mist jutsu":
+        import hidden_mist
+        # A caster may still maintain mist in a room they have left.
+        return hidden_mist.owned_room(player) is not None
     if key == "sage mode":
         import sage_mode
         return bool(sage_mode.active_contract(player))
@@ -68,11 +108,19 @@ def _available(player, key):
     import combat
     import data_jutsu
     import skill_training
+    if key in ("celestial byakugan", "tenseigan chakra mode"):
+        import hyuga
+        return (hyuga.unlocked(player, key)
+                and not skill_training.needs_first_practice(
+                    player, data_jutsu.JUTSU[key]["display_name"]))
     if key in data_jutsu.JUTSU:
         jutsu = data_jutsu.JUTSU[key]
-        return bool(combat._can_use_jutsu(player, jutsu, key)
-                    and not skill_training.needs_first_practice(
-                        player, jutsu["display_name"]))
+        available = bool(combat._can_use_jutsu(player, jutsu, key)
+                         and not skill_training.needs_first_practice(
+                             player, jutsu["display_name"]))
+        if key == "kamui intangibility" and not combat._staff_testing_mangekyo(player):
+            return available and bool(player.sharingan_active)
+        return available
     if key == "sharingan":
         return ((player.bloodline_id == "sharingan" and player.bloodline_tomoe >= 1)
                 or combat._staff_testing_mangekyo(player))
@@ -86,6 +134,18 @@ def _available(player, key):
     if key == "susanoo":
         import susanoo
         return susanoo.eligible(player)
+    if key == "six paths mode":
+        import six_paths
+        return six_paths.eligible(player)
+    if key == "tailed beast mode":
+        import data_tailed_beasts
+        return (player.jinchuriki_beast_key in data_tailed_beasts.TAILED_BEASTS_BY_KEY
+                and player.jinchuriki_mastery >= 100)
+    if key == "bijuu cloak":
+        import data_tailed_beasts
+        return (player.jinchuriki_beast_key in data_tailed_beasts.TAILED_BEASTS_BY_KEY
+                and player.level >= 25 and player.bijuu_control >= 20
+                and player.jinchuriki_mastery >= 10)
     return False
 
 
@@ -123,7 +183,10 @@ def _show_config(session):
                   "  config battle ready           View this menu",
                   "  battle ready status           Show currently active preparations",
                   "Already active buffs are never toggled off. Chakra and Stamina are",
-                  "paid normally; unavailable or unpracticed skills are skipped."))
+                  "paid normally; unavailable or unpracticed skills are skipped.",
+                  "High-tier eyes, stances, beast modes and Mist are opt-in.",
+                  "Stances never replace another active stance; one hand-sign",
+                  "cast may be queued at a time."))
     session.send("\n".join(lines))
 
 
@@ -140,6 +203,21 @@ def _cast(session, key):
     elif key == "byakugan":
         import hyuga
         hyuga.cmd_byakugan(session, ["on"])
+    elif key in ("celestial byakugan", "tenseigan chakra mode"):
+        import hyuga
+        hyuga.cast(session, key, ["on"])
+    elif key == "six paths mode":
+        import six_paths
+        six_paths.command(session, ["on"])
+    elif key == "tailed beast mode":
+        commands.cmd_tailed_beast_mode(session, [])
+    elif key == "bijuu cloak":
+        import bijuu_chakra
+        bijuu_chakra.command(session, ["cloak"])
+    elif key in ("sanchin dachi", "neko ashi dachi", "kihon dachi"):
+        commands.cmd_use_jutsu(session, key, [])
+    elif key in ("kamui intangibility", "hidden mist jutsu"):
+        commands.cmd_use_jutsu(session, key, [] if key == "kamui intangibility" else ["on"])
     elif key == "sage mode":
         import sage_mode
         sage_mode.command(session, ["on"])
@@ -184,15 +262,37 @@ def _prepare(session):
                 or getattr(session, "pvp_target", None) is not None):
             unavailable.append(key)
             continue
+        if key in ("sanchin dachi", "neko ashi dachi", "kihon dachi"):
+            # Never override an existing manually chosen or earlier stance.
+            if player.taijutsu_stance:
+                unavailable.append(key)
+                continue
+        if key == "six paths mode" and getattr(player, "sage_active_contract", ""):
+            unavailable.append(key)
+            continue
+        if key == "tailed beast mode" and getattr(player, "rampage_until", 0):
+            unavailable.append(key)
+            continue
+        if key == "celestial byakugan" and not player.byakugan_active:
+            unavailable.append(key)
+            continue
+        if key == "tenseigan chakra mode" and not player.celestial_byakugan_active:
+            unavailable.append(key)
+            continue
         # Respect each ability's real cooldown/resources. The regular command
         # remains the authority for restrictions beyond these checks.
         _cast(session, key)
         if _active(player, key):
             done.append(key)
-        elif key == "chisei" and getattr(session, "pending_cast", None) is not None:
-            done.append("chisei (channeling)")
+        elif getattr(session, "pending_cast", None) is not None:
+            done.append(f"{key} (forming hand signs)")
         else:
             failed.append(key)
+        if (getattr(session, "pending_cast", None) is not None
+                or getattr(session, "pending_action", None) is not None
+                or getattr(session, "is_busy", lambda: False)()):
+            session.send("Finish your hand signs or current action, then use BATTLE READY again for remaining preparations.")
+            break
     def label(items):
         return ", ".join(name.title() for name in items) if items else "none"
     session.send(
