@@ -13,8 +13,12 @@ from models import Player
 
 class ElementalReleaseArtsTests(unittest.TestCase):
     def techniques(self, release_id):
+        # This suite verifies the original Ninjutsu release branch.
+        # The matching three Taijutsu moves are separately covered in
+        # test_taijutsu_elemental_kkgk.py.
         return [(key, jutsu) for key, jutsu in data_jutsu.JUTSU.items()
-                if jutsu.get("kkg_gate") == release_id]
+                if jutsu.get("kkg_gate") == release_id
+                and jutsu["class_requirement"] == "ninjutsu"]
 
     def test_every_pair_grants_three_moves_at_or_after_second_reveal(self):
         for pair, release_id in kkg.ELEMENTAL_RELEASES.items():
