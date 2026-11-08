@@ -5502,7 +5502,7 @@ def test_chargen_hair_eye_build_personality():
         out.clear()
 
     feed_local("Fourfieldstest"); feed_local("y"); feed_local("FourFieldsTestPass1")
-    feed_local("leaf"); feed_local("taijutsu"); feed_local("none")
+    feed_local("leaf"); feed_local("taijutsu"); feed_local("uchiha")
     feed_local("balanced"); feed_local("male"); feed_local("tan")
 
     # Invalid input at each of the 4 new steps is rejected and re-prompts.
