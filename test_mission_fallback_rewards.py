@@ -37,7 +37,7 @@ class MissionFallbackRewardsTests(unittest.TestCase):
         self.assertEqual(p.active_missions[0]["dynamic"]["mission_type"], "courier")
         self.assertEqual(p.mission_cooldowns["dynamic_B-Rank"], 2200)
         with patch.object(missions.time, "time", return_value=1000):
-            self.assertIn("too recently", missions.request_mission(p, "b"))
+            self.assertIn("already have an active", missions.request_mission(p, "b"))
 
     def test_no_hunt_can_choose_recovery_first(self):
         p = ninja()
