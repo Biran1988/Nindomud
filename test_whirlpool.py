@@ -218,7 +218,11 @@ class WhirlpoolTests(unittest.TestCase):
         content.populate()
         self.assertEqual(kage.kage_title("whirlpool"), "the Whirlpool Leader")
         self.assertEqual(len(missions.missions_for_village("whirlpool")), 2)
-        for vnum in (5006, 5106, 5206, 5306, 5406, 6051, 6052, 6053, 6055, 6057):
+        # The original Whirlpool bandit and four rank-tier quest mobs
+        # have been retired; unrelated staff and village NPCs remain.
+        for vnum in (5006, 5106, 5206, 5306, 5406):
+            self.assertNotIn(vnum, combat.MOB_TEMPLATES)
+        for vnum in (6051, 6052, 6053, 6055, 6057):
             self.assertIn(vnum, combat.MOB_TEMPLATES)
         headbands = [p["short_desc"] for p in olc.OBJECT_TEMPLATES.values() if "Uzushio" in p["short_desc"]]
         self.assertEqual(len(headbands), 8)
