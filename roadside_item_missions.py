@@ -161,6 +161,9 @@ def try_pickup(session, query, *, all_mode=False):
                (not query or all(word in item[2].casefold() for word in query.casefold().split()))]
     if not matches:
         return False
+    # If two ninjas have identical lost items in the same road room,
+    # GET must prefer the caller's own instance over anyone else's.
+    matches.sort(key=lambda pair: pair[1][0] != owner)
     selected = matches if all_mode else matches[:1]
     handled = False
     for key, (bound_owner, _room, name) in selected:
