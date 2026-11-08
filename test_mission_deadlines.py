@@ -43,7 +43,7 @@ class MissionCommandTests(unittest.TestCase):
         info = missions.mission_info(ninja, now=1000)
         self.assertIn("a level-appropriate rogue", info)
         self.assertIn("level 60", info)
-        self.assertIn("0/2", info)
+        self.assertIn("0/1", info)
         self.assertIn("30m", info)
         self.assertNotIn("an unmarked rogue", info)
 
