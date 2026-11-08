@@ -176,4 +176,27 @@ PAGES = [
          "for the maximum 25% total sword strike damage bonus. "
          "See HELP SAMURAI SABRE.",
          "samurai sabre v", "sabre 5"),
+    page("elemental taijutsu", "Elemental KKGK Taijutsu",
+         "Syntax: <elemental taijutsu technique> <enemy> | HELP <technique>\\n\\n"
+         "Taijutsu now has 33 physical Kekkei Genkai strikes: three each "
+         "for Ice, Wood, Storm, Boil, Lava, Scorch, Magnet, Explosion, "
+         "Flashfire, Tempest and Dust Releases. These are direct punches, "
+         "kicks, palms and combinations, not projected Ninjutsu spells. "
+         "They inflict physical damage, use mainly Stamina plus a smaller "
+         "amount of Chakra, have no hand signs or casting delay, and can "
+         "apply the same elemental status effects as their corresponding "
+         "Ninjutsu releases. Their damage is set to 85% of matching-tier "
+         "Ninjutsu base damage to balance their instant impact.\\n\\n"
+         "First, earn a real nature-based elemental release through Chakra "
+         "Paper; existing clan bloodline restrictions remain unchanged. "
+         "The first three strikes unlock at levels 25, 45 and 70 for "
+         "the matching release. Dust Release (Kekkei Tota) has all three "
+         "techniques at level 100 and requires Earth, Wind and Fire. "
+         "Taijutsu fighters learn the moves automatically when qualified, "
+         "including retroactive login unlocks. Only the Taijutsu class "
+         "can activate them; other classes keep their original Ninjutsu "
+         "and elemental options unchanged. Use PRAC KKGK or SKILLS for "
+         "your techniques, then HELP <name> for costs and effects. "
+         "A first teacher practice may be required by normal skill rules.",
+         "kkgk taijutsu", "taijutsu kekkei genkai", "elemental martial arts"),
 ]
