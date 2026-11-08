@@ -150,4 +150,30 @@ PAGES = [
          "EXAMINE shows it, not the visible item name. Durability and "
          "permanent gem inlays remain separate.",
          "weapon enchantments", "enchantment effects", "enchanted weapons"),
+    page("samurai sabre 2", "Samurai Sabre 2 (Passive)",
+         "Automatic Bukijutsu passive unlocked at ninja level 85. "
+         "No scroll, manual command, or teacher practice is needed. "
+         "Adds +5% sword strike damage while the original SAMURAI SABRE "
+         "toggle is active, for a 10% total bonus. Does nothing while "
+         "Samurai Sabre is off. See HELP SAMURAI SABRE.",
+         "samurai sabre ii", "sabre 2"),
+    page("samurai sabre 3", "Samurai Sabre 3 (Passive)",
+         "Automatic Bukijutsu passive unlocked at ninja level 140. "
+         "No scroll, manual command, or teacher practice is needed. "
+         "Adds another +5% while SAMURAI SABRE is active with a sword, "
+         "for a 15% total bonus. See HELP SAMURAI SABRE.",
+         "samurai sabre iii", "sabre 3"),
+    page("samurai sabre 4", "Samurai Sabre 4 (Passive)",
+         "Automatic Bukijutsu passive unlocked at ninja level 195. "
+         "No scroll, manual command, or teacher practice is needed. "
+         "Adds another +5% while SAMURAI SABRE is active with a sword, "
+         "for a 20% total bonus. See HELP SAMURAI SABRE.",
+         "samurai sabre iv", "sabre 4"),
+    page("samurai sabre 5", "Samurai Sabre 5 (Passive)",
+         "Automatic Bukijutsu passive unlocked at ninja level 250. "
+         "No scroll, manual command, or teacher practice is needed. "
+         "Adds another +5% while SAMURAI SABRE is active with a sword, "
+         "for the maximum 25% total sword strike damage bonus. "
+         "See HELP SAMURAI SABRE.",
+         "samurai sabre v", "sabre 5"),
 ]
