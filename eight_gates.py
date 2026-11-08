@@ -216,7 +216,15 @@ def tick(session, *, now=None):
     cost = GATES[gate - 1][3]
     if player.stamina < cost:
         end(player, forced=True)
-        session.send("&YYour Stamina gives out. The Inner Gates slam shut; exhaustion follows.&x")
+        if gate == 8:
+            import combat
+            if combat.is_immortal_immune_to_defeat(session):
+                player.health = max(1, player.health)
+            else:
+                player.health = 0
+            session.send("&RThe Gate of Death exhausts the last of your life force. You collapse!&x")
+        else:
+            session.send("&YYour Stamina gives out. The Inner Gates slam shut; exhaustion follows.&x")
         return
     player.stamina -= cost
     wound_pct = GATES[gate - 1][6]
