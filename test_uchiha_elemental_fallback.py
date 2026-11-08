@@ -56,7 +56,8 @@ class UchihaElementalFallbackTests(unittest.TestCase):
                 self.assertTrue(kkg.sync_elemental_release(p))
                 self.assertEqual(p.elemental_release_id, release_id)
                 moves = sorted((j for j in data_jutsu.JUTSU.values()
-                                if j.get("kkg_gate") == release_id),
+                                if j.get("kkg_gate") == release_id
+                                and j["class_requirement"] == "ninjutsu"),
                                key=lambda j: j["level_requirement"])
                 self.assertEqual([j["level_requirement"] for j in moves], [25,45,70])
                 self.assertIn(moves[0]["display_name"], p.learned_skills)
