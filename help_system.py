@@ -4180,7 +4180,10 @@ for _release_key, _release_jutsu in data_jutsu.JUTSU.items():
     if _release_id in _release_data.ELEMENTAL_RELEASE_NAMES and _release_key not in _EXPANSION_DESCRIPTIONS:
         _EXPANSION_HELP_KEYS += (_release_key,)
         _EXPANSION_DESCRIPTIONS[_release_key] = (
-            f"A {_release_data.ELEMENTAL_RELEASE_NAMES[_release_id]} attack that strikes one target. "
+            (f"A close-range {_release_data.ELEMENTAL_RELEASE_NAMES[_release_id]} Taijutsu strike. "
+             + _release_jutsu.get("description", "") + " Uses physical damage and no hand signs. "
+             if _release_jutsu.get("jutsu_type") == "kkgk_taijutsu_strike"
+             else f"A {_release_data.ELEMENTAL_RELEASE_NAMES[_release_id]} attack that strikes one target. ")
             + {
                 "off_balance": "An off-balance target loses Stamina over time.",
                 "drained": "A drained target loses Chakra over time.",
@@ -4195,6 +4198,8 @@ for _key in _EXPANSION_HELP_KEYS:
     _jutsu = data_jutsu.JUTSU[_key]
     _type = _jutsu.get("jutsu_type")
     _syntax = f"perform {_key}" if _type in ("buff", "elemental_clone") else f"perform {_key} <target>"
+    if _type == "kkgk_taijutsu_strike":
+        _syntax = f"{_key} <target>  (or use during combat without a target)"
     if _type in ("chisei", "room_sleep"):
         _syntax = f"perform {_key}"
     if _type == "chisei":
@@ -4229,6 +4234,8 @@ for _key in _EXPANSION_HELP_KEYS:
     if _jutsu.get("kkg_gate") in _release_data.ELEMENTAL_RELEASE_NAMES:
         _release_name = _release_data.ELEMENTAL_RELEASE_NAMES[_jutsu["kkg_gate"]]
         _nature = f" Requires {_release_name} and its revealed chakra natures, without a clan bloodline."
+        if _type == "kkgk_taijutsu_strike":
+            _nature += " Taijutsu class only; learned automatically at the listed level. No scroll or hand signs."
     if _jutsu.get("requires_water"):
         _nature += " Requires water in the room (ocean, river, lake, or swamp)."
     _effect = (f" { _jutsu.get('effect_chance_pct', 100)}% chance to inflict {_jutsu['effect'].replace('_', ' ')}."
