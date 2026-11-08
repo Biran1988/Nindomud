@@ -26,11 +26,14 @@ class RankCappedRewardMessageTests(unittest.TestCase):
         old_ryo = self.player.ryo
         old_mp = self.player.mission_points
 
-        messages = missions._complete_mission(self.player, mission, entry)
+        with patch.object(missions.random, "randint", return_value=3):
+            messages = missions._complete_mission(self.player, mission, entry)
 
         self.assertEqual(self.player.experience, self.starting_xp)
         self.assertEqual(self.player.ryo, old_ryo + mission["reward_ryo"])
-        self.assertEqual(self.player.mission_points, old_mp + mission["reward_mission_points"])
+        self.assertEqual(self.player.mission_points, old_mp + 3)
+        self.assertEqual(self.player.mission_points_earned_total, 3)
+        self.assertIn("3 mission point(s)", messages[0])
         self.assertIn("0 experience", messages[0])
         self.assertIn("Rank cap", messages[0])
         self.assertNotIn("You receive 200 experience", messages[0])
