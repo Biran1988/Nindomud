@@ -42,8 +42,10 @@ PAGES = [
          "gates", "gate", "inner gates", "eight inner gates", "gate of death"),
     page("mission rewards", "Mission Points and Automatic Fallbacks",
          "Every completed mission, including hunts, gathering, lost-item "
-         "recovery, and courier delivery, rewards a randomly rolled 1-5 "
-         "mission points. The same amount counts toward your current "
+         "recovery, and courier delivery, awards rank-scaled random mission "
+         "points: D 1-5, C 4-9, B 7-13, A 11-17, S 15-20. These "
+         "ranges intentionally overlap, with a maximum of 20 points. "
+         "The rolled amount counts toward your current "
          "spendable balance and lifetime total. XP and Ryo still scale "
          "with mission rank.\\n\\n"
          "When MISSION REQUEST <rank> cannot find a Mission-flagged enemy "

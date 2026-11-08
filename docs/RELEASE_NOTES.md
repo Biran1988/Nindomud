@@ -15,6 +15,9 @@ existing server installation, keeping the server's `data/` directory intact.
 
 ## Recent changes included
 
+- **15.447 Mission point scaling:** Each completed mission rolls a random point reward in its rank's overlapping band: D 1–5, C 4–9, B 7–13, A 11–17, S 15–20. Same payout for all mission types; S-Rank caps at 20, and `mission info` displays the range.
+- **15.446 Mission fallback:** When no eligible rank-matched Mission mob exists, the game offers a randomized item-recovery or courier delivery objective. Both types also grant rank-based mission points.
+
 - **15.445 Courier missions:** `mission request delivery <rank>` gives a unique sealed parcel bound to the requesting ninja. Deliver it to a real village NPC using `deliver` or `give parcel <npc>` within 30 minutes. Cargo cannot be dropped, traded, auctioned, sold or stored. This feature changes only source; all live `data/` files are preserved.
 - **15.444 Eight Inner Gates:** Taijutsu levels 20/40/65/90/120/155/195/240 gain eight progressively stronger Gates with Stamina upkeep and higher-tier Health drain; the final Gate lasts 30 seconds and is fatal to the user. Six follow-up moves unlock across the Gates. `gates status`, `gates <1-8>`, `gates off`, `gates safe`; Eighth Gate requires explicit `gates 8 confirm`. Battle Ready only selects Gates 1-7 and is OFF by default.
 

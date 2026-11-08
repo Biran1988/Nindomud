@@ -61,28 +61,60 @@ class MissionFallbackRewardsTests(unittest.TestCase):
         self.assertEqual(p.active_missions, [])
         self.assertNotIn("dynamic_A-Rank", p.mission_cooldowns)
 
-    def test_completion_rolls_once_per_mission_from_1_to_5(self):
+    def test_overlapping_reward_ranges_end_at_20(self):
+        self.assertEqual(missions.MISSION_POINT_RANGES, {
+            "D-Rank": (1, 5), "C-Rank": (4, 9), "B-Rank": (7, 13),
+            "A-Rank": (11, 17), "S-Rank": (15, 20),
+        })
+        bands = list(missions.MISSION_POINT_RANGES.values())
+        self.assertEqual(bands[-1][1], 20)
+        for lower, higher in zip(bands, bands[1:]):
+            self.assertLessEqual(higher[0], lower[1])
+
+    def test_completion_rolls_once_in_each_rank_for_all_mission_types(self):
         p = ninja()
+        expected_total = 0
+        types = ("kill", "gather", "retrieve", "courier", "kill")
         with patch("village_perks.ryo_multiplier", return_value=1.0), \
                 patch("village_perks.xp_multiplier", return_value=1.0), \
                 patch("leveling.grant_experience", return_value=[]):
-            for points in (1, 5):
-                entry = {"mission_id": "dynamic_C-Rank_test_" + str(points),
-                         "progress": 1}
-                mission = {
-                    "mission_id": entry["mission_id"], "mission_type": "retrieve",
-                    "rank": "C-Rank", "title": "Sample Recovery",
-                    "target_count": 1, "reward_xp": 0, "reward_ryo": 10,
-                    "reward_mission_points": 999, "cooldown_seconds": 60,
-                }
-                p.active_missions.append(entry)
-                with patch.object(missions.random, "randint", return_value=points) as roll:
-                    messages = missions._complete_mission(p, mission, entry)
-                roll.assert_called_once_with(1, 5)
-                self.assertIn(f"and {points} mission point(s).", messages[0])
-        self.assertEqual(p.mission_points, 6)
-        self.assertEqual(p.mission_points_earned_total, 6)
-        self.assertEqual(len(p.completed_missions), 2)
+            for (rank, (minimum, maximum)), mission_type in zip(
+                    missions.MISSION_POINT_RANGES.items(), types):
+                for points in (minimum, maximum):
+                    with self.subTest(rank=rank, type=mission_type, points=points):
+                        entry = {"mission_id": f"dynamic_{rank}_{mission_type}_{points}",
+                                 "progress": 1}
+                        mission = {
+                            "mission_id": entry["mission_id"],
+                            "mission_type": mission_type,
+                            "rank": rank, "title": "Test mission", "target_count": 1,
+                            "reward_xp": 0, "reward_ryo": 10,
+                            "reward_mission_points": 999, "cooldown_seconds": 60,
+                        }
+                        p.active_missions.append(entry)
+                        with patch.object(missions.random, "randint", return_value=points) as roll:
+                            messages = missions._complete_mission(p, mission, entry)
+                        roll.assert_called_once_with(minimum, maximum)
+                        self.assertIn(f"and {points} mission point(s).", messages[0])
+                        expected_total += points
+                        self.assertEqual(p.mission_points, expected_total)
+                        self.assertEqual(p.mission_points_earned_total, expected_total)
+        self.assertEqual(len(p.completed_missions), 10)
+
+    def test_mission_info_shows_its_rank_reward_band(self):
+        p = ninja()
+        p.active_missions.append({
+            "mission_id": "dynamic_S-Rank_info",
+            "progress": 0,
+            "expires_at": missions.time.time() + 100,
+            "dynamic": {
+                "mission_id": "dynamic_S-Rank_info", "rank": "S-Rank",
+                "mission_type": "retrieve", "title": "Find the scroll",
+                "target_count": 1, "quest_item_name": "Lost scroll",
+                "quest_region": "Roadside Inn",
+            },
+        })
+        self.assertIn("15-20 (random)", missions.mission_info(p))
 
 
 if __name__ == "__main__":

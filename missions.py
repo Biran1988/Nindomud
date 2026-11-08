@@ -205,6 +205,22 @@ RANK_LEVEL_OFFSETS = {
 }
 MAX_CHARACTER_LEVEL = 250
 
+# Mission point rewards overlap by rank: higher jobs are more valuable on
+# average, but a strong roll from a lower rank can beat a weak higher one.
+# Applies at completion to EVERY mission type (hunt, gather, retrieve, courier).
+MISSION_POINT_RANGES = {
+    "D-Rank": (1, 5),
+    "C-Rank": (4, 9),
+    "B-Rank": (7, 13),
+    "A-Rank": (11, 17),
+    "S-Rank": (15, 20),
+}
+
+
+def mission_point_range(rank: str):
+    """Return the inclusive reward band; legacy unranked missions use D."""
+    return MISSION_POINT_RANGES.get(rank, MISSION_POINT_RANGES["D-Rank"])
+
 
 def level_window_for_rank(player_level: int, rank: str):
     """Inclusive mob-level range for the requested rank.
@@ -536,7 +552,8 @@ def mission_info(player: Player, now=None) -> str:
         else:
             lines.append(f"    Objective: {mission['description']}")
         lines.append(f"    Progress: {entry.get('progress', 0)}/{mission['target_count']}")
-        lines.append("    Mission points on completion: random 1-5")
+        mp_min, mp_max = mission_point_range(mission.get("rank", "D-Rank"))
+        lines.append(f"    Mission points on completion: {mp_min}-{mp_max} (random)")
         lines.append(f"    Time remaining: {_format_duration(remaining)}")
         lines.append(f"    To abandon: mission fail {mission['rank'].lower().replace('-rank', '')}")
     return "\n".join(lines)
@@ -641,9 +658,10 @@ def _complete_mission(player: Player, mission: dict, entry: dict) -> List[str]:
     ryo_mult = village_perks.ryo_multiplier(player.village)
     ryo_reward = int(mission["reward_ryo"] * ryo_mult)
     player.ryo += ryo_reward
-    # Each successful mission independently rolls 1-5 points, regardless of
-    # rank or mission type. Keep spendable and lifetime balances in sync.
-    mission_points_reward = random.randint(1, 5)
+    # Roll at completion, not assignment. Rank controls the overlapping
+    # reward band; mission type does not. Keep both balances in sync.
+    mp_min, mp_max = mission_point_range(mission.get("rank", "D-Rank"))
+    mission_points_reward = random.randint(mp_min, mp_max)
     player.mission_points += mission_points_reward
     player.mission_points_earned_total += mission_points_reward
     player.village_reputation[player.village] = (
