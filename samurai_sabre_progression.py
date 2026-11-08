@@ -34,13 +34,14 @@ def sync_passives(player):
 
 def damage_bonus_percent(player):
     """Total Sabre bonus, 0 when inactive or not wielding a sword."""
-    if not getattr(player, "samurai_sabre_active", False):
+    if (not getattr(player, "samurai_sabre_active", False)
+            or getattr(player, "level", 0) < BASE_LEVEL):
         return 0
     if getattr(player, "primary_class", None) != "bukijutsu":
         return 0
     import data_weapons
     import ninja_arts
-    wielded = getattr(player, "equipment", {}).get("wielded", "")
+    wielded = (getattr(player, "equipment", None) or {}).get("wielded") or ""
     if data_weapons.weapon_type_for_item(ninja_arts.base_item(wielded)) != "sword":
         return 0
     total = BASE_BONUS_PCT
