@@ -284,6 +284,7 @@ def request_mission(player: Player, rank: str) -> str:
     if remaining > 0:
         return f"You've requested a {rank} mission too recently. You can request another in {_format_duration(remaining)}."
     if any((_resolve_mission(m) or {}).get("rank") == rank
+           and (_resolve_mission(m) or {}).get("mission_type", "kill") == "kill"
            for m in player.active_missions):
         return f"You already have an active {rank} mission -- finish or abandon it first."
 
