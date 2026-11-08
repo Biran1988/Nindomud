@@ -30,6 +30,15 @@ help_system.AUDIT_LOG_PATH = storage.DATA_DIR + "/help_audit.log"
 
 import combat              # noqa: E402
 import olc                 # noqa: E402
+
+# Compatibility opponent ONLY within this isolated smoke-test process.
+# The live game deliberately removed old mission-bandit templates; do NOT
+# register this via content.populate(), a saved area, or production /data.
+# Older smoke scenarios still refer to a disposable NPC VNUM 5001.
+combat.register_template(5001, "a wandering bandit near Konoha",
+                         level=3, max_health=80, min_damage=1,
+                         max_damage=4, experience_reward=100, ryo_reward=5)
+combat.MOB_TEMPLATES[5001]["long_desc"] = "A wandering bandit near Konoha is here."
 assert content._ITEM_VNUMS["hoe_copper"] == 20802
 assert content._ITEM_VNUMS["chisel_copper"] == 20803
 for _tool_key in ("hoe_copper", "chisel_copper"):
