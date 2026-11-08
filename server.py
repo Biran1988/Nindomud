@@ -139,6 +139,7 @@ async def pulse_loop() -> None:
     import territory
     import tips
     import upkeep_reports
+    import inactive_player_purge
     from session import ACTIVE_SESSIONS, State
 
     elapsed_since_regen = 0.0
@@ -152,6 +153,7 @@ async def pulse_loop() -> None:
     tips_rotation_index = 0
     elapsed_since_area_reset = 0.0
     elapsed_since_seasonal = 0.0
+    elapsed_since_inactive_purge = 0.0
 
     def _broadcast_all(message: str) -> None:
         for s in ACTIVE_SESSIONS:
@@ -168,6 +170,10 @@ async def pulse_loop() -> None:
         from session import expire_linkdead_sessions
         expire_linkdead_sessions()
 
+        elapsed_since_inactive_purge += PULSE_SECONDS
+        if elapsed_since_inactive_purge >= 86400:
+            elapsed_since_inactive_purge = 0.0
+            inactive_player_purge.purge_inactive()
         elapsed_since_regen += PULSE_SECONDS
         elapsed_since_idle_upkeep += PULSE_SECONDS
         elapsed_since_autosave += PULSE_SECONDS
@@ -347,6 +353,8 @@ async def pulse_loop() -> None:
 async def run_server(host: str = config.HOST, port: int = config.PORT) -> None:
     storage.ensure_dirs()
     network_bans.initialize()
+    import inactive_player_purge
+    inactive_player_purge.purge_inactive()
     server = await asyncio.start_server(handle_connection, host, port)
     import server_uptime
     server_uptime.start()  # a fresh clock per reboot or new server process
