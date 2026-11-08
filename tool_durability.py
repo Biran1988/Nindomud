@@ -38,14 +38,8 @@ def uses_left(item_name: str) -> tuple:
 
 
 def display_name(item_name: str) -> str:
-    """Show remaining uses even on a tool that has never been used."""
-    import olc
-    base = base_name(item_name).lower()
-    if not any(p.get("item_type") == "tool" and p.get("short_desc", "").lower() in base
-               for p in olc.OBJECT_TEMPLATES.values()):
-        return item_name
-    remaining, total = uses_left(item_name)
-    return f"{base_name(item_name)} [{remaining}/{total} uses]"
+    """Only display the genuine name; tool uses appear under EXAMINE."""
+    return base_name(item_name)
 
 
 def spend_use(item_name: str) -> str | None:
