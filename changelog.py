@@ -586,6 +586,7 @@ CHANGELOG = [
     ("15.439", "Samurai Sabre begins at +5% damage and gains automatic passive Samurai Sabre 2/3/4/5 at levels 85, 140, 195 and 250. Each passive adds 5% while the base sword technique is on (up to +25%). Updated poison/toxin/enchantment help and separate Sabre tier pages; no scrolls, item-name tags or additional upkeep."),
     ("15.440", "Added 33 close-range elemental Kekkei Genkai Taijutsu techniques, three for each of eleven elemental releases. They use the matching revealed natures, Taijutsu class, physical damage, higher Stamina/lower Chakra costs, existing status effects and no hand signs. Added individual help pages and one-word shortcuts."),
     ("15.441", "Added configurable BATTLE READY combat preparation. Use BATTLE READY CONFIG or CONFIG BATTLE READY to switch Barrier, Focused Mind, Sensory Detect, Samurai Sabre, Sharingan, Byakugan, Sage Mode, Susanoo, Silent Movement, Camouflage and Chisei on or off independently. Character selections persist, and activated buffs obey normal costs and restrictions without toggling existing buffs off."),
+    ("15.442", "All eight regular Farming crops can now be eaten raw, or cooked using the Cooking job for substantially stronger Stamina restoration. Cooked produce uses the existing pot or apartment kitchen, normal failure and XP rules, and separate safe item prototypes; Medicinal Herbs remain a crafting ingredient. Added EAT, COOK and FARM help."),
 
 
 ]
