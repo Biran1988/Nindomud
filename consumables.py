@@ -10,6 +10,8 @@ commands.py needs to change.
 """
 
 import time
+
+import farming
 from typing import Optional, Tuple
 
 CONSUMABLES = {
@@ -78,6 +80,18 @@ CONSUMABLES = {
         "message": "You eat {item}. You feel utterly restored.",
     },
 }
+
+# Both harvested and cooked versions use EAT, but cooked crops restore
+# substantially more Stamina. This uses the canonical Farming recipes.
+for _raw, _recipe in farming.EDIBLE_CROPS.items():
+    CONSUMABLES[_raw] = {
+        "category": "food", "restore": "stamina", "amount": _recipe["raw_stamina"],
+        "message": "You eat {item} fresh from the harvest.",
+    }
+    CONSUMABLES[_recipe["dish"].lower()] = {
+        "category": "food", "restore": "stamina", "amount": _recipe["cooked_stamina"],
+        "message": "You enjoy {item}. Cooking brings out a hearty, satisfying meal.",
+    }
 
 # Which command verb is expected for each category -- eating a healing
 # salve or drinking a rice ball should be refused with a hint at the
