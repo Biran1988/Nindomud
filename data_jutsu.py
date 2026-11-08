@@ -764,6 +764,8 @@ import whirlpool_fuinjutsu
 JUTSU.update(whirlpool_fuinjutsu.jutsu_entries())
 import hyuga
 JUTSU.update(hyuga.registry())
+import eight_gates
+JUTSU.update(eight_gates.entries())
 _scale_base_damage_to_level()
 # Close-range Taijutsu applies its 85% base damage balancing during
 # actual combat; the full unlock-level damage ladder remains intact.
