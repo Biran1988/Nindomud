@@ -89,6 +89,13 @@ class CourierMissionsTests(unittest.TestCase):
         self.assertIn(mission["quest_item_name"], self.player.inventory)
         self.assertTrue(any("cannot be dropped" in line for line in self.sent))
 
+    def test_give_parcel_wrong_npc_keeps_cargo(self):
+        _, mission = self.accept()
+        with patch.object(combat, "mobs_in_room", return_value=[self.mob]):
+            commands.cmd_give(self.session, ["parcel", "bandit"])
+        self.assertIn(mission["quest_item_name"], self.player.inventory)
+        self.assertTrue(any("Deliver this parcel" in text for text in self.sent))
+
     def test_mission_command_requests_delivery_and_saves(self):
         commands.cmd_mission(self.session, ["request", "delivery", "b"])
         self.assertTrue(any("Mission requested:" in line for line in self.sent))
