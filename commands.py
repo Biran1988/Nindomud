@@ -2319,6 +2319,9 @@ def cmd_aff(session, args: List[str]) -> None:
     lines = ["&WActive effects:&x " + _format_active_effects(player.active_status_effects)]
     if player.taijutsu_stance:
         lines.append(f"&YTaijutsu stance: {data_jutsu.JUTSU[player.taijutsu_stance]['display_name']}&x")
+    import eight_gates
+    if eight_gates.active(player):
+        lines.append(f"&RInner Gates: {eight_gates.GATES[eight_gates.active(player) - 1][0]}&x")
     if player.sharingan_active:
         lines.append("&RYour Sharingan is active.&x")
     if player.samurai_sabre_active:
@@ -3398,6 +3401,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         return
     if jutsu_data.get("jutsu_type") == "hyuga_mode":
         hyuga.cast(session, jutsu_key, target_words)
+        return
+    if jutsu_data.get("jutsu_type") == "eight_gate":
+        import eight_gates
+        eight_gates.command(session, [str(jutsu_data["required_gate"]), *target_words])
         return
     if jutsu_data.get("jutsu_type") == "general_utility":
         import general_skills
@@ -10194,6 +10201,9 @@ COMMANDS = {
     "sage": sage_mode.command,
     "susanoo": __import__("susanoo").command,
     "set": __import__("susanoo").command_set,
+    "gates": __import__("eight_gates").command,
+    "gate": __import__("eight_gates").command,
+    "eightgates": __import__("eight_gates").command,
     "battle": __import__("battle_ready").command,
     "battleready": __import__("battle_ready").command,
     "bready": __import__("battle_ready").command,
