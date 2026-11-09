@@ -19,6 +19,7 @@ from models import Player
 class GenjutsuExpansionTests(unittest.TestCase):
     def setUp(self):
         self.player = Player("Caster", "Caster", primary_class="genjutsu", level=75)
+        self.player.pvp_organization = 'anbu'
         self.player.room_vnum = 1
         self.player.chakra = 500
         self.player.maximum_chakra = 500
@@ -104,6 +105,7 @@ class GenjutsuExpansionTests(unittest.TestCase):
         self.player.learned_skills = ["Nehan Shōja"]
         foe = combat.Mob(123, 555, "Enemy", 30, 100, 100, 1, 0, 0)
         victim = Player("Victim", "Victim", level=30)
+        victim.pvp_organization = 'root'
         victim.room_vnum = 1
         victim_session = NS(player=victim, send=Mock())
         with patch.object(session_module, "ACTIVE_SESSIONS", [self.session, victim_session]), \
@@ -158,6 +160,7 @@ class GenjutsuExpansionTests(unittest.TestCase):
         attacker = self.player
         attacker.learned_skills = ["Distortion Flame"]
         target = Player("Target", "Target", level=30)
+        target.pvp_organization = 'root'
         target.room_vnum = 1
         target.chakra = 500
         target_session = NS(player=target, send=Mock())

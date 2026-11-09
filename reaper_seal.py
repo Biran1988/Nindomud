@@ -336,6 +336,9 @@ def cast(session, key, words):
     if not target:
         session.send("Reaper Death Seal can bind only another player, never an NPC.")
         return
+    import pvp_organizations
+    if not pvp_organizations.check(session, target):
+        return
     if (target.player.health <= 0 or imprisoned(target.player)
             or target.player.illusion_walk_caster or target.player.tsukuyomi_frozen
             or general_skills.concealed_from(player, target.player)

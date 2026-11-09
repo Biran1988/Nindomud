@@ -260,6 +260,9 @@ def resolve_cast(session, key, payload):
                         or other.player.room_vnum != player.room_vnum
                         or other.player.health <= 0):
                     continue
+                import pvp_organizations
+                if not pvp_organizations.allowed(player, other.player):
+                    continue
                 chance = max(25, min(85, 70 + (player.level - other.player.level) * 2))
                 if random.randint(1, 100) <= chance:
                     if status_effects.willpower_resists(other.player):

@@ -22,10 +22,12 @@ class HiddenMistTests(unittest.TestCase):
         self.enemy = Session(self.enemy_output.append, lambda: None)
         self.caster.state = self.enemy.state = State.PLAYING
         self.caster.player = Player("MistNinja", "MistNinja", primary_class="ninjutsu", level=75)
+        self.caster.player.pvp_organization = 'anbu'
         self.caster.player.room_vnum = self.room.vnum
         self.caster.player.chakra_nature = "water"
         self.caster.player.chakra = 500
         self.enemy.player = Player("EnemyNinja", "EnemyNinja", primary_class="taijutsu", level=75)
+        self.enemy.player.pvp_organization = 'root'
         self.enemy.player.room_vnum = self.room.vnum
         with patch.object(leveling.storage, "save_player"):
             leveling.sync_universal_skills(self.caster.player)

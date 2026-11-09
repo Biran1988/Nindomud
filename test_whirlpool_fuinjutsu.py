@@ -53,6 +53,7 @@ class WhirlpoolFuinjutsuTests(unittest.TestCase):
                           chakra=3000, maximum_chakra=3000,
                           stamina=300, maximum_stamina=300,
                           health=300, maximum_health=300)
+        s.player.pvp_organization = 'akatsuki' if name == 'Caster' else 'anbu'
         s.state = State.PLAYING
         if s not in sessions.ACTIVE_SESSIONS:
             sessions.ACTIVE_SESSIONS.append(s)

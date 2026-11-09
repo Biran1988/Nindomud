@@ -654,6 +654,9 @@ def cast(session, key, words):
     if room is None or room.safe or target_session.player.health <= 0:
         session.send("You cannot apply a hostile seal in a safe room or to a defeated player.")
         return
+    import pvp_organizations
+    if not pvp_organizations.check(session, target_session):
+        return
     if not _ready(session, key):
         return
     target = target_session.player

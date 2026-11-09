@@ -49,6 +49,7 @@ class ReaperSealTests(unittest.TestCase):
         s.player = Player(name, name, village=kwargs.get("village", "whirlpool"),
                           clan=kwargs.get("clan", "uzumaki"), primary_class="ninjutsu",
                           level=25, room_vnum=1, chakra=1000)
+        s.player.pvp_organization = 'akatsuki' if name == 'Sealer' else 'anbu'
         s.account = Account(name, "salt", "hash")
         s.state = State.PLAYING
         storage.save_player(s.player)

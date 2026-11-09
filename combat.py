@@ -64,6 +64,7 @@ import status_effects
 import signature_moves
 import ninja_arts
 import teams
+import pvp_organizations
 from data_villages import VILLAGES
 from models import Player
 
@@ -895,6 +896,8 @@ def _check_jutsu_collisions() -> None:
         target_session = cast.target
         if target_session not in candidates or target_session in already_collided:
             continue
+        if not pvp_organizations.allowed(session.player, getattr(target_session, "player", None)):
+            continue
         other_cast = target_session.pending_cast
         # Mutual: the target's own pending cast must be aimed back at THIS caster.
         if other_cast.target is not session:
@@ -973,6 +976,8 @@ def resolve_illusion_walk_cast(session, target_session, grow_handsigns: bool = T
     all with that passive active). See tracking's own docstring/
     commands.py's own cmd_use_jutsu for the full confirmed design."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1021,6 +1026,8 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     permanently ignites the target, and separately sets their room on
     fire for five minutes (everyone in it except the caster)."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1078,6 +1085,8 @@ def resolve_kamui_limb_removal_cast(session, target_session) -> None:
     directly to NOT be a lingering effect, just a single, massive
     hit if the long cast actually completes."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1115,6 +1124,8 @@ def resolve_izanami_cast(session, target_session, grow_handsigns: bool = True) -
     (confirmed directly -- not tied up or restricted in any way), so
     this deliberately does nothing at all to the caster's own state."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1184,6 +1195,8 @@ def resolve_tsukuyomi_cast(session, target_session, grow_handsigns: bool = True)
     is rolled inside open_tsukuyomi itself, setting how many of the
     caster's own actions the technique lasts."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1252,6 +1265,9 @@ def tick_pending_casts() -> None:
                     or opponent.player.health <= 0):
                 session.send("&DYour hand signs fade -- that shinobi is no longer an active target.&x")
                 continue
+        if cast.is_pvp and not pvp_organizations.check(session, cast.target):
+            session.send("&DYour hostile jutsu dissolves before reaching a protected shinobi.&x")
+            continue
         if cast.is_pvp and getattr(cast.target, "player", None):
             import hidden_mist
             if hidden_mist.obscures(player, cast.target.player) or general_skills.concealed_from(player, cast.target.player):
@@ -3255,6 +3271,12 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     if _is_linkdead(target_session) or _is_linkdead(session):
         jutsu_colors.send(session, "That shinobi is disconnected and cannot be targeted.")
         return
+    if not pvp_organizations.check(session, target_session):
+        return
+    room = world.WORLD.get(player.room_vnum)
+    if room is not None and room.safe:
+        session.send("This is a PvP-safe zone. You cannot attack other players here.")
+        return
     if _is_action_blocked(player):
         jutsu_colors.send(session, "You are unable to act!")
         return
@@ -3874,14 +3896,21 @@ def start_pvp_attack(session, target_session) -> None:
     """Mutual aggro -- both sessions start attacking each other, mirroring
     how mob combat is a two-sided exchange each pulse."""
     if (_is_linkdead(session) or _is_linkdead(target_session)):
-        return
+        return False
+    if not pvp_organizations.check(session, target_session):
+        return False
+    room = world.WORLD.get(session.player.room_vnum)
+    if room is not None and room.safe:
+        session.send("This is a PvP-safe zone. You cannot attack other players here.")
+        return False
     import general_skills
     if general_skills.concealed_from(session.player, target_session.player):
-        return
+        return False
     general_skills.break_camouflage(session)
     general_skills.break_camouflage(target_session)
     session.pvp_target = target_session
     target_session.pvp_target = session
+    return True
 
 
 def engage_damage_attack(session, victim, victim_session=None) -> bool:
@@ -3899,6 +3928,8 @@ def engage_damage_attack(session, victim, victim_session=None) -> bool:
                 or _is_linkdead(session) or _is_linkdead(victim_session)
                 or victim.health <= 0 or victim.room_vnum != player.room_vnum
                 or getattr(victim, "izanami_trapped", False)):
+            return False
+        if not pvp_organizations.check(session, victim_session):
             return False
         room = world.WORLD.get(player.room_vnum)
         if room is not None and room.safe:
@@ -4083,6 +4114,12 @@ def resolve_pvp_pulse(session) -> None:
     player = session.player
     target_session = session.pvp_target
     if target_session is None:
+        return
+    if not pvp_organizations.allowed(player, getattr(target_session, "player", None)):
+        session.pvp_target = None
+        if target_session.pvp_target is session:
+            target_session.pvp_target = None
+        session.send("&DYour PvP fight ends because the organizations are no longer eligible.&x")
         return
     if player.izanami_trapped or (getattr(target_session, "player", None)
                                    and target_session.player.izanami_trapped):
