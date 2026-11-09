@@ -976,6 +976,8 @@ def resolve_illusion_walk_cast(session, target_session, grow_handsigns: bool = T
     all with that passive active). See tracking's own docstring/
     commands.py's own cmd_use_jutsu for the full confirmed design."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1024,6 +1026,8 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
     permanently ignites the target, and separately sets their room on
     fire for five minutes (everyone in it except the caster)."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1081,6 +1085,8 @@ def resolve_kamui_limb_removal_cast(session, target_session) -> None:
     directly to NOT be a lingering effect, just a single, massive
     hit if the long cast actually completes."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1118,6 +1124,8 @@ def resolve_izanami_cast(session, target_session, grow_handsigns: bool = True) -
     (confirmed directly -- not tied up or restricted in any way), so
     this deliberately does nothing at all to the caster's own state."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
@@ -1187,6 +1195,8 @@ def resolve_tsukuyomi_cast(session, target_session, grow_handsigns: bool = True)
     is rolled inside open_tsukuyomi itself, setting how many of the
     caster's own actions the technique lasts."""
     player = session.player
+    if not pvp_organizations.check(session, target_session):
+        return
     if (
         target_session.state.name != "PLAYING"
         or not target_session.player
