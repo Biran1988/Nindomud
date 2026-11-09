@@ -70,7 +70,7 @@ DEFAULT_HELP_ENTRIES = [
             "membership in their home village. Akatsuki recruits from any village.\n\n"
             "You cannot change your organization during a PvP fight, duel, or incoming hostile "
             "cast. You must wait 24 hours between joins and leaves. PvP-safe rooms remain safe. "
-            "Consensual arena duels remain available to everyone, even players outside an organization."
+            "Consensual arena duels also require both players to belong to different PvP organizations."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
@@ -462,7 +462,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: duel <player>  |  duel  |  duel cancel\n"
             "\n"
-            "Description: Open to everyone regardless of PvP organization. A formal, friendly 1v1 fight, staged in a dedicated 10-room arena spanning five biomes (forest, mountain, desert, swamp, plains) -- real biomes, so elemental jutsu affinity genuinely applies there.\n"
+            "Description: Available only to members of rival PvP organizations. A formal, friendly 1v1 fight, staged in a dedicated 10-room arena spanning five biomes (forest, mountain, desert, swamp, plains) -- real biomes, so elemental jutsu affinity genuinely applies there.\n"
             "\n"
             "&Cduel <player>&x - Challenges someone in the room, or accepts a pending challenge from them. The instant BOTH sides have accepted, you're both pulled straight into the arena -- but to two DIFFERENT starting rooms, not the same one. Finding each other through the arena's maze-like layout is part of the challenge.\n"
             "  &G[Active]&x\n"
