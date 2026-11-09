@@ -2,7 +2,7 @@
 
 Players outside a registered organization are immune to player-origin PvP.
 Members can fight members of *other* organizations, never their own allies.
-Safe-room protections also apply to consensual duels, which require rival organizations.
+Safe-room protections remain in place; mutually accepted arena duels are open to all.
 """
 
 import time
@@ -63,14 +63,23 @@ def allowed(attacker, defender):
     return not denial_reason(attacker, defender)
 
 
+def is_accepted_duel(session, opponent):
+    """Only a mutual, accepted arena challenge bypasses organization membership."""
+    duel = getattr(session, "duel", None)
+    return (duel is not None and duel is getattr(opponent, "duel", None)
+            and getattr(duel, "accepted", False) and duel.other(session) is opponent)
+
+
 def allowed_sessions(session, opponent):
-    """Use one rule for PvP attacks, area effects, and accepted duels."""
-    return allowed(getattr(session, "player", None),
-                   getattr(opponent, "player", None))
+    """Member-versus-rival combat or an accepted consensual duel."""
+    return is_accepted_duel(session, opponent) or allowed(
+        getattr(session, "player", None), getattr(opponent, "player", None))
 
 
 def check(session, opponent):
-    """Send the denial to the attacker; never allow a duel bypass."""
+    """Reject nonmember attacks, except accepted consensual duels."""
+    if is_accepted_duel(session, opponent):
+        return True
     reason = denial_reason(getattr(session, "player", None),
                            getattr(opponent, "player", None))
     if reason:
@@ -103,84 +112,6 @@ def _cooldown_left(player, now):
 
 
 def command(session, args):
-    """organization [list|status|join <name>|leave|members <name>]"""
-    player = session.player
-    action = args[0].lower() if args else "status"
-    if action in ("list", "help"):
-        lines = ["&C-- PvP organizations (opt-in) --&x"]
-        for key, (title, villages, description) in ORGANIZATIONS.items():
-            requirement = ", ".join(villages).title() if villages else "Any village"
-            lines.append(f"  &W{title}&x ({key}) - {description} [{requirement}]")
-        lines += [
-            "&YJoining enables PvP against members of other organizations only.&x",
-            "Unaffiliated players are protected from all PvP. Same-organization attacks are blocked.",
-            "Safe rooms remain safe; even consensual duels require rival organization memberships. Changes have a 24-hour cooldown.",
-            "Use 'organization join <name>', 'organization leave', or 'organization status'.",
-        ]
-        session.send("\n".join(lines))
-        return
-
-    if action in ("status", "info"):
-        session.send(f"&CPvP organization:&x {display_name(membership(player))}")
-        if membership(player):
-            session.send("&YPvP active:&x You may fight members of rival organizations outside safe rooms.")
-        else:
-            session.send("&GPvP protected:&x You cannot attack or be attacked by other players, including in duels.")
-        remaining = _cooldown_left(player, time.time())
-        if remaining:
-            hours, minutes = divmod((remaining + 59) // 60, 60)
-            session.send(f"&DNext organization change available in {hours}h {minutes}m.&x")
-        session.send("Commands: organization list | join <name> | leave | members <name>")
-        return
-
-    if action == "members":
-        key = resolve(" ".join(args[1:])) if len(args) > 1 else membership(player)
-        if not key:
-            session.send("Usage: organization members <organization>")
-            return
-        online = sorted(s.player.name for s in session.active_sessions()
-                        if getattr(s, "player", None) and membership(s.player) == key)
-        session.send(f"&C{display_name(key)} online:&x " + (", ".join(online) if online else "No online members"))
-        return
-
-    if action not in ("join", "leave"):
-        session.send("Usage: organization list | status | join <name> | leave | members <name>")
-        return
-
-    if _busy(session):
-        session.send("You cannot change PvP organization while a duel, hostile cast or PvP fight is active.")
-        return
-
-    current = membership(player)
-    if action == "leave" and not current:
-        session.send("You are not currently part of a PvP organization.")
-        return
-
-    key = resolve(" ".join(args[1:])) if action == "join" else ""
-    if action == "join":
-        if not key:
-            session.send("Specify an organization from 'organization list'.")
-            return
-        if key == current:
-            session.send(f"You already belong to {display_name(key)}.")
-            return
-        if current:
-            session.send(f"Leave {display_name(current)} before joining another organization.")
-            return
-        villages = ORGANIZATIONS[key][1]
-        if villages and player.village not in villages:
-            session.send(f"{display_name(key)} only accepts shinobi from: {', '.join(villages)}.")
-            return
-
-    remaining = _cooldown_left(player, time.time())
-    if remaining:
-        session.send("You must wait 24 hours between joining or leaving PvP organizations.")
-        return
-
-    player.pvp_organization = key
-    player.pvp_organization_changed_at = time.time()
-    storage.save_player(player)
-    if key:
-        session.send(f"&RYou joined {display_name(key)}. You are now eligible for PvP against rival organizations.&x")
-    else:
-        session.send("&GYou left your PvP organization. You are now protected from player attacks.&x")
+    """Manage immortal-appointed, invitation-only organizations."""
+    from organization_leaders import command as organization_command
+    return organization_command(session, args)
