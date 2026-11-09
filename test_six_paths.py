@@ -150,6 +150,9 @@ class SixPathsTests(unittest.TestCase):
                         jutsu = data_jutsu.JUTSU[key]
                         self.assertFalse(data_handsigns.has_handsigns(jutsu))
                         victim = self.player("", 75) if pvp else combat.Mob(1, 100, "enemy", 75, 100000, 100000, 1, 0, 0)
+                        if pvp:
+                            p.pvp_organization = 'anbu'
+                            victim.pvp_organization = 'root'
                         victim.health = 100000
                         rolls = iter([1, 100] if pvp else [])
                         with patch.object(combat.random, "randint", side_effect=lambda lo, hi: next(rolls, lo)), \
