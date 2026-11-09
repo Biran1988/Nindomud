@@ -2,7 +2,7 @@
 
 Players outside a registered organization are immune to player-origin PvP.
 Members can fight members of *other* organizations, never their own allies.
-Safe-room protections also apply to consensual duels, which require rival organizations.
+Safe-room protections remain in place; mutually accepted arena duels are open to all.
 """
 
 import time
@@ -63,14 +63,23 @@ def allowed(attacker, defender):
     return not denial_reason(attacker, defender)
 
 
+def is_accepted_duel(session, opponent):
+    """Only a mutual, accepted arena challenge bypasses organization membership."""
+    duel = getattr(session, "duel", None)
+    return (duel is not None and duel is getattr(opponent, "duel", None)
+            and getattr(duel, "accepted", False) and duel.other(session) is opponent)
+
+
 def allowed_sessions(session, opponent):
-    """Use one rule for PvP attacks, area effects, and accepted duels."""
-    return allowed(getattr(session, "player", None),
-                   getattr(opponent, "player", None))
+    """Member-versus-rival combat or an accepted consensual duel."""
+    return is_accepted_duel(session, opponent) or allowed(
+        getattr(session, "player", None), getattr(opponent, "player", None))
 
 
 def check(session, opponent):
-    """Send the denial to the attacker; never allow a duel bypass."""
+    """Reject nonmember attacks, except accepted consensual duels."""
+    if is_accepted_duel(session, opponent):
+        return True
     reason = denial_reason(getattr(session, "player", None),
                            getattr(opponent, "player", None))
     if reason:
