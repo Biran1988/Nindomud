@@ -63,8 +63,23 @@ def allowed(attacker, defender):
     return not denial_reason(attacker, defender)
 
 
+def is_accepted_duel(session, opponent):
+    """A consensual arena duel is allowed even for unaffiliated players."""
+    duel = getattr(session, "duel", None)
+    return (duel is not None and duel is getattr(opponent, "duel", None)
+            and getattr(duel, "accepted", False)
+            and duel.other(session) is opponent)
+
+
+def allowed_sessions(session, opponent):
+    return is_accepted_duel(session, opponent) or allowed(
+        getattr(session, "player", None), getattr(opponent, "player", None))
+
+
 def check(session, opponent):
     """Send the denial to the attacker; avoid modifying combat state."""
+    if is_accepted_duel(session, opponent):
+        return True
     reason = denial_reason(getattr(session, "player", None),
                            getattr(opponent, "player", None))
     if reason:
@@ -107,8 +122,8 @@ def command(session, args):
             lines.append(f"  &W{title}&x ({key}) - {description} [{requirement}]")
         lines += [
             "&YJoining enables PvP against members of other organizations only.&x",
-            "Unaffiliated players are PvP protected. Same-organization attacks are blocked.",
-            "Safe rooms remain safe. You must wait 24 hours between organization changes.",
+            "Unaffiliated players are protected in open-world PvP. Same-organization attacks are blocked.",
+            "Safe rooms remain safe; consensual arena duels remain open to everyone. Changes have a 24-hour cooldown.",
             "Use 'organization join <name>', 'organization leave', or 'organization status'.",
         ]
         session.send("\n".join(lines))
