@@ -60,17 +60,18 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["organization", "org", "pvp", "pvp organizations", "anbu", "root", "akatsuki"],
         "title": "PvP Organizations",
         "body": (
-            "Syntax: organization list | status | join <name> | leave | members <name>\n\n"
-            "Joining a PvP organization enables you to fight members of rival organizations. "
-            "Players not in an organization cannot attack or be attacked by other players. "
-            "Members of the same organization are allies and cannot damage each other. "
-            "Joining never changes your bloodline clan, village, ninja class, or rank. "
-            "Available organizations include Leaf ANBU, Root, Akatsuki, Mist Hunter-nin, "
-            "Seven Ninja Swordsmen, Sand ANBU, Cloud ANBU, and Stone ANBU; most require "
-            "membership in their home village. Akatsuki recruits from any village.\n\n"
-            "You cannot change your organization during a PvP fight, duel, or incoming hostile "
-            "cast. You must wait 24 hours between joins and leaves. PvP-safe rooms remain safe. "
-            "Consensual arena duels also require both players to belong to different PvP organizations."
+            "Syntax: organization list | status | members [org] | invite <player> | accept | decline | leave | hideout\n\n"
+            "Every PvP organization has one immortal-appointed leader. Only its leader may invite "
+            "online players. Invites last 48 hours and must be accepted by the invitee; direct "
+            "joining is disabled. An immortal can use 'organization appoint <org> <player>' to "
+            "appoint or replace leadership, 'organization unappoint <org>' to dismiss, and "
+            "'organization sethideout <org> <existing-room-vnum|none>' to reserve a future hideout.\n\n"
+            "Organization membership enables combat with rival organizations only; nonmembers "
+            "and members of your own organization are protected. Safe zones remain protected. "
+            "Consensual arena duels remain available to everyone regardless of organization. "
+            "You must wait 24 hours to leave or change affiliations and leaders must first "
+            "be replaced or dismissed by an immortal. Clan, village rank and class are unchanged. "
+            "Hideouts are assignments only until rooms and access rules have been built."
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
