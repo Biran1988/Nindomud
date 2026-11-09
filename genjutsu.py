@@ -261,7 +261,7 @@ def resolve_cast(session, key, payload):
                         or other.player.health <= 0):
                     continue
                 import pvp_organizations
-                if not pvp_organizations.allowed(player, other.player):
+                if not pvp_organizations.allowed_sessions(session, other):
                     continue
                 chance = max(25, min(85, 70 + (player.level - other.player.level) * 2))
                 if random.randint(1, 100) <= chance:
