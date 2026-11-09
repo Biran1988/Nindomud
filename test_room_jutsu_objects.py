@@ -25,6 +25,7 @@ class RoomJutsuObjectTests(unittest.TestCase):
         self.session = Session(self.output.append, lambda: None)
         self.session.player = Player("JutsuNinja", "JutsuNinja", level=100,
                                      room_vnum=self.room.vnum)
+        self.session.player.pvp_organization = "anbu"
         self.session.account = Account("JutsuNinja", "salt", "hash", staff_level="implementor")
         self.session.state = State.PLAYING
         self.addCleanup(ACTIVE_SESSIONS.remove, self.session)
@@ -80,6 +81,7 @@ class RoomJutsuObjectTests(unittest.TestCase):
         target = Session(lambda text: None, lambda: None)
         self.addCleanup(ACTIVE_SESSIONS.remove, target)
         target.player = Player("Victim", "Victim", room_vnum=self.room.vnum)
+        target.player.pvp_organization = "root"
         target.player.health = target.player.maximum_health = 800
         target.state = State.PLAYING
         combat.resolve_amaterasu_cast(self.session, target, grow_handsigns=False)

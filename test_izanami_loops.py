@@ -46,6 +46,7 @@ class IzanamiLoopTests(unittest.TestCase):
             chakra=1000, maximum_chakra=1000,
             stamina=1000, maximum_stamina=1000
         )
+        s.player.pvp_organization = "anbu" if name == "Caster" else "root"
         s.state = State.PLAYING
         s.color_enabled = False
         output.clear()

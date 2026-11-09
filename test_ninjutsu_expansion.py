@@ -18,6 +18,7 @@ from models import Player
 class NinjutsuExpansionTests(unittest.TestCase):
     def player(self, level=75, nature="lightning"):
         p = Player(name="Nin", account_name="Nin", primary_class="ninjutsu", level=level)
+        p.pvp_organization = "anbu"
         p.chakra_nature = nature
         p.chakra = 500
         p.room_vnum = 1
@@ -116,6 +117,7 @@ class NinjutsuExpansionTests(unittest.TestCase):
     def test_elemental_clone_assists_in_pvp(self):
         attacker = self.player(50, "lightning")
         defender = Player(name="Defender", account_name="Defender", primary_class="taijutsu", level=50)
+        defender.pvp_organization = "root"
         defender.room_vnum = attacker.room_vnum
         attacker_session = NS(player=attacker, send=Mock())
         defender_session = NS(player=defender, send=Mock())
@@ -164,6 +166,7 @@ class NinjutsuExpansionTests(unittest.TestCase):
 
         p.cooldowns.clear()
         defender = Player(name="Defender", account_name="Defender", level=100)
+        defender.pvp_organization = "root"
         defender.room_vnum = p.room_vnum
         defender.health = defender.maximum_health = 1000
         defender_session = NS(player=defender, send=Mock())

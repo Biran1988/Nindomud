@@ -21,6 +21,7 @@ class SageModeTests(unittest.TestCase):
     def setUp(self):
         self.player = Player(name="Student", account_name="Student", level=80, room_vnum=9001,
                              chakra=1000, maximum_chakra=1000)
+        self.player.pvp_organization = "anbu"
         self.player.maximum_health = 1000
         self.player.health = 500
         self.session = NS(player=self.player, account=NS(staff_level="implementor"),
@@ -192,6 +193,7 @@ class SageModeTests(unittest.TestCase):
         self.player.signed_summoning_contracts = ["ninken"]
         self.player.sage_mastery = {"ninken": 100}
         opponent = Player(name="Opponent", account_name="Opponent", room_vnum=9001)
+        opponent.pvp_organization = "root"
         opponent_session = NS(player=opponent, pvp_target=self.session, send=Mock())
         self.session.pvp_target = opponent_session
         with patch("combat._player_attack_target_once") as attack, \

@@ -46,6 +46,7 @@ import roadside_item_missions
 import npc_schedules
 import data_appearance
 import data_clans
+import pvp_organizations
 import biomes
 import data_jutsu
 import data_kekkei_genkai
@@ -111,7 +112,7 @@ def has_silent_genjutsu(player) -> bool:
 
 # Sleeping is a deliberate resting position. Only non-physical essentials and
 # commands that wake the character may execute until they stand up.
-SLEEPING_ALLOWED_COMMANDS = frozenset({"wizinvis", "setallprac", "ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "time", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc"})
+SLEEPING_ALLOWED_COMMANDS = frozenset({"wizinvis", "setallprac", "ip", "spy", "stand", "wake", "help", "who", "score", "level", "uptime", "time", "jinchuriki", "mastery", "skills", "jutsu", "quit", "save", "ooc", "organization", "org"})
 
 
 def _blocked_while_sleeping(session, verb: str) -> bool:
@@ -2154,6 +2155,10 @@ def _tsukuyomi_torture_action(session, command_name: str) -> None:
         session.send("Your target is no longer there!")
         return
 
+    if not pvp_organizations.allowed_sessions(session, target_session):
+        mangekyo.end_tsukuyomi(session, target_session, world_module)
+        session.send("Tsukuyomi ends: PvP organization protection is now active.")
+        return
     spec = data_mangekyo.TSUKUYOMI_COMMANDS[command_name]
     target = target_session.player
     lo, hi = spec["hp_damage"]
@@ -3296,6 +3301,8 @@ def cmd_attack(session, args: List[str]) -> None:
         session.send("There is nothing here for you to attack.")
         return
 
+    if not pvp_organizations.check(session, target_session):
+        return
     room = world.WORLD.get(player.room_vnum)
     if room and room.safe:
         session.send("This is a PvP-safe zone. You cannot attack other players here.")
@@ -3316,7 +3323,8 @@ def cmd_attack(session, args: List[str]) -> None:
         return
 
     _wake_and_stand(session)
-    combat.start_pvp_attack(session, target_session)
+    if not combat.start_pvp_attack(session, target_session):
+        return
     session.send(f"You attack {target_session.player.name}!")
     target_session.send(f"&R{player.name} attacks you!&x")
     import room_actions
@@ -3555,6 +3563,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if target is None:
             jutsu_colors.send(session, "There is nobody here by that name.")
             return
+        if target_session and not pvp_organizations.check(session, target_session):
+            return
         ninja_arts.use_disable(session, target)
         return
     if jutsu_data.get("jutsu_type") in ("disguise", "item_illusion", "item_decoy", "chisei", "room_sleep"):
@@ -3703,6 +3713,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if target_session.player.health > 0:
             jutsu_colors.send(session, f"You must defeat {target_session.player.name} in combat first.")
             return
+        if not pvp_organizations.check(session, target_session):
+            return
 
         player.chakra -= scaled_chakra_cost
         beast_key = target_session.player.jinchuriki_beast_key
@@ -3796,6 +3808,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if target_session is None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
+        if not pvp_organizations.check(session, target_session):
+            return
+        if world.WORLD.get(player.room_vnum) and world.WORLD.get(player.room_vnum).safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
+            return
 
         player.chakra -= scaled_chakra_cost
         player.cooldowns["tsukuyomi"] = now + jutsu_data["cooldown"]
@@ -3828,6 +3845,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         )
         if target_session is None:
             jutsu_colors.send(session, "There's nobody here by that name.")
+            return
+        if not pvp_organizations.check(session, target_session):
+            return
+        if world.WORLD.get(player.room_vnum) and world.WORLD.get(player.room_vnum).safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
             return
 
         player.chakra -= scaled_chakra_cost
@@ -3870,6 +3892,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         )
         if target_session is None:
             jutsu_colors.send(session, "There's nobody here by that name.")
+            return
+        if not pvp_organizations.check(session, target_session):
+            return
+        if world.WORLD.get(player.room_vnum) and world.WORLD.get(player.room_vnum).safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
             return
 
         import mangekyo
@@ -3929,6 +3956,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         if target_session is None:
             jutsu_colors.send(session, "There's nobody here by that name.")
             return
+        if not pvp_organizations.check(session, target_session):
+            return
+        if world.WORLD.get(player.room_vnum) and world.WORLD.get(player.room_vnum).safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
+            return
 
         player.chakra -= scaled_chakra_cost
         player.cooldowns["kamui limb removal"] = now + jutsu_data["cooldown"]
@@ -3962,6 +3994,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         )
         if target_session is None:
             jutsu_colors.send(session, "There's nobody here by that name.")
+            return
+        if not pvp_organizations.check(session, target_session):
+            return
+        if world.WORLD.get(player.room_vnum) and world.WORLD.get(player.room_vnum).safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
             return
 
         player.chakra -= scaled_chakra_cost
@@ -4013,6 +4050,11 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         )
         if not target_session:
             jutsu_colors.send(session, "There's nobody here by that name.")
+            return
+        if not pvp_organizations.check(session, target_session):
+            return
+        if world.WORLD.get(player.room_vnum) and world.WORLD.get(player.room_vnum).safe:
+            session.send("This is a PvP-safe zone. You cannot attack other players here.")
             return
 
         player.chakra -= scaled_chakra_cost
@@ -4089,6 +4131,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         jutsu_colors.send(session, "There is nothing here to use that on.")
         return
 
+    if not pvp_organizations.check(session, target_session):
+        return
     room = world.WORLD.get(player.room_vnum)
     if room and room.safe:
         jutsu_colors.send(session, "This is a PvP-safe zone. You cannot attack other players here.")
@@ -4778,6 +4822,8 @@ def cmd_duel(session, args: List[str]) -> None:
     if not target_session:
         session.send("There's nobody here by that name.")
         return
+    # A mutually accepted arena duel needs no PvP organization membership.
+    # The arena itself uses the accepted-duel exception in combat.
 
     if session.duel and session.duel.other(session) is target_session and not session.duel.accepted:
         # WE were the one invited -- this is the accept.
@@ -10341,6 +10387,7 @@ COMMANDS = {
     "examine": cmd_examine,
     "write": cmd_write,
     "clan": cmd_clan,
+    "organization": pvp_organizations.command, "org": pvp_organizations.command,
     "list": cmd_list,
     "sell": cmd_sell,
     "gamble": cmd_gamble, "chouhan": cmd_gamble,

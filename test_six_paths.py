@@ -26,6 +26,7 @@ class SixPathsTests(unittest.TestCase):
         p = Player("Reborn", "Reborn", level=level, primary_class=primary_class,
                    village_rank=rank, reincarnation=soul, chakra=1000, maximum_chakra=1000,
                    stamina=1000, maximum_stamina=1000, room_vnum=1)
+        p.pvp_organization = "anbu" if soul else "root"
         return p
 
     def session(self, p):

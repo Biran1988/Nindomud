@@ -16,6 +16,8 @@ class DamageEngagementTests(unittest.TestCase):
                                primary_class="bukijutsu", health=100, chakra=200)
         self.defender = Player("Defender", "Defender", room_vnum=self.room,
                                health=100, maximum_health=100)
+        self.attacker.pvp_organization = "anbu"
+        self.defender.pvp_organization = "root"
         self.s = NS(player=self.attacker, send=Mock(), combat_target=None, pvp_target=None)
         self.target_s = NS(player=self.defender, send=Mock(), combat_target=None, pvp_target=None)
         self.mob = combat.Mob(991712, 991713, "the guard", 25, 300, 300,

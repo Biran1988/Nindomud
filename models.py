@@ -248,6 +248,9 @@ class Player:
     # Clan is cosmetic-only for now (Section 48 defers bloodline mechanics);
     # freely changeable, unlike village/class.
     clan: str = "none"
+    # Opt-in PvP affiliation, separate from bloodline clan and village.
+    pvp_organization: str = ""
+    pvp_organization_changed_at: float = 0.0
     reincarnation: str = ""
     reincarnation_birth_clan: str = ""
     # Existing saves default to resolved so login never gives a new roll.

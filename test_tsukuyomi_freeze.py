@@ -37,6 +37,7 @@ class TsukuyomiFreezeTests(unittest.TestCase):
         session = Session(output.append, lambda: None)
         session.player = Player(name, name, room_vnum=1, chakra=100, maximum_chakra=100)
         session.player.village = "leaf"
+        session.player.pvp_organization = "anbu" if name == "Caster" else "root"
         session.account = Account(name, "", "", staff_level=staff_level)
         session.state = State.PLAYING
         session.color_enabled = False

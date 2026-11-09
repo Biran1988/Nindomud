@@ -56,6 +56,25 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "organization",
+        "keywords": ["organization", "org", "pvp", "pvp organizations", "anbu", "root", "akatsuki"],
+        "title": "PvP Organizations",
+        "body": (
+            "Syntax: organization list | status | join <name> | leave | members <name>\n\n"
+            "Joining a PvP organization enables you to fight members of rival organizations. "
+            "Players not in an organization cannot attack or be attacked by other players. "
+            "Members of the same organization are allies and cannot damage each other. "
+            "Joining never changes your bloodline clan, village, ninja class, or rank. "
+            "Available organizations include Leaf ANBU, Root, Akatsuki, Mist Hunter-nin, "
+            "Seven Ninja Swordsmen, Sand ANBU, Cloud ANBU, and Stone ANBU; most require "
+            "membership in their home village. Akatsuki recruits from any village.\n\n"
+            "You cannot change your organization during a PvP fight, duel, or incoming hostile "
+            "cast. You must wait 24 hours between joins and leaves. PvP-safe rooms remain safe. "
+            "Consensual arena duels remain available to everyone, even players outside an organization."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "mob jutsu", "keywords": ["mob jutsu", "npc jutsu", "mob casting"],
         "title": "NPC Combat Jutsu",
         "body": "Hostile mobs at level 10 and above may use damage-dealing jutsu from their own ninja class (Taijutsu, Ninjutsu, Genjutsu, or Bukijutsu) and at or below their level. Their chakra nature must match elemental techniques. A mob with no set class receives a random class when spawned at level 10 or higher; builders can use mset class to choose a particular class. Level 1-9 mobs NEVER cast jutsu. NPC jutsu consume Chakra/Stamina and have cooldowns, may miss or be dodged, respect Kamui, Sharingan, barriers, Sage defenses and normal death protection, and can apply the listed ordinary status effects. Casting replaces that round's melee attack and follows the level-based mob damage-balance limits. Special bloodline, item-dependent, summoning and room-wide techniques are not automatically cast by NPCs. Mobs regain casting resources between fights. Administrators can use mobscale to adjust global mob damage.",
@@ -443,7 +462,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: duel <player>  |  duel  |  duel cancel\n"
             "\n"
-            "Description: A formal, friendly 1v1 fight, staged in a dedicated 10-room arena spanning five biomes (forest, mountain, desert, swamp, plains) -- real biomes, so elemental jutsu affinity genuinely applies there.\n"
+            "Description: Open to everyone regardless of PvP organization. A formal, friendly 1v1 fight, staged in a dedicated 10-room arena spanning five biomes (forest, mountain, desert, swamp, plains) -- real biomes, so elemental jutsu affinity genuinely applies there.\n"
             "\n"
             "&Cduel <player>&x - Challenges someone in the room, or accepts a pending challenge from them. The instant BOTH sides have accepted, you're both pulled straight into the arena -- but to two DIFFERENT starting rooms, not the same one. Finding each other through the arena's maze-like layout is part of the challenge.\n"
             "  &G[Active]&x\n"
@@ -1546,7 +1565,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: attack <target>  (alias: kill)\n"
             "\n"
-            "Description: Starts a fight with a mob in the room, or (if 'group' or PvP is set up) with another player. Once combat starts, your basic attack resolves automatically every pulse until the fight ends -- you don't need to re-type it each round. The verb shown (slash/stab/punch/etc.) matches whatever you're wielding. See 'help combatstats' for how Hit Roll, Armor Class, Dodge, and Critical Chance factor into each swing.\n"
+            "Description: Starts a fight with a mob in the room, or with a member of a rival PvP organization while you are also a member. Unaffiliated players and members of your own organization are protected. Once combat starts, your basic attack resolves automatically every pulse until the fight ends -- you don't need to re-type it each round. The verb shown (slash/stab/punch/etc.) matches whatever you're wielding. See 'help combatstats' for how Hit Roll, Armor Class, Dodge, and Critical Chance factor into each swing.\n"
             "\n"
             "Date: 2026-08-17"
         ),
