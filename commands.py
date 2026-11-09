@@ -2155,7 +2155,7 @@ def _tsukuyomi_torture_action(session, command_name: str) -> None:
         session.send("Your target is no longer there!")
         return
 
-    if not pvp_organizations.allowed(player, target_session.player):
+    if not pvp_organizations.allowed_sessions(session, target_session):
         mangekyo.end_tsukuyomi(session, target_session, world_module)
         session.send("Tsukuyomi ends: PvP organization protection is now active.")
         return
@@ -4822,8 +4822,8 @@ def cmd_duel(session, args: List[str]) -> None:
     if not target_session:
         session.send("There's nobody here by that name.")
         return
-    if not pvp_organizations.check(session, target_session):
-        return
+    # A mutually accepted arena duel needs no PvP organization membership.
+    # The arena itself uses the accepted-duel exception in combat.
 
     if session.duel and session.duel.other(session) is target_session and not session.duel.accepted:
         # WE were the one invited -- this is the accept.
