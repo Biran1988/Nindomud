@@ -28,6 +28,7 @@ class DefaultJutsuTargetTests(unittest.TestCase):
         self.s = Session(self.out.append, lambda: None)
         self.s.player = Player("Caster", "Caster", level=100, room_vnum=self.room.vnum,
                                chakra=1000, stamina=1000, primary_class="taijutsu")
+        self.s.player.pvp_organization = "anbu"
         self.s.account = Account("Caster", "salt", "hash", staff_level="player")
         self.s.state = State.PLAYING
         self.s.player.learned_skills = [j["display_name"] for j in data_jutsu.JUTSU.values()]
@@ -57,6 +58,7 @@ class DefaultJutsuTargetTests(unittest.TestCase):
     def test_player_aggro_supplies_special_jutsu_and_self_skills_stay_self(self):
         other = Session(lambda text: None, lambda: None)
         other.player = Player("Rival", "Rival", room_vnum=self.room.vnum)
+        other.player.pvp_organization = "root"
         other.state = State.PLAYING
         combat.start_pvp_attack(other, self.s)
         with patch("reaper_seal.cast") as cast:
