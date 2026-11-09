@@ -83,6 +83,7 @@ class DefaultJutsuTargetTests(unittest.TestCase):
     def test_player_opponent_is_not_confused_with_npc_of_same_name(self):
         other = Session(lambda text: None, lambda: None)
         other.player = Player("Bandit", "Bandit", room_vnum=self.room.vnum)
+        other.player.pvp_organization = "root"
         other.state = State.PLAYING
         combat.start_pvp_attack(self.s, other)
         with patch.object(combat, "use_jutsu_on_player") as cast, patch.object(combat, "use_jutsu") as npc_cast:
