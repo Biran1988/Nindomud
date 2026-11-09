@@ -251,6 +251,9 @@ class Player:
     # Opt-in PvP affiliation, separate from bloodline clan and village.
     pvp_organization: str = ""
     pvp_organization_changed_at: float = 0.0
+    pvp_organization_invite: str = ""  # invitation-only PvP membership
+    pvp_organization_invited_by: str = ""
+    pvp_organization_invite_expires_at: float = 0.0
     reincarnation: str = ""
     reincarnation_birth_clan: str = ""
     # Existing saves default to resolved so login never gives a new roll.
