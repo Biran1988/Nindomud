@@ -22,6 +22,7 @@ class LegacyTechniquesTests(unittest.TestCase):
         self.session = Session(self.output.append, lambda: None)
         self.session.state = State.PLAYING
         self.player = Player("Caster", "Caster", primary_class="bukijutsu", level=80)
+        self.player.pvp_organization = 'anbu'
         self.player.room_vnum = 1
         self.player.chakra = 500
         self.player.stamina = 100
@@ -104,6 +105,7 @@ class LegacyTechniquesTests(unittest.TestCase):
         other = Session(lambda message: None, lambda: None)
         other.state = State.PLAYING
         other.player = Player("Rival", "Rival", room_vnum=1, health=200, maximum_health=200)
+        other.player.pvp_organization = 'root'
         self.session.active_sessions = lambda: [self.session, other]
         self.player.learned_skills = ["1000 Years of Death"]
         with patch.object(combat, "find_mob", return_value=None), \
