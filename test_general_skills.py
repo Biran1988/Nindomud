@@ -46,6 +46,7 @@ class GeneralSkillTests(unittest.TestCase):
         session.player = Player(name, name, primary_class="taijutsu", level=level,
                                 room_vnum=self.room.vnum)
         player = session.player
+        player.pvp_organization = "anbu" if name == "StealthNinja" else "root"
         player.chakra = player.stamina = 1000
         player.health = player.maximum_health = 1000
         player.practice_gate_enabled = True
