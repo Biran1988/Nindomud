@@ -2,7 +2,7 @@
 
 Players outside a registered organization are immune to player-origin PvP.
 Members can fight members of *other* organizations, never their own allies.
-Safe-room protections still apply. Consensual accepted duels are exempt.
+Safe-room protections also apply to consensual duels, which require rival organizations.
 """
 
 import time
@@ -63,23 +63,14 @@ def allowed(attacker, defender):
     return not denial_reason(attacker, defender)
 
 
-def is_accepted_duel(session, opponent):
-    """A consensual arena duel is allowed even for unaffiliated players."""
-    duel = getattr(session, "duel", None)
-    return (duel is not None and duel is getattr(opponent, "duel", None)
-            and getattr(duel, "accepted", False)
-            and duel.other(session) is opponent)
-
-
 def allowed_sessions(session, opponent):
-    return is_accepted_duel(session, opponent) or allowed(
-        getattr(session, "player", None), getattr(opponent, "player", None))
+    """Use one rule for PvP attacks, area effects, and accepted duels."""
+    return allowed(getattr(session, "player", None),
+                   getattr(opponent, "player", None))
 
 
 def check(session, opponent):
-    """Send the denial to the attacker; avoid modifying combat state."""
-    if is_accepted_duel(session, opponent):
-        return True
+    """Send the denial to the attacker; never allow a duel bypass."""
     reason = denial_reason(getattr(session, "player", None),
                            getattr(opponent, "player", None))
     if reason:
@@ -122,8 +113,8 @@ def command(session, args):
             lines.append(f"  &W{title}&x ({key}) - {description} [{requirement}]")
         lines += [
             "&YJoining enables PvP against members of other organizations only.&x",
-            "Unaffiliated players are protected in open-world PvP. Same-organization attacks are blocked.",
-            "Safe rooms remain safe; consensual arena duels remain open to everyone. Changes have a 24-hour cooldown.",
+            "Unaffiliated players are protected from all PvP. Same-organization attacks are blocked.",
+            "Safe rooms remain safe; even consensual duels require rival organization memberships. Changes have a 24-hour cooldown.",
             "Use 'organization join <name>', 'organization leave', or 'organization status'.",
         ]
         session.send("\n".join(lines))
@@ -134,7 +125,7 @@ def command(session, args):
         if membership(player):
             session.send("&YPvP active:&x You may fight members of rival organizations outside safe rooms.")
         else:
-            session.send("&GPvP protected:&x You cannot attack or be attacked by other players outside accepted duels.")
+            session.send("&GPvP protected:&x You cannot attack or be attacked by other players, including in duels.")
         remaining = _cooldown_left(player, time.time())
         if remaining:
             hours, minutes = divmod((remaining + 59) // 60, 60)

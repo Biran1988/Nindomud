@@ -1,4 +1,4 @@
-"""Opt-in PvP organizations: protected nonmembers and unrestricted consensual duels."""
+"""Opt-in PvP organizations: protected nonmembers and rival-only consensual duels."""
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
@@ -44,29 +44,44 @@ class OrganizationPvPTests(unittest.TestCase):
         self.assertIs(self.first.pvp_target, self.second)
         self.assertIs(self.second.pvp_target, self.first)
 
-    def test_formal_duel_allows_two_protected_players(self):
+    def test_formal_duel_cannot_bypass_membership_requirements(self):
         fight = duel.start_duel(self.first, self.second)
-        self.assertFalse(org.allowed_sessions(self.first, self.second))  # proposal not consent
+        self.assertFalse(org.allowed_sessions(self.first, self.second))
         fight.accepted = True
-        self.assertTrue(org.allowed_sessions(self.first, self.second))
-        self.assertTrue(combat.engage_damage_attack(self.first, self.second.player, self.second))
-        self.assertIs(self.first.pvp_target, self.second)
+        self.assertFalse(org.allowed_sessions(self.first, self.second))
+        self.assertFalse(combat.engage_damage_attack(self.first, self.second.player, self.second))
+        self.assertIsNone(self.first.pvp_target)
 
-    def test_formal_duel_allows_members_of_same_organization(self):
+    def test_formal_duel_does_not_permit_friendly_fire(self):
         self.first.player.pvp_organization = "root"
         self.second.player.pvp_organization = "root"
         fight = duel.start_duel(self.first, self.second)
         fight.accepted = True
-        self.assertTrue(combat.engage_damage_attack(self.first, self.second.player, self.second))
+        self.assertFalse(combat.engage_damage_attack(self.first, self.second.player, self.second))
 
-    def test_duel_command_allows_challenge_without_membership(self):
+    def test_duel_command_rejects_unaffiliated_and_allied_players(self):
+        commands.cmd_duel(self.first, ["Second"])
+        self.assertIsNone(self.first.duel)
+        self.first.player.pvp_organization = "root"
+        commands.cmd_duel(self.first, ["Second"])
+        self.assertIsNone(self.first.duel)
+        self.second.player.pvp_organization = "root"
+        commands.cmd_duel(self.first, ["Second"])
+        self.assertIsNone(self.first.duel)
+
+    def test_duel_command_allows_rivals_to_challenge_and_accept(self):
+        self.first.player.pvp_organization = "anbu"
+        self.second.player.pvp_organization = "root"
         commands.cmd_duel(self.first, ["Second"])
         self.assertIs(self.first.duel, self.second.duel)
         self.assertFalse(self.first.duel.accepted)
-        commands.cmd_duel(self.second, ["First"])
+        with patch("duel.begin_duel"):
+            commands.cmd_duel(self.second, ["First"])
         self.assertTrue(self.first.duel.accepted)
 
-    def test_safe_room_still_blocks_duel_attacks(self):
+    def test_safe_room_still_blocks_rival_duel_attacks(self):
+        self.first.player.pvp_organization = "anbu"
+        self.second.player.pvp_organization = "root"
         fight = duel.start_duel(self.first, self.second)
         fight.accepted = True
         with patch.object(combat.world.WORLD, "get", return_value=NS(safe=True)):
