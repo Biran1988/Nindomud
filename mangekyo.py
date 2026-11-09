@@ -14,6 +14,7 @@ import time
 import data_mangekyo
 import damage_messages
 import status_effects
+import pvp_organizations
 
 _NEXT_POCKET_DIMENSION_VNUM = None  # lazily initialized on first real use, see _allocate_pocket_dimension_vnum
 
@@ -410,6 +411,7 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
     original target leaves, exactly as confirmed."""
     import random
     import session as session_module
+    import storage
 
     now = time.time()
     for room in list(world_module.WORLD.rooms.values()):
@@ -420,9 +422,15 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
             room.amaterasu_fire_expires_at = 0.0
             continue
 
+        caster = next((other.player for other in session_module.ACTIVE_SESSIONS
+                       if other.player and other.player.name == room.amaterasu_fire_caster), None)
+        if caster is None:
+            caster = storage.load_player(room.amaterasu_fire_caster)
         for s in session_module.ACTIVE_SESSIONS:
             if (not s.player or s.state != session_module.State.PLAYING
                     or s.player.room_vnum != room.vnum):
+                continue
+            if (room.safe or not pvp_organizations.allowed(caster, s.player)):
                 continue
             if s.player.name == room.amaterasu_fire_caster:
                 continue
@@ -478,6 +486,14 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
         if player.health <= 0:
             clear_amaterasu_target_burn(player)
             continue
+        source = next((other.player for other in session_module.ACTIVE_SESSIONS
+                       if other.player and other.player.name == player.mangekyo_amaterasu_caster), None)
+        if source is None and player.mangekyo_amaterasu_caster:
+            source = storage.load_player(player.mangekyo_amaterasu_caster)
+        if not pvp_organizations.allowed(source, player):
+            clear_amaterasu_target_burn(player)
+            storage.save_player(player)
+            continue
         if combat_module.is_immortal_immune_to_defeat(s):
             clear_amaterasu_target_burn(player)
             storage.save_player(player)
@@ -520,6 +536,7 @@ def process_kekkei_no_me(combat_module, world_module, session_module) -> None:
     (see combat.py's own damage-calculation sites), not something to
     precompute on a timer."""
     import random
+    import storage
 
     now = time.time()
     for room in list(world_module.WORLD.rooms.values()):
@@ -531,9 +548,15 @@ def process_kekkei_no_me(combat_module, world_module, session_module) -> None:
             room.kekkei_no_me_expires_at = 0.0
             continue
 
+        caster = next((other.player for other in session_module.ACTIVE_SESSIONS
+                       if other.player and other.player.name == room.kekkei_no_me_caster), None)
+        if caster is None:
+            caster = storage.load_player(room.kekkei_no_me_caster)
         for s in session_module.ACTIVE_SESSIONS:
             if (not s.player or s.state != session_module.State.PLAYING
                     or s.player.room_vnum != room.vnum):
+                continue
+            if room.safe or not pvp_organizations.allowed(caster, s.player):
                 continue
             if s.player.name == room.kekkei_no_me_caster:
                 continue
