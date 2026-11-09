@@ -20,6 +20,7 @@ class SecretReverseSummonTests(unittest.TestCase):
         output = []
         session = Session(output.append, lambda: None)
         session.player = Player(name, name, room_vnum=room, chakra=500, maximum_chakra=500)
+        session.player.pvp_organization = 'anbu' if name == 'Caster' else 'root'
         session.player.village = 'leaf'
         session.player.bloodline_id = 'sharingan' if eye else None
         session.player.bloodline_mangekyo = eye
