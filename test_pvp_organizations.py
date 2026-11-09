@@ -41,7 +41,7 @@ class OrganizationTests(unittest.TestCase):
         self.two.pvp_organization = "akatsuki"
         self.assertTrue(orgs.allowed(self.one, self.two))
         self.assertTrue(orgs.allowed(self.two, self.one))
-        self.assertIn("rival", orgs.command.__doc__ if False else "rival")  # policy is symmetric
+        self.assertEqual(orgs.denial_reason(self.one, self.two), "")
 
     def test_join_and_leave_persist_and_apply_cooldown(self):
         orgs.command(self.attacker, ["join", "anbu"])
