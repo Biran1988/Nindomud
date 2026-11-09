@@ -248,6 +248,8 @@ class Player:
     # Clan is cosmetic-only for now (Section 48 defers bloodline mechanics);
     # freely changeable, unlike village/class.
     clan: str = "none"
+    pvp_organization: str = ""  # independently chosen opt-in PvP faction
+    pvp_organization_changed_at: float = 0.0  # 24-hour membership-change cooldown
     # Opt-in PvP affiliation, separate from bloodline clan and village.
     pvp_organization: str = ""
     pvp_organization_changed_at: float = 0.0
