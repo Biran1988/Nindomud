@@ -896,7 +896,7 @@ def _check_jutsu_collisions() -> None:
         target_session = cast.target
         if target_session not in candidates or target_session in already_collided:
             continue
-        if not pvp_organizations.allowed(session.player, getattr(target_session, "player", None)):
+        if not pvp_organizations.allowed_sessions(session, target_session):
             continue
         other_cast = target_session.pending_cast
         # Mutual: the target's own pending cast must be aimed back at THIS caster.
@@ -4115,7 +4115,7 @@ def resolve_pvp_pulse(session) -> None:
     target_session = session.pvp_target
     if target_session is None:
         return
-    if not pvp_organizations.allowed(player, getattr(target_session, "player", None)):
+    if not pvp_organizations.allowed_sessions(session, target_session):
         session.pvp_target = None
         if target_session.pvp_target is session:
             target_session.pvp_target = None
