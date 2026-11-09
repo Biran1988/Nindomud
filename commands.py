@@ -4822,8 +4822,10 @@ def cmd_duel(session, args: List[str]) -> None:
     if not target_session:
         session.send("There's nobody here by that name.")
         return
-    # A mutually accepted arena duel needs no PvP organization membership.
-    # The arena itself uses the accepted-duel exception in combat.
+    # A friendly arena duel is still PvP: both ninja must belong to rival
+    # organizations before proposing or accepting a challenge.
+    if not pvp_organizations.check(session, target_session):
+        return
 
     if session.duel and session.duel.other(session) is target_session and not session.duel.accepted:
         # WE were the one invited -- this is the accept.
