@@ -2,7 +2,7 @@
 
 Players outside a registered organization are immune to player-origin PvP.
 Members can fight members of *other* organizations, never their own allies.
-Safe-room protections still apply. No administrator or duel bypass is granted.
+Safe-room protections still apply. Consensual accepted duels are exempt.
 """
 
 import time
@@ -134,7 +134,7 @@ def command(session, args):
         if membership(player):
             session.send("&YPvP active:&x You may fight members of rival organizations outside safe rooms.")
         else:
-            session.send("&GPvP protected:&x You cannot attack or be attacked by other players.")
+            session.send("&GPvP protected:&x You cannot attack or be attacked by other players outside accepted duels.")
         remaining = _cooldown_left(player, time.time())
         if remaining:
             hours, minutes = divmod((remaining + 59) // 60, 60)
