@@ -38,6 +38,7 @@ class TsukuyomiDamageTests(unittest.TestCase):
                           maximum_health=20000, chakra=3000,
                           maximum_chakra=3000, stamina=3000,
                           maximum_stamina=3000)
+        s.player.pvp_organization = 'anbu' if name == 'Caster' else 'root'
         s.state = State.PLAYING
         return s
 
