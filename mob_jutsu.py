@@ -140,6 +140,8 @@ def try_cast(session, mob):
     damage = max(1, damage)
     if getattr(session, "combat_target", None) is not mob:
         combat.start_attack(session, mob)
+    import iron_ascension
+    damage = iron_ascension.reduce_incoming(session, mob, damage)
     player.health -= damage
     session.send(f"&R{mob.name} unleashes {name} for {damage_messages.describe_damage(damage)} damage!&x")
 
