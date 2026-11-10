@@ -69,7 +69,9 @@ def accuracy_bonus(player):
     if not active:
         return 0
     name, data = active
-    return round(data["accuracy"] * _power(player, name))
+    import signature_moves
+    return round(data["accuracy"] * _power(player, name) *
+                 signature_moves.multiplier(player, name))
 
 
 def damage_bonus(player, damage):
@@ -77,7 +79,9 @@ def damage_bonus(player, damage):
     if not active:
         return damage
     name, data = active
-    return max(1, int(damage * (1 + data["damage"] * _power(player, name) / 100)))
+    import signature_moves
+    boost = data["damage"] * _power(player, name) * signature_moves.multiplier(player, name)
+    return max(1, int(damage * (1 + boost / 100)))
 
 
 def successful_strike(player, session):
