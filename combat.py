@@ -62,6 +62,7 @@ import leveling
 import mob_balance
 import status_effects
 import signature_moves
+import samurai_sabre_progression
 import ninja_arts
 import teams
 import pvp_organizations
