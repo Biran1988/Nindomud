@@ -5,7 +5,7 @@
     "tracking"
   ],
   "title": "Track",
-  "body": "Syntax: perform track <mob or player name>\n\nNormal Track (level 30) tracks the target automatically inside their area. Advanced Tracking (level 20+) is a separate scroll-learned passive upgrade: once you READ a scroll inscribed with Advanced Tracking, the SAME perform track <target> command can search actual connected exits across area borders. It still obeys closed doors and cannot teleport or cross disconnected rooms. Tracks a mob or online player, moves one room per pulse, pauses in combat and resumes when combat ends. Upkeep remains 5 Chakra per pulse. Ordinary Track remains area-limited for those who have not learned Advanced Tracking.",
+  "body": "Syntax: perform track <mob or player name>\n\nTrack is a scroll-learned general technique (level 30) that automatically pursues a mob or online player through connected rooms inside the target's area. Advanced Tracking is a separate scroll-only upgrade available at level 20 that allows cross-area pursuit with the same command. Both stop at hidden exits until the automatic level-50 Hidden Tracking passive is unlocked. Hidden Tracking then permits tracking through hidden passages, including exits without doors. Closed doors still block every version. Moves one room per pulse, pauses in combat, and costs 5 Chakra per pulse.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
