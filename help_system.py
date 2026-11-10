@@ -1623,9 +1623,9 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: perform track <mob or player name>\n"
             "\n"
-            "Normal Track (level 30) follows the target automatically only inside the target's area. Advanced Tracking is a separate scroll-learned upgrade available from level 20. Read an Advanced Tracking Scroll to unlock cross-area pathfinding on the exact same PERFORM TRACK command; no second command is needed.\n"
+            "Normal Track (level 30) follows the target automatically within their area. Advanced Tracking is a scroll-learned upgrade available at level 20 that removes area borders. Hidden Tracking unlocks automatically at level 50, letting either version follow hidden exits. Use the same PERFORM TRACK command.\n"
             "\n"
-            "With Advanced Tracking learned, you can follow a mob or online player through any connected areas as long as an actual walkable route exists. It does not teleport, open closed doors, or bypass locked exits. Your character moves one room per pulse, pauses during combat and resumes afterward. If your target vanishes, the route is blocked, you arrive, or your chakra runs out, tracking stops. Tracking costs 5 Chakra per pulse plus the ordinary Track cast cost and cooldown. Normal Track still follows its original area restriction.\n"
+            "Neither standard nor Advanced Tracking can pass hidden exits before Hidden Tracking unlocks at level 50. Even after that, closed doors and disconnected routes stay impassable. Tracking moves one room per pulse, pauses during combat, and costs 5 Chakra per pulse plus the normal casting cost. Regular Track remains area-limited.\n"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -1636,7 +1636,20 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["advanced tracking", "advanced track"],
         "title": "Advanced Tracking",
         "body": (
-            "Scroll-only upgrade, level 20 minimum. READ an Advanced Tracking Scroll to learn it. There is no separate tracking command: type 'perform track <mob or player>' exactly as before. With Advanced Tracking learned, Track follows connected rooms across all area borders instead of staying inside one area. Closed doors and unreachable regions remain blocked. Normal Track still has its original area limit. Five Chakra are charged per tracking pulse.\n"
+            "Scroll-only upgrade, level 20 minimum. READ an Advanced Tracking Scroll, then keep using PERFORM TRACK <mob or player>. This passive upgrade removes area borders but not closed doors or hidden passages. Hidden Tracking at level 50 independently unlocks secret passages. Upkeep remains 5 Chakra per pulse.\n"
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "hidden tracking",
+        "keywords": ["hidden tracking", "secret tracking", "track hidden exits"],
+        "title": "Hidden Tracking",
+        "body": (
+            "Automatic level-50 passive for all classes. PERFORM TRACK <mob or player> "
+            "can follow routes through hidden exits, even without doors. "
+            "The upgrade does not reveal them through LOOK or SCAN, open closed doors, "
+            "or remove normal Track\'s area limit. Learn Advanced Tracking from a "
+            "scroll to also cross area borders. There is no separate command or upkeep cost.\n"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
