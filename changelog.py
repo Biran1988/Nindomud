@@ -593,5 +593,7 @@ CHANGELOG = [
     ("15.446", "All completed missions now award a random 1-5 mission points, credited to spendable and lifetime totals. When no eligible hunt mob exists for the requested rank, the mission system automatically assigns either a roadside item recovery or a courier delivery, trying the other option if the first is unavailable. Rank requirements, mission deadlines and cooldowns still apply."),
     ("15.447", "Mission point rewards now scale by rank with overlapping random ranges: D 1-5, C 4-9, B 7-13, A 11-17, and S 15-20. Applies to hunting, gathering, recovery and courier missions, with a hard maximum of 20 per completed mission. MISSION INFO displays the reward range."),
 
+    ("15.448", "Signature Move now accepts ANY learned skill at 100% mastery, including later class techniques, passive abilities, weapon proficiency, multi-attacks and sword styles. Passive combat use can raise the chosen skill to 150%; signature combat effects gain +25% where applicable. Switching still resets the old choice to 100%."),
+
 
 ]
