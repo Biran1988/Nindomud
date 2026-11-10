@@ -18,6 +18,8 @@ SECRET_KEYS = {
     # Lightsaber commands must remain undiscoverable until the event or item.
     "activate", "deactivate", "insert",
 }
+from help_command_overrides import PAGES as REVIEWED_COMMAND_HELP, STAFF_GUIDE
+
 COMMAND_OVERRIDES = {
     "group": ("GROUP | GROUP INVITE <player> | GROUP ACCEPT | GROUP LEAVE | GROUP KICK <player> | GROUP DISBAND | GROUP FOLLOW",
               "Only groups within a 20-ninja-level spread can share combat XP. "
@@ -89,18 +91,33 @@ def populate(entries, commands):
     by_key = {entry["primary_keyword"].casefold(): entry for entry in entries}
     for key, handler in sorted(commands.items()):
         key = key.casefold()
-        override = COMMAND_OVERRIDES.get(key)
-        if override:
-            syntax, body = override
-            entry = _entry(key, key.title(), f"Syntax: {syntax}\n\n{body}")
+        reviewed = REVIEWED_COMMAND_HELP.get(key)
+        if reviewed is not None:
             if key in by_key:
-                if by_key[key].get("created_by") == "System":
-                    by_key[key]["body"] = entry["body"]
-                    COVERED.add(key)
+                # Never replace an authoritative page or a staff edit.
+                # Upgrade only the old automatically generated placeholder.
+                old = by_key[key]
+                if (old.get("updated_by") == "System"
+                        and ("[arguments]" in old.get("body", "")
+                             or "Try the command without arguments" in old.get("body", ""))):
+                    old["body"] = reviewed
             else:
+                entry = _entry(key, key.replace("_", " ").title(), reviewed)
                 entries.append(entry)
                 by_key[key] = entry
-                COVERED.add(key)
+            COVERED.add(key)
+            continue
+        override = COMMAND_OVERRIDES.get(key)
+        if override:
+            # Existing hand-reviewed help always wins over an old broad
+            # generator override. In particular GROUP no longer has
+            # invitation/acceptance commands, and BAN has country controls.
+            if key not in by_key:
+                syntax, body = override
+                entry = _entry(key, key.title(), f"Syntax: {syntax}\n\n{body}")
+                entries.append(entry)
+                by_key[key] = entry
+            COVERED.add(key)
             continue
         if key in by_key:
             continue
@@ -150,8 +167,19 @@ def populate(entries, commands):
             details += f" Technique kind: {kind.replace('_', ' ')}."
         if art.get("scroll_only"):
             details += " Requires its teaching scroll."
+        # Direct-use Taijutsu/Bukijutsu and passive Gate techniques
+        # must not instruct players to type PERFORM for every art.
+        category = art.get("class_requirement")
+        if kind == "eight_gate":
+            syntax = f"gates <number> [confirm]  |  {key} [confirm]"
+        elif kind in {"combat_passive", "counter", "silent_genjutsu_passive"}:
+            syntax = f"help {key}  (passive; no casting command)"
+        elif category in {"taijutsu", "bukijutsu"}:
+            syntax = f"{key} [target]"
+        else:
+            syntax = f"perform {key} [target]"
         entry = _entry(key, art["display_name"],
-                       f"Syntax: PERFORM {key} [target]\n\n{details}\n\n"
+                       f"Syntax: {syntax}\n\nDescription: {details}\n\n"
                        "Damage and duration bonuses are technique-specific; "
                        "actual cast cost increases with ninja level and maximum resource pool.")
         entries.append(entry)
@@ -306,6 +334,13 @@ def populate(entries, commands):
         entries.append(entry)
         by_key[topic] = entry
         COVERED.add(topic)
+
+    # Role-aware staff help. Do not leak the consolidated staff index to
+    # ordinary players; individual existing command pages remain unchanged.
+    if STAFF_GUIDE["primary_keyword"] not in by_key:
+        entries.append(dict(STAFF_GUIDE))
+        by_key[STAFF_GUIDE["primary_keyword"]] = entries[-1]
+        COVERED.add(STAFF_GUIDE["primary_keyword"])
 
     # Enrich dynamically generated techniques *before* returning. The first
     # help_system metadata pass ran before these pages existed.
