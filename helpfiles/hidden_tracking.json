@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "hidden tracking",
+  "keywords": [
+    "hidden tracking",
+    "secret tracking",
+    "track hidden exits"
+  ],
+  "title": "Hidden Tracking",
+  "body": "Automatic level-50 passive general skill for all ninja classes. Once learned, the usual PERFORM TRACK <mob or player> command can follow hidden exits, whether or not those passages have doors. Hidden Tracking does not expose exits through LOOK or SCAN, open closed doors, or grant worldwide range to ordinary Track. The separate scroll-only Advanced Tracking upgrade permits cross-area routes; having both permits hidden-exit routing across areas. No separate activation, scroll, or additional upkeep is required.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
