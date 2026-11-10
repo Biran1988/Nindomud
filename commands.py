@@ -5348,22 +5348,24 @@ def cmd_practice(session, args: List[str]) -> None:
 
 
 def cmd_signature(session, args: List[str]) -> None:
-    """Pick a mastered active move; changing choice removes old overmastery."""
+    """Pick any mastered learned skill, active or passive."""
     import signature_moves
     player = session.player
     current = signature_moves.selected_name(player)
+    learned = signature_moves.eligible_names(player)
     if not args:
         status = (f"{current} ({player.skill_proficiencies.get(current, 0)}/150%)"
                   if current else "none")
-        ready = sorted(j["display_name"] for j in data_jutsu.JUTSU.values()
-                       if signature_moves.eligible(j) and j["display_name"] in player.learned_skills
-                       and player.skill_proficiencies.get(j["display_name"], 0) >= 100)
-        session.send(f"Signature move: {status}. The +25% damage/effect-duration bonus starts at 150%.\n"
-                     f"Eligible mastered moves: {', '.join(ready) or 'none'}\n"
-                     "Use 'signature <move>' to choose or 'signature clear' to remove it. "
-                     "Switching returns the old move to 100%.")
+        ready = [name for name in learned
+                 if player.skill_proficiencies.get(name, 0) >= 100]
+        session.send(f"Signature move: {status}. At 150%, signature techniques gain +25% "
+                     "damage/effect strength or duration; passive skills boost their "
+                     "associated combat effect.\\n"
+                     f"Eligible mastered skills: {', '.join(ready) or 'none'}\\n"
+                     "Use 'signature <skill>' to choose or 'signature clear' to remove it. "
+                     "Switching returns the old skill to 100%.")
         return
-    query = " ".join(args).strip().lower()
+    query = " ".join(args).strip().casefold()
     if query == "clear":
         if not current:
             session.send("You have no signature move selected.")
@@ -5372,17 +5374,15 @@ def cmd_signature(session, args: List[str]) -> None:
         player.signature_move = ""
         session.send(f"{current} is no longer your signature move; its proficiency returns to 100%.")
         return
-    eligible = [j for j in data_jutsu.JUTSU.values()
-                if signature_moves.eligible(j) and j["display_name"] in player.learned_skills]
-    matches = [j for j in eligible if j["display_name"].lower() == query]
+    matches = [name for name in learned if name.casefold() == query]
     if not matches:
-        matches = [j for j in eligible if query in j["display_name"].lower()]
+        matches = [name for name in learned if query in name.casefold()]
     if len(matches) != 1:
-        session.send("Choose one eligible learned move by name. " +
-                     ("Matches: " + ", ".join(j["display_name"] for j in matches)
-                      if matches else "Use 'signature' to see your eligible mastered moves."))
+        session.send("Choose one learned skill by name. " +
+                     ("Matches: " + ", ".join(matches)
+                      if matches else "Use 'signature' to see your mastered skills."))
         return
-    name = matches[0]["display_name"]
+    name = matches[0]
     if player.skill_proficiencies.get(name, 0) < 100:
         session.send(f"{name} must reach 100% proficiency before you can select it.")
         return
@@ -5392,8 +5392,9 @@ def cmd_signature(session, args: List[str]) -> None:
     if current:
         player.skill_proficiencies[current] = min(100, player.skill_proficiencies.get(current, 0))
     player.signature_move = name
-    session.send(f"{name} is now your signature move. Raise it from 100% to 150% "
-                 "by successfully using it, not by teacher practice. The +25% bonus activates at 150%.")
+    session.send(f"{name} is now your signature skill. Raise it from 100% to 150% "
+                 "through successful use or passive combat training, not teacher practice. "
+                 "Its +25% signature effect activates at 150%.")
 
 
 def _skill_unlock_level(skill_name: str) -> Optional[int]:
