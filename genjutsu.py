@@ -211,9 +211,13 @@ def resolve_cast(session, key, payload):
     if player.chakra < cost or not combat._can_use_jutsu(player, jutsu, key):
         jutsu_colors.send(session, "You can no longer complete that Genjutsu.")
         return
+    import signature_moves
+    # A mastered Silent Genjutsu signature improves the efficiency of
+    # the instant-cast passive without altering its hand-sign or cast gate.
+    if signature_moves.mastered(player, "Silent Genjutsu"):
+        cost = max(1, math.ceil(cost / signature_moves.SIGNATURE_BONUS))
     player.chakra -= cost
     player.cooldowns[key] = time.time() + jutsu["cooldown"]
-    import signature_moves
 
     if kind == "disguise":
         player.genjutsu_disguise = payload["target"].name
