@@ -25,13 +25,62 @@ class SignatureMoveTests(unittest.TestCase):
         self.player.practice_points = 50
         self.session = SimpleNamespace(player=self.player, send=Mock())
 
-    def test_requires_100_and_rejects_passives(self):
+    def test_requires_100_but_accepts_passives(self):
         self.player.skill_proficiencies["Dynamic Entry"] = 99
         commands.cmd_signature(self.session, ["Dynamic", "Entry"])
         self.assertFalse(self.player.signature_move)
         self.assertIn("100%", self.session.send.call_args.args[0])
         commands.cmd_signature(self.session, ["Soto", "Uke"])
-        self.assertFalse(self.player.signature_move)
+        self.assertEqual(self.player.signature_move, "Soto Uke")
+        self.assertIn("Soto Uke", self.session.send.call_args.args[0])
+
+    def test_higher_level_and_non_jutsu_class_skills_can_be_selected(self):
+        for skill in ("Second Attack", "Iaijutsu", "Samurai Sabre 2",
+                      "Strong Fist Style", "Weapon Expert", "Sword", "Iron Resolve"):
+            with self.subTest(skill=skill):
+                if skill not in self.player.learned_skills:
+                    self.player.learned_skills.append(skill)
+                self.player.skill_proficiencies[skill] = 100
+                commands.cmd_signature(self.session, skill.split())
+                self.assertEqual(self.player.signature_move, skill)
+                self.player.skill_proficiencies[skill] = 150
+                self.assertTrue(signature_moves.mastered(self.player, skill))
+                commands.cmd_signature(self.session, ["clear"])
+                self.assertEqual(self.player.skill_proficiencies[skill], 100)
+
+    def test_signature_passive_trains_in_combat_to_150(self):
+        self.player.learned_skills.append("Strong Fist Style")
+        self.player.skill_proficiencies["Strong Fist Style"] = 149
+        self.player.signature_move = "Strong Fist Style"
+        with patch.object(combat.random, "randint", return_value=1):
+            messages = combat.tick_passive_skill_growth(self.player)
+        self.assertEqual(self.player.skill_proficiencies["Strong Fist Style"], 150)
+        self.assertTrue(any("150%" in message for message in messages))
+        self.assertEqual(signature_moves.multiplier(self.player, "Strong Fist Style"), 1.25)
+
+    def test_sabre_signature_progress_survives_level_sync(self):
+        import samurai_sabre_progression
+        self.player.primary_class = "bukijutsu"
+        self.player.level = 85
+        samurai_sabre_progression.sync_passives(self.player)
+        self.player.signature_move = "Samurai Sabre 2"
+        self.player.skill_proficiencies["Samurai Sabre 2"] = 150
+        samurai_sabre_progression.sync_passives(self.player)
+        self.assertEqual(self.player.skill_proficiencies["Samurai Sabre 2"], 150)
+
+    def test_sword_style_signature_boosts_style_not_all_hits(self):
+        import sword_styles
+        self.player.primary_class = "bukijutsu"
+        self.player.level = 85
+        self.player.stamina = 100
+        self.player.equipment["wielded"] = "A Basic Ninja Sword"
+        self.player.sword_style = "Iaijutsu"
+        self.player.learned_skills.append("Iaijutsu")
+        self.player.skill_proficiencies["Iaijutsu"] = 100
+        ordinary = sword_styles.damage_bonus(self.player, 100)
+        self.player.signature_move = "Iaijutsu"
+        self.player.skill_proficiencies["Iaijutsu"] = 150
+        self.assertGreater(sword_styles.damage_bonus(self.player, 100), ordinary)
 
     def test_switch_resets_old_to_100_and_requires_new_use(self):
         commands.cmd_signature(self.session, ["Dynamic", "Entry"])
