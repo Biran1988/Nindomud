@@ -2792,6 +2792,8 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
         dmg = susanoo.incoming_damage(
             player, sage_mode.incoming(
                 player, status_effects.reduce_incoming_damage(player.active_status_effects, dmg)))
+        import iron_ascension
+        dmg = iron_ascension.reduce_incoming(session, mob, dmg)
         player.health -= dmg
         if dmg > 0:
             import equipment_durability
@@ -3621,6 +3623,8 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     player.npc_kills += 1
     session.send(f"&GYou have defeated {mob.name}!&x")
     session.send(f"&r{mob.name.capitalize()} is DEAD!&x")
+    import iron_ascension
+    iron_ascension.defeated(session, mob)
 
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if t and t.get("mob_programs"):
