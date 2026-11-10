@@ -5,8 +5,8 @@
     "study"
   ],
   "title": "Read",
-  "body": "Syntax: read <scroll>  (alias: study)\n\nDescription: Learns the jutsu inscribed on a scroll -- an alternate way to pick up a jutsu beyond your starting kit. The scroll is consumed on a successful read; it isn't consumed if it's blank or teaches something you already know.\n\nDate: 2026-08-17",
+  "body": "Syntax: read <scroll>  (alias: study)\n\nAn inscribed jutsu scroll can teach ordinary Ninjutsu, Taijutsu, Genjutsu or Bukijutsu to a character of a different primary class. For example, a Taijutsu user may learn Narakumi by reading its Genjutsu scroll. It does not change your class or grant that class's automatic level-up jutsu. Bloodline, clan, village, gate, and special class-passive abilities cannot cross classes this way. Chakra nature, item, and other casting requirements still apply. A successfully read scroll is consumed; failed, blank and already-known scrolls are preserved. Scroll-learned jutsu do not need first teacher practice.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
