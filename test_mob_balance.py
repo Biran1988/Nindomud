@@ -103,13 +103,13 @@ class EndgameXPTests(unittest.TestCase):
         gained = leveling.credited_experience(player, leveling.xp_band_for_level(224), 250)
         self.assertEqual(gained, leveling.cumulative_xp_for_level(225))
 
-    def test_large_reward_never_crosses_another_level_band(self):
+    def test_last_25_cost_more_even_when_large_reward_crosses_boundary(self):
         player = Player("BigGain", "BigGain", level=224, village_rank="elite jonin")
         player.experience = leveling.cumulative_xp_for_level(224)
         raw = leveling.xp_band_for_level(224) + leveling.xp_band_for_level(225)
         credited = leveling.credited_experience(player, raw, 250)
-        self.assertEqual(credited, leveling.cumulative_xp_for_level(225))
-        # The extra XP from this reward must not carry into the final stretch.
+        self.assertGreater(credited, leveling.cumulative_xp_for_level(225))
+        self.assertLess(credited, leveling.cumulative_xp_for_level(226))
 
     def test_reaching_250_keeps_exact_final_floor(self):
         player = Player("FinalXP", "FinalXP", level=249, village_rank="elite jonin")
