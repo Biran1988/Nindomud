@@ -1,4 +1,4 @@
-"""Regressions for standalone hidden exits, Track tiers, and one-level XP awards."""
+"""Regressions for standalone hidden exits, Track tiers, and XP carryover."""
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import patch
@@ -62,7 +62,9 @@ class HiddenExitTrackingTests(unittest.TestCase):
             ["north", "east"])
 
 
-class OneLevelExperienceRewardTests(unittest.TestCase):
+class ExperienceCarryoverTests(unittest.TestCase):
+    """Large rewards retain surplus XP and can award several levels."""
+
     def character(self, level=50):
         player = Player("LevelTester", "LevelTester", level=level,
                         village_rank="elite jonin", primary_class="taijutsu")
@@ -74,43 +76,34 @@ class OneLevelExperienceRewardTests(unittest.TestCase):
                 leveling.shinobi_notices, "announce_level"):
             return leveling.grant_experience(player, amount)
 
-    def test_one_reward_drops_overflow_but_keeps_existing_progress(self):
+    def test_single_kill_overflow_is_saved_toward_following_level(self):
         player = self.character()
-        target = leveling.xp_for_next_level(50)
-        player.experience = target - 200_000
+        player.experience = leveling.xp_for_next_level(50) - 200_000
         messages = self.award(player, 500_000)
         self.assertEqual(player.level, 51)
-        self.assertEqual(player.experience, leveling.cumulative_xp_for_level(51))
+        self.assertEqual(player.experience, leveling.cumulative_xp_for_level(51) + 300_000)
         self.assertTrue(any("reached level 51" in line for line in messages))
-        # A separate later reward can begin accumulating XP normally.
-        self.award(player, 300)
-        self.assertEqual(player.experience, leveling.cumulative_xp_for_level(51) + 300)
 
-    def test_rewards_without_level_up_keep_the_full_amount(self):
-        player = self.character()
+    def test_single_large_reward_can_gain_multiple_levels(self):
+        player = self.character(level=20)
+        amount = leveling.cumulative_xp_for_level(24) - player.experience
+        self.award(player, amount)
+        self.assertEqual(player.level, 24)
+        self.assertEqual(player.experience, leveling.cumulative_xp_for_level(24))
+
+    def test_existing_progress_and_incomplete_rewards_are_retained(self):
+        player = self.character(level=50)
         player.experience += 150_000
         self.award(player, 500_000)
         self.assertEqual(player.level, 50)
         self.assertEqual(player.experience, leveling.cumulative_xp_for_level(50) + 650_000)
 
-    def test_no_reward_ever_grants_more_than_one_level(self):
-        player = self.character(level=8)
-        self.award(player, 10**15)
-        self.assertEqual(player.level, 9)
-        self.assertEqual(player.experience, leveling.cumulative_xp_for_level(9))
-        self.award(player, 10**15)
-        self.assertEqual(player.level, 10)
-
-    def test_endgame_tax_still_applies_before_level_cap(self):
+    def test_endgame_xp_tax_still_applies_to_multiple_bands(self):
         player = self.character(level=225)
-        threshold = leveling.xp_for_next_level(225)
-        player.experience = threshold - 200_000
-        self.award(player, 150_000)  # 150% is required at level 225.
-        self.assertEqual(player.level, 225)
-        self.assertEqual(player.experience, threshold - 100_000)
-        self.award(player, 200_000)
+        band = leveling.xp_band_for_level(225)
+        self.award(player, (band * 150 + 99) // 100 + 1_000_000)
         self.assertEqual(player.level, 226)
-        self.assertEqual(player.experience, leveling.cumulative_xp_for_level(226))
+        self.assertGreater(player.experience, leveling.cumulative_xp_for_level(226))
 
 
 if __name__ == "__main__":
