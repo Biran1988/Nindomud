@@ -2217,7 +2217,11 @@ def _try_counter_kunai(session, target_session, target, attacker_name: str, juts
     held_kunai = next((item for item in target.inventory if "kunai" in item.lower()), None)
     if not held_kunai:
         return False
-    target.inventory.remove(held_kunai)
+    # A mastered Counter Kunai signature conserves its own defensive
+    # ammunition 20% of the time (+25% effective uses per carried kunai).
+    if not (signature_moves.mastered(target, "Counter Kunai")
+            and random.randint(1, 100) <= 20):
+        target.inventory.remove(held_kunai)
     jutsu_colors.send(session, f"&C{target.name} whips out a kunai and deflects your {jutsu_display_name} completely!&x")
     jutsu_colors.send(target_session, f"&CYou whip out a kunai and deflect {attacker_name}'s {jutsu_display_name} completely!&x")
     return True
