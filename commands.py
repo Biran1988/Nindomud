@@ -5431,6 +5431,8 @@ def _skill_unlock_level(skill_name: str) -> Optional[int]:
         return SCAN_LEVEL
     if skill_name == "Chakra Charge":
         return data_jutsu.CHAKRA_CHARGE_LEVEL
+    if skill_name == "Iron Resolve":
+        return 250
     import data_weapons
     if skill_name in {info["skill"] for info in data_weapons.WEAPON_TYPES.values()}:
         return 1
@@ -5807,6 +5809,7 @@ def _skill_catalog_for_category(category: str) -> list:
         for weapon_info in data_weapons.WEAPON_TYPES.values():
             entries.append((weapon_info["skill"], None))
         entries.append(("Strong Fist Style", 1))
+        entries.append(("Iron Resolve", 250))
         entries.append(("Examine", data_jutsu.APPRAISAL_LEVEL_REQUIREMENT))
         entries.append(("Scan", SCAN_LEVEL))
         import data_handsigns
