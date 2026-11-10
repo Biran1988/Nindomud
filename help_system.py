@@ -5464,7 +5464,9 @@ _GATHERING_TIER_HELP = {
         "as appropriate, with overlapping resource pools and profession-level gates.\n\n"
         "Other crafting: craft weapon <type> <name> / craft armor <slot> <name> "
         "(Bukijutsu level 25+ or other classes level 100+), then select two materials "
-        "at the prompt. Craft pill <antidote|medicine> <level> is Bukijutsu-only."
+        "at the prompt. Forged combat weapons and armor use two METAL INGOTS and no wood; "
+        "only gathering tools require a wood-and-ingot recipe. "
+        "Craft pill <antidote|medicine> <level> is Bukijutsu-only."
     ),
 }
 for _entry in DEFAULT_HELP_ENTRIES:
