@@ -56,6 +56,31 @@ def save_entry(entry: dict) -> None:
 # `hedit` like any other helpfile -- this is just how it starts out.
 DEFAULT_HELP_ENTRIES = [
     {
+        "primary_keyword": "iron ascension",
+        "keywords": ["iron ascension", "ascension", "iron kage", "iron resolve", "heart of the iron kage"],
+        "title": "Iron Ascension - 250 Floor Tower",
+        "body": (
+            "Iron Ascension is an isolated 250-floor solo PvE gauntlet in room vnums "
+            "30501-30750 (reserved area 30501-31500). No door or road connects "
+            "it to the rest of the world; staff must teleport you in. Each floor "
+            "has one auto-balanced ninja, level 1 through 250. Defeat that "
+            "floor's guardian before using UP; DOWN returns to the prior floor. "
+            "Your personal highest cleared floor is saved permanently.\n\n"
+            "Defeat the Iron Kage on floor 250 after clearing floors 1-249 "
+            "to receive 25 mission points, the top-tier Heart of the Iron Kage, "
+            "and the Scroll of Iron Resolve. Rewards are one-time and soulbound. "
+            "The Heart is worn in the neck slot at level 250. It grants "
+            "+25 hitroll, +25 damroll, +500 HP, +500 chakra, +250 stamina, "
+            "5% incoming damage reduction and a 5% Iron Will negate chance.\n\n"
+            "READ SCROLL OF IRON RESOLVE teaches the permanent passive skill. "
+            "Once per fight, on an attack that drops health to 20% or below, "
+            "Iron Resolve reduces incoming mob damage by 25% for 20 seconds. "
+            "Use ASCENSION to view progress and ASCENSION CLAIM to collect any "
+            "reward that did not fit in your inventory."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
         "primary_keyword": "organization",
         "keywords": ["organization", "org", "pvp", "pvp organizations", "anbu", "root", "akatsuki"],
         "title": "PvP Organizations",
