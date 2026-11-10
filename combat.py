@@ -744,8 +744,15 @@ def _player_attack_damage(player: Player) -> int:
     dmg += commands_module.equipped_weapon_type_damage_bonus(player)
     dmg += commands_module.equipped_weapon_damroll_bonus(player)
     for skill, pct in player.skill_proficiencies.items():
-        if data_passives.is_passive(skill):
-            dmg = int(dmg * data_passives.damage_multiplier(skill, pct))
+        if data_passives.is_passive(skill) and skill in player.learned_skills:
+            # Signature mastery amplifies the passive's own bonus by 25%,
+            # rather than treating 150% as an uncapped chance to trigger.
+            ordinary = data_passives.damage_multiplier(skill, min(100, pct))
+            bonus = (ordinary - 1.0) * signature_moves.multiplier(player, skill)
+            dmg = int(dmg * (1.0 + bonus))
+    weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
+    if weapon_skill and signature_moves.mastered(player, weapon_skill):
+        dmg = max(1, round(dmg * signature_moves.SIGNATURE_BONUS))
     import village_perks
     dmg = int(dmg * village_perks.damage_multiplier(player.village))
     import sage_mode
@@ -1544,13 +1551,22 @@ def tick_passive_skill_growth(player: Player) -> list:
     Returns messages for any skill that just grew."""
     messages = []
     for skill in player.learned_skills:
-        if not data_passives.is_passive(skill):
+        jutsu = data_jutsu.JUTSU.get(skill.lower())
+        class_passive = bool(jutsu and jutsu.get("jutsu_type") in
+                             ("combat_passive", "counter", "silent_genjutsu_passive",
+                              "track_upgrade"))
+        sabre_passive = skill in samurai_sabre_progression.PASSIVE_UNLOCKS
+        if sabre_passive and not getattr(player, "samurai_sabre_active", False):
+            continue
+        if not (data_passives.is_passive(skill) or class_passive or sabre_passive):
             continue
         current = player.skill_proficiencies.get(skill, 0)
-        if current >= 100:
+        cap = (signature_moves.SIGNATURE_CAP
+               if signature_moves.selected_name(player) == skill else 100)
+        if current >= cap:
             continue
         if random.randint(1, 100) <= PASSIVE_GROWTH_CHANCE_PCT:
-            new_pct = min(100, current + PASSIVE_GROWTH_AMOUNT)
+            new_pct = min(cap, current + PASSIVE_GROWTH_AMOUNT)
             player.skill_proficiencies[skill] = new_pct
             experience_before = player.experience
             messages.extend(leveling.grant_experience(player, (new_pct - current) * 10))
@@ -1558,6 +1574,8 @@ def tick_passive_skill_growth(player: Player) -> list:
             if earned_xp:
                 messages.append(f"&G+{earned_xp} experience from {skill} improvement.&x")
             messages.append(f"&D(Your {skill} improves through combat experience: {new_pct}%.)&x")
+            if new_pct == signature_moves.SIGNATURE_CAP:
+                messages.append(f"&Y{skill} reaches 150% signature mastery! Its signature bonus is active.&x")
     return messages
 
 
@@ -2362,7 +2380,7 @@ def _weapon_expert_damage(player, damage):
             and "Weapon Expert" in player.learned_skills
             and random.randint(1, 100) <= player.skill_proficiencies.get("Weapon Expert", 0)):
         grow_skill_from_usage(player, "Weapon Expert")
-        return max(1, int(damage * 1.5))
+        return max(1, int(damage * (1.0 + 0.5 * signature_moves.multiplier(player, "Weapon Expert"))))
     return damage
 
 
@@ -2371,8 +2389,10 @@ def _soto_uke_blocks(defender, attacker_level):
     if (defender.primary_class != "taijutsu" or "Soto Uke" not in defender.learned_skills
             or defender.stamina < 10 or _is_action_blocked(defender)):
         return False
-    chance = max(0, min(100, defender.skill_proficiencies.get("Soto Uke", 0) // 2
-                         + defender.level - attacker_level))
+    mastery = min(100, defender.skill_proficiencies.get("Soto Uke", 0))
+    chance = max(0, min(100, round((mastery / 2) *
+                    signature_moves.multiplier(defender, "Soto Uke"))
+                    + defender.level - attacker_level))
     if random.randint(1, 100) <= chance and random.randint(1, 3) == 1:
         defender.stamina -= 10
         grow_skill_from_usage(defender, "Soto Uke")
@@ -2394,9 +2414,9 @@ def _offhand_attack(session, target, target_session=None):
     player.equipment["wielded"] = offhand
     try:
         if target_session is None:
-            _player_attack_mob_once(session, player, target)
+            _player_attack_mob_once(session, player, target, signature_skill="Dual Wield")
         else:
-            _player_attack_target_once(session, player, target_session, target)
+            _player_attack_target_once(session, player, target_session, target, signature_skill="Dual Wield")
     finally:
         # The durability callback may have destroyed the temporarily wielded
         # off-hand blade; do not restore a broken duplicate into its real slot.
@@ -2404,7 +2424,7 @@ def _offhand_attack(session, target, target_session=None):
         player.equipment["wielded"] = primary
 
 
-def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
+def _player_attack_mob_once(session, player, mob, guaranteed_hit=False, signature_skill=None) -> bool:
     """One single attack (to-hit roll through any bleeding tick) from
     player against mob -- extracted so resolve_pulse can call this
     once per attack a player has earned this round (see
@@ -2456,6 +2476,8 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False) -> bool:
         dmg = int(dmg * 1.5)
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
     dmg = ninja_arts.weapon_hit(player, mob, dmg, session=session)
+    if signature_skill:
+        dmg = signature_moves.amount(player, {"display_name": signature_skill}, dmg)
     mob.health -= dmg
     sword_styles.successful_strike(player, session)
     if is_crit:
@@ -2709,7 +2731,8 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
                     if attack_index < trained_extra:
                         skill_name = data_jutsu.MULTI_ATTACK_SKILLS[attack_index][0]
                         mastered = player.skill_proficiencies.get(skill_name, 0) >= 100
-                        landed = _player_attack_mob_once(session, player, mob, guaranteed_hit=mastered)
+                        landed = _player_attack_mob_once(session, player, mob, guaranteed_hit=mastered,
+                                                               signature_skill=skill_name)
                         if landed:
                             grow_skill_from_usage(player, skill_name, session=session)
                     else:
@@ -3952,7 +3975,7 @@ def engage_damage_attack(session, victim, victim_session=None) -> bool:
     return getattr(session, "combat_target", None) is victim
 
 
-def _player_attack_target_once(session, player, target_session, target, guaranteed_hit=False) -> bool:
+def _player_attack_target_once(session, player, target_session, target, guaranteed_hit=False, signature_skill=None) -> bool:
     """One single PvP attack (to-hit roll through the damage/miss/dodge
     messages to both sides) from player against target -- extracted so
     resolve_pvp_pulse can call this once per attack a player has
@@ -4032,6 +4055,8 @@ def _player_attack_target_once(session, player, target_session, target, guarante
 
     dmg = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(attacker_wielded), dmg)
     dmg = ninja_arts.weapon_hit(player, target, dmg, session=session, target_session=target_session)
+    if signature_skill:
+        dmg = signature_moves.amount(player, {"display_name": signature_skill}, dmg)
     import susanoo
     dmg = susanoo.incoming_damage(
         target, sage_mode.incoming(
@@ -4220,7 +4245,8 @@ def resolve_pvp_pulse(session) -> None:
             if attack_index < trained_extra:
                 skill_name = data_jutsu.MULTI_ATTACK_SKILLS[attack_index][0]
                 mastered = player.skill_proficiencies.get(skill_name, 0) >= 100
-                landed = _player_attack_target_once(session, player, target_session, target, guaranteed_hit=mastered)
+                landed = _player_attack_target_once(session, player, target_session, target,
+                                                        guaranteed_hit=mastered, signature_skill=skill_name)
                 if landed:
                     grow_skill_from_usage(player, skill_name, session=session)
             else:
