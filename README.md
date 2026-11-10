@@ -298,9 +298,7 @@ portable backup/restore, full room/mob/item builder settings, programs, shop
 stock, exit door settings and spawn caps. Game imports validate advanced edits
 against the original server export before applying them.
 
-Version 15.307 added a trainable signature move: select a 100%-mastered active
-jutsu with `signature <move>`, raise it to 150% through successful use (not teacher practice), then gain a 25% bonus to
-its damage or effect duration. Switching drops the old move back to 100%.
+Version 15.307 introduced signature mastery. Version 15.448 expands `signature <skill>` to every learned skill (including passive abilities, high-level class moves, sword styles, weapon skills and multi-attacks). Select at 100%, reach 150% through successful use or passive combat training, and receive the applicable +25% signature combat/effect bonus. Switching drops the previous skill to 100%.
 The visual area editor remains at `builder/Nindo_Area_Builder.html`.
 See `builder/README.md` for the offline-to-server workflow. Earlier updates
 added elemental releases, staff-wide jutsu testing, and jutsu base damage
