@@ -93,7 +93,7 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <label>Room reset message<input id="roomReset" maxlength="500"></label>
 <h3>Exits</h3><div id="exitList" class="hint"></div>
 <details><summary>Room builder settings and programs</summary>
-<div id="roomAdvanced"></div><h3>Exit doors, locks and keys</h3>
+<div id="roomAdvanced"></div><h3>Exit flags, doors and locks</h3><p class="hint">Hidden is independent of doors: select Hidden to conceal a passage without adding a door. Closed and locked controls only apply to real doors.</p>
 <label>Edit exit<select id="exitEditorDirection"></select></label>
 <div id="exitAdvanced" class="builder-grid"></div>
 <h3>Room programs</h3><div id="roomPrograms"></div><div id="roomProgramControls"></div>
@@ -516,7 +516,8 @@ function renderExitAdvanced(){
   const config=r.builder||{};
   for(const field of ['exit_flags','exit_door_open','exit_key_item','exit_passcode'])config[field]??={};
   const flags=config.exit_flags[dir]||[];
-  for(const flag of ['door','locked','hidden']){
+  // Hidden independently conceals a normal passage; it does not require a door.
+  for(const flag of ['hidden','door','locked']){
     const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=flags.includes(flag);
     checkbox.onchange=()=>{
       let row=new Set(config.exit_flags[dir]||[]);
