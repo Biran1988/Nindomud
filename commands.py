@@ -690,6 +690,10 @@ def cmd_auction(session, args: List[str]) -> None:
         if not match:
             session.send("You aren't carrying that.")
             return
+        import iron_ascension
+        if match in (iron_ascension.HEART, iron_ascension.SCROLL):
+            session.send("Soulbound Iron Ascension rewards cannot be auctioned.")
+            return
         import courier_missions
         if courier_missions.is_parcel(match):
             session.send("Mission parcels cannot be auctioned. Deliver them to the assigned NPC.")
@@ -4711,6 +4715,10 @@ def cmd_trade(session, args: List[str]) -> None:
         if not match:
             session.send(f"You aren't carrying anything like '{item_query}'.")
             return
+        import iron_ascension
+        if match in (iron_ascension.HEART, iron_ascension.SCROLL):
+            session.send("Soulbound Iron Ascension rewards cannot be traded.")
+            return
         import courier_missions
         if courier_missions.is_parcel(match):
             session.send("Mission parcels are bound to their courier and cannot be traded.")
@@ -6585,6 +6593,10 @@ def cmd_sell(session, args: List[str]) -> None:
         if not match:
             session.send(f"You aren't carrying anything like '{query}'.")
             return
+        import iron_ascension
+        if match in (iron_ascension.HEART, iron_ascension.SCROLL):
+            session.send("Soulbound Iron Ascension rewards cannot be sold.")
+            return
         import courier_missions
         if courier_missions.is_parcel(match):
             session.send("You cannot sell mission cargo. Deliver it to the recipient.")
@@ -6691,7 +6703,11 @@ def _sell_multiple(session, args: List[str]) -> None:
 
     # Descending order keeps the original indices of pending candidates valid.
     import courier_missions
+    import iron_ascension
     for index, item in reversed(selected):
+        if item in (iron_ascension.HEART, iron_ascension.SCROLL):
+            skipped += 1
+            continue
         if courier_missions.is_parcel(item) or item.endswith(" [glued]") or player.backpack_contents.get(str(index)):
             skipped += 1
             continue
@@ -8311,6 +8327,10 @@ def cmd_put(session, args: List[str]) -> None:
         return
     item_position = item_matches[item_index - 1]
     match = player.inventory[item_position]
+    import iron_ascension
+    if match in (iron_ascension.HEART, iron_ascension.SCROLL):
+        session.send("Soulbound Iron Ascension rewards cannot be placed in containers.")
+        return
     import courier_missions
     if courier_missions.is_parcel(match):
         session.send("Keep the courier parcel in your inventory until delivery.")
