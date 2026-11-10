@@ -82,7 +82,8 @@ def install():
                     "The Iron Kage awaits; no stairs lead higher."
                 )
             room = world.Room(rv, f"Iron Ascension - Floor {floor}",
-                              f"Floor {floor} of 250: {stage}.\n{description}")
+                              f"Floor {floor} of 250: {stage}.\n{description}",
+                              safe=True)
             world.WORLD.add_room(room)
         # Only join tower-owned rooms. Never make an external exit.
         room = world.WORLD.get(rv)
