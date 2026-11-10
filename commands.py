@@ -5529,6 +5529,9 @@ def build_jutsu_catalog_lines(player, immortal: bool = False) -> List[str]:
             conditions = []
             if info.get("scroll_only"):
                 conditions.append("Scroll")
+            if (is_known and info.get("class_requirement") in JUTSU_CATALOG_CLASSES
+                    and info.get("class_requirement") != player.primary_class):
+                conditions.append("Cross-Class")
             if info.get("kkg_gate"):
                 conditions.append("Release")
             if info.get("jutsu_id", "").startswith("six_paths_"):
@@ -5898,8 +5901,7 @@ def cmd_prac(session, args: List[str]) -> None:
         catalog = _skill_catalog_for_category(category)
         entries = []
         for name, level_req in catalog:
-            if name in player.learned_skills and (
-                    category != "Bukijutsu" or player.primary_class == "bukijutsu"):
+            if name in player.learned_skills:
                 pct = player.skill_proficiencies.get(name, 0)
                 entries.append(_prac_entry(name, pct, signature=name == getattr(player, "signature_move", "")))
         for i in range(0, len(entries), 2):
@@ -8874,6 +8876,17 @@ def cmd_read(session, args: List[str]) -> None:
             return
     if display in player.learned_skills:
         session.send(f"You already know {display}.")
+        return
+
+    # Technique scrolls may teach ordinary arts from another class, but
+    # cannot override bloodline, village, clan, gate or class-passive rules.
+    # The player's primary class and normal level-up unlocks do not change.
+    required_class = jutsu.get("class_requirement")
+    if (required_class in JUTSU_CATALOG_CLASSES
+            and required_class != player.primary_class
+            and not data_jutsu.scroll_can_cross_class(jutsu)):
+        session.send(f"{display} is a restricted {required_class.capitalize()} technique "
+                     "that cannot be learned by your class from a scroll.")
         return
 
     if jutsu_key == "advanced tracking" and player.level < 20:
