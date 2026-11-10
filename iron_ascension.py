@@ -281,9 +281,13 @@ def reduce_incoming(session, mob, damage):
     now = time.time()
     if (not player._iron_resolve_fired
             and player.health - damage <= max(1, player.maximum_health // 5)):
+        import signature_moves
+        duration = round(20 * signature_moves.multiplier(player, SKILL))
         player._iron_resolve_fired = True
-        player._iron_resolve_until = now + 20.0
-        session.send("&CIron Resolve activates! Your defenses harden for 20 seconds.&x")
+        player._iron_resolve_until = now + duration
+        session.send(f"&CIron Resolve activates! Your defenses harden for {duration} seconds.&x")
     if now < player._iron_resolve_until:
-        damage = max(1, damage * 75 // 100)
+        import signature_moves
+        reduction = round(25 * signature_moves.multiplier(player, SKILL))
+        damage = max(1, damage * (100 - reduction) // 100)
     return damage
