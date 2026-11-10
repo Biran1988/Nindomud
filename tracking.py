@@ -75,6 +75,8 @@ def find_online_player_anywhere(session_module, query: str, viewer=None):
 TRACK_UPKEEP_PER_PULSE = 5  # a small, real, ongoing chakra cost -- mirrors Shadow Clone Jutsu's own established upkeep pattern
 ADVANCED_TRACK_SKILL = "Advanced Tracking"
 ADVANCED_TRACK_LEVEL = 20
+HIDDEN_TRACK_SKILL = "Hidden Tracking"
+HIDDEN_TRACK_LEVEL = 50
 
 
 def has_advanced_tracking(player) -> bool:
@@ -84,23 +86,34 @@ def has_advanced_tracking(player) -> bool:
 
 
 
-def _room_exits_are_passable(room, direction: str) -> bool:
+def has_hidden_tracking(player) -> bool:
+    """Level-50 passive: Track may follow secret, doorless exits too."""
+    return (player.level >= HIDDEN_TRACK_LEVEL
+            and HIDDEN_TRACK_SKILL in player.learned_skills)
+
+
+def _room_exits_are_passable(room, direction: str, allow_hidden: bool = False) -> bool:
     """Whether the caster's own automatic tracking is allowed to use
     this specific exit -- respects a closed, unopened door exactly
     the same way ordinary player movement already does (see
     commands.cmd_move's own identical check), so an autonomous
     tracker can never bypass a restriction a manually-walking player
     couldn't."""
-    if "door" in room.exit_flags.get(direction, []) and not room.exit_door_open.get(direction, False):
+    flags = room.exit_flags.get(direction, [])
+    if "hidden" in flags and not allow_hidden:
+        return False
+    if "door" in flags and not room.exit_door_open.get(direction, False):
         return False
     return True
 
 
-def find_path(world_module, start_vnum: int, target_vnum: int, area) -> Optional[list]:
+def find_path(world_module, start_vnum: int, target_vnum: int, area, *,
+              allow_hidden: bool = False) -> Optional[list]:
     """Shortest walkable route. Area restricts normal Track; None is global.
 
     World-wide Track still follows actual connected, existing rooms and
-    refuses locked/closed doors. Predecessor pointers avoid copying long
+    refuses closed doors. Hidden exits are blocked until the level-50
+    Hidden Tracking upgrade is learned. Predecessor pointers avoid copying long
     candidate paths for every room on a large cross-country route.
     """
     if area is not None:
@@ -126,7 +139,8 @@ def find_path(world_module, start_vnum: int, target_vnum: int, area) -> Optional
                 continue
             if area is not None and not (area.vnum_start <= next_vnum <= area.vnum_end):
                 continue
-            if world_module.WORLD.get(next_vnum) is None or not _room_exits_are_passable(room, direction):
+            if world_module.WORLD.get(next_vnum) is None or not _room_exits_are_passable(
+                    room, direction, allow_hidden=allow_hidden):
                 continue
             predecessor[next_vnum] = (current_vnum, direction)
             if next_vnum == target_vnum:
@@ -262,10 +276,11 @@ def tick_tracking(session) -> None:
         stop_tracking(player)
         return
 
-    # Advanced Tracking walks the SAME graph without the area constraint;
-    # it cannot teleport, traverse missing links or ignore closed doors.
+    # Level-20 Advanced Tracking removes area borders; level-50 Hidden
+    # Tracking independently unlocks hidden passages. Neither bypasses doors.
     path = find_path(world, player.room_vnum, target_vnum,
-                     None if advanced else area)
+                     None if advanced else area,
+                     allow_hidden=has_hidden_tracking(player))
     if not path:
         session.send("&YYou lose the trail -- there's no way to reach your target from here.&x")
         stop_tracking(player)
