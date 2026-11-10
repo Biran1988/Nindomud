@@ -4075,7 +4075,8 @@ def test_color_escape_and_help_seeding():
     # Four ampersands collapse to two literal ones (two escaped pairs).
     assert colors.render("&&&&", True) == "&&"
 
-    # seed_default_help is idempotent -- never overwrites an existing file.
+    # Help seeding refreshes System-owned documentation, but preserves
+    # explicitly staff-edited pages, which carry the editor's updated_by.
     import shutil
     import storage
     # Save the real, original paths -- restored at the end of this test.
@@ -4102,10 +4103,11 @@ def test_color_escape_and_help_seeding():
     # A staff edit to the seeded topic must survive a second seed call.
     edited = dict(entries["colors"])
     edited["body"] = "STAFF EDITED THIS"
+    edited["updated_by"] = "Builder"
     help_system.save_entry(edited)
     help_system.seed_default_help()
     entries2 = {e["primary_keyword"]: e for e in help_system.all_entries()}
-    assert entries2["colors"]["body"] == "STAFF EDITED THIS", "seeding must never overwrite an existing entry"
+    assert entries2["colors"]["body"] == "STAFF EDITED THIS", "seeding must preserve a staff-authored help edit"
 
     # The unedited seeded body itself reads as clean literal text once rendered.
     original_body = next(entry["body"] for entry in help_system.DEFAULT_HELP_ENTRIES
