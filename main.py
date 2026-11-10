@@ -61,8 +61,16 @@ def main():
             print(f"[Roadside encounters] Restored: {repaired}")
     except roadside_encounters.RoadsideInstallationError as error:
         print(f"[Roadside encounters] Repair safely skipped: {error}")
+    # Isolated Iron Ascension: 250 generated floors in its own reserved
+    # 30501-31500 block. No exits to the rest of the world are created.
+    import iron_ascension
+    try:
+        iron_ascension.install()
+    except iron_ascension.IronAscensionError as error:
+        print(f"[Iron Ascension] Installation safely skipped: {error}")
     import commands
     commands.COMMANDS["inn"] = roadside_encounters.cmd_inn
+    commands.COMMANDS["ascension"] = iron_ascension.command
     import seasonal_events
     seasonal_events.sync_visitors()
     from world import reconcile_apartment_ownership
