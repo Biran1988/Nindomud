@@ -103,6 +103,11 @@ class Player:
     training_points: int = 0
     practice_points: int = 0
     mission_points: int = 0
+    # Iron Ascension achievements survive reconnects/restarts. Missing fields
+    # in older saved players use these safe defaults automatically.
+    iron_ascension_highest_floor: int = 0
+    iron_ascension_completed: bool = False
+    iron_ascension_pending_items: List[str] = field(default_factory=list)
 
     hospital_vnum: Optional[int] = None
     prompt_string: str = ""
