@@ -109,5 +109,6 @@ if __name__ == "__main__":
         import jutsu_colors
         import mangekyo_discovery
         import mainland_roads
+        import iron_ascension
     else:
         main()
