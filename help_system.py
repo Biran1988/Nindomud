@@ -2314,7 +2314,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: examine <item>\n"
             "\n"
-            "Description: Inspects an item closely. A player-written scroll message can always be read using 'examine <scroll>', even without the Examine skill. For other item details, Examine is required (unlocked at character level 20) -- how much detail you see scales with your Examine proficiency, from just its rarity at low proficiency up to full set bonus details at 80%+. At 40%+, shows the item's type, its real wear location, and a full stat breakdown -- every category (Armor Class, Hitroll, Damroll, Max Health/Chakra/Stamina, and each attribute) on its own line, never hidden in the item's own name or description.\n"
+            "Description: Inspects an item closely. A player-written scroll message can always be read using 'examine <scroll>', even without the Examine skill. For other item details, Examine is required (unlocked at character level 20) -- how much detail you see scales with your Examine proficiency, from basic details at low proficiency to full set bonus details at 80%+. Item rarity is never displayed. At 40%+, shows the item's type, its real wear location, and a full stat breakdown -- every category (Armor Class, Hitroll, Damroll, Max Health/Chakra/Stamina, and each attribute) on its own line, never hidden in the item's own name or description.\n"
             "\n"
             "Date: 2026-08-27"
         ),
@@ -4625,7 +4625,9 @@ for _help_entry in DEFAULT_HELP_ENTRIES:
         _help_entry["body"] += (
             "\n\nEXAMINE displays remaining/max durability of crafted "
             "weapons, crafted armor and gathering tools. The counter "
-            "is not part of an item's name."
+            "is not part of an item's name. Item rarity is never shown; "
+            "inspection detail improves with skill and can reveal "
+            "weapon enchantments and permanent gem inlays."
         )
     if _help_entry["primary_keyword"] == "craft":
         _help_entry["body"] += (
