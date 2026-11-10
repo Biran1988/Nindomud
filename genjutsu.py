@@ -7,6 +7,7 @@ ground items, so they cannot be equipped, sold, looted, or duplicated.
 import jutsu_colors
 import random
 import time
+import math
 
 import combat
 import data_jutsu
