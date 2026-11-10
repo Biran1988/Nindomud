@@ -6,8 +6,8 @@
     "signature skill"
   ],
   "title": "Signature Move",
-  "body": "Syntax: signature  |  signature <move name>  |  signature clear\n\nChoose one eligible, learned active combat jutsu after it reaches 100% proficiency. Normal practice still stops at 50%; reach 100% through use first. Once selected, raise it from 100% to 150% through successful use, not teacher practice. The bonus begins only at 150%: +25% damage for an attack, and +25% duration for status/utility effects (Chisei also boosts its temporary Chakra). Switch or clear the signature whenever you want, but the old move immediately drops back to 100%. A newly chosen move starts its own 100%-150% training. Passive, binary, and other unsupported abilities cannot be selected.\n\nDate: 2026-10-06",
+  "body": "Syntax: signature | signature <skill name> | signature clear\\n\\nChoose any learned skill at 100% proficiency as your signature, including later-unlocked class techniques, bloodlines, sword schools, weapon skills, multi-attacks and passive abilities. Only one signature can be active. Train it from 100% to 150% by successful use, upkeep or passive combat participation; teacher practice cannot raise it past 100%. At 150%, supported effects gain 25% damage, effect strength or duration, including specific passive combat bonuses, not an uncapped activation chance. Switching or clearing resets the old signature to 100%. Normal skills remain capped at 100%.\\n\\nDate: 2026-11-09",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
