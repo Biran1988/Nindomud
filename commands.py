@@ -390,6 +390,13 @@ def cmd_move(session, direction: str) -> None:
         session.send("You can't go that way.")
         return
 
+    # Iron Ascension stairs are personal progression gates: merely finding
+    # an empty floor (another ninja's kill) never grants clearance.
+    import iron_ascension
+    if (not (session.account and session.account.staff_level != "player")
+            and not iron_ascension.can_ascend(session, direction)):
+        return
+
     import whirlpool_fuinjutsu
     barrier_message = whirlpool_fuinjutsu.check_movement(player, room.vnum, direction)
     if barrier_message and not (session.account and session.account.staff_level != "player"):
@@ -3076,6 +3083,10 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
         session.send(f"You aren't carrying anything like '{query}'.")
         return
 
+    import iron_ascension
+    if match == iron_ascension.HEART and player.level < 250:
+        session.send("You must be level 250 to wear the Heart of the Iron Kage.")
+        return
     wear_loc = _item_wear_loc(match)
     if wear_loc not in accepted_locs:
         session.send(f"You can't {verb} {match}.")
@@ -3130,6 +3141,9 @@ def _wear_all(session) -> None:
     player = session.player
     equipped_count = 0
     for item in list(player.inventory):
+        import iron_ascension
+        if item == iron_ascension.HEART and player.level < 250:
+            continue
         wear_loc = _item_wear_loc(item)
         if wear_loc not in olc.WEAR_LOCATIONS:
             continue
@@ -7855,6 +7869,11 @@ def cmd_give(session, args: List[str]) -> None:
     )
 
     item_query = " ".join(args[:-1]).lower()
+    import iron_ascension
+    if find_indexed_item(item_query, player.inventory) in (
+            iron_ascension.HEART, iron_ascension.SCROLL):
+        session.send("Iron Ascension rewards are soulbound and cannot be given away.")
+        return
     import courier_missions
     parcel = find_indexed_item(item_query, player.inventory)
     if parcel and courier_missions.is_parcel(parcel):
@@ -8091,6 +8110,11 @@ def cmd_drop(session, args: List[str]) -> None:
         if not player.inventory:
             session.send("You aren't carrying anything.")
             return
+        import iron_ascension
+        if any(item in (iron_ascension.HEART, iron_ascension.SCROLL)
+               for item in player.inventory):
+            session.send("Your Iron Ascension rewards are soulbound and cannot be dropped.")
+            return
         dropped = list(player.inventory)
         player.inventory.clear()
         room.ground_items.extend(dropped)
@@ -8107,6 +8131,10 @@ def cmd_drop(session, args: List[str]) -> None:
     match = find_indexed_item(query, player.inventory)
     if not match:
         session.send("You aren't carrying that.")
+        return
+    import iron_ascension
+    if match in (iron_ascension.HEART, iron_ascension.SCROLL):
+        session.send("That Iron Ascension reward is soulbound and cannot be dropped.")
         return
     if courier_missions.is_parcel(match):
         session.send("The sealed courier parcel is mission-bound and cannot be dropped.")
@@ -8798,6 +8826,10 @@ def cmd_read(session, args: List[str]) -> None:
     if proto.get("scroll_message_writable"):
         session.send("That's an Info Scroll. Use 'examine <scroll>' to view its message "
                      "or 'write <scroll>' to leave one. It doesn't teach jutsu.")
+        return
+
+    import iron_ascension
+    if iron_ascension.read_scroll(session, match):
         return
 
     jutsu_key = proto.get("scroll_jutsu", "")
