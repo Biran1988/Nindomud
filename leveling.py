@@ -216,8 +216,9 @@ def credited_experience(player: Player, amount: int, cap: int) -> int:
         return player.experience
 
     threshold = xp_for_next_level(player.level)
-    floor = cumulative_xp_for_level(player.level)
-    progress = max(floor, min(int(player.experience), threshold))
+    # Keep exactly the EXP already stored, including legacy/test characters
+    # whose totals predate the cumulative curve. Never manufacture EXP.
+    progress = max(0, min(int(player.experience), threshold))
     earned = max(0, int(amount))
     percent = endgame_xp_cost_percent(player.level)
     # Retain the established endgame XP tax but never apply leftover
