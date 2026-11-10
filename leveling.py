@@ -206,29 +206,24 @@ def endgame_xp_cost_percent(level: int) -> int:
 
 
 def credited_experience(player: Player, amount: int, cap: int) -> int:
-    """Charge XP by level band, so a large gain cannot skip the endgame tax."""
-    earned = max(0, int(amount))
-    level = player.level
-    progress = player.experience
-    while earned > 0 and level < cap:
-        threshold = xp_for_next_level(level)
-        if progress >= threshold:
-            level += 1
-            continue
-        distance = threshold - progress
-        percent = endgame_xp_cost_percent(level)
-        price = (distance * percent + 99) // 100
-        if earned >= price:
-            progress = threshold
-            earned -= price
-            level += 1
-        else:
-            progress += min(distance, earned * 100 // percent)
-            break
-    ceiling = (cumulative_xp_for_level(MAX_LEVEL) if cap == MAX_LEVEL
-               else xp_for_next_level(cap) - 1)
-    return min(progress, ceiling)
+    """Credit only the current level band; discard reward overflow.
 
+    Keep the XP earned in prior rewards toward this level. When a single
+    award reaches its threshold, nothing from that award rolls into the
+    next level, including during the more expensive final 25 levels.
+    """
+    if player.level >= min(cap, MAX_LEVEL):
+        return player.experience
+
+    threshold = xp_for_next_level(player.level)
+    floor = cumulative_xp_for_level(player.level)
+    progress = max(floor, min(int(player.experience), threshold))
+    earned = max(0, int(amount))
+    percent = endgame_xp_cost_percent(player.level)
+    # Retain the established endgame XP tax but never apply leftover
+    # reward to another band after this level's threshold is reached.
+    credited = min(threshold - progress, earned * 100 // percent)
+    return progress + credited
 
 def grant_experience(player: Player, amount: int) -> List[str]:
     """Apply combat, skill or job experience without passing the rank cap."""
@@ -238,10 +233,10 @@ def grant_experience(player: Player, amount: int) -> List[str]:
 
     lines = []
     reached_levels = []
-    # Do not bank enough XP to skip levels after promotion.
+    # A single grant may complete at most one level; any excess is lost.
     player.experience = credited_experience(player, amount, cap)
 
-    while player.level < cap and player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
+    if player.level < cap and player.level < MAX_LEVEL and player.experience >= xp_for_next_level(player.level):
         player.level += 1
         reached_levels.append(player.level)
         health_gain = HEALTH_PER_LEVEL + _constitution_health_bonus(player.constitution)
@@ -304,6 +299,12 @@ def grant_experience(player: Player, amount: int) -> List[str]:
             player.learned_skills.append("Scan")
             player.skill_proficiencies["Scan"] = initial_proficiency(player)
             lines.append("You have unlocked:\n  Scan")
+
+        import tracking
+        if player.level >= tracking.HIDDEN_TRACK_LEVEL and tracking.HIDDEN_TRACK_SKILL not in player.learned_skills:
+            player.learned_skills.append(tracking.HIDDEN_TRACK_SKILL)
+            player.skill_proficiencies[tracking.HIDDEN_TRACK_SKILL] = initial_proficiency(player)
+            lines.append("You have unlocked:\n  Hidden Tracking (passive)")
 
         if player.level >= data_jutsu.CHAKRA_CHARGE_LEVEL and "Chakra Charge" not in player.learned_skills:
             player.learned_skills.append("Chakra Charge")
@@ -416,6 +417,12 @@ def sync_universal_skills(player: Player) -> List[str]:
         player.learned_skills.append("Scan")
         player.skill_proficiencies["Scan"] = initial_proficiency(player)
         lines.append("&Y(New since your last login: you have learned Scan!)&x")
+
+    import tracking
+    if player.level >= tracking.HIDDEN_TRACK_LEVEL and tracking.HIDDEN_TRACK_SKILL not in player.learned_skills:
+        player.learned_skills.append(tracking.HIDDEN_TRACK_SKILL)
+        player.skill_proficiencies[tracking.HIDDEN_TRACK_SKILL] = initial_proficiency(player)
+        lines.append("&Y(New since your last login: you have learned Hidden Tracking!)&x")
 
     if player.level >= data_jutsu.CHAKRA_CHARGE_LEVEL and "Chakra Charge" not in player.learned_skills:
         player.learned_skills.append("Chakra Charge")
