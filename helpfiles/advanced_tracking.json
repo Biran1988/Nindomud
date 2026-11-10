@@ -5,7 +5,7 @@
     "advanced track"
   ],
   "title": "Advanced Tracking",
-  "body": "Advanced Tracking is a scroll-only level-20+ upgrade to the normal Track jutsu. Obtain an item with item_type scroll and scroll_jutsu 'advanced tracking', then READ <scroll> while at least level 20. From then on, use the ORIGINAL 'perform track <mob or player>' command: it automatically finds a walkable path through any connected area, respecting real doors and obstacles. You do NOT type 'perform advanced tracking'. It still costs normal Track chakra and upkeep, moves one room per pulse, and pauses during combat. If no connected route exists, it ends normally.",
+  "body": "Advanced Tracking is a scroll-only passive available at level 20. READ an Advanced Tracking Scroll, then use the ordinary PERFORM TRACK <mob or player> command; it now follows connected routes across area borders. Advanced Tracking by itself cannot follow hidden exits. The separate level-50 Hidden Tracking passive unlocks hidden passage routes. Closed doors, missing exits and unreachable destinations remain blocked. Movement is one room per pulse, pauses during combat and costs the regular Track Chakra upkeep.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
