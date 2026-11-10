@@ -14,6 +14,11 @@ giving a small melee damage bonus scaling with its own proficiency.
 """
 
 PASSIVE_SKILLS = {
+    "Iron Resolve": {
+        "class_requirement": None,
+        "description": "Once per combat, guard against defeat with 25% incoming mob damage reduction for 20 seconds.",
+        "damage_bonus_at_mastery": 0.0,
+    },
     "Strong Fist Style": {
         "class_requirement": None,  # universal -- every player starts with this
         "description": "A close-combat specialization that strengthens with battle experience.",
