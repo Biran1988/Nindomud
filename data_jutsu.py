@@ -963,6 +963,36 @@ def match_prefix(lower_words):
     return None, 0
 
 
+
+# Reading an inscribed technique scroll is an alternative to learning a
+# different combat class's ordinary arts through leveling. Class identity
+# still controls automatic unlocks; clan, village, elemental and bloodline
+# prerequisites are not removed by a scroll.
+SCROLL_CROSS_CLASS_EXCLUDED_TYPES = frozenset({
+    "combat_passive", "counter", "silent_genjutsu_passive",
+    "dual_wield", "chokkan", "eight_gate", "gate_strike",
+    "whirlpool_seal", "reaper_seal", "kkgk_taijutsu_strike",
+})
+
+
+def scroll_can_cross_class(jutsu: dict) -> bool:
+    """True for ordinary class arts teachable to outsiders by a scroll.
+
+    Special class passives, bloodlines, village/clan secrets and gate powers
+    retain their own access paths rather than becoming scroll-tradable.
+    """
+    return (
+        jutsu.get("class_requirement") in {
+            "ninjutsu", "taijutsu", "genjutsu", "bukijutsu"
+        }
+        and not jutsu.get("kkg_gate")
+        and not jutsu.get("required_clan")
+        and not jutsu.get("required_village")
+        and not jutsu.get("cross_class_scroll_blocked", False)
+        and jutsu.get("jutsu_type") not in SCROLL_CROSS_CLASS_EXCLUDED_TYPES
+    )
+
+
 def jutsu_for_class_at_level(class_name: str, level: int):
     """Return jutsu keys newly unlocked exactly at this level for this
     class, called from leveling.py on every level-up. Genuinely empty
