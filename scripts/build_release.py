@@ -34,6 +34,11 @@ def build(output: Path) -> None:
     source_files = sorted(path for path in ROOT.glob("*.py") if not path.is_symlink())
     sys.path.insert(0, str(ROOT))
     import help_system
+    # Importing the command registry installs help_audit.populate's reviewed
+    # command topics and the role-gated immortal/builder reference. The live
+    # server already loads these; packaging must ship that same complete
+    # help catalog rather than only its earlier static defaults.
+    import commands
     standalone = output / "Nindo_mud"
     with standalone.open("w", encoding="utf-8") as file:
         file.write('#!/usr/bin/env python3\n"""Nindo_mud single-file server; saves remain beside this file in data/."""\n')
