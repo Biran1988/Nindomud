@@ -2516,7 +2516,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: read <scroll>  (alias: study)\n"
             "\n"
-            "Description: Learns the jutsu inscribed on a scroll -- an alternate way to pick up a jutsu beyond your starting kit. The scroll is consumed on a successful read; it isn't consumed if it's blank or teaches something you already know.\n"
+            "Description: Learn the jutsu inscribed on a scroll. Ordinary Ninjutsu, Taijutsu, Genjutsu and Bukijutsu arts may be learned by a different primary class this way (for example, a Taijutsu shinobi can learn Narakumi from a Genjutsu scroll). Your primary class does not change, and other-class techniques do not unlock automatically through leveling. Bloodline/KKGK, clan, village and special class passive or gate techniques cannot cross classes by scroll. Elemental nature and other casting requirements still apply. Successful reading consumes the scroll; failed, blank and already-known scrolls are not consumed. Scroll learning does not require a first teacher practice.\n"
             "\n"
             "Date: 2026-08-17"
         ),
