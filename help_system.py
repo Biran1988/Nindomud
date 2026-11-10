@@ -4631,7 +4631,9 @@ for _help_entry in DEFAULT_HELP_ENTRIES:
         )
     if _help_entry["primary_keyword"] == "craft":
         _help_entry["body"] += (
-            "\n\nCrafted combat gear wears out: Iron 2,500, Steel 5,000, "
+            "\n\nForging combat WEAPONS and ARMOR consumes two metal ingots and no wood. "
+            "Crafted gathering TOOLS still require their matching wood and ingot recipe. "
+            "Crafted combat gear wears out: Iron 2,500, Steel 5,000, "
             "Chakra Steel 10,000. Equipment breaks at zero durability. "
             "Use EXAMINE to see the remaining/max value; item names never "
             "receive a durability suffix. See HELP DURABILITY."
