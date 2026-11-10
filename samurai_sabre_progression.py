@@ -28,7 +28,10 @@ def sync_passives(player):
             player.skill_proficiencies[name] = 100
             newly.append(name)
         elif name in player.learned_skills:
-            player.skill_proficiencies[name] = 100
+            # Do not erase the one selected signature's earned 101-150%
+            # whenever level synchronization runs at login or level-up.
+            if getattr(player, "signature_move", "") != name:
+                player.skill_proficiencies[name] = 100
     return newly
 
 
@@ -44,8 +47,9 @@ def damage_bonus_percent(player):
     wielded = (getattr(player, "equipment", None) or {}).get("wielded") or ""
     if data_weapons.weapon_type_for_item(ninja_arts.base_item(wielded)) != "sword":
         return 0
-    total = BASE_BONUS_PCT
+    import signature_moves
+    total = BASE_BONUS_PCT * signature_moves.multiplier(player, "Samurai Sabre")
     for name, required_level in PASSIVE_UNLOCKS.items():
         if player.level >= required_level and name in player.learned_skills:
-            total += PASSIVE_TIER_BONUS_PCT
-    return total
+            total += PASSIVE_TIER_BONUS_PCT * signature_moves.multiplier(player, name)
+    return round(total)
