@@ -6,7 +6,7 @@
     "signature skill"
   ],
   "title": "Signature Move",
-  "body": "Syntax: signature | signature <skill name> | signature clear\\n\\nChoose any learned skill at 100% proficiency as your signature, including later-unlocked class techniques, bloodlines, sword schools, weapon skills, multi-attacks and passive abilities. Only one signature can be active. Train it from 100% to 150% by successful use, upkeep or passive combat participation; teacher practice cannot raise it past 100%. At 150%, supported effects gain 25% damage, effect strength or duration, including specific passive combat bonuses, not an uncapped activation chance. Switching or clearing resets the old signature to 100%. Normal skills remain capped at 100%.\\n\\nDate: 2026-11-09",
+  "body": "Syntax: signature | signature <skill name> | signature clear\n\nChoose any learned skill at 100% proficiency as your signature, including later-unlocked class techniques, bloodlines, sword schools, weapon skills, multi-attacks and passive abilities. Only one signature can be active. Train it from 100% to 150% by successful use, upkeep or passive combat participation; teacher practice cannot raise it past 100%. At 150%, supported effects gain 25% damage, effect strength or duration, including specific passive combat bonuses, not an uncapped activation chance. Switching or clearing resets the old signature to 100%. Normal skills remain capped at 100%.\n\nDate: 2026-11-09",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
