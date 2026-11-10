@@ -1418,7 +1418,8 @@ def cmd_rset(session, args: List[str]) -> None:
             "'rset flags safe' toggles PvP safety in this room (blocks attacking other players here).\n"
             f"'rset exitflag <direction> <flag> [value]' -- flags: {', '.join(EXIT_FLAG_NAMES)}. "
             "door/locked/hidden take on|off; keyitem/passcode take the required item name/code "
-            "(or 'off' to clear). A single exit can carry multiple flags at once."
+            "(or 'off' to clear). A single exit can carry multiple flags at once. "
+            "Hidden works alone on an ordinary passage with no door; it conceals the exit from LOOK."
         )
         return
 
@@ -1629,7 +1630,7 @@ def cmd_rset(session, args: List[str]) -> None:
                 f"Usage: rset exitflag <direction> <flag> [value]\n"
                 f"Flags: {', '.join(EXIT_FLAG_NAMES)}\n"
                 "door/locked/hidden take on|off; keyitem/passcode take the required "
-                "item name/code (or 'off'/'none' to clear)."
+                "item name/code (or 'off'/'none' to clear). Hidden needs no door."
             )
             return
         direction, flag = rest[0].lower(), rest[1].lower()
@@ -1655,6 +1656,8 @@ def cmd_rset(session, args: List[str]) -> None:
 
         flags_here = room.exit_flags.setdefault(direction, [])
 
+        # Hidden is a directional passage flag, not a door feature.
+        # Removing a door never removes a separate hidden flag.
         if flag in ("door", "locked", "hidden"):
             if len(rest) < 3 or rest[2].lower() not in ("on", "off"):
                 session.send(f"Usage: rset exitflag {direction} {flag} on|off")
