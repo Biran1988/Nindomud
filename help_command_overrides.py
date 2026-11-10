@@ -45,11 +45,11 @@ PAGES = {
         "Builder+. List programs on the selected object prototype, including triggers, indices and script lines. See OPEDIT and OSET ADDPROGRAM."),
     "mpset": page("mpset <mob vnum> <script index> <chance 1-100>",
         "Builder+. Set an existing mob script's trigger chance. Obtain its zero-based script index using MPSTAT. The selected entry must be a multiline script rather than a legacy single action."),
-    "mpedit": page("mpedit <mob vnum> [script index] [trigger] [speech keyword]",
+    "mpedit": page("mpedit <mob vnum> <trigger> [speech keyword] | mpedit <mob vnum> #<index>",
         "Builder+. Open the multiline mob-program editor for a new or existing script. Use MPSTAT to inspect current indices. Triggers include greet, speech, random, death and move. The editor accepts Smaug-style lines such as say, emote, mpecho, mptransfer, mpmload, mpoload, mpforce and if/or/else/endif. Save with /s; abort with /a. See HELP PROGRAMS."),
-    "rpedit": page("rpedit [room vnum] [script index] [trigger]",
-        "Builder+. Open the multiline room-program editor. Room programs can react to entry and random triggers. Use RPSTAT for script indices, /s to save and /a to abort. See HELP PROGRAMS."),
-    "opedit": page("opedit <object vnum> [script index] [trigger]",
+    "rpedit": page("rpedit <trigger> | rpedit #<index>",
+        "Builder+. Open the multiline room-program editor. Room programs can react to enter and random triggers. RPEDIT always edits the room you are currently in. Use RPSTAT for script indices, /s to save and /a to abort. See HELP PROGRAMS."),
+    "opedit": page("opedit <object vnum> <trigger> | opedit <object vnum> #<index>",
         "Builder+. Edit or create an object script using the multiline editor. Object triggers include wear and get; consult OPSTAT for indices. Use /s to save or /a to abort."),
     "practice": page("practice <learned skill or jutsu>  (alias: prac <name>)",
         "Spend one practice session with a teacher who teaches that skill's actual category. You must already know it. Practice raises proficiency to its teacher cap (usually 50%); using the technique raises it further. Ordinary newly unlocked jutsu must be practiced once before use; scroll-taught arts waive this first lesson, even if learned from another class. Passives train through combat rather than teacher sessions. PRAc without arguments shows your learned skills."),
@@ -101,7 +101,7 @@ STAFF_GUIDE = {
         "MPEDIT/MPSTAT/MPSET, RPEDIT/RPSTAT, OPEDIT/OPSTAT, "
         "SPAWNPOINT, PURGE, UNLEASH BEAST, MOBSCALE (higher rank required "
         "for administrator-only settings).\n"
-        "&CArea Leader+:&x TRANSFER <player>, RETURN <player> for transferred players "
+        "&CArea Leader+:&x TRANSFER <player>, RETURN (last transferred player only) "
         "(subject to their destination/access checks).\n"
         "&CAdministrator+:&x BAN, SPY, RESTORE, JAIL/UNJAIL, SILENCE/UNSILENCE, "
         "LEVELUP <player>, SETALLPRAC, player-target MSET, MOB SCALE controls.\n"
