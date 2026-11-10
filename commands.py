@@ -5360,8 +5360,8 @@ def cmd_signature(session, args: List[str]) -> None:
                  if player.skill_proficiencies.get(name, 0) >= 100]
         session.send(f"Signature move: {status}. At 150%, signature techniques gain +25% "
                      "damage/effect strength or duration; passive skills boost their "
-                     "associated combat effect.\\n"
-                     f"Eligible mastered skills: {', '.join(ready) or 'none'}\\n"
+                     "associated combat effect.\n"
+                     f"Eligible mastered skills: {', '.join(ready) or 'none'}\n"
                      "Use 'signature <skill>' to choose or 'signature clear' to remove it. "
                      "Switching returns the old skill to 100%.")
         return
