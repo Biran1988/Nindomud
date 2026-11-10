@@ -88,9 +88,7 @@ class ReincarnationTests(unittest.TestCase):
             carries = dict(p.reincarnation_growth_carry)
             for character in (p, control):
                 character.village_rank = "genin"  # Level 10 Academy cap now requires graduation.
-                # Each distinct EXP reward can complete only one level.
-                while character.level < 11:
-                    leveling.grant_experience(character, leveling.xp_band_for_level(character.level))
+                leveling.grant_experience(character, leveling.cumulative_xp_for_level(11))
             self.assertEqual(p.level, 11)
             for r, start in initial.items():
                 normal_gain = getattr(control, "maximum_" + r) - start
