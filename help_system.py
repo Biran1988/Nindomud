@@ -575,11 +575,11 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "&CGenjutsu&x -- illusion and mental techniques. See 'help genjutsu'.\n"
             "\n"
-            "&CTaijutsu&x -- pure physical combat techniques, no hand signs, no chakra cost. See 'help taijutsu'.\n"
+            "&CTaijutsu&x -- stamina-based physical strikes without hand signs; elemental strikes may also cost chakra. See 'help taijutsu'.\n"
             "\n"
             "&CBukijutsu&x -- weapon and thrown-item techniques. See 'help bukijutsu'.\n"
             "\n"
-            "Your primary class only decides which jutsu you're automatically granted -- it doesn't restrict which weapons you can wield or which skills you can practice.\n"
+            "Your primary class decides automatic level-up unlocks. You may read a scroll to learn eligible ordinary jutsu from another class (for example a Taijutsu shinobi learning Narakumi from a Genjutsu scroll); the learned art appears under its own category in JUTSU ALL and PRAC. Class-only passive skills, gates, bloodline/KKGK, clan and village secrets remain protected. Scrolls never change your primary class or bypass chakra-nature and casting requirements. See 'help read'.\n"
             "\n"
             "Each class also gives a real, one-time +4 boost to two attributes at character creation: Ninjutsu boosts Intelligence and Constitution, Genjutsu boosts Intelligence and Wisdom, Taijutsu boosts Strength and Dexterity, and Bukijutsu boosts Strength and Constitution.\n"
             "\n"
@@ -3403,7 +3403,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "Description: Ninja levels use a progressive cumulative curve: the total XP at the start of a level is (level - 1) cubed, times 1,000. Each level therefore takes more experience than the one before it. Existing characters are migrated once while preserving the percentage they had already completed toward their next level.\n"
             "\n"
-            "A mob at your level awards about 5% of your current level band before bonuses. Easier mobs award 10% less for every level below you and reach zero at ten levels below. Harder mobs gain 3% per level, capped at 130%. In a group, that calculation is made separately for each member before the group split.\n"
+            "A mob at your level awards about 5% of your current level band before bonuses. Easier mobs award 10% less for every level below you and reach zero at ten levels below. Harder mobs gain 3% per level, capped at 130%. In a group, that calculation is made separately for each member before the group split. Large XP rewards retain any overflow toward later levels and can award more than one level from one kill, subject to your rank cap. Levels 226-250 require progressively more XP; extra earned XP is adjusted separately for each endgame level.\n"
             "\n"
             "Date: 2026-09-22"
         ),
@@ -3816,9 +3816,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["hedit"],
         "title": "Hedit (staff)",
         "body": (
-            "Syntax: hedit create <keyword>  |  hedit <keyword>\n"
+            "Syntax: hedit create [keyword] | hedit edit <keyword> | hedit list | hedit show <keyword> | hedit delete <keyword>\n"
             "\n"
-            "Description: Creates or edits an in-game helpfile -- title, keywords, and body text via the same interactive editor 'rset desc' uses.\n"
+            "Description: Helper rank and higher can create, edit, inspect, list, and delete live in-game help pages. CREATE/EDIT guide you through keywords, title and multiline body; SHOW prints the complete page; LIST shows every topic. Use the editor's /s to save or /a to cancel. Staff-authored pages survive automated help updates and server restarts.\n"
             "\n"
             "&D(Staff only.)&x\n"
             "\n"
@@ -4652,14 +4652,14 @@ def seed_default_help() -> None:
             os.replace(legacy_path, path)
         if not os.path.isfile(path):
             save_entry(entry)
-        elif entry["primary_keyword"] in ({"jobs", "farm", "fish", "mine", "chop", "cook", "oset", "area", "channel", "barrier", "sharingan", "mstat", "bloodstat", "ninjutsu", "genjutsu", "taijutsu", "taijutsu strikes", "bukijutsu", "demonic illusion", "narakumi", "summon", "sage", "summon elder", "damage messages", "track", "shadow clone jutsu", "lottery", "train", "prac", "levelup"}
-                                           | _ELEMENT_HELP_TOPICS | _RELEASE_HELP_TOPICS
-                                           | _recent_pages.keys() | set(_EXPANSION_HELP_KEYS)
-                                           | _SCALED_DAMAGE_HELP_TOPICS | _TECHNIQUE_METADATA_HELP_TOPICS | {"swordstyle", "flags", "group", "follow", "team", "bloodset", "susanoo", "set", "craft"} | __import__("help_audit").COVERED | {"attributes", "combatstats", "scoresheet", "kekkei genkai", "hyuga", "camouflage", "scan", "unleash beast", "hidden mist jutsu", "jinchuriki", "perform", "jutsu all", "skills", "vperk"}):
+        else:
+            # Refresh ANY obsolete System-owned help page as game rules evolve.
+            # Preserve staff-created and staff-edited pages exactly as written.
             with open(path, "r", encoding="utf-8") as f:
                 existing = json.load(f)
-            if (existing.get("updated_by") == "System" and
-                    any(existing.get(field) != entry[field] for field in ("body", "keywords", "title"))):
+            if (existing.get("created_by") == "System"
+                    and existing.get("updated_by") == "System"
+                    and any(existing.get(field) != entry[field] for field in ("body", "keywords", "title"))):
                 save_entry(entry)
     # Earlier releases seeded a separate help file for the old, conflicting
     # staff command. Redirect the stock entry without overwriting staff edits.
@@ -4735,6 +4735,13 @@ def _log(staff_name: str, keyword: str, description: str) -> None:
 
 # --- Player-facing lookup -------------------------------------------------
 
+def _may_view_page(session, entry: dict) -> bool:
+    """Allow public help normally; protect staff-only reference indexes."""
+    return (not entry.get("staff_only") or
+            (getattr(getattr(session, "account", None), "staff_level", "player")
+             in STAFF_CAN_AUTHOR_HELP))
+
+
 def cmd_help(session, args: List[str]) -> None:
     import mangekyo_discovery
     import lightsabers
@@ -4742,7 +4749,7 @@ def cmd_help(session, args: List[str]) -> None:
         _show_help_index(session)
         return
     entry = find_by_keyword(" ".join(args))
-    if not entry or not lightsabers.can_read(session, entry):
+    if not entry or not _may_view_page(session, entry) or not lightsabers.can_read(session, entry):
         session.send("This helpfile doesn't exist, contact an admin to create it.")
         return
     import mangekyo_discovery
@@ -4770,7 +4777,9 @@ def _show_help_index(session) -> None:
     import mangekyo_discovery
     import lightsabers
     lines = ["Type 'commands' for a full list of commands."]
-    entries = [entry for entry in all_entries() if mangekyo_discovery.can_read(session, entry)
+    entries = [entry for entry in all_entries()
+               if _may_view_page(session, entry)
+               and mangekyo_discovery.can_read(session, entry)
                and lightsabers.can_read(session, entry)]
     if entries:
         lines.append("")
