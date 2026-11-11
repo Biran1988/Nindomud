@@ -276,6 +276,10 @@ async def pulse_loop() -> None:
                     session.send(message)
                 import tracking
                 tracking.tick_tracking(session)
+                # World-site working clones run independently of the caster's
+                # current room and resume saved elapsed time after reconnect.
+                import shadow_clone_workforce
+                shadow_clone_workforce.tick(session)
                 for message in upkeep_reports.due(session.player):
                     session.send(message)
                     session.send_prompt()
