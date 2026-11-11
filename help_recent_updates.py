@@ -291,3 +291,53 @@ PAGES = [
          "See HELP BARRIER, HELP SAMURAI SABRE and HELP FOCUSED MIND.",
          "battleready", "bready", "combat preparations", "battle readiness"),
 ]
+
+PAGES.extend([
+    page("advanced shadow clone jutsu", "Advanced Shadow Clone Jutsu",
+         "Scroll-only general jutsu, level 75. Read an Advanced Shadow Clone "
+         "Scroll to learn it. Summons exactly one independent workforce clone "
+         "in the ROOM where it will work; it cannot travel to another work "
+         "site or take part in combat. Workers never craft, smelt, blacksmith, "
+         "cook or cut gems.\\n\\n"
+         "Syntax: WORKCLONE MINE|CHOP|FISH|FARM <chakra> [WITH <tool>]\\n"
+         "        WORKCLONE TRAIN <known attacking jutsu> <chakra>\\n"
+         "        WORKCLONE STATUS | WORKCLONE RETURN\\n"
+         "        PERFORM ADVANCED SHADOW CLONE JUTSU <task> <chakra>\\n\\n"
+         "At least 100 Chakra must be committed in advance. Every 500 "
+         "Chakra pays for 30 real minutes of work, and the prepaid budget "
+         "continues even if the caster leaves the room. A clone gathers "
+         "using basic virtual tools without owning a Copper Pickaxe/Axe/Hoe "
+         "or fishing rod. Give a particular upgraded tool with WITH <tool> "
+         "when summoning; it is removed from your inventory or held-tool "
+         "slot, used with its current durability and returned if unbroken. "
+         "When it breaks, the clone continues using basic techniques. "
+         "Only mining, lumberjacking, fishing and farming are supported. "
+         "A clone training jutsu must be summoned beside an immortal "
+         "training dummy (mob vnum 6). Choose one already known, usable "
+         "attack jutsu; proficiency gains get reported when the clone "
+         "returns.\\n\\n"
+         "On task completion or WORKCLONE RETURN, the clone comes back "
+         "to the caster and dispels. If you own an apartment, the "
+         "gathered items go to your apartment storage room (if built) "
+         "or its main room; otherwise they fill free inventory slots "
+         "and any overflow drops in your present room. Rewards and "
+         "progress are saved with your character, so disconnecting does "
+         "not reset the prepaid work clock. Combat and elemental clones "
+         "remain separate abilities.",
+         "workclone", "workclones", "working clone", "advanced clone"),
+    page("elemental mastery", "Elemental Affinity & Mastery",
+         "Syntax: ELEMENTS\\n\\n"
+         "Your own revealed chakra nature has 100% innate affinity "
+         "from the start. Affinity is not an instant damage bonus. "
+         "Separate Elemental Mastery progresses from 0% to 100% by "
+         "successfully using jutsu from that genuine chakra nature. "
+         "Improvement grows rarer as mastery rises, much like the "
+         "Sharingan's experience curve. At 100% mastery, matching "
+         "elemental jutsu gain up to 15% effectiveness; at the "
+         "beginning they get none. Each of your native elements is "
+         "tracked independently. A nature not yet revealed using "
+         "Chakra Paper will not appear on ELEMENTS. Elemental mastery "
+         "does not replace individual jutsu proficiency or grant "
+         "off-element casting.",
+         "elements", "chakra affinity", "nature mastery"),
+])
