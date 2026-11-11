@@ -128,6 +128,7 @@ JUTSU_SHORTCUTS = {
     'sealing jutsu': 'bseal',
     'sensory detect': 'sdetect',
     'shadow clone jutsu': 'sclone',
+    'advanced shadow clone jutsu': 'aclon',
     'shadow shuriken technique': 'ssh',
     'silent genjutsu': 'sgen',
     'silent movement': 'smove',
