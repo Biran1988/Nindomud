@@ -3429,6 +3429,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     if jutsu_data.get("jutsu_type") == "reaper_seal":
         reaper_seal.cast(session, jutsu_key, target_words)
         return
+    if jutsu_data.get("jutsu_type") == "work_clone":
+        import shadow_clone_workforce
+        shadow_clone_workforce.command(session, target_words)
+        return
     if jutsu_data.get("jutsu_type") == "hyuga_mode":
         hyuga.cast(session, jutsu_key, target_words)
         return
@@ -10405,6 +10409,9 @@ COMMANDS = {
     "teleport": __import__("halloween_event").command_teleport,
     "trickortreat": __import__("halloween_event").command_trickortreat,
     "clone": __import__("clone_control").cmd_clone,
+    "workclone": __import__("shadow_clone_workforce").command,
+    "workclones": __import__("shadow_clone_workforce").command,
+    "elements": __import__("elemental_mastery").command,
     "anki": cmd_anki,
     "charge": cmd_charge,
     "goto": cmd_goto,
