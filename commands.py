@@ -2275,9 +2275,13 @@ def cmd_izanagi(session, args: List[str]) -> None:
 
 
 def cmd_jinchuriki(session, args: List[str]) -> None:
-    """Show the player's sealed beast and its separate combat mastery."""
+    """Show sealed-beast mastery, or dedicated elemental mastery."""
+    if len(args) == 1 and args[0].lower() == "elements":
+        import elemental_mastery
+        elemental_mastery.command(session, [])
+        return
     if args:
-        session.send("Usage: jinchuriki")
+        session.send("Usage: jinchuriki | mastery elements")
         return
     import data_tailed_beasts
     player = session.player
