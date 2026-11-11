@@ -1521,6 +1521,13 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
     import skill_training
     if skill_training.needs_first_practice(player, skill_name):
         return
+    import elemental_mastery
+    technique = data_jutsu.JUTSU.get(skill_name.lower())
+    if technique is None:
+        technique = next((entry for entry in data_jutsu.JUTSU.values()
+                          if entry["display_name"] == skill_name), None)
+    if technique is not None:
+        elemental_mastery.record_use(player, technique)
     current = player.skill_proficiencies.get(skill_name, 0)
     import signature_moves
     cap = (signature_moves.SIGNATURE_CAP
@@ -3223,6 +3230,8 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
 
     dmg = sage_mode.outgoing(player, status_effects.reduce_outgoing_damage(player.active_status_effects, dmg), jutsu=True)
     dmg = eight_gates.physical_damage(player, dmg, jutsu)
+    import elemental_mastery
+    dmg = max(1, round(dmg * elemental_mastery.damage_multiplier(player, jutsu)))
     dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     mob.health -= dmg
     hyuga.on_strike(session, mob, jutsu)
@@ -3487,6 +3496,8 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     dmg = status_effects.reduce_outgoing_damage(player.active_status_effects, dmg)
     dmg = sage_mode.outgoing(player, dmg, jutsu=True)
     dmg = eight_gates.physical_damage(player, dmg, jutsu)
+    import elemental_mastery
+    dmg = max(1, round(dmg * elemental_mastery.damage_multiplier(player, jutsu)))
     dmg = signature_moves.amount(player, jutsu, jutsu_balance.boosted_damage(player, jutsu, dmg))
     dmg = sage_mode.incoming(target, status_effects.reduce_incoming_damage(target.active_status_effects, dmg))
     # A fire inlay resists water, earth resists lightning, etc.
