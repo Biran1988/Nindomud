@@ -206,6 +206,7 @@ class Player:
 
     learned_skills: List[str] = field(default_factory=list)
     skill_proficiencies: Dict[str, int] = field(default_factory=dict)
+    work_clone: dict = field(default_factory=dict)  # persistent prepaid clone task, rewards and clock
     # Saved first teacher lesson and special-grant history; proficiency may fall.
     practiced_skills: List[str] = field(default_factory=list)
     practice_exempt_skills: List[str] = field(default_factory=list)
@@ -562,6 +563,7 @@ class Player:
     # happened yet, so a second Chakra Paper can't be "wasted" if the
     # player somehow already knows (a staff mstat, a future re-reveal
     # item, etc.) -- though today Chakra Paper is the only way in.
+    element_mastery: Dict[str, int] = field(default_factory=dict)  # use-grown 0..100 per native nature
     chakra_nature: Optional[str] = None
     chakra_nature_revealed: bool = False
     # Chosen at level 25 in the protected Kage room; always distinct
