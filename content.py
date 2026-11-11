@@ -111,6 +111,7 @@ _ITEM_VNUMS = {
     "medicinal_herbs": 9809,
     "death_scroll": 9810,
     "info_scroll": 9811,
+    "advanced_clone_scroll": 9812,
 }
 
 
@@ -159,6 +160,18 @@ def _register_shared_items() -> None:
     if _ITEM_VNUMS["death_scroll"] not in olc.OBJECT_TEMPLATES:
         make(_ITEM_VNUMS["death_scroll"], "A Scroll of 1000 Years of Death", "scroll", 0)
         olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "1000 years of death"
+    # Optional high-level scroll: builder-spawnable and rewardable, not
+    # automatically sold in starter village shops. Saved OLC data wins.
+    if _ITEM_VNUMS["advanced_clone_scroll"] not in olc.OBJECT_TEMPLATES:
+        make(_ITEM_VNUMS["advanced_clone_scroll"],
+             "An Advanced Shadow Clone Scroll", "scroll", 15000)
+        scroll = olc.OBJECT_TEMPLATES[_ITEM_VNUMS["advanced_clone_scroll"]]
+        scroll["scroll_jutsu"] = "advanced shadow clone jutsu"
+        scroll["level"] = 75
+        scroll["description"] = (
+            "An advanced shadow-clone technique for delegating gathering and "
+            "training at a local work site. READ to learn it at level 75."
+        )
     # Backfill persistent tiered tool prototypes on existing servers as well:
     # this must run BEFORE the legacy early-return for old shared items.
     for _kind, _vnumprefix in (("rod", "rod"), ("pickaxe", "pickaxe"), ("axe", "axe")):
