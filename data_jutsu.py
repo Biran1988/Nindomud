@@ -197,6 +197,17 @@ JUTSU = {
         # clones) that fight alongside the player each round instead
         # of dealing damage itself. See combat.use_shadow_clone_jutsu.
     },
+    "advanced shadow clone jutsu": {
+        "jutsu_id": "general_advanced_shadow_clone_work",
+        "display_name": "Advanced Shadow Clone Jutsu",
+        "class_requirement": "general", "level_requirement": 75,
+        "chakra_cost": 0, "stamina_cost": 0, "cooldown": 0.0,
+        "damage": None, "damage_type": None, "effect": None,
+        "tier": 4, "element": "none", "jutsu_type": "work_clone",
+        "scroll_only": True,
+        # Chakra is committed directly to work duration, not charged
+        # again through normal level-scaled casting cost.
+    },
     "track": {
         "jutsu_id": "general_track", "display_name": "Track",
         "class_requirement": "general", "level_requirement": 30,
