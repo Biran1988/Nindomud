@@ -8896,6 +8896,9 @@ def cmd_read(session, args: List[str]) -> None:
     if jutsu_key == "advanced tracking" and player.level < 20:
         session.send("You must be level 20 to study the Advanced Tracking Scroll.")
         return
+    if jutsu_key == "advanced shadow clone jutsu" and player.level < 75:
+        session.send("You must reach level 75 to read the Advanced Shadow Clone Scroll.")
+        return
 
     player.learned_skills.append(display)
     player.skill_proficiencies[display] = leveling.initial_proficiency(player)
