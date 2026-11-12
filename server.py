@@ -140,6 +140,7 @@ async def pulse_loop() -> None:
     import tips
     import upkeep_reports
     import inactive_player_purge
+    import village_perks
     from session import ACTIVE_SESSIONS, State
 
     elapsed_since_regen = 0.0
@@ -163,6 +164,10 @@ async def pulse_loop() -> None:
 
     while True:
         await asyncio.sleep(PULSE_SECONDS)
+
+        perk_notice = village_perks.tick_automatic_perks()
+        if perk_notice:
+            _broadcast_all(perk_notice)
 
         # The expiration clock runs even when nobody else is connected.
         # Only after 15 full minutes do we perform the real logout,

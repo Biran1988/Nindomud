@@ -141,8 +141,21 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "vperk", "keywords": ["vperk", "villageperk"],
-        "title": "Immortal Global Village Perks",
-        "body": "Syntax: vperk list | vperk status | vperk <perk> on|off | vperk on|off <perk>\\n\\nDescription: Immortal only (helper rank and higher). Activates a perk for every player in the entire MUD for 24 hours, at no mission-point cost; survives reboots and crashes. Only one global perk per category can be active at once: experience, damage or Ryo. Active double/triple EXP perks also apply to successful job actions (fishing, mining, lumberjack, farming, cooking and gemcutting), and turn off immediately when the perk ends. Re-enabling refreshes the timer; 'off' cancels that global bonus. Ordinary Kage purchases remain village-only, last one hour, and are not erased.\\n\\nExamples: vperk double exp on | vperk triple damage on | vperk double ryo off | vperk status.\\n\\nPerks: double exp, triple exp, double damage, triple damage, double ryo, triple ryo.",
+        "title": "Global Village Perks",
+        "body": (
+            "Three free MUD-wide perks run at random times in each 24-hour cycle. "
+            "Each window lasts 30 minutes. The game announces one double or triple boost "
+            "for each of experience, damage, and ryo. The schedule survives reboots.\n\n"
+            "Immortals of helper rank and higher can use vperk list and vperk status. "
+            "Use vperk <perk> on or vperk on <perk> to start or renew a 24-hour override. "
+            "Use vperk <perk> off or vperk off <perk> to end it. "
+            "Available perks are double exp, triple exp, double damage, triple damage, "
+            "double ryo, and triple ryo.\n\n"
+            "Immortal overrides take priority in their category. When a Kage purchase "
+            "and an automatic perk share a category, the higher multiplier applies. "
+            "Kage purchases last one hour in their village. Active EXP perks also boost "
+            "successful job actions."
+        ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {

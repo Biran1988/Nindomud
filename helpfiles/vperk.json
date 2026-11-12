@@ -4,9 +4,9 @@
     "vperk",
     "villageperk"
   ],
-  "title": "Vperk - Immortal Global Perks",
-  "body": "Syntax: vperk list\n        vperk status\n        vperk <perk> on|off\n        vperk on|off <perk>\n\nDescription: Immortals can activate or disable a perk across the ENTIRE MUD for 24 hours. Every village and every character receives the same global EXP, damage, or Ryo boost. Double/Triple EXP also boosts successful job actions, including Fishing, Mining, Lumberjack, Farming, Cooking, and Gemcutter; when the perk expires or is disabled, job XP immediately returns to normal. No mission points are spent. A global perk survives server reboots and crashes. Enabling again refreshes 24 hours; disabling removes only that global perk. One global perk per category may be active; changing double EXP to triple EXP replaces the old global EXP boost. Kage-purchased bonuses are still restricted to their own villages, remain separate, and last one hour.\n\nExamples:\n  vperk list\n  vperk status\n  vperk double exp on\n  vperk double exp off\n  vperk triple damage on\n  vperk double ryo on\n\nPerks: double exp, triple exp, double damage, triple damage, double ryo, triple ryo.\n\nDate: 2026-10-24",
+  "title": "Global Village Perks",
+  "body": "Three free MUD-wide perks run at random times in each 24-hour cycle. Each window lasts 30 minutes. The game announces one double or triple boost for each of experience, damage, and ryo. The schedule survives reboots.\n\nImmortals of helper rank and higher can use vperk list and vperk status. Use vperk <perk> on or vperk on <perk> to start or renew a 24-hour override. Use vperk <perk> off or vperk off <perk> to end it. Available perks are double exp, triple exp, double damage, triple damage, double ryo, and triple ryo.\n\nImmortal overrides take priority in their category. When a Kage purchase and an automatic perk share a category, the higher multiplier applies. Kage purchases last one hour in their village. Active EXP perks also boost successful job actions.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0
+  "updated_at": 0.0
 }

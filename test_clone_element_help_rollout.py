@@ -39,8 +39,10 @@ class CloneElementHelpRolloutTests(unittest.TestCase):
         self.assertIn('Shadow Clone', versions['15.449'])
         self.assertIn('Elemental Mastery', versions['15.450'])
         self.assertIn('HELP WORKCLONE', versions['15.451'])
-        self.assertEqual([v for v, _ in changelog.CHANGELOG][-14:],
-                         ['15.449', '15.450', '15.451', '15.452', '15.453', '15.454', '15.455', '15.456', '15.457', '15.458', '15.459', '15.460', '15.461', '15.462'])
+        ordered_versions = [version for version, _ in changelog.CHANGELOG]
+        expected = [f'15.{revision}' for revision in range(449, 463)]
+        start = ordered_versions.index(expected[0])
+        self.assertEqual(ordered_versions[start:start + len(expected)], expected)
 
 
 if __name__ == '__main__':

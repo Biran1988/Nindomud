@@ -616,4 +616,6 @@ CHANGELOG = [
 
     ("15.462", "Reduced the cost of buying a basic one-room boat from 75,000 to 10,000 ryo at an immortal-created shoreline port. BUY BOAT and BOAT now display the new price; HELP BOAT updated. Existing owners keep their boats unchanged."),
 
+    ("15.463", "Three 30-minute village perks now activate MUD-wide at random times in each 24-hour cycle. One double or triple boost is drawn for each of experience, damage, and ryo. The game announces each active window, and the schedule survives reboots."),
+
 ]

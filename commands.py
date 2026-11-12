@@ -1632,9 +1632,12 @@ def cmd_vperk(session, args: List[str]) -> None:
             session.send(usage)
             return
         active = village_perks.staff_perks_display("all")
+        automatic = village_perks.automatic_perk_display()
         session.send("&CImmortal perks (entire MUD):&x\n" +
                      ("\n".join("  " + entry for entry in active)
-                      if active else "  No global immortal perks are active."))
+                      if active else "  No global immortal perks are active.") +
+                     "\n&C30-minute automatic perk&x\n  " +
+                     (automatic or "No automatic perk is active."))
         return
 
     # Keep 'all' as a backward-compatible optional marker, but never
