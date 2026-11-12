@@ -19,7 +19,9 @@ class ImmortalJutsuTests(unittest.TestCase):
         self.assertTrue(leveling.grant_immortal_jutsu(player))
         self.assertTrue(all(j["display_name"] in player.learned_skills
                             and player.skill_proficiencies[j["display_name"]] == 100
-                            for j in data_jutsu.JUTSU.values()))
+                            for j in data_jutsu.JUTSU.values()
+                            if not j.get("jinchuriki_only")))
+        self.assertNotIn("Tailed Beast Bomb", player.learned_skills)
         self.assertIn("1000 Years of Death", player.learned_skills)  # scroll-only
 
         session = Session(lambda text: None, lambda: None)
@@ -28,7 +30,9 @@ class ImmortalJutsuTests(unittest.TestCase):
         session.state = State.PLAYING
         try:
             self.assertTrue(all(combat._can_use_jutsu(player, j, key)
-                                for key, j in data_jutsu.JUTSU.items()))
+                                for key, j in data_jutsu.JUTSU.items()
+                                if not j.get("jinchuriki_only")))
+            self.assertFalse(combat._can_use_jutsu(player, data_jutsu.JUTSU["tailed beast bomb"], "tailed beast bomb"))
             player.chakra = 500
             player.room_vnum = 991199
             mob = combat.Mob(991199, 991199, "Bandit", 40, 500, 500, 991199, 0, 0)

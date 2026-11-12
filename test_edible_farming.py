@@ -64,6 +64,9 @@ class EdibleFarmFoodTests(unittest.TestCase):
                     commands.cmd_cook(self.session, raw.split()[1:])
                 self.assertEqual(self.player.inventory, [recipe["dish"]])
                 award.assert_called_once_with(self.session, "cooking", recipe["cooking_xp"])
+                self.assertIn(f"You cooked {raw}.", self.messages)
+                self.assertFalse(any("You cook A Cooked" in line for line in self.messages))
+                self.messages.clear()
 
     def test_herbs_remain_ingredient_and_not_an_edible_crop(self):
         self.assertNotIn("medicinal herbs", farming.EDIBLE_CROPS)

@@ -7465,12 +7465,12 @@ def cmd_cook(session, args: List[str]) -> None:
 
         ok, reason = inventory.add_item(player.inventory, display_name)
         if not ok:
-            session.send(f"You cook {rarity_colored_name(display_name)}, but had nowhere to put it!")
+            session.send(f"You cooked {ingredient_name.lower()}, but had nowhere to put it!")
             session.send(inventory.full_message(reason, display_name))
             session.send("You eat it yourself on the spot rather than waste it.")
             return
 
-        session.send(f"You cook {rarity_colored_name(display_name)}!")
+        session.send(f"You cooked {ingredient_name.lower()}.")
         _award_job_action_xp(session, "cooking", result["xp"])
 
     session.send(f"You start cooking {ingredient_name}...")

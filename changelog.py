@@ -611,4 +611,6 @@ CHANGELOG = [
 
     ("15.459", "Fixed Bukijutsu pill crafting above level 100. CRAFT PILL MEDICINE/ANTIDOTE <level> now accepts levels 1 through the crafter's own level, up to 250. Higher-level Medicinal and Antidote Pills retain their potency after save/load and correctly work with EXAMINE, USE or EAT; updated helpfiles."),
 
+    ("15.460", "Cooking completion text now uses the ingredient name in past tense, for example: You cooked a potato. Cooked item names, food benefits, experience, and cooking failures are unchanged."),
+
 ]
