@@ -3717,6 +3717,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         combat.remove_mob(mob)
         player.jinchuriki_beast_key = beast_key
         player.jinchuriki_mastery = 0
+        import tailed_beasts
+        tailed_beasts.sync_tailed_beast_bomb(player)
         jutsu_colors.send(session, f"&RYou complete the seal -- {beast['display_name']} is bound within you now!&x")
         import tailed_beasts
         _broadcast_globally(tailed_beasts.announcement(beast, sealed_by=player.name))
@@ -3750,6 +3752,8 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
         beast = data_tailed_beasts.TAILED_BEASTS_BY_KEY[beast_key]
         target_session.player.jinchuriki_beast_key = None
         target_session.player.jinchuriki_mastery = 0
+        target_session.player.tailed_beast_mode_active = False
+        tailed_beasts_module.sync_tailed_beast_bomb(target_session.player)
         mob = tailed_beasts_module.release_beast(beast, world_module, combat)
         jutsu_colors.send(session, f"&RYou tear {beast['display_name']} free from {target_session.player.name}!&x")
         jutsu_colors.send(target_session, f"&R{player.name} rips {beast['display_name']} out of you!&x")
@@ -3757,6 +3761,9 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             beast, freed_from=target_session.player.name))
         return
     if jutsu_data.get("jutsu_type") == "beast_bomb":
+        if not combat._can_use_jutsu(player, jutsu_data, jutsu_key):
+            jutsu_colors.send(session, "Only a jinchuriki who has fully mastered their sealed beast can learn Tailed Beast Bomb.")
+            return
         if not player.tailed_beast_mode_active:
             jutsu_colors.send(session, "You can only unleash this while Tailed Beast Mode is active.")
             return
@@ -5290,8 +5297,16 @@ def cmd_practice(session, args: List[str]) -> None:
     if not args:
         session.send("Practice what?")
         return
-    query = " ".join(args).lower()
-    match = next((s for s in player.learned_skills if query in s.lower()), None)
+    query = " ".join(args).strip().casefold()
+    match = next((skill for skill in player.learned_skills
+                  if skill.casefold() == query), None)
+    if match is None:
+        candidates = [skill for skill in player.learned_skills
+                      if query in skill.casefold()]
+        if len(candidates) > 1:
+            session.send("Be more specific: " + ", ".join(candidates))
+            return
+        match = candidates[0] if candidates else None
     if not match:
         session.send("You haven't learned that skill or jutsu.")
         return
@@ -5995,10 +6010,16 @@ def _find_matching_teacher(room_vnum: int, skill_name: str):
     # existing teacher eligibility based on the jutsu's underlying
     # class_requirement so this update cannot lock out practiced eyes.
     category = _categorize_underlying_class(skill_name)
+    # Numbered attacks are general melee drills for their FIRST lesson.
+    # Eligibility remains class- and level-locked in cmd_practice.
+    numbered_attack = skill_name in {
+        name for name, _level, _required_class in data_jutsu.MULTI_ATTACK_SKILLS
+    }
     for mob in combat.mobs_in_room(room_vnum):
         if not combat.is_teacher(mob):
             continue
-        if category == "General Skills" or combat.teacher_class(mob) == category.lower():
+        if (numbered_attack or category == "General Skills"
+                or combat.teacher_class(mob) == category.lower()):
             return mob
     return None
 
@@ -8877,6 +8898,9 @@ def cmd_read(session, args: List[str]) -> None:
 
     jutsu = data_jutsu.JUTSU[jutsu_key]
     display = jutsu["display_name"]
+    if jutsu.get("jinchuriki_only"):
+        session.send("Tailed Beast Bomb is earned only through mastering a sealed Tailed Beast; a scroll cannot teach it.")
+        return
     if jutsu.get("jutsu_type") == "reaper_seal":
         import reaper_seal
         if not reaper_seal.eligible(player):
@@ -10416,8 +10440,7 @@ COMMANDS = {
     "teleport": __import__("halloween_event").command_teleport,
     "trickortreat": __import__("halloween_event").command_trickortreat,
     "clone": __import__("clone_control").cmd_clone,
-    "workclone": __import__("shadow_clone_workforce").command,
-    "workclones": __import__("shadow_clone_workforce").command,
+    # Advanced Clone workforce runs via PERFORM ADVANCED SHADOW CLONE JUTSU, not a standalone command.
     "elements": __import__("elemental_mastery").command,
     "anki": cmd_anki,
     "charge": cmd_charge,

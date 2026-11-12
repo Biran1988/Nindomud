@@ -268,6 +268,7 @@ JUTSU = {
         "class_requirement": "general", "level_requirement": 100,
         "chakra_cost": 150, "stamina_cost": 0, "cooldown": 30.0,
         "jutsu_type": "beast_bomb", "damage": None, "damage_type": None, "effect": None,
+        "scroll_only": True, "jinchuriki_only": True,
         "tier": 5, "element": "none",
         # No fixed damage tuple -- per direct confirmation (Section
         # 127 continued): "with its own real damage scaling by tail

@@ -44,7 +44,11 @@ def grant_immortal_jutsu(player: Player) -> bool:
     if not getattr(player, "_immortal_skill_mastery", False):
         return False
     changed = False
+    import tailed_beasts
+    tailed_beasts.sync_tailed_beast_bomb(player)
     for jutsu in data_jutsu.JUTSU.values():
+        if jutsu.get("jinchuriki_only") and not (player.jinchuriki_beast_key and player.jinchuriki_mastery >= 100):
+            continue
         name = jutsu["display_name"]
         if name not in player.learned_skills:
             player.learned_skills.append(name)
@@ -504,7 +508,9 @@ def sync_universal_skills(player: Player) -> List[str]:
         lines.append(f"&Y(New Byakugan technique: {new_skill}!)&x")
     import six_paths
     lines.extend(six_paths.sync_skills(player))
-    if lines or ice_changed:
+    import tailed_beasts
+    bomb_changed = tailed_beasts.sync_tailed_beast_bomb(player)
+    if lines or ice_changed or bomb_changed:
         storage.save_player(player)
 
     return lines

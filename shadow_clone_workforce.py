@@ -165,8 +165,10 @@ def _message_status(session, state):
 
 
 def command(session, args):
-    """workclone status | return | <job> <chakra> [with <tool>] |
-       train <known damaging jutsu> <chakra>"""
+    """Handler for PERFORM ADVANCED SHADOW CLONE JUTSU.
+
+    The normal PERFORM pipeline resolves the learned scroll technique first.
+    """
     import combat
     import data_jutsu
     import storage
@@ -176,9 +178,9 @@ def command(session, args):
     if player is None:
         return
     if not args or args[0].casefold() in ("help", "?"):
-        session.send("Syntax: workclone mine|chop|fish|farm <chakra> [with <tool>]\n"
-                     "        workclone train <known attack jutsu> <chakra>\n"
-                     "        workclone status | workclone return\n"
+        session.send("Syntax: PERFORM ADVANCED SHADOW CLONE JUTSU MINE|CHOP|FISH|FARM <chakra> [WITH <tool>]\n"
+                     "        PERFORM ADVANCED SHADOW CLONE JUTSU TRAIN <known attack jutsu> <chakra>\n"
+                     "        PERFORM ADVANCED SHADOW CLONE JUTSU STATUS|RETURN\n"
                      "500 Chakra = 30 real minutes; one worker, summoned at its work site.")
         return
     action = args[0].casefold()
@@ -208,11 +210,11 @@ def command(session, args):
         session.send("You must be conscious, out of combat and free to summon a worker.")
         return
     if player.work_clone:
-        session.send("You already have a working clone. Use 'workclone status' or 'workclone return'.")
+        session.send("You already have a working clone. Use 'perform advanced shadow clone jutsu status' or 'perform advanced shadow clone jutsu return'.")
         return
     parsed = _split_request(args)
     if not parsed:
-        session.send("Use 'workclone help' for the task and Chakra syntax.")
+        session.send("Use 'perform advanced shadow clone jutsu help' for the task and Chakra syntax.")
         return
     task, chakra, skill_query, tool_query = parsed
     if chakra < MIN_CHARGE:

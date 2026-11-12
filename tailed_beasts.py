@@ -233,6 +233,22 @@ RAMPAGE_CHANCE_PER_ROUND = 1.0 / 1000.0  # confirmed directly: "1 in 1000 per co
 RAMPAGE_STAT_BOOST_PCT = 50  # confirmed directly: "+50%" to HP/chakra/stamina AND damage/hit roll/armor class while rampaging
 
 
+def sync_tailed_beast_bomb(player) -> bool:
+    """Grant the Bomb to mastered jinchuriki, and revoke it on extraction."""
+    name = "Tailed Beast Bomb"
+    eligible = bool(getattr(player, "jinchuriki_beast_key", None)) and getattr(player, "jinchuriki_mastery", 0) >= 100 and player.level >= 100
+    known = name in player.learned_skills
+    if eligible and not known:
+        player.learned_skills.append(name)
+        player.skill_proficiencies.setdefault(name, 0)
+        return True
+    if not eligible and known:
+        player.learned_skills.remove(name)
+        player.skill_proficiencies.pop(name, None)
+        return True
+    return False
+
+
 def tick_jinchuriki_mastery(player) -> bool:
     """Rolls the real, flat per-round chance (MASTERY_GAIN_CHANCE_PER_
     ROUND) for a jinchuriki to gain +1 real mastery -- mirrors the
@@ -245,9 +261,11 @@ def tick_jinchuriki_mastery(player) -> bool:
     Returns True if mastery genuinely increased this call, for the
     caller to decide whether to narrate it."""
     if player.jinchuriki_mastery >= 100:
+        sync_tailed_beast_bomb(player)
         return False
     if random.random() < MASTERY_GAIN_CHANCE_PER_ROUND:
         player.jinchuriki_mastery = min(100, player.jinchuriki_mastery + 1)
+        sync_tailed_beast_bomb(player)
         return True
     return False
 

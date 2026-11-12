@@ -220,6 +220,27 @@ def defeated(session, mob):
     storage.save_player(player)
 
 
+def return_from_final_floor(session, mob):
+    """Automatically reset tower challenger after the final guardian kill."""
+    player = session.player
+    last_room = START + FLOORS - 1
+    if (mob.template_vnum != guardian_vnum(FLOORS)
+            or mob.room_vnum != last_room or player.room_vnum != last_room
+            or not player.iron_ascension_completed):
+        return False
+    player.room_vnum = START
+    session.send("&YThe Iron Kage's final seal activates! You return to "
+                 "the entrance of Iron Ascension. You must climb the tower "
+                 "again to face the last guardian.&x")
+    import storage
+    storage.save_player(player)
+    import world
+    if world.WORLD.get(START):
+        import commands
+        commands.cmd_look(session, [])
+    return True
+
+
 def command(session, args):
     player = session.player
     if args and args[0].lower() == "claim":

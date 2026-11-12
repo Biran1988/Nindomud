@@ -359,6 +359,16 @@ def is_training_dummy(mob: Mob) -> bool:
     return mob.template_vnum == TRAINING_DUMMY_VNUM
 
 
+def mob_attacks_at_level(level: int, template_attacks: int = 1) -> int:
+    """NPC level thresholds: 2 strikes at 100+, 3 strikes at 201+.
+
+    Stronger builder-set attack counts are left intact. The training dummy
+    remains a special case with a single harmless attack.
+    """
+    baseline = 3 if level > 200 else 2 if level >= 100 else 1
+    return max(baseline, int(template_attacks or 1))
+
+
 def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     t = MOB_TEMPLATES[template_vnum]
     if not t.get("enabled", True) and template_vnum != TRAINING_DUMMY_VNUM:
@@ -396,7 +406,7 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         experience_reward=(0 if template_vnum == TRAINING_DUMMY_VNUM else t["experience_reward"]),
         ryo_reward=(0 if template_vnum == TRAINING_DUMMY_VNUM else t["ryo_reward"]),
         damage_dice=effective_damage_dice,
-        attacks=(1 if template_vnum == TRAINING_DUMMY_VNUM else max(1, t.get("attacks", 1))),
+        attacks=(1 if template_vnum == TRAINING_DUMMY_VNUM else mob_attacks_at_level(level, t.get("attacks", 1))),
         armor_class=t.get("armor_class", 0), hit_roll=t.get("hit_roll", 0),
         respawns=t.get("respawns", True), loot_items=list(t.get("loot_items", [])),
         chakra=max_chakra, maximum_chakra=max_chakra,
@@ -2888,6 +2898,11 @@ def _can_use_jutsu(player, jutsu, jutsu_key: str = None) -> bool:
     import whirlpool_fuinjutsu
     if whirlpool_fuinjutsu.blocked_jutsu(player, jutsu):
         return False
+    if jutsu.get("jinchuriki_only"):
+        return (bool(player.jinchuriki_beast_key)
+                and player.jinchuriki_mastery >= 100
+                and player.level >= jutsu["level_requirement"]
+                and jutsu["display_name"] in player.learned_skills)
     if _staff_testing_mangekyo(player):
         return True
     if (jutsu.get("jutsu_type") == "kkgk_taijutsu_strike"
@@ -3781,6 +3796,9 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     import missions  # local import to avoid circular dependency
     for line in missions.on_mob_defeated(player, mob.template_vnum):
         session.send(line)
+
+    # Only move the tower victor after loot, XP and mission rewards settle.
+    iron_ascension.return_from_final_floor(session, mob)
 
 
 def try_trigger_izanagi(session) -> bool:
