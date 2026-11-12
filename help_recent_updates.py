@@ -369,10 +369,10 @@ for _school, _spec in _individual_sword_styles.STYLES.items():
                          if _spec.get("dual") else " Wield one sword to use it.")
     _body = (
         f"Syntax: SWORDSTYLE {_school} | SWORDSTYLE LIST | "
-        "SWORDSTYLE OFF\\n\\n"
+        "SWORDSTYLE OFF\n\n"
         f"{_school} unlocks for Bukijutsu at level {_spec['level']} "
         "and is learned automatically at that level. "
-        f"{_spec['description']}" + _dual_requirement + "\\n\\n" +
+        f"{_spec['description']}" + _dual_requirement + "\n\n" +
         f"At 100% mastery: {_spec['accuracy']:+} accuracy and "
         f"+{_spec['damage']}% sword damage. "
         f"Each landed strike costs {_spec['stamina']} Stamina. "
@@ -386,7 +386,7 @@ for _school, _spec in _individual_sword_styles.STYLES.items():
 
 PAGES.append(page(
     "fourth attack", "Fourth Attack - Bukijutsu Numbered Attack",
-    "Syntax: PRAC FOURTH ATTACK | PRACTICE FOURTH ATTACK\\n\\n"
+    "Syntax: PRAC FOURTH ATTACK | PRACTICE FOURTH ATTACK\n\n"
     "Bukijutsu learns Fourth Attack automatically at level 75. "
     "It starts at 0% proficiency and needs one teacher lesson before "
     "passive combat use can improve it. Any class teacher can teach this "
