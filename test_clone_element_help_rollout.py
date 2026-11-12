@@ -21,8 +21,8 @@ class CloneElementHelpRolloutTests(unittest.TestCase):
                 self.assertIsNotNone(page, topic)
                 for phrase in phrases:
                     self.assertIn(phrase, page['body'])
-                self.assertIn('\\n\\n', page['body'])
-                self.assertNotIn('\\\\n', page['body'])
+                self.assertIn('\n\n', page['body'])
+                self.assertNotIn('\\n', page['body'])
 
     def test_staff_help_is_preserved_on_restart(self):
         with tempfile.TemporaryDirectory() as temp, patch.object(help_system, 'HELP_DIR', temp):
