@@ -596,4 +596,9 @@ CHANGELOG = [
     ("15.448", "Signature Move now accepts ANY learned skill at 100% mastery, including later class techniques, passive abilities, weapon proficiency, multi-attacks and sword styles. Passive combat use can raise the chosen skill to 150%; signature combat effects gain +25% where applicable. Switching still resets the old choice to 100%."),
 
 
+
+    ("15.449", "Advanced Shadow Clone Jutsu is a level-75, scroll-learned general technique. Summon one room-bound workforce clone with WORKCLONE to mine, chop, fish, farm or practice a known attack jutsu beside a training dummy. Each 500 committed Chakra funds 30 minutes; upgraded tools may be supplied, work survives reconnects, and gathered items return to the caster or apartment."),
+    ("15.450", "Every revealed natural chakra element now has innate 100% affinity plus a separate Elemental Mastery that grows from successful matching jutsu use. Use ELEMENTS to view each nature; effectiveness rises gradually from 0 to +15% as mastery reaches 100%. Separate progress is saved for each element, without granting unavailable natures."),
+    ("15.451", "Expanded HELP ADVANCED SHADOW CLONE JUTSU, HELP WORKCLONE and HELP ELEMENTAL MASTERY with command examples, Chakra costs, tool handling, training, saved rewards and elemental damage progression. System helpfiles update at startup without replacing staff-authored help."),
+
 ]
