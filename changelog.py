@@ -612,5 +612,6 @@ CHANGELOG = [
     ("15.459", "Fixed Bukijutsu pill crafting above level 100. CRAFT PILL MEDICINE/ANTIDOTE <level> now accepts levels 1 through the crafter's own level, up to 250. Higher-level Medicinal and Antidote Pills retain their potency after save/load and correctly work with EXAMINE, USE or EAT; updated helpfiles."),
 
     ("15.460", "Cooking completion text now uses the ingredient name in past tense, for example: You cooked a potato. Cooked item names, food benefits, experience, and cooking failures are unchanged."),
+    ("15.461", "Added coordinate-based ocean travel: BUY BOAT at a registered port, BOARD BOAT to enter your private helm, COURSE/VECTOR <x> <z> to pilot across a 20,000 x 20,000 water map, and DOCK to detect ports within 100 units (berth within 50). Immortals manage ports with SETPORT. Ships turn toward safe waters at the boundary; locations and discovered harbors save between logins."),
 
 ]

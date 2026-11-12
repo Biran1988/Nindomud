@@ -4644,6 +4644,50 @@ for _help_entry in DEFAULT_HELP_ENTRIES:
         )
 
 
+# The entire ocean is X/Z math: no 400-million-room ocean area is built.
+DEFAULT_HELP_ENTRIES.extend([
+    {"primary_keyword": "boat", "keywords": ["buy boat", "board boat", "water travel", "sailing", "ship"],
+     "title": "Boats and Ocean Travel",
+     "body": "Syntax: BUY BOAT | BOARD BOAT | BOAT | COURSE <x> <z> | VECTOR <x> <z> | ANCHOR | DOCK [port] | DISEMBARK\n\n"
+             "Purchase a basic boat for 75,000 ryo while standing in an immortal-created shoreline port. "
+             "Every boat has exactly one private helm/cabin room; ocean movement uses X/Z coordinates, "
+             "NOT 20,000 by 20,000 rooms. BOARD BOAT in the harbor and pilot from its helm. "
+             "COURSE/VECTOR <x> <z> steers to absolute ocean coordinates (0-20,000 on each axis). "
+             "ANCHOR stops your engines. The ship turns toward open water if it hits a boundary. "
+             "BOAT reports current position, course and mooring. DOCK scans 100 units for undiscovered ports; "
+             "DOCK <port name> moors within 50 units. DISEMBARK enters that port's land room. "
+             "Boat ownership, location and discovered ports survive save/reconnect. "
+             "Boats only move while a pilot is online and aboard.",
+     "created_by": "System", "updated_by": "System", "updated_at": 0.0},
+    {"primary_keyword": "course", "keywords": ["vector", "steer", "helm", "anchor"],
+     "title": "Course and Vector Navigation",
+     "body": "Syntax: COURSE <x> <z> | VECTOR <x> <z> | ANCHOR\n\n"
+             "Use these commands inside your single-room boat cabin. X and Z are target coordinates "
+             "on a 0 to 20,000 ocean square; no Y axis. The boat sails automatically at 25 units "
+             "per second as the server pulses. COURSE does not warp the vessel: it steers toward "
+             "the requested point. ANCHOR cancels the course. Boundary contact automatically "
+             "turns the boat around and steers 500 units back into the sea.",
+     "created_by": "System", "updated_by": "System", "updated_at": 0.0},
+    {"primary_keyword": "dock", "keywords": ["docking", "dock boat", "harbor", "ports"],
+     "title": "Docking and Port Discovery",
+     "body": "Syntax: DOCK | DOCK <port name> | DISEMBARK | BOARD BOAT\n\n"
+             "DOCK detects registered harbors within 100 X/Z units of your current position. "
+             "When within 50 units, use DOCK <port name> to moor. You stay in the ship cabin "
+             "until DISEMBARK transfers you into the actual port room. Only nearby ports "
+             "appear on the DOCK scan. Your discovered port names are stored on your boat. "
+             "BUY BOAT and BOARD BOAT are only usable while in a registered port's room.",
+     "created_by": "System", "updated_by": "System", "updated_at": 0.0},
+    {"primary_keyword": "setport", "keywords": ["port setup", "immortal port", "set port"],
+     "title": "Immortal SETPORT",
+     "body": "Syntax: SETPORT <x> <z> <port name> | SETPORT LIST | SETPORT REMOVE <port name>\n\n"
+             "Staff only. Stand in the actual coastal land room to anchor a port there, "
+             "then SETPORT X Z Name to place it in the ocean's separate 20,000 x 20,000 "
+             "coordinate layer. Use LIST to see every registered port and its room vnum; "
+             "REMOVE deletes one. Port records persist under data/ocean_ports.json. "
+             "This does not allocate ocean rooms or change the land room's exits.",
+     "created_by": "System", "updated_by": "System", "updated_at": 0.0},
+])
+
 def seed_default_help() -> None:
     old_death_page = _path("100 years of death")
     if os.path.isfile(old_death_page):

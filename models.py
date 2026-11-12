@@ -138,6 +138,8 @@ class Player:
     # world.reconcile_apartment_ownership(), called once at startup
     # after the world is built, re-applies Room.owner from every
     # player's saved apartment_room_vnum.
+    # One owned private boat; X/Z ocean travel persists separately from room exits.
+    boat_state: dict = field(default_factory=dict)
     apartment_room_vnum: Optional[int] = None
     apartment_name: Optional[str] = None
     apartment_description: Optional[str] = None

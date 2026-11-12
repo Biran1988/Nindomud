@@ -235,6 +235,12 @@ def dispatch(session, verb: str, args: List[str]) -> None:
         cmd_emote(session, [verb] + args)
         return
 
+    # Full DISEMBARK coexists with an older jutsu shortcut "dise".
+    if verb == "disembark":
+        import water_travel
+        water_travel.command_disembark(session, args)
+        return
+
     handler = COMMANDS.get(verb)
     if handler:
         handler(session, args)
@@ -6106,6 +6112,10 @@ def cmd_list(session, args: List[str]) -> None:
 
 def cmd_buy(session, args: List[str]) -> None:
     player = session.player
+    if args and args[0].casefold() == "boat":
+        import water_travel
+        water_travel.buy_boat(session)
+        return
 
     if args and args[0].lower() != "all" and not args[0].isdigit() and "apartment" in " ".join(args).lower():
         current_room = WORLD.get(player.room_vnum)
@@ -10384,6 +10394,15 @@ from network_bans import cmd_ip, cmd_ban
 import immortal_practice
 
 COMMANDS = {
+    # Ocean navigation is coordinate-based; the only real room is the boat interior.
+    "board": __import__("water_travel").command_board,
+    "boat": __import__("water_travel").command_status,
+    "course": __import__("water_travel").command_course,
+    "vector": __import__("water_travel").command_course,
+    "dock": __import__("water_travel").command_dock,
+    "leaveboat": __import__("water_travel").command_disembark,
+    "anchor": __import__("water_travel").command_anchor,
+    "setport": __import__("water_travel").command_setport,
     "setallprac": immortal_practice.command,
     "ip": cmd_ip,
     "ban": cmd_ban,

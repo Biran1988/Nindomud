@@ -1217,6 +1217,10 @@ class Session:
             if storage_room is not None:
                 storage_room.ground_items = player.storage_room_items
 
+        # Restore a saved single-room boat interior before missing-room recovery.
+        import water_travel
+        water_travel.ensure_boat_room(player)
+
         # A saved room_vnum can point to a room that no longer exists --
         # most commonly a builder-created room ('rset create') that was
         # never persisted to disk (OLC changes are in-memory only), so

@@ -184,6 +184,9 @@ async def pulse_loop() -> None:
         elapsed_since_tips += PULSE_SECONDS
         elapsed_since_area_reset += PULSE_SECONDS
 
+        # Ships travel via X/Z vectors, never by creating ocean grid rooms.
+        import water_travel
+        water_travel.tick_boats(ACTIVE_SESSIONS, PULSE_SECONDS)
         combat.process_respawns()
         import halloween_event
         halloween_event.process_fast_respawns()
