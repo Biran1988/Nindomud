@@ -7715,8 +7715,8 @@ def cmd_craft(session, args: List[str]) -> None:
             session.send("Usage: craft pill antidote <level>  |  craft pill medicine <level>")
             return
         chosen_level = int(args[2])
-        if not 1 <= chosen_level <= min(player.level, 100):
-            session.send(f"Choose a pill level from 1 to your current level ({player.level}).")
+        if not 1 <= chosen_level <= min(player.level, pill_crafting.MAX_PILL_LEVEL):
+            session.send(f"Choose a pill level from 1 to {min(player.level, pill_crafting.MAX_PILL_LEVEL)} (your level or the game cap).")
             return
         herb = next((item for item in player.inventory if item.lower() == pill_crafting.HERB_NAME.lower()), None)
         if herb is None:

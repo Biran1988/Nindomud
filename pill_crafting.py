@@ -4,6 +4,8 @@ import re
 
 HERB_NAME = "Medicinal Herbs"
 MIN_CRAFTER_LEVEL = 25
+# Keep pill potency aligned with the level-250 character cap.
+MAX_PILL_LEVEL = 250
 PILL_PATTERN = re.compile(r"^(Antidote|Medicinal) Pill\x1e\{pill_level:([1-9][0-9]{0,2})\}$", re.I)
 PILL_DATA_SUFFIX = re.compile(r"\x1e\{pill_level:[1-9][0-9]{0,2}\}")
 
@@ -27,7 +29,7 @@ def pill_data(item_name: str):
         return None
     kind, raw_level = match.groups()
     level = int(raw_level)
-    if not 1 <= level <= 100:
+    if not 1 <= level <= MAX_PILL_LEVEL:
         return None
     if kind.lower() == "antidote":
         return {

@@ -609,4 +609,6 @@ CHANGELOG = [
     ("15.457", "Fixed Fourth Attack's first PRAC lesson at level 75 for Bukijutsu: any class teacher may introduce the numbered melee attacks, while class and level restrictions remain. Practice now prefers exact skill names and reports ambiguous matches."),
     ("15.458", "Added six individual Bukijutsu sword school helpfiles (Iaijutsu through Jigen Ryu), plus HELP FOURTH ATTACK and updated Iron Ascension instructions. Live helpfile refresh preserves staff-edited topics."),
 
+    ("15.459", "Fixed Bukijutsu pill crafting above level 100. CRAFT PILL MEDICINE/ANTIDOTE <level> now accepts levels 1 through the crafter's own level, up to 250. Higher-level Medicinal and Antidote Pills retain their potency after save/load and correctly work with EXAMINE, USE or EAT; updated helpfiles."),
+
 ]

@@ -156,19 +156,19 @@ PAGES += [
     {
         "primary_keyword": "medicinal herbs", "keywords": ["medicinal herbs", "herbs"],
         "title": "Medicinal Herbs",
-        "body": "Syntax: craft pill medicine <level>  |  craft pill antidote <level>\n\nDescription: Buy Medicinal Herbs from a village general store. Bukijutsu at level 25 or higher consumes one herb to craft either pill at a chosen level no higher than the crafter's level. See 'help medicinal pill' and 'help antidote pill'.\n\nDate: 2026-09-27",
+        "body": "Syntax: craft pill medicine <level>  |  craft pill antidote <level>\n\nDescription: Buy Medicinal Herbs from a village general store. Bukijutsu at level 25 or higher consumes one herb to craft either pill at a chosen level no higher than the crafter's level (max 250). See 'help medicinal pill' and 'help antidote pill'.\n\nDate: 2026-09-27",
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "medicinal pill", "keywords": ["medicinal pill", "medicine pill"],
         "title": "Medicinal Pill",
-        "body": "Syntax: craft pill medicine <level>  |  examine <pill>  |  use <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level; it is saved in item data and shown by examine, not in the name. Using it restores Health, Chakra, and Stamina by 100 + six times its level, each over 30 seconds. It does not cure status effects. Use 2.pill to select the second matching pill.\n\nDate: 2026-09-27",
+        "body": "Syntax: craft pill medicine <level>  |  examine <pill>  |  use <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level (max 250); it is saved in item data and shown by examine, not in the name. Using it restores Health, Chakra, and Stamina by 100 + six times its level, each over 30 seconds. It does not cure status effects. Use 2.pill to select the second matching pill.\n\nDate: 2026-09-27",
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
     {
         "primary_keyword": "antidote pill", "keywords": ["antidote pill", "antidote"],
         "title": "Antidote Pill",
-        "body": "Syntax: craft pill antidote <level>  |  examine <pill>  |  use <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level; it is saved in item data and shown by examine, not in the name. It cures poison only and is not consumed when you are not poisoned. Use 2.pill to select the second matching pill.\n\nDate: 2026-09-27",
+        "body": "Syntax: craft pill antidote <level>  |  examine <pill>  |  use <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level (max 250); it is saved in item data and shown by examine, not in the name. It cures poison only and is not consumed when you are not poisoned. Use 2.pill to select the second matching pill.\n\nDate: 2026-09-27",
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
 ]

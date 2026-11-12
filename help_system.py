@@ -2687,7 +2687,7 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "After naming your item, you'll be asked which 2 materials to combine (e.g. 'iron ingot, yew log') -- the same material can be used twice for a weaker but simpler craft. Takes a short delay to resolve, and re-checks you still have both materials at that point.\n"
             "\n"
-            "Pill crafting is Bukijutsu-only from level 25 (the level-70 general weapon/armor unlock does not apply). Each pill uses one Medicinal Herbs, sold at village general stores, and takes a short crafting delay. Choose any pill level from 1 through your own current level. The plain item name does not reveal its strength: use 'examine <pill>' to see its level and effect. 'use <pill>' consumes it; use '2.pill' or 'examine 2.pill' to select the second matching pill when carrying multiple levels. Antidote Pill cures poison, and is saved if you are not poisoned. Medicinal Pill restores Health, Chakra, and Stamina (100 + six times its level), each over 30 seconds. It does not cure status effects. These herbs make the strongest medical restorative in the game. Medicinal Herbs are separate from the two-material weapon/armor recipes.\n"
+            "Pill crafting is Bukijutsu-only from level 25 (the level-70 general weapon/armor unlock does not apply). Each pill uses one Medicinal Herbs, sold at village general stores, and takes a short crafting delay. Choose any pill level from 1 through your own current level (maximum 250). The plain item name does not reveal its strength: use 'examine <pill>' to see its level and effect. 'use <pill>' consumes it; use '2.pill' or 'examine 2.pill' to select the second matching pill when carrying multiple levels. Antidote Pill cures poison, and is saved if you are not poisoned. Medicinal Pill restores Health, Chakra, and Stamina (100 + six times its level), each over 30 seconds. It does not cure status effects. These herbs make the strongest medical restorative in the game. Medicinal Herbs are separate from the two-material weapon/armor recipes.\n"
             "\n"
             "Date: 2026-09-07"
         ),
@@ -5478,7 +5478,7 @@ _GATHERING_TIER_HELP = {
         "(Bukijutsu level 25+ or other classes level 100+), then select two materials "
         "at the prompt. Forged combat weapons and armor use two METAL INGOTS and no wood; "
         "only gathering tools require a wood-and-ingot recipe. "
-        "Craft pill <antidote|medicine> <level> is Bukijutsu-only."
+        "Craft pill <antidote|medicine> <level> is Bukijutsu-only from level 25, with pill strength from 1 to your level (max 250)."
     ),
 }
 for _entry in DEFAULT_HELP_ENTRIES:
