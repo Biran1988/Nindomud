@@ -4649,7 +4649,7 @@ DEFAULT_HELP_ENTRIES.extend([
     {"primary_keyword": "boat", "keywords": ["buy boat", "board boat", "water travel", "sailing", "ship"],
      "title": "Boats and Ocean Travel",
      "body": "Syntax: BUY BOAT | BOARD BOAT | BOAT | COURSE <x> <z> | VECTOR <x> <z> | ANCHOR | DOCK [port] | DISEMBARK\n\n"
-             "Purchase a basic boat for 75,000 ryo while standing in an immortal-created shoreline port. "
+             "Purchase a basic boat for 10,000 ryo while standing in an immortal-created shoreline port. "
              "Every boat has exactly one private helm/cabin room; ocean movement uses X/Z coordinates, "
              "NOT 20,000 by 20,000 rooms. BOARD BOAT in the harbor and pilot from its helm. "
              "COURSE/VECTOR <x> <z> steers to absolute ocean coordinates (0-20,000 on each axis). "

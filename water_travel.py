@@ -22,7 +22,7 @@ CRUISE_SPEED = 25.0       # ocean coordinate units per second
 DETECT_RADIUS = 100.0
 DOCK_RADIUS = 50.0
 BORDER_RETREAT = 500.0
-BOAT_PRICE_RYO = 75_000
+BOAT_PRICE_RYO = 10_000
 BOAT_VNUM_BASE = 9_000_000_000  # deliberately outside regular builder/area vnums
 
 

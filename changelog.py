@@ -614,4 +614,6 @@ CHANGELOG = [
     ("15.460", "Cooking completion text now uses the ingredient name in past tense, for example: You cooked a potato. Cooked item names, food benefits, experience, and cooking failures are unchanged."),
     ("15.461", "Added coordinate-based ocean travel: BUY BOAT at a registered port, BOARD BOAT to enter your private helm, COURSE/VECTOR <x> <z> to pilot across a 20,000 x 20,000 water map, and DOCK to detect ports within 100 units (berth within 50). Immortals manage ports with SETPORT. Ships turn toward safe waters at the boundary; locations and discovered harbors save between logins."),
 
+    ("15.462", "Reduced the cost of buying a basic one-room boat from 75,000 to 10,000 ryo at an immortal-created shoreline port. BUY BOAT and BOAT now display the new price; HELP BOAT updated. Existing owners keep their boats unchanged."),
+
 ]

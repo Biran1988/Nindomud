@@ -31,6 +31,20 @@ class BoatNavigationTests(unittest.TestCase):
         self.addCleanup(lambda: world.WORLD.rooms.pop(918211, None))
         self.addCleanup(lambda: world.WORLD.rooms.pop(ocean.boat_room_vnum(self.player), None))
 
+    def test_10000_ryo_purchase_and_insufficient_funds(self):
+        ocean.command_setport(self.session, ["10", "10", "Budget", "Harbor"])
+        self.assertEqual(ocean.BOAT_PRICE_RYO, 10_000)
+        self.player.ryo = 9_999
+        ocean.buy_boat(self.session)
+        self.assertFalse(ocean.state(self.player).get("owned"))
+        self.assertEqual(self.player.ryo, 9_999)
+        self.assertTrue(any("10,000" in str(call)
+                            for call in self.session.send.call_args_list))
+        self.player.ryo = 10_000
+        ocean.buy_boat(self.session)
+        self.assertTrue(self.player.boat_state["owned"])
+        self.assertEqual(self.player.ryo, 0)
+
     def test_ownership_room_course_and_bounds(self):
         ocean.command_setport(self.session, ["19980", "19980", "Test", "Harbor"])
         ocean.buy_boat(self.session)
