@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "yagyu shinkage ryu",
+  "keywords": [
+    "yagyu shinkage ryu"
+  ],
+  "title": "Yagyu Shinkage Ryu - Bukijutsu Sword Style",
+  "body": "Syntax: SWORDSTYLE Yagyu Shinkage Ryu | SWORDSTYLE LIST | SWORDSTYLE OFF\n\nYagyu Shinkage Ryu unlocks for Bukijutsu at level 175 and is learned automatically at that level. Measured, precise counter-cutting and tight blade control. Wield one sword to use it.\n\nAt 100% mastery: +16 accuracy and +16% sword damage. Each landed strike costs 4 Stamina. Bonuses increase with mastery, starting at a partial strength. Use PRAC <school name> with a teacher for your initial lesson and improve it by landing ordinary sword attacks while selected. Only one sword school may be active at a time; its selection persists across logins. See HELP SWORDSTYLE for the full list.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

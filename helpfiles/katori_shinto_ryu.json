@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "katori shinto ryu",
+  "keywords": [
+    "katori shinto ryu"
+  ],
+  "title": "Katori Shinto Ryu - Bukijutsu Sword Style",
+  "body": "Syntax: SWORDSTYLE Katori Shinto Ryu | SWORDSTYLE LIST | SWORDSTYLE OFF\n\nKatori Shinto Ryu unlocks for Bukijutsu at level 110 and is learned automatically at that level. Disciplined all-round swordsmanship with balanced strikes. Wield one sword to use it.\n\nAt 100% mastery: +10 accuracy and +12% sword damage. Each landed strike costs 3 Stamina. Bonuses increase with mastery, starting at a partial strength. Use PRAC <school name> with a teacher for your initial lesson and improve it by landing ordinary sword attacks while selected. Only one sword school may be active at a time; its selection persists across logins. See HELP SWORDSTYLE for the full list.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

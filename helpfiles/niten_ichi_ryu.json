@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "niten ichi ryu",
+  "keywords": [
+    "niten ichi ryu"
+  ],
+  "title": "Niten Ichi Ryu - Bukijutsu Sword Style",
+  "body": "Syntax: SWORDSTYLE Niten Ichi Ryu | SWORDSTYLE LIST | SWORDSTYLE OFF\n\nNiten Ichi Ryu unlocks for Bukijutsu at level 140 and is learned automatically at that level. Two-sword fighting; requires a sword in each hand. A sword in BOTH wield and offhand is required.\n\nAt 100% mastery: +7 accuracy and +18% sword damage. Each landed strike costs 4 Stamina. Bonuses increase with mastery, starting at a partial strength. Use PRAC <school name> with a teacher for your initial lesson and improve it by landing ordinary sword attacks while selected. Only one sword school may be active at a time; its selection persists across logins. See HELP SWORDSTYLE for the full list.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
