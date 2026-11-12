@@ -12,8 +12,8 @@ class CloneElementHelpRolloutTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp, patch.object(help_system, 'HELP_DIR', temp):
             help_system.seed_default_help()
             cases = {
-                'advanced shadow clone jutsu': ('WORKCLONE MINE', 'TRAIN', '500 Chakra', 'apartment'),
-                'workclone': ('WORKCLONE STATUS', 'WORKCLONE RETURN', 'with steel axe'),
+                'advanced shadow clone jutsu': ('PERFORM ADVANCED SHADOW CLONE JUTSU MINE', 'TRAIN', '500 Chakra', 'apartment'),
+                'workclone': ('PERFORM ADVANCED SHADOW CLONE JUTSU STATUS', 'PERFORM ADVANCED SHADOW CLONE JUTSU RETURN', 'with steel axe'),
                 'elemental mastery': ('ELEMENTS', '100%', '+15%', 'Chakra Paper'),
             }
             for topic, phrases in cases.items():
@@ -39,8 +39,8 @@ class CloneElementHelpRolloutTests(unittest.TestCase):
         self.assertIn('Shadow Clone', versions['15.449'])
         self.assertIn('Elemental Mastery', versions['15.450'])
         self.assertIn('HELP WORKCLONE', versions['15.451'])
-        self.assertEqual([v for v, _ in changelog.CHANGELOG][-3:],
-                         ['15.449', '15.450', '15.451'])
+        self.assertEqual([v for v, _ in changelog.CHANGELOG][-10:],
+                         ['15.449', '15.450', '15.451', '15.452', '15.453', '15.454', '15.455', '15.456', '15.457', '15.458'])
 
 
 if __name__ == '__main__':

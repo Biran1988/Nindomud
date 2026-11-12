@@ -75,6 +75,10 @@ DEFAULT_HELP_ENTRIES = [
             "READ SCROLL OF IRON RESOLVE teaches the permanent passive skill. "
             "Once per fight, on an attack that drops health to 20% or below, "
             "Iron Resolve reduces incoming mob damage by 25% for 20 seconds. "
+            "After the final guardian falls and ordinary kill rewards are "
+            "processed, you automatically return to floor 1 to prevent "
+            "camping the final encounter. Repeating the tower does not "
+            "reissue the unique items or 25 mission points. "
             "Use ASCENSION to view progress and ASCENSION CLAIM to collect any "
             "reward that did not fit in your inventory."
         ),
@@ -1354,7 +1358,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: perform tailed beast bomb <target>\n"
             "\n"
-            "Description: A devastating signature technique, usable only while Beastmode is active. Deals real, heavy damage scaled by which specific beast you carry -- a higher-tailed beast's Bomb hits noticeably harder. Works on a mob or another player. Has a real cooldown between casts.\n"
+            "Description: Exclusive to jinchuriki who have sealed a Tailed Beast and reached 100% jinchuriki mastery. Tailed Beast Bomb cannot be learned from leveling, a teacher, or a scroll. It is granted when you fully master your beast, removed if that beast is extracted, and requires active Beastmode to cast. Deals real, heavy damage scaled by which specific beast you carry -- a higher-tailed beast's Bomb hits noticeably harder. Works on a mob or another player. Has a real cooldown between casts.\n"
             "\n"
             "Date: 2026-09-05"
         ),
@@ -5369,6 +5373,14 @@ for _entry in DEFAULT_HELP_ENTRIES:
             "Tenseigan and other kekkei-genkai-gated jutsu) appear exclusively "
             "under KKGK on PRAC. They keep their original combat class "
             "and teacher eligibility; the category is organizational.\n"
+            "\nAdvanced Shadow Clone Jutsu is a level-75, scroll-learned General "
+            "Skills technique. Once learned it appears in PRAC like other "
+            "learned jutsu. A working clone cast via PERFORM ADVANCED SHADOW CLONE JUTSU at a training dummy can improve "
+            "proficiency for a known, currently usable attack jutsu without "
+            "spending practice points; this is separate from teacher-led PRAC "
+            "and cannot bypass the first-practice requirement for ordinary "
+            "skills. Use HELP WORKCLONE for clone training; use ELEMENTS to "
+            "view elemental mastery, which is not a spendable PRAC skill.\n"
         )
     elif _entry["primary_keyword"] == "levelup":
         _entry["body"] += (

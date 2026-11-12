@@ -298,13 +298,13 @@ PAGES.extend([
              "Level requirement: 75. This is a scroll-only general utility jutsu for every class. Read an Advanced Shadow Clone Scroll to learn it. It creates ONE working shadow clone (separate from combat and elemental clones) in the room where the job or training will happen. Summon the clone at the work site; it cannot walk to another site or fight.\n"
              "\n"
              "Syntax:\n"
-             "  WORKCLONE MINE <chakra> [WITH <tool>]\n"
-             "  WORKCLONE CHOP <chakra> [WITH <tool>]\n"
-             "  WORKCLONE FISH <chakra> [WITH <tool>]\n"
-             "  WORKCLONE FARM <chakra> [WITH <tool>]\n"
-             "  WORKCLONE TRAIN <known attack jutsu> <chakra>\n"
-             "  WORKCLONE STATUS\n"
-             "  WORKCLONE RETURN\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU MINE <chakra> [WITH <tool>]\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU CHOP <chakra> [WITH <tool>]\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU FISH <chakra> [WITH <tool>]\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU FARM <chakra> [WITH <tool>]\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU TRAIN <known attack jutsu> <chakra>\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU STATUS\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU RETURN\n"
              "  PERFORM ADVANCED SHADOW CLONE JUTSU <task> <chakra>\n"
              "\n"
              "Commit at least 100 Chakra at summoning. Every 500 Chakra funds 30 REAL minutes; the budget is paid up front and work continues after leaving the room or disconnecting. The character retains the task and pending rewards across reconnects. A clone can only gather by mining, lumberjacking, fishing or farming; it cannot smith, craft, cook, smelt or cut gems.\n"
@@ -313,30 +313,30 @@ PAGES.extend([
              "\n"
              "For jutsu training, summon beside a training dummy (mob vnum 6) and choose one already learned, usable ATTACK jutsu. The clone can increase that jutsu's proficiency; its gains are reported on return. The clone does not learn brand-new jutsu for you.\n"
              "\n"
-             "On task completion or WORKCLONE RETURN, the clone returns and dispels. If you own an apartment, gathered materials are deposited in its storage room (when built) or main room. Otherwise they fill your available inventory slots and any overflow drops at your feet. Job XP and jutsu training gains are awarded when the clone returns.\n"
+             "On task completion or PERFORM ADVANCED SHADOW CLONE JUTSU RETURN, the clone returns and dispels. If you own an apartment, gathered materials are deposited in its storage room (when built) or main room. Otherwise they fill your available inventory slots and any overflow drops at your feet. Job XP and jutsu training gains are awarded when the clone returns.\n"
              "\n"
-             "Examples: WORKCLONE MINE 500 | WORKCLONE CHOP 100 WITH steel axe | WORKCLONE TRAIN Fireball Jutsu 500 | WORKCLONE STATUS | WORKCLONE RETURN\n"
+             "Examples: PERFORM ADVANCED SHADOW CLONE JUTSU MINE 500 | PERFORM ADVANCED SHADOW CLONE JUTSU CHOP 100 WITH steel axe | PERFORM ADVANCED SHADOW CLONE JUTSU TRAIN Fireball Jutsu 500 | PERFORM ADVANCED SHADOW CLONE JUTSU STATUS | PERFORM ADVANCED SHADOW CLONE JUTSU RETURN\n"
              "\n"
              "See HELP WORKCLONE for a short command guide. Normal Shadow Clone Jutsu and elemental battle clones are separate abilities."
          ),
          "working clone", "advanced clone"),
     page("workclone", "Workclone - Task Commands",
          (
-             "WORKCLONE controls your one Advanced Shadow Clone workforce worker. You must first be level 75+ and learn Advanced Shadow Clone Jutsu from its scroll (HELP ADVANCED SHADOW CLONE JUTSU). You cannot summon another worker while one is active.\n"
+             "PERFORM ADVANCED SHADOW CLONE JUTSU controls your one Advanced Shadow Clone workforce worker. You must first be level 75+ and learn Advanced Shadow Clone Jutsu from its scroll (HELP ADVANCED SHADOW CLONE JUTSU). You cannot summon another worker while one is active.\n"
              "\n"
              "Syntax:\n"
-             "  WORKCLONE MINE|CHOP|FISH|FARM <chakra> [WITH <tool>]\n"
-             "  WORKCLONE TRAIN <known attack jutsu> <chakra>\n"
-             "  WORKCLONE STATUS\n"
-             "  WORKCLONE RETURN\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU MINE|CHOP|FISH|FARM <chakra> [WITH <tool>]\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU TRAIN <known attack jutsu> <chakra>\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU STATUS\n"
+             "  PERFORM ADVANCED SHADOW CLONE JUTSU RETURN\n"
              "\n"
              "Examples:\n"
-             "  workclone mine 500\n"
-             "  workclone chop 500 with steel axe\n"
-             "  workclone fish 100\n"
-             "  workclone train Fireball Jutsu 500\n"
-             "  workclone status\n"
-             "  workclone return\n"
+             "  perform advanced shadow clone jutsu mine 500\n"
+             "  perform advanced shadow clone jutsu chop 500 with steel axe\n"
+             "  perform advanced shadow clone jutsu fish 100\n"
+             "  perform advanced shadow clone jutsu train Fireball Jutsu 500\n"
+             "  perform advanced shadow clone jutsu status\n"
+             "  perform advanced shadow clone jutsu return\n"
              "\n"
              "Summon at a compatible gathering location or beside a training dummy (vnum 6) for jutsu practice. Minimum investment is 100 Chakra; 500 Chakra pays for 30 minutes. Workers gather with virtual basic tools unless you lend them a real improved tool. If that tool breaks, basic gathering continues. Only collecting and training are allowed, never crafting. One worker at a time.\n"
              "\n"
@@ -359,3 +359,51 @@ PAGES.extend([
          ),
          "chakra affinity", "nature mastery", "elemental affinity"),
 ])
+
+
+# Individual Bukijutsu school pages are generated from the live style catalog:
+# each can be found by HELP <school name>, not only HELP SWORDSTYLE.
+import sword_styles as _individual_sword_styles
+for _school, _spec in _individual_sword_styles.STYLES.items():
+    _dual_requirement = (" A sword in BOTH wield and offhand is required."
+                         if _spec.get("dual") else " Wield one sword to use it.")
+    _body = (
+        f"Syntax: SWORDSTYLE {_school} | SWORDSTYLE LIST | "
+        "SWORDSTYLE OFF\\n\\n"
+        f"{_school} unlocks for Bukijutsu at level {_spec['level']} "
+        "and is learned automatically at that level. "
+        f"{_spec['description']}" + _dual_requirement + "\\n\\n" +
+        f"At 100% mastery: {_spec['accuracy']:+} accuracy and "
+        f"+{_spec['damage']}% sword damage. "
+        f"Each landed strike costs {_spec['stamina']} Stamina. "
+        "Bonuses increase with mastery, starting at a partial strength. "
+        "Use PRAC <school name> with a teacher for your initial lesson "
+        "and improve it by landing ordinary sword attacks while selected. "
+        "Only one sword school may be active at a time; its selection "
+        "persists across logins. See HELP SWORDSTYLE for the full list."
+    )
+    PAGES.append(page(_school.casefold(), _school + " - Bukijutsu Sword Style", _body))
+
+PAGES.append(page(
+    "fourth attack", "Fourth Attack - Bukijutsu Numbered Attack",
+    "Syntax: PRAC FOURTH ATTACK | PRACTICE FOURTH ATTACK\\n\\n"
+    "Bukijutsu learns Fourth Attack automatically at level 75. "
+    "It starts at 0% proficiency and needs one teacher lesson before "
+    "passive combat use can improve it. Any class teacher can teach this "
+    "initial melee drill. PRAC FOURTH ATTACK spends one practice point "
+    "and raises proficiency according to Intelligence, up to the regular "
+    "practice cap. Beyond that, successful attacks improve its chance to "
+    "activate in combat. It remains Bukijutsu-only. "
+    "HELP PRAC explains the teacher and progression rules.",
+    "fourth extra attack", "fourth swing"))
+
+PAGES.append(page(
+    "mob multi attacks", "NPC Level-Based Multi Attacks",
+    "Level 1-99 mobs normally have one melee attack per combat round. "
+    "Level 100-200 mobs have at least two, and level 201+ mobs at least "
+    "three. Builder-set higher ATTACKS values are retained; the immortal "
+    "training dummy remains harmless. A mob choosing to cast jutsu for "
+    "the round does not also gain free melee attacks. These NPC attacks "
+    "are not player Second/Third/Fourth Attack skills and require no PRAC. "
+    "Builders can inspect with MSTAT and adjust with MSET ATTACKS.",
+    "mob attacks", "npc extra attacks"))
