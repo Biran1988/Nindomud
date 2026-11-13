@@ -19,6 +19,9 @@ jobs:
         run: python -m unittest discover -p "test_*.py"
       - name: Run end-to-end smoke suite
         run: python test_smoke.py
+      - name: Diagnose legacy smoke failures independently
+        if: failure() && github.event_name == 'pull_request'
+        run: python scripts/audit_legacy_smoke.py
 
   package:
     runs-on: ubuntu-latest

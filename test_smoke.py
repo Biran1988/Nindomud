@@ -1419,7 +1419,7 @@ def test_kage_promotions_enabled():
 
     # Every remaining promotion in the ladder, each with its own headband upgrade.
     ladder = [
-        (100, 50, "special jonin", "A Konoha Special Jonin Headband"),
+        (65, 50, "special jonin", "A Konoha Special Jonin Headband"),
         (200, 100, "jonin", "A Konoha Jonin Headband"),
     ]
 
@@ -1428,7 +1428,7 @@ def test_kage_promotions_enabled():
     text_refused = "".join(out)
     out.clear()
     assert s.player.village_rank == "chunin"
-    assert "level 100" in text_refused.lower()
+    assert "level 65" in text_refused.lower()
     assert "50 completed mission" in text_refused.lower()
 
     for level, missions, expected_rank, expected_headband in ladder:
@@ -1921,7 +1921,8 @@ def test_who_list_redesign():
 
     # A player who genuinely holds the Kage rank -- the real title should show for them specifically.
     s4, out4 = make("Onokixx", "StoneKagePassword1", "stone", "ninjutsu")
-    s4.player.village_rank = "kage"
+    s4.player.village_rank = "jonin"
+    s4.player.is_kage = True
 
     s3.handle_line("who")
     import re
@@ -2034,7 +2035,7 @@ def test_who_list_alignment_and_rank_colors():
     s1, out1 = make("Arashiya", "UzumakiClanPass1", "leaf", "ninjutsu")
     s1.player.village_rank = "genin"
     s2, out2 = make("Raidenya", "LightningFistPass1", "cloud", "taijutsu")
-    s2.player.village_rank = "village elder"
+    s2.player.village_rank = "jonin"
 
     s1.handle_line("who")
     import re
@@ -2054,8 +2055,8 @@ def test_who_list_alignment_and_rank_colors():
     # Rank text is actually colored -- genin (green) and village
     # elder (red) should use different color codes.
     assert commands_module.RANK_WHO_COLOR["genin"] == "&G"
-    assert commands_module.RANK_WHO_COLOR["village elder"] == "&R"
-    assert commands_module.RANK_WHO_COLOR["genin"] != commands_module.RANK_WHO_COLOR["village elder"]
+    assert commands_module.RANK_WHO_COLOR["jonin"] == "&R"
+    assert commands_module.RANK_WHO_COLOR["genin"] != commands_module.RANK_WHO_COLOR["jonin"]
     assert "\x1b[32m" in raw  # green, from genin's rank color actually rendering
 
     print("WHO LIST ALIGNMENT AND RANK COLORS TEST PASSED")
@@ -7165,7 +7166,7 @@ def test_player_bounties():
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -7281,7 +7282,7 @@ def test_player_kage_rank():
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -7379,7 +7380,7 @@ def test_war_territory_system():
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -7774,7 +7775,7 @@ def test_award_command():
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -7950,7 +7951,7 @@ def test_stunned_blocks_combat_action():
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -8134,7 +8135,7 @@ def test_configs_default_on_and_staff_configs():
     def new_session(name, password, village, staff=False):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -8226,7 +8227,7 @@ def test_crafted_items_are_real_and_staff_see_vnums():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Craftrealitemtest", "y", "CraftRealItemTestPass1", "leaf", "bukijutsu", "none",
+    for line in ["Craftrealitemtest", "y", "CraftRealItemTestPass1", "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -8767,7 +8768,7 @@ def test_multi_attack_skills_show_in_prac():
     # Fourth/Fifth Attack sees both correctly.
     bukijutsu_session = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Pracbukijutsu", "y", "PracBukijutsuPass123", "leaf", "bukijutsu", "none",
+    for line in ["Pracbukijutsu", "y", "PracBukijutsuPass123", "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         bukijutsu_session.handle_line(line)
         out.clear()
@@ -8856,7 +8857,7 @@ def test_whois_command():
     out2 = []
     s2 = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Whoisaskerfinal", "y", "WhoisAskerFinalPass123", "sand", "ninjutsu", "none",
+    for line in ["Whoisaskerfinal", "y", "WhoisAskerFinalPass123", "sand", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["sand"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s2.handle_line(line)
         out2.clear()
@@ -8936,7 +8937,7 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     out2 = []
     admin = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Mstatkkgadmintest", "y", "MstatKkgAdminTestPass1", "sand", "taijutsu", "none",
+    for line in ["Mstatkkgadmintest", "y", "MstatKkgAdminTestPass1", "sand", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["sand"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         admin.handle_line(line)
         out2.clear()
@@ -8962,7 +8963,7 @@ def test_mstat_shows_kekkei_genkai_to_admins_only():
     out3 = []
     builder = Session(lambda t: out3.append(t), lambda: out3.append("[[CLOSED]]"))
     out3.clear()
-    for line in ["Mstatkkgbuildertest", "y", "MstatKkgBuilderTestPass1", "cloud", "taijutsu", "none",
+    for line in ["Mstatkkgbuildertest", "y", "MstatKkgBuilderTestPass1", "cloud", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["cloud"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         builder.handle_line(line)
         out3.clear()
@@ -9026,7 +9027,7 @@ def test_awaken_command():
     out2 = []
     staff = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Awakencmdstafftest", "y", "AwakenCmdStaffTestPass1", "sand", "taijutsu", "none",
+    for line in ["Awakencmdstafftest", "y", "AwakenCmdStaffTestPass1", "sand", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["sand"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         staff.handle_line(line)
         out2.clear()
@@ -9058,7 +9059,7 @@ def test_awaken_command():
     out3 = []
     no_blood = Session(lambda t: out3.append(t), lambda: out3.append("[[CLOSED]]"))
     out3.clear()
-    for line in ["Awakencmdnobloodtest", "y", "AwakenCmdNoBloodTestPass1", "cloud", "taijutsu", "none",
+    for line in ["Awakencmdnobloodtest", "y", "AwakenCmdNoBloodTestPass1", "cloud", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["cloud"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         no_blood.handle_line(line)
         out3.clear()
@@ -9122,7 +9123,7 @@ def test_sharingan_one_tomoe_ability():
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -9839,7 +9840,7 @@ def test_quit_announcement():
     out2 = []
     quitter = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Quitannouncequit", "y", "QuitAnnounceQuitPass1", "cloud", "taijutsu", "none",
+    for line in ["Quitannouncequit", "y", "QuitAnnounceQuitPass1", "cloud", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["cloud"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         quitter.handle_line(line)
         out2.clear()
@@ -9967,14 +9968,14 @@ def test_sharingan_tomoe_four_five_six():
     out = []
     attacker = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Pvpjutsufinalatk", "y", "PvpJutsuFinalAtkPass1", "leaf", "ninjutsu", "none",
+    for line in ["Pvpjutsufinalatk", "y", "PvpJutsuFinalAtkPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         attacker.handle_line(line)
         out.clear()
 
     victim = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Pvpjutsufinalvic", "y", "PvpJutsuFinalVicPass1", "sand", "taijutsu", "none",
+    for line in ["Pvpjutsufinalvic", "y", "PvpJutsuFinalVicPass1", "sand", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["sand"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         victim.handle_line(line)
         out.clear()
@@ -10014,7 +10015,7 @@ def test_sharingan_tomoe_four_five_six():
 
     no_tomoe_target = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Notomoetargetfinal", "y", "NoTomoeTargetFinalPass1", "cloud", "taijutsu", "none",
+    for line in ["Notomoetargetfinal", "y", "NoTomoeTargetFinalPass1", "cloud", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["cloud"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         no_tomoe_target.handle_line(line)
         out.clear()
@@ -10068,7 +10069,7 @@ def test_sharingan_tomoe_four_five_six():
     # --- Genjutsu resistance genuinely shortens an incoming effect's duration ---
     baseline_session = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Baselinegenjfinal", "y", "BaselineGenjFinalPass1", "water", "taijutsu", "none",
+    for line in ["Baselinegenjfinal", "y", "BaselineGenjFinalPass1", "water", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["water"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         baseline_session.handle_line(line)
         out.clear()
@@ -10096,7 +10097,7 @@ def test_sharingan_tomoe_four_five_six():
     try:
         copier = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in ["Copierfinaltest", "y", "CopierFinalTestPass1", "stone", "taijutsu", "none",
+        for line in ["Copierfinaltest", "y", "CopierFinalTestPass1", "stone", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["stone"][0],
                      "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             copier.handle_line(line)
             out.clear()
@@ -11411,7 +11412,7 @@ def test_narakumi_genjutsu():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Narakumijutsutest", "y", "NarakumiJutsuTestPass1", "leaf", "genjutsu", "none",
+    for line in ["Narakumijutsutest", "y", "NarakumiJutsuTestPass1", "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -11693,7 +11694,7 @@ def test_kunai_jutsu_trio():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Kunaitriotest", "y", "KunaiTrioTestPassword", "leaf", "bukijutsu", "none",
+    for line in ["Kunaitriotest", "y", "KunaiTrioTestPassword", "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -11755,13 +11756,13 @@ def test_kunai_jutsu_trio():
     import content as content_module
     attacker = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Kunaitrioatk", "y", "KunaiTrioAtkPassword1", "leaf", "bukijutsu", "none",
+    for line in ["Kunaitrioatk", "y", "KunaiTrioAtkPassword1", "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         attacker.handle_line(line)
         out.clear()
     defender = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Kunaitriodef", "y", "KunaiTrioDefPassword1", "cloud", "bukijutsu", "none",
+    for line in ["Kunaitriodef", "y", "KunaiTrioDefPassword1", "cloud", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["cloud"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         defender.handle_line(line)
         out.clear()
@@ -11978,7 +11979,7 @@ def test_staff_get_every_jutsu_regardless_of_class():
     # --- An ordinary, non-staff player at level 1 genuinely has none of the leveled jutsu ---
     ordinary = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Staffbypassordinary", "y", "StaffBypassOrdinaryPass", "leaf", "ninjutsu", "none",
+    for line in ["Staffbypassordinary", "y", "StaffBypassOrdinaryPass", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         ordinary.handle_line(line)
         out.clear()
@@ -11989,7 +11990,7 @@ def test_staff_get_every_jutsu_regardless_of_class():
     # --- A staff character, even at level 1, has EVERY jutsu from EVERY class immediately ---
     staff = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Staffbypassaccount", "y", "StaffBypassAccountPass", "leaf", "ninjutsu", "none",
+    for line in ["Staffbypassaccount", "y", "StaffBypassAccountPass", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         staff.handle_line(line)
         out.clear()
@@ -12266,7 +12267,7 @@ def test_elemental_jutsu_and_effects_system():
     # --- The hard elemental gate: matching nature can cast, non-matching cannot, even if both are "known" ---
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Elementalsystemtest", "y", "ElementalSystemTestPass1", "leaf", "ninjutsu", "none",
+    for line in ["Elementalsystemtest", "y", "ElementalSystemTestPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -12464,7 +12465,7 @@ def test_duel_system():
     def make(name, pw, village="leaf"):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -12659,7 +12660,7 @@ def test_handsigns_and_casting_delay():
     # --- The actual casting delay: jutsu does NOT resolve immediately, only after the delay elapses ---
     caster = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Castingdelaytest", "y", "CastingDelayTestPass1", "leaf", "ninjutsu", "none",
+    for line in ["Castingdelaytest", "y", "CastingDelayTestPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         caster.handle_line(line)
         out.clear()
@@ -12700,7 +12701,7 @@ def test_handsigns_and_casting_delay():
     # --- The real security fix: an ineligible cast is refused BEFORE the delay ever begins ---
     ineligible = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Ineligiblecasttest", "y", "IneligibleCastTestPas", "leaf", "genjutsu", "none",
+    for line in ["Ineligiblecasttest", "y", "IneligibleCastTestPas", "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         ineligible.handle_line(line)
         out.clear()
@@ -12751,7 +12752,7 @@ def test_jutsu_combat_start_and_damage_scaling():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Jutsucombatstarttest", "y", "JutsuCombatDelayPass1", "leaf", "ninjutsu", "none",
+    for line in ["Jutsucombatstarttest", "y", "JutsuCombatDelayPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13046,7 +13047,7 @@ def test_silence_and_jail():
     def make(name, pw, village="leaf"):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, village, "taijutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -13246,7 +13247,7 @@ def test_skills_list_shows_unlock_level():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Skillslisttest", "y", "SkillsListTestPass1", "leaf", "ninjutsu", "none",
+    for line in ["Skillslisttest", "y", "SkillsListTestPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13309,7 +13310,7 @@ def test_appraisal_renamed_to_examine():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Appraisalrenamed", "y", "AppraisalRenamedP1", "leaf", "ninjutsu", "none",
+    for line in ["Appraisalrenamed", "y", "AppraisalRenamedP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13382,7 +13383,7 @@ def test_prac_list_uses_color():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Praclistcolortest", "y", "PracListColorTestP1", "leaf", "ninjutsu", "none",
+    for line in ["Praclistcolortest", "y", "PracListColorTestP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13780,7 +13781,7 @@ def test_skills_colored_by_class_no_percentage():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Skillscolortwo", "y", "SkillsColorTwoTestP1", "leaf", "ninjutsu", "none",
+    for line in ["Skillscolortwo", "y", "SkillsColorTwoTestP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -13961,7 +13962,7 @@ def test_set_rank_program_and_global_announcement():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "ninjutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -14050,7 +14051,7 @@ def test_levelup_command():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "ninjutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -14099,7 +14100,7 @@ def test_levelup_command():
         offline_out = []
         offline_s = Session(lambda t: offline_out.append(t), lambda: offline_out.append("[[CLOSED]]"))
         offline_out.clear()
-        for line in ["Levelupcmdoffline", "y", "LevelupCmdOfflinePass1", "leaf", "ninjutsu", "none",
+        for line in ["Levelupcmdoffline", "y", "LevelupCmdOfflinePass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                      "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             offline_s.handle_line(line)
             offline_out.clear()
@@ -14150,7 +14151,7 @@ def test_practice_requires_matching_teacher():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Teachergatemaintest", "y", "TeacherGateMainTestP1", "leaf", "ninjutsu", "none",
+    for line in ["Teachergatemaintest", "y", "TeacherGateMainTestP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -14565,7 +14566,7 @@ def test_mangekyo_betrayal_mechanic():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "ninjutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -14710,7 +14711,7 @@ def test_skills_list_ordered_by_level():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Skillsorderlvltest", "y", "SkillsOrderLvlTestP1", "leaf", "ninjutsu", "none",
+    for line in ["Skillsorderlvltest", "y", "SkillsOrderLvlTestP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -14775,7 +14776,7 @@ def test_summoning_contracts():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Summontestmain", "y", "SummonTestMainPass1", "leaf", "ninjutsu", "none",
+    for line in ["Summontestmain", "y", "SummonTestMainPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -14949,7 +14950,7 @@ def test_illusion_walk_stamina_and_visibility():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "genjutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -15070,7 +15071,7 @@ def test_class_stat_bonuses():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", primary_class, "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", primary_class, __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -15144,7 +15145,7 @@ def test_personality_trait_bonuses():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "bukijutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic"]:
             s.handle_line(line)
             out.clear()
@@ -15250,7 +15251,7 @@ def test_transfer_and_return():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "ninjutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -15394,7 +15395,7 @@ def test_tailed_beasts_complete_system():
     out = []
     imm_s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Beastfulltestimm", "y", "BeastFullTestImmP1", "leaf", "ninjutsu", "none",
+    for line in ["Beastfulltestimm", "y", "BeastFullTestImmP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         imm_s.handle_line(line)
         out.clear()
@@ -15465,7 +15466,7 @@ def test_tailed_beasts_complete_system():
         attacker_out = []
         attacker_s = Session(lambda t: attacker_out.append(t), lambda: attacker_out.append("[[CLOSED]]"))
         attacker_out.clear()
-        for line in ["Beastfulltestatk", "y", "BeastFullTestAtkP1", "leaf", "ninjutsu", "none",
+        for line in ["Beastfulltestatk", "y", "BeastFullTestAtkP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                      "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
             attacker_s.handle_line(line)
             attacker_out.clear()
@@ -15593,7 +15594,7 @@ def test_immortals_immune_to_defeat():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Immortaldefeattest", "y", "ImmortalDefeatTestP1", "leaf", "ninjutsu", "none",
+    for line in ["Immortaldefeattest", "y", "ImmortalDefeatTestP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -15618,7 +15619,7 @@ def test_immortals_immune_to_defeat():
     attacker_out = []
     attacker_s = Session(lambda t: attacker_out.append(t), lambda: attacker_out.append("[[CLOSED]]"))
     attacker_out.clear()
-    for line in ["Immortaldefeatatk", "y", "ImmortalDefeatAtkP1", "leaf", "bukijutsu", "none",
+    for line in ["Immortaldefeatatk", "y", "ImmortalDefeatAtkP1", "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         attacker_s.handle_line(line)
         attacker_out.clear()
@@ -15680,7 +15681,7 @@ def test_release_beast_global_announcement():
     out = []
     imm_s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Releaseannouncetest", "y", "ReleaseAnnounceTestP1", "leaf", "ninjutsu", "none",
+    for line in ["Releaseannouncetest", "y", "ReleaseAnnounceTestP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         imm_s.handle_line(line)
         out.clear()
@@ -15688,7 +15689,7 @@ def test_release_beast_global_announcement():
     bystander_out = []
     bystander_s = Session(lambda t: bystander_out.append(t), lambda: bystander_out.append("[[CLOSED]]"))
     bystander_out.clear()
-    for line in ["Releaseannouncebyst", "y", "ReleaseAnnounceBystP1", "leaf", "ninjutsu", "none",
+    for line in ["Releaseannouncebyst", "y", "ReleaseAnnounceBystP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         bystander_s.handle_line(line)
         bystander_out.clear()
@@ -15771,7 +15772,7 @@ def test_tailed_beast_safe_spawn_and_roaming_cap():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Roamingcaptestperm", "y", "RoamingCapTestPermP1", "leaf", "ninjutsu", "none",
+    for line in ["Roamingcaptestperm", "y", "RoamingCapTestPermP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -15793,7 +15794,7 @@ def test_tailed_beast_safe_spawn_and_roaming_cap():
     attacker_out = []
     attacker_s = Session(lambda t: attacker_out.append(t), lambda: attacker_out.append("[[CLOSED]]"))
     attacker_out.clear()
-    for line in ["Roamingcapattacker", "y", "RoamingCapAttackerP1", "leaf", "ninjutsu", "none",
+    for line in ["Roamingcapattacker", "y", "RoamingCapAttackerP1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         attacker_s.handle_line(line)
         attacker_out.clear()
@@ -15849,7 +15850,7 @@ def test_chakra_and_stamina_uncapped_gain():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", "bukijutsu", "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -15932,7 +15933,7 @@ def test_chakra_control_discount_applies_to_ninjutsu_not_taijutsu():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", cls, "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", cls, __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -16052,7 +16053,7 @@ def test_bukijutsu_crafting_skill():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", cls, "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", cls, __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -16192,7 +16193,7 @@ def test_login_sync_grants_missed_class_jutsu():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Loginskillsyncperm", "y", "LoginSkillSyncPermP1", "leaf", "genjutsu", "none",
+    for line in ["Loginskillsyncperm", "y", "LoginSkillSyncPermP1", "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16246,7 +16247,7 @@ def test_anki_teleport_skill():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Ankiskilltest", "y", "AnkiSkillTestPass1", "leaf", "ninjutsu", "none",
+    for line in ["Ankiskilltest", "y", "AnkiSkillTestPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16386,7 +16387,7 @@ def test_mangekyo_techniques_complete_system():
         out = []
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", pw, "leaf", cls, "none", "balanced", "male",
+        for line in [name, "y", pw, "leaf", cls, __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0], "balanced", "male",
                      "tan", "black", "brown", "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
@@ -16588,7 +16589,7 @@ def test_new_program_actions():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Newprogramtest", "y", "NewProgramTestPass1", "leaf", "genjutsu", "none",
+    for line in ["Newprogramtest", "y", "NewProgramTestPass1", "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -16672,7 +16673,7 @@ def test_new_program_actions():
     s2, out2 = None, []
     s2 = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Newprogramother", "y", "NewProgramOtherPass1", "leaf", "genjutsu", "none",
+    for line in ["Newprogramother", "y", "NewProgramOtherPass1", "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s2.handle_line(line)
         out2.clear()
@@ -17153,7 +17154,7 @@ def test_immortal_mob_flag():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Immortalflagpermtest", "y", "ImmortalFlagPermTestP1", "leaf", "genjutsu", "none",
+    for line in ["Immortalflagpermtest", "y", "ImmortalFlagPermTestP1", "leaf", "genjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -17630,7 +17631,7 @@ def test_join_banner_no_border_bright_colors():
     out2 = []
     s2 = Session(lambda t: out2.append(t), lambda: out2.append("[[CLOSED]]"))
     out2.clear()
-    for line in ["Joinbannerjoiner", "y", "JoinBannerJoinerPass1", "sand", "taijutsu", "none",
+    for line in ["Joinbannerjoiner", "y", "JoinBannerJoinerPass1", "sand", "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE["sand"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s2.handle_line(line)
 
@@ -17705,7 +17706,7 @@ def test_all_weapon_skills_reachable():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Weaponskillstest", "y", "WeaponSkillsTestPass123", "leaf", "bukijutsu", "none",
+    for line in ["Weaponskillstest", "y", "WeaponSkillsTestPass123", "leaf", "bukijutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -18067,7 +18068,7 @@ def test_rank_headbands():
     out = []
     s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
     out.clear()
-    for line in ["Headbandtestjob", "y", "HeadbandTestJobPass1", "leaf", "ninjutsu", "none",
+    for line in ["Headbandtestjob", "y", "HeadbandTestJobPass1", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         s.handle_line(line)
         out.clear()
@@ -18149,7 +18150,7 @@ def test_chunin_exam_forest_of_death():
         s.handle_line(line)
         out.clear()
 
-    for line in ["Examtestjob", "y", "ExamTestJobPass123", "leaf", "ninjutsu", "none",
+    for line in ["Examtestjob", "y", "ExamTestJobPass123", "leaf", "ninjutsu", __import__("data_clans").CLANS_BY_VILLAGE["leaf"][0],
                  "balanced", "male", "tan", "black", "brown", "athletic", "confident", "y"]:
         feed_local(line)
     for cmd in ["south"]:
