@@ -6,12 +6,15 @@ regeneration.
 
 import asyncio
 import socket
+import logging
 
 import config
 import consumables
 import storage
 import country_geo
 import network_bans
+
+LOG = logging.getLogger(__name__)
 from session import ACTIVE_SESSIONS, Session
 
 PULSE_SECONDS = 1.0  # ROM-style short pulse -- drives every periodic system's own elapsed-time counter below.
@@ -123,6 +126,51 @@ def tick_idle_upkeep(session) -> None:
         session.send_prompt()
 
 
+def tick_combat_rounds() -> None:
+    """One independent combat heartbeat; failure in world upkeep must not freeze combat."""
+    import combat
+    import susanoo
+    from session import ACTIVE_SESSIONS, State
+
+    mob_turns_taken = set()
+    for session in list(ACTIVE_SESSIONS):
+        try:
+            if (session.state == State.PLAYING
+                    and (session.combat_target is not None or session.pvp_target is not None)):
+                if susanoo.combat_upkeep(session):
+                    session.send_prompt()
+            if session.state == State.PLAYING and session.combat_target is not None:
+                mob = session.combat_target
+                combat.resolve_pulse(session, retaliate=id(mob) not in mob_turns_taken)
+                mob_turns_taken.add(id(mob))
+                session.send_prompt()
+            if session.state == State.PLAYING and session.pvp_target is not None:
+                combat.resolve_pvp_pulse(session)
+                session.send_prompt()
+            if session.state == State.PLAYING:
+                combat.tick_summon_upkeep(session)
+                combat.tick_ordered_summon(session)
+        except Exception:
+            LOG.exception("Combat heartbeat failed for player %s",
+                          getattr(getattr(session, "player", None), "name", "<unknown>"))
+
+
+async def combat_loop() -> None:
+    """Keep combat running even if an unrelated world/perk pulse faults."""
+    elapsed = 0.0
+    while True:
+        await asyncio.sleep(PULSE_SECONDS)
+        elapsed += PULSE_SECONDS
+        if elapsed >= COMBAT_ROUND_SECONDS:
+            elapsed = 0.0
+            try:
+                tick_combat_rounds()
+            except Exception:
+                LOG.exception("Combat heartbeat unexpectedly failed; retrying next round")
+
+
+
+
 async def pulse_loop() -> None:
     """Drives automatic combat rounds, mob respawns, natural regen,
     corpse decay, and periodic autosave."""
@@ -149,7 +197,6 @@ async def pulse_loop() -> None:
     elapsed_since_weather = 0.0
     elapsed_since_time_of_day = 0.0
     elapsed_since_territory_income = 0.0
-    elapsed_since_combat = 0.0
     elapsed_since_tips = 0.0
     tips_rotation_index = 0
     elapsed_since_area_reset = 0.0
@@ -164,203 +211,187 @@ async def pulse_loop() -> None:
 
     while True:
         await asyncio.sleep(PULSE_SECONDS)
+        try:
 
-        perk_notice = village_perks.tick_automatic_perks()
-        if perk_notice:
-            _broadcast_all(perk_notice)
+            try:
+                perk_notice = village_perks.tick_automatic_perks()
+                if perk_notice:
+                    _broadcast_all(perk_notice)
+            except Exception:
+                LOG.exception("Automatic village perk tick failed; world/combat will continue")
 
-        # The expiration clock runs even when nobody else is connected.
-        # Only after 15 full minutes do we perform the real logout,
-        # releasing group slots and sending the global departure notice.
-        from session import expire_linkdead_sessions
-        expire_linkdead_sessions()
+            # The expiration clock runs even when nobody else is connected.
+            # Only after 15 full minutes do we perform the real logout,
+            # releasing group slots and sending the global departure notice.
+            from session import expire_linkdead_sessions
+            expire_linkdead_sessions()
 
-        elapsed_since_inactive_purge += PULSE_SECONDS
-        if elapsed_since_inactive_purge >= 86400:
-            elapsed_since_inactive_purge = 0.0
-            inactive_player_purge.purge_inactive()
-        elapsed_since_regen += PULSE_SECONDS
-        elapsed_since_idle_upkeep += PULSE_SECONDS
-        elapsed_since_autosave += PULSE_SECONDS
-        elapsed_since_weather += PULSE_SECONDS
-        elapsed_since_time_of_day += PULSE_SECONDS
-        elapsed_since_territory_income += PULSE_SECONDS
-        elapsed_since_combat += PULSE_SECONDS
-        elapsed_since_tips += PULSE_SECONDS
-        elapsed_since_area_reset += PULSE_SECONDS
+            elapsed_since_inactive_purge += PULSE_SECONDS
+            if elapsed_since_inactive_purge >= 86400:
+                elapsed_since_inactive_purge = 0.0
+                inactive_player_purge.purge_inactive()
+            elapsed_since_regen += PULSE_SECONDS
+            elapsed_since_idle_upkeep += PULSE_SECONDS
+            elapsed_since_autosave += PULSE_SECONDS
+            elapsed_since_weather += PULSE_SECONDS
+            elapsed_since_time_of_day += PULSE_SECONDS
+            elapsed_since_territory_income += PULSE_SECONDS
+            elapsed_since_tips += PULSE_SECONDS
+            elapsed_since_area_reset += PULSE_SECONDS
 
-        # Ships travel via X/Z vectors, never by creating ocean grid rooms.
-        import water_travel
-        water_travel.tick_boats(ACTIVE_SESSIONS, PULSE_SECONDS)
-        combat.process_respawns()
-        import halloween_event
-        halloween_event.process_fast_respawns()
-        # Other holiday populations only need minute-level calendar checks.
-        elapsed_since_seasonal += PULSE_SECONDS
-        if elapsed_since_seasonal >= 60:
-            elapsed_since_seasonal = 0.0
-            import seasonal_events
-            seasonal_events.sync_visitors()
-        import lottery
-        lottery.draw_due(ACTIVE_SESSIONS)
-        corpses.process_decay()
-        auction.process_expired_auctions()
-        combat.process_wander()
-        combat.process_scavengers()
-        import mob_aggression
-        mob_aggression.process_aggression()
-        smaug_progs.process_delayed()
-        import tailed_beasts
-        import world as world_module
-        import session as session_module
-        tailed_beasts.process_tailed_beasts(combat, world_module, session_module)
-        tailed_beasts.process_rampages(combat, session_module)
-        import mangekyo
-        mangekyo.process_amaterasu_room_fires(combat, world_module)
-        mangekyo.process_amaterasu_player_burns(combat, session_module)
-        mangekyo.process_kamui_pocket_dimensions(combat, world_module, session_module)
-        mangekyo.process_kekkei_no_me(combat, world_module, session_module)
-        import izanami_loops
-        izanami_loops.process(ACTIVE_SESSIONS)
-        import hidden_mist
-        hidden_mist.process_rooms(ACTIVE_SESSIONS)
-        import whirlpool_fuinjutsu
-        whirlpool_fuinjutsu.process_barriers(sessions=ACTIVE_SESSIONS)
-        programs.process_random_triggers()
-        territory.ensure_war_window_scheduled(_broadcast_all)
-        territory.tick_captures(_broadcast_all)
+            # Ships travel via X/Z vectors, never by creating ocean grid rooms.
+            import water_travel
+            water_travel.tick_boats(ACTIVE_SESSIONS, PULSE_SECONDS)
+            combat.process_respawns()
+            import halloween_event
+            halloween_event.process_fast_respawns()
+            # Other holiday populations only need minute-level calendar checks.
+            elapsed_since_seasonal += PULSE_SECONDS
+            if elapsed_since_seasonal >= 60:
+                elapsed_since_seasonal = 0.0
+                import seasonal_events
+                seasonal_events.sync_visitors()
+            import lottery
+            lottery.draw_due(ACTIVE_SESSIONS)
+            corpses.process_decay()
+            auction.process_expired_auctions()
+            combat.process_wander()
+            combat.process_scavengers()
+            import mob_aggression
+            mob_aggression.process_aggression()
+            smaug_progs.process_delayed()
+            import tailed_beasts
+            import world as world_module
+            import session as session_module
+            tailed_beasts.process_tailed_beasts(combat, world_module, session_module)
+            tailed_beasts.process_rampages(combat, session_module)
+            import mangekyo
+            mangekyo.process_amaterasu_room_fires(combat, world_module)
+            mangekyo.process_amaterasu_player_burns(combat, session_module)
+            mangekyo.process_kamui_pocket_dimensions(combat, world_module, session_module)
+            mangekyo.process_kekkei_no_me(combat, world_module, session_module)
+            import izanami_loops
+            izanami_loops.process(ACTIVE_SESSIONS)
+            import hidden_mist
+            hidden_mist.process_rooms(ACTIVE_SESSIONS)
+            import whirlpool_fuinjutsu
+            whirlpool_fuinjutsu.process_barriers(sessions=ACTIVE_SESSIONS)
+            programs.process_random_triggers()
+            territory.ensure_war_window_scheduled(_broadcast_all)
+            territory.tick_captures(_broadcast_all)
 
-        if elapsed_since_territory_income >= territory.INCOME_TICK_SECONDS:
-            elapsed_since_territory_income = 0.0
-            territory.tick_income()
+            if elapsed_since_territory_income >= territory.INCOME_TICK_SECONDS:
+                elapsed_since_territory_income = 0.0
+                territory.tick_income()
 
-        if elapsed_since_weather >= weather.WEATHER_CHANGE_INTERVAL_SECONDS:
-            elapsed_since_weather = 0.0
-            weather.tick_weather()
+            if elapsed_since_weather >= weather.WEATHER_CHANGE_INTERVAL_SECONDS:
+                elapsed_since_weather = 0.0
+                weather.tick_weather()
 
-        if elapsed_since_time_of_day >= weather.DAY_NIGHT_INTERVAL_SECONDS:
-            elapsed_since_time_of_day = 0.0
-            phase_changed = weather.tick_time_of_day()
-            npc_schedules.apply_all(announce=True)
-            if phase_changed:
-                if weather.time_of_day() == "day":
-                    _broadcast_all("&YSunrise brightens the shinobi world. Gates and markets stir.&x")
-                else:
-                    _broadcast_all("&DThe sun sets over the shinobi world. Night falls.&x")
+            if elapsed_since_time_of_day >= weather.DAY_NIGHT_INTERVAL_SECONDS:
+                elapsed_since_time_of_day = 0.0
+                phase_changed = weather.tick_time_of_day()
+                npc_schedules.apply_all(announce=True)
+                if phase_changed:
+                    if weather.time_of_day() == "day":
+                        _broadcast_all("&YSunrise brightens the shinobi world. Gates and markets stir.&x")
+                    else:
+                        _broadcast_all("&DThe sun sets over the shinobi world. Night falls.&x")
 
-        # Status effects tick down every pulse for everyone, independent of
-        # combat state -- this used to only happen inside resolve_pulse()
-        # (i.e. only while actively fighting), which left effects frozen
-        # outside combat or after the fight that applied them ended.
-        combat.tick_all_mob_effects(list(ACTIVE_SESSIONS))
-        combat.tick_pending_casts()
-        # The real-time mission timer also runs while idle/outside combat.
-        import missions
-        for session in list(ACTIVE_SESSIONS):
-            if session.state == State.PLAYING and session.player:
-                before = [(e.get("mission_id"), e.get("expires_at"))
-                          for e in session.player.active_missions]
-                expired = missions.expire_missions(session.player)
-                after = [(e.get("mission_id"), e.get("expires_at"))
-                         for e in session.player.active_missions]
-                if before != after:
-                    storage.save_player(session.player)
-                for message in expired:
-                    session.send(message)
-                    session.send_prompt()
-        for session in list(ACTIVE_SESSIONS):
-            if session.state == State.PLAYING:
-                import element_choice
-                element_choice.begin(session)
-                combat.tick_effects_pulse(session)
-                import bijuu_chakra
-                bijuu_chakra.tick(session)
-                # Shadow Clone upkeep, per direct follow-up request
-                # ("Clones can be summoned before combat and persist
-                # until unsigned or chakra runs out") -- same
-                # always-ticks-regardless-of-combat-state reasoning
-                # as tick_effects_pulse just above.
-                for message in combat.tick_shadow_clone_upkeep(session.player):
-                    session.send(message)
-                import tracking
-                tracking.tick_tracking(session)
-                # World-site working clones run independently of the caster's
-                # current room and resume saved elapsed time after reconnect.
-                import shadow_clone_workforce
-                shadow_clone_workforce.tick(session)
-                for message in upkeep_reports.due(session.player):
-                    session.send(message)
-                    session.send_prompt()
-
-        if elapsed_since_combat >= COMBAT_ROUND_SECONDS:
-            elapsed_since_combat = 0.0
-            mob_turns_taken = set()
-            import susanoo
+            # Status effects tick down every pulse for everyone, independent of
+            # combat state -- this used to only happen inside resolve_pulse()
+            # (i.e. only while actively fighting), which left effects frozen
+            # outside combat or after the fight that applied them ended.
+            combat.tick_all_mob_effects(list(ACTIVE_SESSIONS))
+            combat.tick_pending_casts()
+            # The real-time mission timer also runs while idle/outside combat.
+            import missions
             for session in list(ACTIVE_SESSIONS):
-                if (session.state == State.PLAYING
-                        and (session.combat_target is not None or session.pvp_target is not None)):
-                    if susanoo.combat_upkeep(session):
+                if session.state == State.PLAYING and session.player:
+                    before = [(e.get("mission_id"), e.get("expires_at"))
+                              for e in session.player.active_missions]
+                    expired = missions.expire_missions(session.player)
+                    after = [(e.get("mission_id"), e.get("expires_at"))
+                             for e in session.player.active_missions]
+                    if before != after:
+                        storage.save_player(session.player)
+                    for message in expired:
+                        session.send(message)
                         session.send_prompt()
-                if session.state == State.PLAYING and session.combat_target is not None:
-                    mob = session.combat_target
-                    combat.resolve_pulse(session, retaliate=id(mob) not in mob_turns_taken)
-                    mob_turns_taken.add(id(mob))
-                    session.send_prompt()
-                if session.state == State.PLAYING and session.pvp_target is not None:
-                    combat.resolve_pvp_pulse(session)
-                    session.send_prompt()
-                if session.state == State.PLAYING:
-                    combat.tick_summon_upkeep(session)
-                    combat.tick_ordered_summon(session)
-
-        for session in list(ACTIVE_SESSIONS):
-            if session.state == State.PLAYING and session.chakra_charge is not None:
-                import commands
-                commands.process_chakra_charge(session)
-            if session.state == State.PLAYING and session.pending_action is not None:
-                session.process_pending_action()
-            if session.state == State.PLAYING:
-                session.player.total_play_seconds += PULSE_SECONDS
-                restored = consumables.tick_medical_healing(session.player)
-                for message in consumables.medical_healing_report(session.player, restored):
-                    session.send(message)
-                    session.send_prompt()
-
-        if elapsed_since_regen >= config.REGEN_INTERVAL_SECONDS:
-            elapsed_since_regen -= config.REGEN_INTERVAL_SECONDS
-            for session in list(ACTIVE_SESSIONS):
-                if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
-                    messages = regen.tick_player(session.player)
-                    if messages:
-                        for message in messages:
-                            session.send(message)
-                        session.send_prompt()
-
-        if elapsed_since_idle_upkeep >= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS:
-            elapsed_since_idle_upkeep -= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS
-            for session in list(ACTIVE_SESSIONS):
-                if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
-                    tick_idle_upkeep(session)
-
-        if elapsed_since_autosave >= config.AUTOSAVE_INTERVAL_SECONDS:
-            elapsed_since_autosave = 0.0
             for session in list(ACTIVE_SESSIONS):
                 if session.state == State.PLAYING:
-                    storage.save_player(session.player)
+                    import element_choice
+                    element_choice.begin(session)
+                    combat.tick_effects_pulse(session)
+                    import bijuu_chakra
+                    bijuu_chakra.tick(session)
+                    # Shadow Clone upkeep, per direct follow-up request
+                    # ("Clones can be summoned before combat and persist
+                    # until unsigned or chakra runs out") -- same
+                    # always-ticks-regardless-of-combat-state reasoning
+                    # as tick_effects_pulse just above.
+                    for message in combat.tick_shadow_clone_upkeep(session.player):
+                        session.send(message)
+                    import tracking
+                    tracking.tick_tracking(session)
+                    # World-site working clones run independently of the caster's
+                    # current room and resume saved elapsed time after reconnect.
+                    import shadow_clone_workforce
+                    shadow_clone_workforce.tick(session)
+                    for message in upkeep_reports.due(session.player):
+                        session.send(message)
+                        session.send_prompt()
 
-        if elapsed_since_tips >= tips.TIPS_INTERVAL_SECONDS:
-            elapsed_since_tips = 0.0
-            tip_text, tips_rotation_index = tips.next_tip(tips_rotation_index)
-            if tip_text is not None:
+            for session in list(ACTIVE_SESSIONS):
+                if session.state == State.PLAYING and session.chakra_charge is not None:
+                    import commands
+                    commands.process_chakra_charge(session)
+                if session.state == State.PLAYING and session.pending_action is not None:
+                    session.process_pending_action()
+                if session.state == State.PLAYING:
+                    session.player.total_play_seconds += PULSE_SECONDS
+                    restored = consumables.tick_medical_healing(session.player)
+                    for message in consumables.medical_healing_report(session.player, restored):
+                        session.send(message)
+                        session.send_prompt()
+
+            if elapsed_since_regen >= config.REGEN_INTERVAL_SECONDS:
+                elapsed_since_regen -= config.REGEN_INTERVAL_SECONDS
                 for session in list(ACTIVE_SESSIONS):
-                    if session.state == State.PLAYING and session.player.tips:
-                        session.send(f"&C[Tip]&x {tip_text}")
-                        session.send_prompt()
+                    if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
+                        messages = regen.tick_player(session.player)
+                        if messages:
+                            for message in messages:
+                                session.send(message)
+                            session.send_prompt()
 
-        if elapsed_since_area_reset >= areas.AREA_RESET_INTERVAL_SECONDS:
-            elapsed_since_area_reset = 0.0
-            areas.perform_all_area_resets()
+            if elapsed_since_idle_upkeep >= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS:
+                elapsed_since_idle_upkeep -= config.IDLE_SHARINGAN_UPKEEP_INTERVAL_SECONDS
+                for session in list(ACTIVE_SESSIONS):
+                    if session.state == State.PLAYING and session.combat_target is None and session.pvp_target is None:
+                        tick_idle_upkeep(session)
 
+            if elapsed_since_autosave >= config.AUTOSAVE_INTERVAL_SECONDS:
+                elapsed_since_autosave = 0.0
+                for session in list(ACTIVE_SESSIONS):
+                    if session.state == State.PLAYING:
+                        storage.save_player(session.player)
+
+            if elapsed_since_tips >= tips.TIPS_INTERVAL_SECONDS:
+                elapsed_since_tips = 0.0
+                tip_text, tips_rotation_index = tips.next_tip(tips_rotation_index)
+                if tip_text is not None:
+                    for session in list(ACTIVE_SESSIONS):
+                        if session.state == State.PLAYING and session.player.tips:
+                            session.send(f"&C[Tip]&x {tip_text}")
+                            session.send_prompt()
+
+            if elapsed_since_area_reset >= areas.AREA_RESET_INTERVAL_SECONDS:
+                elapsed_since_area_reset = 0.0
+                areas.perform_all_area_resets()
+
+        except Exception:
+            LOG.exception("World pulse failed; retrying next second without stopping combat")
 
 async def run_server(host: str = config.HOST, port: int = config.PORT) -> None:
     storage.ensure_dirs()
@@ -371,6 +402,7 @@ async def run_server(host: str = config.HOST, port: int = config.PORT) -> None:
     import server_uptime
     server_uptime.start()  # a fresh clock per reboot or new server process
     asyncio.create_task(pulse_loop())
+    asyncio.create_task(combat_loop())
     addr = server.sockets[0].getsockname()
     print(f"{config.MUD_NAME} MUD listening on {addr[0]}:{addr[1]}")
     async with server:
