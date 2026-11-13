@@ -21,8 +21,7 @@ class TowerResetAndFourthPracticeTests(unittest.TestCase):
         self.assertFalse(iron_ascension.defeated(session, wrong))
         final = NS(room_vnum=player.room_vnum,
                    template_vnum=iron_ascension.guardian_vnum(250))
-        with patch('storage.save_player'), patch('world.WORLD.get', return_value=object()), \\
-             patch('commands.cmd_look'):
+        with patch('storage.save_player'), patch('world.WORLD.get', return_value=object()), patch('commands.cmd_look'):
             self.assertTrue(iron_ascension.defeated(session, final))
         self.assertEqual(player.room_vnum, iron_ascension.START)
         self.assertFalse(iron_ascension.defeated(session, final))
