@@ -9206,13 +9206,24 @@ def cmd_config(session, args: List[str]) -> None:
         battle_ready.command(session, ["config"] + args[2:])
         return
     player = session.player
+    if args and args[0].lower() == "damage":
+        if len(args) == 1:
+            session.send(f"Damage display: {'numbers' if player.damage_numbers else 'words'}. "
+                         "Use CONFIG DAMAGE NUMBERS or CONFIG DAMAGE WORDS.")
+            return
+        if len(args) != 2 or args[1].lower() not in ("numbers", "words"):
+            session.send("Usage: config damage numbers|words")
+            return
+        _save_personal_config(session, "damage_numbers", args[1].lower() == "numbers")
+        return
     if not args:
         lines = ["&WYour settings:&x"]
         for key, description in CONFIG_OPTIONS.items():
             state = "&Gon&x" if getattr(player, key) else "&Doff&x"
             lines.append(f"  {key:16s} [{state}]  {description}")
-        lines.extend(("  Battle Ready: use 'config battle ready' for per-jutsu on/off selections.",
-                      "Usage: config <name> on|off"))
+        lines.extend((f"  damage           [{'numbers' if player.damage_numbers else 'words'}]  Show exact damage or descriptive tiers",
+                      "  Battle Ready: use 'config battle ready' for per-jutsu on/off selections.",
+                      "Usage: config <name> on|off | config damage numbers|words"))
         session.send("\n".join(lines))
         return
 
@@ -9247,7 +9258,10 @@ def _save_personal_config(session, key: str, value: bool) -> None:
         setattr(player, key, previous)
         session.send(f"&RUnable to save {key}; its previous value was kept: {exc}&x")
         return
-    session.send(f"{key} is now {'on' if value else 'off'} (saved).")
+    if key == "damage_numbers":
+        session.send(f"Damage display is now {'numbers' if value else 'words'} (saved).")
+    else:
+        session.send(f"{key} is now {'on' if value else 'off'} (saved).")
 
 
 def cmd_colorscheme(session, args: List[str]) -> None:
