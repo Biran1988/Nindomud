@@ -108,7 +108,7 @@ def validate_program(trigger: str, action: str, args: str, valid_triggers: set, 
         if rank_arg == "kage":
             errors.append("'set_rank' can't grant the Kage rank -- appointing a Kage stays exclusive to the real staff command, which enforces one Kage per village.")
         elif rank_arg not in kage.RANK_ORDER:
-            errors.append(f"'set_rank' needs a real rank as its argument. Valid: {', '.join(kage.RANK_ORDER[:-1])}")
+            errors.append(f"'set_rank' needs a real rank as its argument. Valid: {', '.join(kage.RANK_ORDER)}")
     return errors
 
 
@@ -185,14 +185,14 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
         import data_headbands
         import kage
         new_rank = args.lower()
-        if new_rank not in kage.RANK_ORDER or new_rank == "kage":
+        if new_rank not in kage.RANK_ORDER:
             session.send("That rank cannot be assigned by a mob program.")
             return False
         if new_rank == "genin" and player.village_rank == "student":
             session.send("The Genin rank must be earned through Iruka's exam.")
             return False
         player.village_rank = new_rank
-        data_headbands.apply_rank_headband(player, new_rank)
+        data_headbands.apply_rank_headband(player, "kage" if player.is_kage else new_rank)
         session.send(f"&Y{speaker_name} promotes you to {new_rank.title()}!&x")
         kage.announce_rank_up(player.name, new_rank)
         kage.award_genin_mission_points_if_applicable(session, player, new_rank)

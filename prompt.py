@@ -6,6 +6,7 @@ labels) so a stock prompt never shows uncolored numbers.
 """
 
 import leveling
+import kage
 from models import Player
 
 PRESETS = {
@@ -40,7 +41,7 @@ def render_prompt(player: Player, mob=None, is_staff: bool = False) -> str:
         "%r": str(player.ryo), "%m": str(player.mission_points),
         "%l": str(player.level),
         "%v": (player.village or "").capitalize(),
-        "%k": (player.village_rank or "").title(),
+        "%k": kage.display_rank(player),
         "%p": (player.primary_class or "").capitalize(),
         "%e": enemy_pct, "%n": enemy_name, "%t": "", "%a": "", "%d": "",
         "%E": "",
