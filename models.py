@@ -62,7 +62,8 @@ class Player:
     # Permanent choices (Section 3) -- protected from player edits
     village: Optional[str] = None
     village_rank: str = "student"  # starting designation; Genin is the first obtainable rank (via exam)
-    rank_before_kage: str = ""  # previous earned rank restored on Kage removal
+    is_kage: bool = False  # staff-appointed title, independent of earned rank
+    rank_before_kage: str = ""  # retained only for legacy Kage save migration
     primary_class: Optional[str] = None
     # Fresh characters default to migrated; saved characters missing this
     # field are eligible for one-time, over-cap rank grandfathering.
@@ -686,4 +687,11 @@ class Player:
         # Convert only that old label; never alter real earned ranks or levels.
         if data.get("village_rank") == "academy student":
             data["village_rank"] = "student"
+        # Earlier saves stored staff-appointed Kage inside the earned rank.
+        if data.get("village_rank") == "kage":
+            ordinary = {"student", "genin", "chunin", "special jonin", "jonin"}
+            prior = data.get("rank_before_kage")
+            data["village_rank"] = prior if prior in ordinary else "jonin"
+            data["is_kage"] = True
+            data["rank_before_kage"] = ""
         return Player(**data)

@@ -561,6 +561,7 @@ def load_player(name: str) -> Optional[Player]:
     legacy_experience_curve = "experience_curve_version" not in raw
     legacy_sage_training = raw.get("sage_training_interval_version", 1) < 2
     player = Player.from_dict(raw)
+    legacy_kage_migrated = raw.get("village_rank") == "kage"
     import kage
     obsolete_rank_migrated = kage.migrate_removed_rank(player)
     # A maintained battle mode must be activated and paid for again on login.
@@ -641,7 +642,7 @@ def load_player(name: str) -> Optional[Player]:
     if (chisei_orphaned or renamed_technique or vital_surge_migrated or summon_contracts_migrated or sage_training_migrated
             or experience_migrated or removed_bloodline_migrated
             or elemental_release_migrated or hyuga_migrated or legacy_first_practice
-            or legacy_rank_migrated or obsolete_rank_migrated):
+            or legacy_rank_migrated or obsolete_rank_migrated or legacy_kage_migrated):
         save_player(player)
     import reaper_seal
     if reaper_seal.reconcile_player(player):
