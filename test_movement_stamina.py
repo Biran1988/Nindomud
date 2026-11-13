@@ -11,12 +11,50 @@ from models import Player
 
 
 class MovementStaminaTests(unittest.TestCase):
+    def test_under_level_ten_walks_for_free_even_when_exhausted(self):
+        start = world.Room(709, "Start", "Start")
+        finish = world.Room(710, "Finish", "Finish")
+        start.exits["north"] = finish.vnum
+        finish.exits["south"] = start.vnum
+        player = Player("Beginner", "Beginner", level=9)
+        player.room_vnum = start.vnum
+        player.stamina = 0
+        session = SimpleNamespace(player=player, account=None, combat_target=None,
+                                  trade=None, send=Mock(), broadcast_room=Mock())
+        with patch.object(commands.WORLD, "get", side_effect={709: start, 710: finish}.get), \
+             patch.object(commands.combat, "mobs_in_room", return_value=[]), \
+             patch.object(commands, "cmd_look"), \
+             patch.object(commands, "_fire_enter_triggers"), \
+             patch.object(commands.random, "randint") as roll:
+            commands.cmd_move(session, "north")
+            self.assertEqual((player.room_vnum, player.stamina), (710, 0))
+            commands.cmd_move(session, "south")
+            self.assertEqual((player.room_vnum, player.stamina), (709, 0))
+            # Under-level-10 movement does not roll or consume stamina.
+            roll.assert_not_called()
+
+    def test_level_ten_switches_to_normal_stamina_rules(self):
+        start = world.Room(711, "Start", "Start")
+        finish = world.Room(712, "Finish", "Finish")
+        start.exits["east"] = finish.vnum
+        player = Player("Graduate", "Graduate", level=10)
+        player.room_vnum = start.vnum
+        player.stamina = 0
+        session = SimpleNamespace(player=player, account=None, combat_target=None,
+                                  trade=None, send=Mock(), broadcast_room=Mock())
+        with patch.object(commands.WORLD, "get", side_effect={711: start, 712: finish}.get), \
+             patch.object(commands.random, "randint") as roll:
+            commands.cmd_move(session, "east")
+        self.assertEqual(player.room_vnum, start.vnum)
+        roll.assert_not_called()
+        self.assertIn("too exhausted", session.send.call_args.args[0])
+
     def test_walking_charges_one_or_two_and_never_goes_negative(self):
         start = world.Room(701, "Start", "Start")
         finish = world.Room(702, "Finish", "Finish")
         start.exits["north"] = 702
         finish.exits["south"] = 701
-        player = Player("Walker", "Walker")
+        player = Player("Walker", "Walker", level=10)
         player.room_vnum = 701
         player.stamina = 3
         session = SimpleNamespace(player=player, account=None, combat_target=None,
@@ -44,7 +82,7 @@ class MovementStaminaTests(unittest.TestCase):
         start = world.Room(703, "Start", "Start")
         finish = world.Room(704, "Finish", "Finish")
         start.exits["north"] = finish.vnum
-        player = Player("TiredWalker", "TiredWalker")
+        player = Player("TiredWalker", "TiredWalker", level=10)
         player.room_vnum = start.vnum
         player.stamina = 0
         player.position = "resting"
@@ -70,7 +108,7 @@ class MovementStaminaTests(unittest.TestCase):
         start = world.Room(705, "Start", "Start")
         finish = world.Room(706, "Finish", "Finish")
         start.exits["east"] = finish.vnum
-        player = Player("LowWalker", "LowWalker")
+        player = Player("LowWalker", "LowWalker", level=10)
         player.room_vnum = start.vnum
         player.stamina = 1
         session = SimpleNamespace(player=player, account=None, combat_target=None,
@@ -94,7 +132,7 @@ class MovementStaminaTests(unittest.TestCase):
         finish = world.Room(708, "Finish", "Finish")
         start.exits["north"] = finish.vnum
         finish.exits["south"] = start.vnum
-        player = Player("RecoveringWalker", "RecoveringWalker")
+        player = Player("RecoveringWalker", "RecoveringWalker", level=10)
         player.room_vnum = start.vnum
         player.stamina = 1
         session = SimpleNamespace(player=player, account=None, combat_target=None,
