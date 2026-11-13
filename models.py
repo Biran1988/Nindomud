@@ -263,6 +263,8 @@ class Player:
     pvp_organization_invited_by: str = ""
     pvp_organization_invite_expires_at: float = 0.0
     reincarnation: str = ""
+    # Staff-appointed Six Paths descendant; separate from rare birth reincarnation.
+    six_paths_descendant: str = ""  # "" | "indra" | "ashura"
     reincarnation_birth_clan: str = ""
     # Existing saves default to resolved so login never gives a new roll.
     reincarnation_roll_complete: bool = True
