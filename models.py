@@ -243,6 +243,7 @@ class Player:
     position: str = "standing"
 
     # Player-configurable convenience settings (see the `config` command).
+    damage_numbers: bool = False  # config damage numbers|words; False retains descriptive combat output
     auto_loot_ryo: bool = True
     auto_loot_gear: bool = True
     auto_sac_corpse: bool = True
