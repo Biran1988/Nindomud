@@ -49,7 +49,7 @@ class DurabilityTests(unittest.TestCase):
               patch.object(storage, "save_player"),
               patch("world_autosave.mark_dirty")):
             self.assertTrue(durability.wear_weapon(s))
-            self.assertIsNone(actor.equipment["wielded"])
+            self.assertNotIn("wielded", actor.equipment)
             self.assertNotIn(vnum, olc.OBJECT_TEMPLATES)
             self.assertEqual(commands._allocate_crafted_item_vnum(), vnum)
         self.assertIn(name, " ".join(messages))
