@@ -11,9 +11,9 @@ exam and taking theirs. At the central tower a protected proctor accepts both sc
 the candidate to a single-room VNUM 670 final 1v1. Victory earns Chunin rank.
 
 The entry gate itself is UNCHANGED from the old Genin -> Chunin
-requirement (level 15, 25 completed missions) -- this doesn't add a
+requirement (level 35, 25 completed missions) -- this doesn't add a
 new, separate gate, it changes what happens once you're qualified.
-Genin are capped at 15 while awaiting promotion; older characters
+Genin are capped at 35 while awaiting promotion; older characters
 who were already above that cap can still take the exam.
 
 Other normal promotions (Special Jonin through Jonin) are handled
@@ -50,7 +50,7 @@ EARTH_GUARDIAN_VNUM = 6901
 # (level, min_completed_missions) -- kept here as the single source of
 # truth now that kage.py's own ladder no longer has a Chunin entry, so
 # a future balance change only has to touch one place.
-MIN_LEVEL = 15  # Genin cap: reach it before attempting the Chunin exam.
+MIN_LEVEL = 35  # Genin cap: reach it before attempting the Chunin exam.
 MIN_COMPLETED_MISSIONS = 25
 
 
