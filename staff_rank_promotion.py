@@ -23,18 +23,13 @@ def command(session, args):
         session.send(f"{target.name}'s ninja rank '{current}' is not in the rank ladder.")
         return
     index = kage.RANK_ORDER.index(current)
-    if index == len(kage.RANK_ORDER) - 1:
-        session.send(f"{target.name} is already a Kage, the highest village rank.")
+    if current == "kage":
+        session.send(f"{target.name} is already an appointed Kage.")
+        return
+    if current == "jonin":
+        session.send(f"{target.name} is already Jonin, the highest normal rank. An Implementor may use SETKAGE separately.")
         return
     new_rank = kage.RANK_ORDER[index + 1]
-    if new_rank == "kage":
-        if account.staff_level != "implementor" or account.name.lower() != config.ADMIN_NAME:
-            session.send("Only the primary Implementor may appoint a Kage.")
-            return
-        # Centralized one-Kage-per-village logic, including demoting the
-        # previous holder and saving both characters.
-        olc.cmd_setkage(session, [target.name])
-        return
 
     import data_headbands
     target.village_rank = new_rank
