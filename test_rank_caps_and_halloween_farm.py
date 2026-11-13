@@ -15,12 +15,11 @@ from models import Player
 class RankCapTests(unittest.TestCase):
     def test_rank_caps_cover_every_ninja_rank(self):
         self.assertEqual(kage.RANK_LEVEL_CAPS, {
-            "student": 10, "genin": 15, "chunin": 80,
-            "special jonin": 135, "jonin": 200, "elite jonin": 250,
-            "village elder": 250, "kage": 250,
+            "student": 10, "genin": 35, "chunin": 100,
+            "special jonin": 200, "jonin": 250, "kage": 250,
         })
         self.assertEqual([level for level, _, _ in kage.PROMOTION_LADDER],
-                         [80, 135, 200])
+                         [100, 200])
 
     def test_student_is_first_rank_at_creation(self):
         self.assertEqual(kage.RANK_ORDER[0], "student")
@@ -33,15 +32,15 @@ class RankCapTests(unittest.TestCase):
         result = kage.handle_promotion_request(player)
         self.assertIn("Genin Exam", result)
 
-    def test_elite_jonin_cannot_automatically_become_village_elder(self):
+    def test_jonin_cannot_automatically_become_kage(self):
         player = Player("ElderCandidate", "ElderCandidate",
-                        village="leaf", village_rank="elite jonin",
+                        village="leaf", village_rank="jonin",
                         level=250, completed_missions=list(range(1000)))
         result = kage.handle_promotion_request(player)
-        self.assertEqual(player.village_rank, "elite jonin")
+        self.assertEqual(player.village_rank, "jonin")
         self.assertIn("no further promotion", result.lower())
 
-    def test_elite_jonin_can_reach_250_without_becoming_kage(self):
+    def test_jonin_can_reach_250_without_becoming_kage(self):
         player = Player("Experienced", "Experienced",
                         village_rank="elite jonin", level=249,
                         experience=leveling.cumulative_xp_for_level(249))
@@ -55,33 +54,33 @@ class RankCapTests(unittest.TestCase):
 
     def test_exp_cannot_cross_current_rank_cap(self):
         player = Player("CapTester", "CapTester", village_rank="genin",
-                        level=15, experience=leveling.cumulative_xp_for_level(15))
+                        level=35, experience=leveling.cumulative_xp_for_level(35))
         before = player.experience
-        self.assertEqual(leveling.rank_level_cap(player), 15)
+        self.assertEqual(leveling.rank_level_cap(player), 35)
         self.assertEqual(leveling.grant_experience(player, 1_000_000), [])
-        self.assertEqual((player.level, player.experience), (15, before))
+        self.assertEqual((player.level, player.experience), (35, before))
 
     def test_after_promotion_leveling_resumes(self):
         player = Player("PromotionTester", "PromotionTester",
-                        village_rank="genin", level=15,
+                        village_rank="genin", level=35,
                         experience=leveling.cumulative_xp_for_level(15))
         player.village_rank = "chunin"
-        needed = leveling.xp_for_next_level(15) - player.experience
+        needed = leveling.xp_for_next_level(35) - player.experience
         with patch.object(leveling.storage, "save_player"), patch.object(
                 leveling.shinobi_notices, "announce_level"):
             messages = leveling.grant_experience(player, needed)
-        self.assertEqual(player.level, 16)
-        self.assertTrue(any("reached level 16" in msg for msg in messages))
+        self.assertEqual(player.level, 36)
+        self.assertTrue(any("reached level 36" in msg for msg in messages))
 
     def test_huge_xp_gain_stops_at_rank_cap_and_discards_overflow(self):
         player = Player("BigKillTester", "BigKillTester",
-                        village_rank="chunin", level=79,
-                        experience=leveling.cumulative_xp_for_level(79))
+                        village_rank="chunin", level=99,
+                        experience=leveling.cumulative_xp_for_level(99))
         with patch.object(leveling.storage, "save_player"), patch.object(
                 leveling.shinobi_notices, "announce_level"):
             msgs = leveling.grant_experience(player, 10**12)
-        self.assertEqual(player.level, 80)
-        self.assertLess(player.experience, leveling.xp_for_next_level(80))
+        self.assertEqual(player.level, 100)
+        self.assertLess(player.experience, leveling.xp_for_next_level(100))
         self.assertTrue(any("Rank cap reached" in msg for msg in msgs))
 
 
