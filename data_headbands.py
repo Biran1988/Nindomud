@@ -17,20 +17,7 @@ way, since that's the one color mechanism already wired into every
 place an item's name is displayed (inventory, equipment, sell,
 etc.) -- rather than inventing a second, parallel coloring system
 that would only work in the one or two places built to know about it.
-8 ranks don't map 1:1 onto 5 rarity tiers, so the two lowest and two
-highest ranks share a tier with their neighbor (see
-RANK_HEADBAND_RARITY below) -- everything in between gets its own.
-
-IMPORTANT CAVEAT, stated plainly: kage.PROMOTIONS_ENABLED is currently
-False, so no player can currently be promoted past genin through
-normal play -- see kage.py's own comment on why. The chunin-and-above
-headbands built here are fully real, functional items (registered,
-correctly stat-boosted, correctly colored, and wired into
-kage.handle_promotion_request so a promotion swaps the headband
-automatically), but nothing in the game currently grants them to a
-player, since the promotions that would is switched off. They're
-ready the moment that flag flips back on.
-"""
+There are five ordinary ranks plus the separately appointed Kage.
 
 from typing import Optional
 
@@ -38,7 +25,7 @@ from typing import Optional
 # than imported, to avoid a circular import (kage.py doesn't need to
 # know anything about headbands to keep working -- see
 # apply_rank_headband below, which IS the one place that imports both).
-RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
+RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin", "kage"]
 
 # Progressively larger Armor Class bonus per rank. The starting Student rank stays
 # at the existing headband's original 0 bonus (purely cosmetic) so
@@ -48,9 +35,7 @@ RANK_HEADBAND_AC_BONUS = {
     "genin": 2,
     "chunin": 4,
     "special jonin": 6,
-    "jonin": 8,
-    "elite jonin": 10,
-    "village elder": 12,
+    "jonin": 10,
     "kage": 14,
 }
 
@@ -63,9 +48,7 @@ RANK_HEADBAND_RARITY = {
     "genin": "common",
     "chunin": "uncommon",
     "special jonin": "rare",
-    "jonin": "epic",
-    "elite jonin": "legendary",
-    "village elder": "legendary",
+    "jonin": "legendary",
     "kage": "legendary",
 }
 
@@ -78,8 +61,6 @@ RANK_HEADBAND_TITLE = {
     "chunin": "Chunin Headband",
     "special jonin": "Special Jonin Headband",
     "jonin": "Jonin Headband",
-    "elite jonin": "Elite Jonin Headband",
-    "village elder": "Elder's Headband",
     "kage": "Kage's Headband",
 }
 
@@ -103,14 +84,11 @@ def apply_rank_headband(player, rank: str) -> Optional[str]:
     """Swaps the player's currently-equipped headband for the one
     matching `rank`, if their village has one registered for it.
     Removes the old headband from equipment entirely (it does NOT go
-    back to inventory -- ranks only ever move forward, so there's
-    nothing to preserve) and equips the new one directly. Returns the
+    back to inventory -- only the current rank's headband applies) and equips the new one directly. Returns the
     new headband's name for the caller to announce, or None if rank
     isn't a recognized headband tier.
 
-    Called from kage.handle_promotion_request() -- currently
-    unreachable in normal play while promotions are disabled, but
-    wired in correctly for when they aren't."""
+    Called from the exam, promotion and Kage appointment paths."""
     import data_villages
 
     if rank not in RANK_HEADBAND_TITLE:
