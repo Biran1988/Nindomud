@@ -246,7 +246,7 @@ def _register_shared_items() -> None:
     _headband_vnum = 20700
     _RANK_COST = {
         "genin": 100, "chunin": 500, "special jonin": 2000,
-        "jonin": 8000, "elite jonin": 30000, "village elder": 100000, "kage": 500000,
+        "jonin": 8000, "kage": 500000,
     }
     for _village_data in data_villages.VILLAGES.values():
         for _rank in data_headbands.RANK_ORDER[1:]:  # Student headband is already registered above
