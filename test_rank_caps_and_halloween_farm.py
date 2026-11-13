@@ -5,6 +5,7 @@ from types import SimpleNamespace as NS
 from unittest.mock import Mock, patch
 
 import commands
+import chunin_exam
 import force_commands
 import halloween_event
 import kage
@@ -20,6 +21,26 @@ class RankCapTests(unittest.TestCase):
         })
         self.assertEqual([level for level, _, _ in kage.PROMOTION_LADDER],
                          [100, 200])
+
+    def test_chunin_exam_gate_is_genin_level_35(self):
+        player = Player("ForestCandidate", "ForestCandidate", village_rank="genin",
+                        level=34, completed_missions=list(range(25)))
+        self.assertFalse(chunin_exam.qualifies_for_exam(player))
+        player.level = 35
+        self.assertTrue(chunin_exam.qualifies_for_exam(player))
+
+    def test_jonin_promotion_requires_level_200(self):
+        player = Player("PromotionCandidate", "PromotionCandidate",
+                        village="leaf", village_rank="special jonin",
+                        level=199, completed_missions=list(range(100)))
+        self.assertIn("level 200", kage.handle_promotion_request(player))
+        self.assertEqual(player.village_rank, "special jonin")
+        player.level = 200
+        with patch.object(kage.data_headbands, "apply_rank_headband"), \
+             patch.object(kage, "announce_rank_up"):
+            message = kage.handle_promotion_request(player)
+        self.assertEqual(player.village_rank, "jonin")
+        self.assertIn("promoted to Jonin", message)
 
     def test_student_is_first_rank_at_creation(self):
         self.assertEqual(kage.RANK_ORDER[0], "student")
