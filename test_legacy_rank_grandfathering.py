@@ -22,18 +22,17 @@ class RankGrandfatheringTests(unittest.TestCase):
         examples = (
             ("student", 10, "student"),
             ("student", 11, "genin"),
-            ("student", 16, "chunin"),
-            ("genin", 15, "genin"),
-            ("genin", 16, "chunin"),
-            ("genin", 60, "chunin"),
-            ("chunin", 80, "chunin"),
-            ("chunin", 81, "special jonin"),
-            ("chunin", 136, "jonin"),
-            ("chunin", 201, "elite jonin"),
-            ("special jonin", 135, "special jonin"),
-            ("jonin", 200, "jonin"),
-            ("jonin", 201, "elite jonin"),
-            ("elite jonin", 250, "elite jonin"),
+            ("student", 36, "chunin"),
+            ("genin", 35, "genin"),
+            ("genin", 36, "chunin"),
+            ("genin", 101, "special jonin"),
+            ("genin", 201, "jonin"),
+            ("chunin", 100, "chunin"),
+            ("chunin", 101, "special jonin"),
+            ("chunin", 201, "jonin"),
+            ("special jonin", 200, "special jonin"),
+            ("special jonin", 201, "jonin"),
+            ("jonin", 250, "jonin"),
         )
         for index, (original, level, expected) in enumerate(examples):
             with self.subTest(original=original, level=level):
@@ -49,13 +48,19 @@ class RankGrandfatheringTests(unittest.TestCase):
                 self.assertLessEqual(level, kage.RANK_LEVEL_CAPS[p.village_rank])
 
     def test_staff_only_ranks_never_awarded_or_downgraded(self):
-        for rank in ("village elder", "kage"):
-            p = self.player(level=250, rank=rank)
-            self.assertIsNone(kage.grandfather_legacy_rank(p))
-            self.assertEqual(p.village_rank, rank)
+        p = self.player(level=250, rank="kage")
+        self.assertIsNone(kage.grandfather_legacy_rank(p))
+        self.assertEqual(p.village_rank, "kage")
         p = self.player(level=250, rank="student")
-        self.assertEqual(kage.grandfather_legacy_rank(p), ("student", "elite jonin"))
-        self.assertEqual(p.village_rank, "elite jonin")
+        self.assertEqual(kage.grandfather_legacy_rank(p), ("student", "jonin"))
+        self.assertEqual(p.village_rank, "jonin")
+
+    def test_removed_historical_ranks_are_mapped_to_jonin(self):
+        for legacy in ("elite jonin", "village elder"):
+            player = self.player(level=250, rank=legacy)
+            self.assertTrue(kage.migrate_removed_rank(player))
+            self.assertEqual(player.village_rank, "jonin")
+            self.assertFalse(kage.migrate_removed_rank(player))
 
     def test_graduation_mission_points_once_even_if_skipping_genin(self):
         p = self.player(level=65, rank="student")
