@@ -396,13 +396,6 @@ def cmd_move(session, direction: str) -> None:
         session.send("You can't go that way.")
         return
 
-    # Iron Ascension stairs are personal progression gates: merely finding
-    # an empty floor (another ninja's kill) never grants clearance.
-    import iron_ascension
-    if (not (session.account and session.account.staff_level != "player")
-            and not iron_ascension.can_ascend(session, direction)):
-        return
-
     import whirlpool_fuinjutsu
     barrier_message = whirlpool_fuinjutsu.check_movement(player, room.vnum, direction)
     if barrier_message and not (session.account and session.account.staff_level != "player"):
