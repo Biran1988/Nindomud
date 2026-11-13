@@ -25,10 +25,10 @@ class RankGrandfatheringTests(unittest.TestCase):
             ("student", 36, "chunin"),
             ("genin", 35, "genin"),
             ("genin", 36, "chunin"),
-            ("genin", 101, "special jonin"),
+            ("genin", 66, "special jonin"),
             ("genin", 201, "jonin"),
-            ("chunin", 100, "chunin"),
-            ("chunin", 101, "special jonin"),
+            ("chunin", 65, "chunin"),
+            ("chunin", 66, "special jonin"),
             ("chunin", 201, "jonin"),
             ("special jonin", 200, "special jonin"),
             ("special jonin", 201, "jonin"),
@@ -48,9 +48,11 @@ class RankGrandfatheringTests(unittest.TestCase):
                 self.assertLessEqual(level, kage.RANK_LEVEL_CAPS[p.village_rank])
 
     def test_staff_only_ranks_never_awarded_or_downgraded(self):
-        p = self.player(level=250, rank="kage")
+        p = self.player(level=250, rank="jonin")
+        p.is_kage = True
         self.assertIsNone(kage.grandfather_legacy_rank(p))
-        self.assertEqual(p.village_rank, "kage")
+        self.assertEqual(p.village_rank, "jonin")
+        self.assertTrue(p.is_kage)
         p = self.player(level=250, rank="student")
         self.assertEqual(kage.grandfather_legacy_rank(p), ("student", "jonin"))
         self.assertEqual(p.village_rank, "jonin")

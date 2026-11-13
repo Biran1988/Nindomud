@@ -42,6 +42,15 @@ class ImmortalPromoteTests(unittest.TestCase):
         self.assertEqual(self.target.village_rank, "special jonin")
         save.assert_called_once_with(self.target)
 
+    def test_appointed_kage_can_earn_rank_without_losing_title(self):
+        self.target.village_rank = "chunin"
+        self.target.is_kage = True
+        save, head, _ = self.invoke()
+        self.assertEqual(self.target.village_rank, "special jonin")
+        self.assertTrue(self.target.is_kage)
+        head.assert_called_once_with(self.target, "kage")
+        save.assert_called_once_with(self.target)
+
     def test_promote_stops_at_jonin_even_for_implementor(self):
         self.target.village_rank = "jonin"
         self.actor.account.name = "biran"
