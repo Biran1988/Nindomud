@@ -388,7 +388,8 @@ def cmd_move(session, direction: str) -> None:
     if whirlpool_fuinjutsu.is_active(player, "fuinjutsu_rooted"):
         session.send("Whirlpool binding script pins your feet in place.")
         return
-    if player.stamina <= 0:
+    # New ninja below level 10 can explore without spending stamina.
+    if player.level >= 10 and player.stamina <= 0:
         session.send("&RYou're too exhausted to walk! Rest until you recover stamina.&x")
         return
 
@@ -445,10 +446,9 @@ def cmd_move(session, direction: str) -> None:
         session.send("The door is locked. This is someone's private home.")
         return
 
-    # Walking requires enough Stamina to pay the full 1-2 point cost.
-    # Refuse before movement hooks or messages, and never allow a free step
-    # from zero (or spend Stamina on an unsuccessful attempt).
-    movement_cost = random.randint(1, 2)
+    # Levels 1-9 walk free, even at zero stamina. Starting at level 10,
+    # normal 1-2 stamina movement costs and exhaustion rules apply.
+    movement_cost = random.randint(1, 2) if player.level >= 10 else 0
     if player.stamina < movement_cost:
         session.send(
             f"&RYou're too exhausted to walk {direction}! "
