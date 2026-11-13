@@ -1303,6 +1303,12 @@ class Session:
 
     def _handle_playing(self, line: str) -> None:
         line = line.strip()
+        # Consume a pending permanent SLAY confirmation before command
+        # dispatch or immortal spying. The code is never recorded in chat.
+        import slay_character
+        if slay_character.consume_confirmation(self, line):
+            self.send_prompt()
+            return
         import immortal_spy
         immortal_spy.forward_input(self, line)
         if not line:
