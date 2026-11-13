@@ -39,8 +39,9 @@ class IronAscensionTests(unittest.TestCase):
         self.assertEqual(len(combat.MOB_TEMPLATES), 250)
         first = world.WORLD.get(tower.START)
         last = world.WORLD.get(tower.START + 249)
-        self.assertEqual(first.exits, {"up": tower.START + 1})
-        self.assertEqual(last.exits, {"down": tower.START + 248})
+        self.assertEqual(first.exits, {})
+        self.assertEqual(last.exits, {})
+        self.assertTrue(all(not room.exits for room in world.WORLD.rooms.values()))
         for floor in range(1, 251):
             template = combat.MOB_TEMPLATES[tower.guardian_vnum(floor)]
             self.assertTrue(template["auto_balance"])
@@ -51,28 +52,42 @@ class IronAscensionTests(unittest.TestCase):
         self.assertEqual(heart["stat_bonuses"]["max_health"], 500)
         self.assertEqual(olc.OBJECT_TEMPLATES[tower.SCROLL_VNUM]["item_type"], "scroll")
 
-    def test_up_is_gated_by_personal_progress_and_living_guardian(self):
-        self.assertFalse(tower.can_ascend(self.session, "up"))
-        self.player.iron_ascension_highest_floor = 1
-        mob = SimpleNamespace(template_vnum=tower.guardian_vnum(1), health=100)
-        with patch.object(combat, "mobs_in_room", return_value=[mob]):
-            self.assertFalse(tower.can_ascend(self.session, "up"))
-        with patch.object(combat, "mobs_in_room", return_value=[]):
-            self.assertTrue(tower.can_ascend(self.session, "up"))
-        self.assertTrue(tower.can_ascend(self.session, "down"))
+    def test_kill_transfers_directly_without_progress_tracking(self):
+        with patch.object(tower, "_validate_area"), patch.object(combat, "spawn_mob"):
+            tower.install()
+        guardian = SimpleNamespace(room_vnum=tower.START,
+                                    template_vnum=tower.guardian_vnum(1))
+        with patch("commands.cmd_look") as look:
+            self.assertTrue(tower.defeated(self.session, guardian))
+        self.assertEqual(self.player.room_vnum, tower.START + 1)
+        self.assertFalse(hasattr(self.player, "iron_ascension_highest_floor"))
+        self.assertEqual(world.WORLD.get(tower.START).exits, {})
+        look.assert_called_once_with(self.session, [])
+
+    def test_login_mid_tower_restarts_on_floor_one_without_checkpoint(self):
+        with patch.object(tower, "_validate_area"), patch.object(combat, "spawn_mob"):
+            tower.install()
+            self.player.room_vnum = tower.START + 109
+            self.assertTrue(tower.reset_run_on_login(self.session))
+        self.assertEqual(self.player.room_vnum, tower.START)
+        self.assertFalse(hasattr(self.player, "iron_ascension_highest_floor"))
+        self.assertIn("floor 1", " ".join(self.lines))
 
     def test_final_guard_awards_once_and_scroll_teaches_passive(self):
+        with patch.object(tower, "_validate_area"), patch.object(combat, "spawn_mob"):
+            tower.install()
         self.player.room_vnum = tower.START + 249
-        self.player.iron_ascension_highest_floor = 249
         final = SimpleNamespace(room_vnum=self.player.room_vnum,
                                 template_vnum=tower.guardian_vnum(250))
-        with patch("session.ACTIVE_SESSIONS", []):
+        with patch("session.ACTIVE_SESSIONS", []), patch("commands.cmd_look"):
             tower.defeated(self.session, final)
+            self.assertEqual(self.player.room_vnum, tower.START)
+            self.player.room_vnum = tower.START + 249
             tower.defeated(self.session, final)
         self.assertTrue(self.player.iron_ascension_completed)
         self.assertEqual(self.player.mission_points, 25)
         self.assertEqual(self.player.mission_points_earned_total, 25)
-        self.assertEqual(self.player.iron_ascension_highest_floor, 250)
+        self.assertFalse(hasattr(self.player, "iron_ascension_highest_floor"))
         self.assertIn(tower.HEART, self.player.inventory)
         self.assertIn(tower.SCROLL, self.player.inventory)
         self.assertTrue(tower.read_scroll(self.session, tower.SCROLL))
