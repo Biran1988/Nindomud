@@ -1159,6 +1159,10 @@ class Session:
 
         self.player = player
         self.state = State.PLAYING
+        # A disconnected or logged-out tower challenger must always restart
+        # at floor 1. This has no per-player cleared-floor bookkeeping.
+        import iron_ascension
+        iron_ascension.reset_run_on_login(self)
         player.last_login_at = time.time()
         storage.save_player(player)
         # Real-time mission deadlines survive logout/reboot. Inform a
