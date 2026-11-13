@@ -84,4 +84,9 @@ def command(session, args):
     if args:
         session.send("Usage: reincarnation  (your inherited soul cannot be selected or changed)")
         return
-    session.send(description(session.player))
+    text = description(session.player)
+    descendant = getattr(session.player, "six_paths_descendant", "")
+    if descendant in NAMES:
+        text += (f"\\nAn immortal has also appointed you a Descendant of the Six Paths "
+                 f"({NAMES[descendant]}). That does not change your birth reincarnation.")
+    session.send(text)
