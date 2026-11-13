@@ -19,7 +19,7 @@ import storage
 
 class SixPathsTests(unittest.TestCase):
     def player(self, soul="indra", level=75, primary_class="taijutsu"):
-        rank = ("jonin" if level > 200 else "special jonin" if level > 100
+        rank = ("jonin" if level > 200 else "special jonin" if level > 65
                 else "chunin" if level > 35
                 else "genin" if level > 10 else "student")
         p = Player("Reborn", "Reborn", level=level, primary_class=primary_class,
