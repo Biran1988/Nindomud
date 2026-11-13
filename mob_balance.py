@@ -11,7 +11,7 @@ import json
 import os
 import tempfile
 
-DEFAULT_SETTINGS = {"hp_percent": 100, "damage_percent": 100}
+DEFAULT_SETTINGS = {"hp_percent": 100, "damage_percent": 100, "hitroll_percent": 100}
 # Fivefold base health gives players time to use jutsu instead of one-shotting mobs.
 # The adjustable mobscale HP percentage remains relative to this tougher baseline.
 BASE_HP_MULTIPLIER = 5
@@ -76,6 +76,20 @@ def hp_for_level(level, setting=None):
     return max(1, amount * BASE_HP_MULTIPLIER * percent // 100)
 
 
+def hit_roll_for_level(level, setting=None):
+    """Level-scaled accuracy for auto-balanced NPCs.
+
+    Mob combat uses Dexterity-10 as its *effective* hitroll. A flat zero
+    leaves advanced NPCs almost unable to hit a trained Dexterity build.
+    +0.6 per level keeps early mobs modest and grants +150 at level 250.
+    Staff can tune this with MOB SCALE HITROLL without editing templates.
+    """
+    level = max(1, min(250, int(level)))
+    baseline = round(level * 0.6)
+    percent = (setting or settings())["hitroll_percent"]
+    return max(1, round(baseline * percent / 100))
+
+
 def target_damage_for_level(level, setting=None):
     """Expected total outgoing hit, including derived Strength damage_roll."""
     level = max(1, min(250, int(level)))
@@ -98,7 +112,7 @@ def damage_dice_for_level(level, setting=None):
 
 
 def cmd_mobscale(session, args):
-    """Administrator controls: mobscale, mobscale preview 50, hp 125, damage 85."""
+    """Administrator controls for mob HP, damage and hitroll scaling."""
     if (not getattr(session, "account", None)
             or session.account.staff_level not in {"administrator", "implementor"}):
         session.send("Only administrators may tune mob difficulty.")
@@ -107,9 +121,10 @@ def cmd_mobscale(session, args):
         values = settings()
         session.send(
             "Standard mob scaling (5x base HP; applies on next spawn): "
-            f"HP {values['hp_percent']}%, Damage {values['damage_percent']}%.\n"
+            f"HP {values['hp_percent']}%, Damage {values['damage_percent']}%, "
+            f"Hitroll {values['hitroll_percent']}%.\n"
             "Usage: mobscale preview <level> | mobscale hp <25-400> | "
-            "mobscale damage <25-400>\n"
+            "mobscale damage <25-400> | mobscale hitroll <25-400>\n"
             "A specific mob can use custom hit/damage dice with 'mset <vnum> autobalance off'."
         )
         return
@@ -119,12 +134,14 @@ def cmd_mobscale(session, args):
             return
         level = int(args[1])
         session.send(f"Level {level} standard mob: {hp_for_level(level):,} HP; "
-                     f"about {target_damage_for_level(level):,} damage per hit "
+                     f"about {target_damage_for_level(level):,} damage per hit; "
+                     f"+{hit_roll_for_level(level)} hitroll "
                      f"({damage_dice_for_level(level)} before the derived Strength bonus).")
         return
-    key = {"hp": "hp_percent", "damage": "damage_percent"}.get(args[0].lower())
+    key = {"hp": "hp_percent", "damage": "damage_percent",
+           "hitroll": "hitroll_percent"}.get(args[0].lower())
     if key is None or len(args) != 2 or not args[1].isdigit():
-        session.send("Usage: mobscale hp <25-400> | mobscale damage <25-400>")
+        session.send("Usage: mobscale hp <25-400> | mobscale damage <25-400> | mobscale hitroll <25-400>")
         return
     try:
         values = set_percent(key, int(args[1]))
@@ -132,5 +149,5 @@ def cmd_mobscale(session, args):
         session.send(f"Mob balance was not changed: {exc}")
         return
     session.send(f"Mob balance saved: HP {values['hp_percent']}%, "
-                 f"Damage {values['damage_percent']}%. "
+                 f"Damage {values['damage_percent']}%, Hitroll {values['hitroll_percent']}%. "
                  "Newly spawned mobs use the new standard; existing fights are unchanged.")
