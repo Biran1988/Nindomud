@@ -5598,3 +5598,39 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+DEFAULT_HELP_ENTRIES.extend([
+    {
+        "primary_keyword": "slay",
+        "keywords": ["slay character", "permanent deletion", "implementor slay"],
+        "title": "Slay Character (Implementor Only)",
+        "body": (
+            "Syntax: SLAY <playername>\\n"
+            "Then enter 1212 as your next command within 60 seconds.\\n\\n"
+            "This permanently removes an ordinary player's character file and "
+            "their matching login account. The character may be offline. "
+            "Connected sessions are closed before deletion, preventing an "
+            "autosave from recreating the deleted character. Any reply other "
+            "than 1212 cancels the action. The primary Implementor account "
+            "and every staff account are protected. Deletion cannot be undone."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+    {
+        "primary_keyword": "promote",
+        "keywords": ["promote player", "promote ninja rank", "next rank"],
+        "title": "Promote Ninja Rank (Immortal)",
+        "body": (
+            "Syntax: PROMOTE <playername>\\n\\n"
+            "Advances an online or offline character by exactly ONE step in "
+            "the standard ninja rank ladder: Student, Genin, Chunin, Special "
+            "Jonin, Jonin, Elite Jonin, Village Elder, Kage. Uses the usual "
+            "rank headband and global announcement; changes save immediately. "
+            "Student -> Genin also grants the normal 50 mission points. "
+            "Only the primary Implementor can appoint a Kage; that final "
+            "step uses the existing one-Kage-per-village rules. "
+            "Staff promotion is a DIFFERENT command: PROMOTEIMM."
+        ),
+        "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+    },
+])
