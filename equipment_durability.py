@@ -86,7 +86,9 @@ def _wear(session, slot, expected_type):
         # Unique-name forge prototypes normally have exactly one live item.
         # Remove both its equipment instance and its prototype. Any OSET-
         # spawned duplicates of this custom item cease to resolve as equipment.
-        session.player.equipment[slot] = None
+        # Remove the slot entirely: a None value is not an item name,
+        # and older combat-bonus lookups called .lower() on every slot.
+        session.player.equipment.pop(slot, None)
         del olc.OBJECT_TEMPLATES[vnum]
         import commands
         commands.reclaim_crafted_item_vnum(vnum)
