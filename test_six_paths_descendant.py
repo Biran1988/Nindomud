@@ -25,8 +25,8 @@ class SixPathsDescendantTests(unittest.TestCase):
         self.live = NS(player=self.target, send=Mock(), send_prompt=Mock())
 
     def invoke(self, action):
-        with patch("olc._find_target_player", return_value=(self.target, self.live)), \\
-             patch("storage.save_player") as saved:
+        with (patch("olc._find_target_player", return_value=(self.target, self.live)),
+              patch("storage.save_player") as saved):
             six_paths_staff.command(self.owner, ["Target", action])
             return saved.call_count
 
@@ -79,9 +79,8 @@ class SixPathsDescendantTests(unittest.TestCase):
         self.assertIs(commands.COMMANDS["sixdescendant"], six_paths_staff.command)
         self.assertIs(commands.COMMANDS["sixpathsset"], six_paths_staff.command)
         self.invoke("ashura")
-        self.assertIn("Descendant of the Six Paths", self.live.send.call_args_list[-2].args[0]
-                      if len(self.live.send.call_args_list) > 1
-                      else reincarnation.description(self.target) + " Descendant of the Six Paths")
+        self.assertTrue(any("Ashura" in args.args[0]
+                            for args in self.live.send.call_args_list))
         message = NS(player=self.target, send=Mock())
         reincarnation.command(message, [])
         self.assertIn("Descendant of the Six Paths", message.send.call_args.args[0])
