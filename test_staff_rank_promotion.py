@@ -42,16 +42,15 @@ class ImmortalPromoteTests(unittest.TestCase):
         self.assertEqual(self.target.village_rank, "special jonin")
         save.assert_called_once_with(self.target)
 
-    def test_kage_appointment_is_delegated_to_protected_setkage(self):
-        self.target.village_rank = "village elder"
-        self.invoke()
-        self.assertEqual(self.target.village_rank, "village elder")
+    def test_promote_stops_at_jonin_even_for_implementor(self):
+        self.target.village_rank = "jonin"
         self.actor.account.name = "biran"
         self.actor.account.staff_level = "implementor"
-        with (patch("olc._find_target_player", return_value=(self.target, self.live)),
-              patch("olc.cmd_setkage") as appoint):
-            staff_rank_promotion.command(self.actor, ["Target"])
-        appoint.assert_called_once_with(self.actor, ["Target"])
+        with patch("olc.cmd_setkage") as appoint:
+            save, _, _ = self.invoke()
+        self.assertEqual(self.target.village_rank, "jonin")
+        self.assertFalse(save.called)
+        appoint.assert_not_called()
 
     def test_player_rank_cannot_use_immortal_promotion(self):
         self.actor.account.staff_level = "player"
