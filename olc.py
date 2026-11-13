@@ -413,7 +413,8 @@ def cmd_mstat(session, args: List[str]) -> None:
         import mob_balance
         lines.append(
             f"&WLevel Standard:&x {mob_balance.hp_for_level(t['level']):,} HP / "
-            f"{mob_balance.target_damage_for_level(t['level']):,} damage per hit"
+            f"{mob_balance.target_damage_for_level(t['level']):,} damage per hit / "
+            f"+{max(t.get('hit_roll', 0), mob_balance.hit_roll_for_level(t['level']))} hitroll"
         )
     lines += [
         f"&WArmor Class:&x {t['armor_class']}   &WHit Roll:&x {t['hit_roll']}   &WDamage Roll:&x {t['damage_roll']}",
