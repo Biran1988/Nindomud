@@ -11,19 +11,22 @@ from models import Player
 
 
 class TowerResetAndFourthPracticeTests(unittest.TestCase):
-    def test_iron_kage_return_requires_real_floor_250_clear(self):
+    def test_final_floor_transfer_requires_correct_kill_and_preserves_reward(self):
         player = Player('Verifier', 'Verifier', level=250)
         player.room_vnum = iron_ascension.START + 249
-        player.iron_ascension_highest_floor = 250
         player.iron_ascension_completed = True
         session = NS(player=player, send=Mock())
-        wrong = NS(room_vnum=player.room_vnum, template_vnum=iron_ascension.guardian_vnum(249))
-        self.assertFalse(iron_ascension.return_from_final_floor(session, wrong))
-        final = NS(room_vnum=player.room_vnum, template_vnum=iron_ascension.guardian_vnum(250))
-        with patch('storage.save_player'), patch('world.WORLD.get', return_value=None):
-            self.assertTrue(iron_ascension.return_from_final_floor(session, final))
+        wrong = NS(room_vnum=player.room_vnum,
+                   template_vnum=iron_ascension.guardian_vnum(249))
+        self.assertFalse(iron_ascension.defeated(session, wrong))
+        final = NS(room_vnum=player.room_vnum,
+                   template_vnum=iron_ascension.guardian_vnum(250))
+        with patch('storage.save_player'), patch('world.WORLD.get', return_value=object()), \\
+             patch('commands.cmd_look'):
+            self.assertTrue(iron_ascension.defeated(session, final))
         self.assertEqual(player.room_vnum, iron_ascension.START)
-        self.assertFalse(iron_ascension.return_from_final_floor(session, final))
+        self.assertFalse(iron_ascension.defeated(session, final))
+        self.assertEqual(player.mission_points, 0)
 
     def test_fourth_practice_from_non_buki_teacher_at_level_75(self):
         player = Player('Verifier', 'Verifier', primary_class='bukijutsu', level=75, room_vnum=444)
