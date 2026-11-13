@@ -10595,6 +10595,7 @@ COMMANDS = {
     "reboot": cmd_reboot,
     "makeimm": cmd_makeimm,
     "promoteimm": cmd_promoteimm,
+    "promote": __import__("staff_rank_promotion").command,
     "commands": cmd_commands,
     "changes": cmd_changes,
     "leaderboard": cmd_leaderboard, "leaderboards": cmd_leaderboard, "top": cmd_leaderboard,
