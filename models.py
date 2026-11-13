@@ -62,6 +62,7 @@ class Player:
     # Permanent choices (Section 3) -- protected from player edits
     village: Optional[str] = None
     village_rank: str = "student"  # starting designation; Genin is the first obtainable rank (via exam)
+    rank_before_kage: str = ""  # previous earned rank restored on Kage removal
     primary_class: Optional[str] = None
     # Fresh characters default to migrated; saved characters missing this
     # field are eligible for one-time, over-cap rank grandfathering.
