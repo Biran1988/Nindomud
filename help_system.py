@@ -5284,6 +5284,24 @@ DEFAULT_HELP_ENTRIES.append({
 })
 
 DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "sixdesc",
+    "keywords": ["six paths descendant", "descendant", "appoint descendant", "indra", "ashura"],
+    "title": "Six Paths Descendant Appointment (Administrator+)",
+    "body": (
+        "Syntax: sixdesc <player> <indra|ashura|none>\\n"
+        "Alias: descendant <player> <indra|ashura|none>\\n\\n"
+        "Administrators and Implementors can appoint an online or offline "
+        "character as a Descendant of the Six Paths. At level 75, Indra "
+        "unlocks Six Paths Rinnegan and its arts, while Ashura unlocks "
+        "Six Paths Sage Mode and its arts. NONE withdraws the staff "
+        "appointment. This never changes the birth reincarnation, level, "
+        "or reincarnation resource bonuses. The change is saved immediately."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
+
+
+DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "delete",
     "keywords": ["delete character", "character deletion", "delete account"],
     "title": "Delete Your Character",
