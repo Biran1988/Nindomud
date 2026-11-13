@@ -69,6 +69,11 @@ POSITION_MULTIPLIER = {
 HOSPITAL_MULTIPLIER = 10.0
 # Hospital healing bypasses ordinary per-tick caps. Resource maximums still apply.
 
+# Beginner catch-up: levels 1-9 regenerate all three resources five times
+# faster on their existing regen tick. Level 10+ keeps standard rates.
+BEGINNER_REGEN_MAX_LEVEL = 9
+BEGINNER_REGEN_MULTIPLIER = 5.0
+
 
 CHAKRA_CONTROL_REGEN_BONUS_PER_POINT = 0.5  # confirmed directly: same real rate as the other new resource formulas (Section 130)
 
@@ -135,6 +140,8 @@ def tick_player(player) -> list:
         return []
 
     multiplier = POSITION_MULTIPLIER.get(player.position, 1.0)
+    if player.level <= BEGINNER_REGEN_MAX_LEVEL:
+        multiplier *= BEGINNER_REGEN_MULTIPLIER
     room = world.WORLD.get(player.room_vnum)
     hospital = bool(room and ACCELERATED_HEALING_FLAG in room.flags)
     if hospital:
