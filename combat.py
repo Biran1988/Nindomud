@@ -1084,8 +1084,8 @@ def resolve_amaterasu_cast(session, target_session, grow_handsigns: bool = True)
         target_session.player.active_status_effects, data_mangekyo.AMATERASU_INITIAL_DAMAGE)
     damage = sage_mode.incoming(target_session.player, damage)
     target_session.player.health -= damage
-    jutsu_colors.send(session, f"&RAmaterasu engulfs {target_session.player.name} for {damage_messages.describe_damage(damage)} initial damage! The black flames burn until death.&x")
-    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you for {damage_messages.describe_damage(damage)} initial damage! The black flames burn until death.&x")
+    jutsu_colors.send(session, f"&RAmaterasu engulfs {target_session.player.name} for {damage_messages.describe_damage(damage, player)} initial damage! The black flames burn until death.&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s Amaterasu engulfs you for {damage_messages.describe_damage(damage, target_session.player)} initial damage! The black flames burn until death.&x")
     if grow_handsigns:
         grow_skill_from_usage(player, "Handsigns", session=session)
     if target_session.player.health <= 0:
@@ -1127,8 +1127,8 @@ def resolve_kamui_limb_removal_cast(session, target_session) -> None:
     target_session.player.health -= dmg
     import mangekyo_discovery
     mangekyo_discovery.record_use(player, "kamui limb removal")
-    jutsu_colors.send(session, f"&RYour blade tears through space itself, severing {target_session.player.name}'s limb for {damage_messages.describe_damage(dmg)} damage!&x")
-    jutsu_colors.send(target_session, f"&R{player.name}'s Kamui rips your limb away in an instant of pure agony -- {damage_messages.describe_damage(dmg)} damage!&x")
+    jutsu_colors.send(session, f"&RYour blade tears through space itself, severing {target_session.player.name}'s limb for {damage_messages.describe_damage(dmg, player)} damage!&x")
+    jutsu_colors.send(target_session, f"&R{player.name}'s Kamui rips your limb away in an instant of pure agony -- {damage_messages.describe_damage(dmg, target_session.player)} damage!&x")
     if target_session.player.health <= 0:
         if try_trigger_izanagi(target_session):
             pass
@@ -1386,17 +1386,17 @@ def tick_effects_pulse(session) -> None:
         dmg = status_effects.burning_damage()
         dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
         player.health = max(0, player.health - dmg)
-        session.send(f"&RThe fire burns you for {damage_messages.describe_damage(dmg)} damage!&x")
+        session.send(f"&RThe fire burns you for {damage_messages.describe_damage(dmg, player)} damage!&x")
     if "poisoned" in player.active_status_effects:
         dmg = status_effects.reduce_incoming_damage(player.active_status_effects, random.randint(3, 5))
         player.health = max(0, player.health - dmg)
-        session.send(f"&GPoison hurts you for {damage_messages.describe_damage(dmg)} damage!&x")
+        session.send(f"&GPoison hurts you for {damage_messages.describe_damage(dmg, player)} damage!&x")
     for trap in ninja_arts.TRAPS:
         state = player.active_status_effects.get(trap)
         if state and state["duration"] <= 1:
             player.active_status_effects.pop(trap)
             dmg = ninja_arts.detonate_trap(player, trap)
-            session.send(f"&R{trap.title()} detonates for {damage_messages.describe_damage(dmg)} damage!&x")
+            session.send(f"&R{trap.title()} detonates for {damage_messages.describe_damage(dmg, player)} damage!&x")
     if "drained" in player.active_status_effects:
         loss = min(player.chakra, status_effects.drained_chakra_loss())
         player.chakra -= loss
@@ -1477,7 +1477,7 @@ def tick_all_mob_effects(sessions=None) -> None:
                     if sessions:
                         for owner in sessions:
                             if owner.player and owner.player.name == state["source"]:
-                                owner.send(f"&R{trap.title()} detonates on {mob.name} for {damage_messages.describe_damage(dmg)} damage!&x")
+                                owner.send(f"&R{trap.title()} detonates on {mob.name} for {damage_messages.describe_damage(dmg, owner.player)} damage!&x")
                                 if mob.health <= 0 and mob in room_mobs:
                                     handle_mob_defeat(owner, mob)
                                 break
@@ -2508,15 +2508,15 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False, signatur
     mob.health -= dmg
     sword_styles.successful_strike(player, session)
     if is_crit:
-        session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
+        session.send(f"&YCritical hit!&x You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg, player)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
-        session.send(f"You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
+        session.send(f"You {attack_verb} {mob.name} for {damage_messages.describe_damage(dmg, player)} damage. {damage_messages.impact_flavor(dmg)}")
     import room_actions
     room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(player.equipment.get('wielded', ''))} {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
     if "bleeding" in mob.active_status_effects:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
-        session.send(f"{mob.name} bleeds for {damage_messages.describe_damage(bleed)} damage.")
+        session.send(f"{mob.name} bleeds for {damage_messages.describe_damage(bleed, player)} damage.")
     import equipment_durability
     equipment_durability.wear_weapon(session)
     return True
@@ -2555,7 +2555,7 @@ def _clone_attack_mob_once(session, player, mob, clone=None) -> None:
         dmg = round(dmg * 1.25)
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
     mob.health -= dmg
-    session.send(f"Your {clone_label} {attack_verb}s {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
+    session.send(f"Your {clone_label} {attack_verb}s {mob.name} for {damage_messages.describe_damage(dmg, player)} damage.")
     clone_effect = {"lightning": "paralyzed", "water": "drained", "sand": "entangled"}.get(element)
     if clone_effect and random.randint(1, 100) <= 20:
         status_effects.apply_effect(mob.active_status_effects, clone_effect, source=f"{element} clone", duration_override=2)
@@ -2563,7 +2563,7 @@ def _clone_attack_mob_once(session, player, mob, clone=None) -> None:
     if "bleeding" in mob.active_status_effects:
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
-        session.send(f"{mob.name} bleeds for {damage_messages.describe_damage(bleed)} damage.")
+        session.send(f"{mob.name} bleeds for {damage_messages.describe_damage(bleed, player)} damage.")
 
 
 def _summon_attack_mob_once(session, player, summon, mob) -> None:
@@ -2587,7 +2587,7 @@ def _summon_attack_mob_once(session, player, summon, mob) -> None:
         return
     dmg = stat_for_summon_tier(player.level, tier, SUMMON_DAMAGE_PER_LEVEL)
     mob.health -= dmg
-    session.send(f"{summon.name} attacks {mob.name} for {damage_messages.describe_damage(dmg)} damage.")
+    session.send(f"{summon.name} attacks {mob.name} for {damage_messages.describe_damage(dmg, player)} damage.")
 
 
 def _resolve_summon_round(session, player, mob) -> None:
@@ -2660,7 +2660,7 @@ def _resolve_summon_round(session, player, mob) -> None:
             status_effects.apply_effect(mob.active_status_effects, "bleeding", source="summon_bind")
         bleed = status_effects.bleeding_damage()
         mob.health -= bleed
-        session.send(f"{summon.name} coils tight, poison seeping into {mob.name} for {damage_messages.describe_damage(bleed)} damage!")
+        session.send(f"{summon.name} coils tight, poison seeping into {mob.name} for {damage_messages.describe_damage(bleed, player)} damage!")
     elif mechanic == "poison_cloud":
         poison = max(3, player.level // 6 + int(tier["base_modifier"] * 5))
         mob.health -= poison
@@ -2852,7 +2852,7 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
         if dmg > 0:
             import equipment_durability
             equipment_durability.wear_armor(session)
-        session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
+        session.send(f"{mob.name} strikes you for {damage_messages.describe_damage(dmg, player)} damage. {damage_messages.impact_flavor(dmg)}")
         import room_actions
         room_actions.emit(session, f"{mob.name} strikes {player.name} for {damage_messages.describe_damage(dmg)} damage.")
 
@@ -3269,9 +3269,9 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     else:
         biome_note = ""
     if was_explosive:
-        jutsu_colors.send(session, f"&RThe kunai detonates!&x You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"&RThe kunai detonates!&x You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg, player)} explosive damage!{perk_note}{biome_note}")
     else:
-        jutsu_colors.send(session, f"You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg)} damage! {damage_messages.impact_flavor(dmg)}{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"You use {colored_name} on {mob.name} for {damage_messages.describe_damage(dmg, player)} damage! {damage_messages.impact_flavor(dmg)}{perk_note}{biome_note}")
 
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
         duration = (status_effects.genjutsu_duration(jutsu["effect"])
@@ -3297,7 +3297,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
                     or is_teacher(other) or is_immortal_mob(other)):
                 continue
             other.health -= dmg
-            jutsu_colors.send(session, f"{jutsu['display_name']} also strikes {other.name} for {damage_messages.describe_damage(dmg)} damage!")
+            jutsu_colors.send(session, f"{jutsu['display_name']} also strikes {other.name} for {damage_messages.describe_damage(dmg, player)} damage!")
             if other.health <= 0:
                 handle_mob_defeat(session, other)
 
@@ -3538,17 +3538,17 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     else:
         biome_note = ""
     if was_explosive:
-        jutsu_colors.send(session, f"&RThe kunai detonates!&x You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"&RThe kunai detonates!&x You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg, player)} explosive damage!{perk_note}{biome_note}")
         if silent_to_target:
-            jutsu_colors.send(target_session, f"&RYou feel a sudden, sharp pain -- {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(target_session, f"&RYou feel a sudden, sharp pain -- {damage_messages.describe_damage(dmg, target_session.player)} damage!&x")
         else:
-            jutsu_colors.send(target_session, f"&RThe kunai detonates!&x {player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg)} explosive damage!{perk_note}{biome_note}")
+            jutsu_colors.send(target_session, f"&RThe kunai detonates!&x {player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg, target_session.player)} explosive damage!{perk_note}{biome_note}")
     else:
-        jutsu_colors.send(session, f"You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg)} damage! {damage_messages.impact_flavor(dmg)}{perk_note}{biome_note}")
+        jutsu_colors.send(session, f"You use {colored_name} on {target.name} for {damage_messages.describe_damage(dmg, player)} damage! {damage_messages.impact_flavor(dmg)}{perk_note}{biome_note}")
         if silent_to_target:
-            jutsu_colors.send(target_session, f"&RSomething washes over you -- {damage_messages.describe_damage(dmg)} damage!&x")
+            jutsu_colors.send(target_session, f"&RSomething washes over you -- {damage_messages.describe_damage(dmg, target_session.player)} damage!&x")
         else:
-            jutsu_colors.send(target_session, f"{player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg)} damage!{perk_note}{biome_note}")
+            jutsu_colors.send(target_session, f"{player.name} uses {colored_name} on you for {damage_messages.describe_damage(dmg, target_session.player)} damage!{perk_note}{biome_note}")
 
     if jutsu["effect"] and random.randint(1, 100) <= jutsu.get("effect_chance_pct", 100):
         import data_kekkei_genkai
@@ -3687,7 +3687,6 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     session.send(f"&GYou have defeated {mob.name}!&x")
     session.send(f"&r{mob.name.capitalize()} is DEAD!&x")
     import iron_ascension
-    iron_ascension.defeated(session, mob)
 
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if t and t.get("mob_programs"):
@@ -3806,8 +3805,9 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     for line in missions.on_mob_defeated(player, mob.template_vnum):
         session.send(line)
 
-    # Only move the tower victor after loot, XP and mission rewards settle.
-    iron_ascension.return_from_final_floor(session, mob)
+    # Each tower guardian transfers the victor to the next sealed arena,
+    # after loot, XP and all mission rewards have finished.
+    iron_ascension.defeated(session, mob)
 
 
 def try_trigger_izanagi(session) -> bool:
@@ -4107,10 +4107,10 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     target.health -= dmg
     sword_styles.successful_strike(player, session)
     if is_crit:
-        session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
+        session.send(f"&YCritical hit!&x You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg, player)} damage. {damage_messages.impact_flavor(dmg)}")
     else:
-        session.send(f"You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg)} damage. {damage_messages.impact_flavor(dmg)}")
-    target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg)} damage.")
+        session.send(f"You {attack_verb} {target.name} for {damage_messages.describe_damage(dmg, player)} damage. {damage_messages.impact_flavor(dmg)}")
+    target_session.send(f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} you for {damage_messages.describe_damage(dmg, target_session.player)} damage.")
     import room_actions
     room_actions.emit(session, f"{player.name} {data_weapons.attack_verb_for_item_third_person(attacker_wielded)} {target.name} for {damage_messages.describe_damage(dmg)} damage.", exclude=(target_session,))
     import equipment_durability
@@ -4150,8 +4150,8 @@ def _clone_attack_target_once(session, player, target_session, target, clone) ->
     damage = commands_module.reduce_weapon_damage(target, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), damage)
     damage = status_effects.reduce_incoming_damage(target.active_status_effects, damage)
     target.health -= damage
-    session.send(f"Your {label} strikes {target.name} for {damage_messages.describe_damage(damage)} damage.")
-    target_session.send(f"{player.name}'s {label} strikes you for {damage_messages.describe_damage(damage)} damage.")
+    session.send(f"Your {label} strikes {target.name} for {damage_messages.describe_damage(damage, player)} damage.")
+    target_session.send(f"{player.name}'s {label} strikes you for {damage_messages.describe_damage(damage, target_session.player)} damage.")
     clone_effect = {"lightning": "paralyzed", "water": "drained", "sand": "entangled"}.get(element)
     if clone_effect and random.randint(1, 100) <= 20:
         status_effects.apply_effect(target.active_status_effects, clone_effect, source=f"{element} clone", duration_override=2)
