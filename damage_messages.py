@@ -43,8 +43,14 @@ def damage_tier(amount: int) -> Tuple[str, int]:
     raise AssertionError("open-ended damage tier is missing")
 
 
-def describe_damage(amount: int) -> str:
-    """Return a player-facing, number-free, 256-color damage phrase."""
+def describe_damage(amount: int, viewer=None) -> str:
+    """Render numeric or descriptive damage according to the viewer's config.
+
+    Omitting viewer preserves the legacy descriptive output for shared room
+    broadcasts and old call sites. All combat calculations stay numeric.
+    """
+    if viewer is not None and getattr(viewer, "damage_numbers", False):
+        return f"{max(0, int(amount)):,}"
     label, color = damage_tier(amount)
     return f"&[{color}]{label}&x"
 
