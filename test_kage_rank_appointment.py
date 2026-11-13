@@ -53,6 +53,21 @@ class KageAppointmentTests(unittest.TestCase):
         self.assertTrue(self.target.is_kage)
         self.assertEqual(save.call_count, 2)
 
+    def test_ordinary_promotion_does_not_strip_kage_headband(self):
+        import data_headbands
+        p = Player("Appointed", "Appointed", village="leaf",
+                   village_rank="chunin", level=65, is_kage=True,
+                   completed_missions=list(range(50)))
+        with patch.object(data_headbands, "apply_rank_headband", wraps=data_headbands.apply_rank_headband) as band, \
+             patch("commands._apply_equipment_stat_bonuses"), \
+             patch.object(kage, "announce_rank_up"):
+            message = kage.handle_promotion_request(p)
+        self.assertIn("promoted to Special Jonin", message)
+        self.assertTrue(p.is_kage)
+        self.assertEqual(p.village_rank, "special jonin")
+        self.assertEqual(p.equipment["head"], "A Konoha Kage's Headband")
+        band.assert_called_once_with(p, "special jonin")
+
     def test_old_kage_saved_rank_migrates_safely(self):
         for previous, expected in (("chunin", "chunin"), ("", "jonin"),
                                    ("village elder", "jonin")):

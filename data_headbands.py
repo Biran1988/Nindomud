@@ -79,6 +79,10 @@ def apply_rank_headband(player, rank: str) -> Optional[str]:
 
     if rank not in RANK_HEADBAND_TITLE:
         return None
+    # Appointment headbands survive ordinary rank promotions, including exams
+    # and legacy migrations, until staff explicitly relieves the Kage.
+    if getattr(player, "is_kage", False):
+        rank = "kage"
     village_data = data_villages.VILLAGES.get(player.village)
     if not village_data:
         return None
