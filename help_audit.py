@@ -304,7 +304,7 @@ def populate(entries, commands):
         key = f"rank {rank}"
         if key in by_key:
             continue
-        gate = ("Staff-appointed only." if rank in {"village elder", "kage"}
+        gate = ("Staff-appointed only." if rank == "kage"
                 else "Earn the normal required exam, promotion or rank requirements.")
         entry = _entry(key, rank.title() + " Ninja Rank",
                        f"Rank: {rank.title()}. Maximum ninja level {cap}. "
