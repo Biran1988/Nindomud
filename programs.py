@@ -185,6 +185,9 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
         import data_headbands
         import kage
         new_rank = args.lower()
+        if new_rank not in kage.RANK_ORDER or new_rank == "kage":
+            session.send("That rank cannot be assigned by a mob program.")
+            return False
         if new_rank == "genin" and player.village_rank == "student":
             session.send("The Genin rank must be earned through Iruka's exam.")
             return False
