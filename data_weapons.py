@@ -139,11 +139,13 @@ def weapon_type_for_item(item_name: str) -> Optional[str]:
     # The exact prototype wins over broader names such as "A Basic Kunai"
     # matching a builder's distinct item named "Kunai".
     for proto in olc.OBJECT_TEMPLATES.values():
-        if query == proto["short_desc"].lower():
+        label = proto.get("short_desc")
+        if isinstance(label, str) and query == label.lower():
             weapon_type = proto.get("weapon_type")
             return weapon_type if weapon_type in WEAPON_TYPES else None
     for proto in olc.OBJECT_TEMPLATES.values():
-        if query in proto["short_desc"].lower() or proto["short_desc"].lower() in query:
+        label = proto.get("short_desc")
+        if isinstance(label, str) and label and (query in label.lower() or label.lower() in query):
             weapon_type = proto.get("weapon_type")
             return weapon_type if weapon_type in WEAPON_TYPES else None
 
