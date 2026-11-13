@@ -23,51 +23,31 @@ KAGE_NAMES = {
     "sand": "the Kazekage",
 }
 
-# (min_level, min_completed_missions, next_rank) -- one entry per
-# promotion step, covering Chunin through Elite Jonin (not Village Elder).
-# Re-enabled per explicit request; the requirements below intentionally
-# steepen toward the top (Elite Jonin demands substantial level
-# investment and a real mission history), so the highest earned rank feels
-# like a genuine, rare milestone rather than an automatic checkpoint.
-# Village Elder is a staff-appointed rank, not earned from this NPC.
-# Genin -> Chunin is deliberately NOT in this ladder -- that promotion
-# now requires passing the Chunin Exam (see chunin_exam.py) instead of
-# a simple Kage request; handle_promotion_request below redirects a
-# Genin who asks about promotion to go take the exam.
-# Student is automatically assigned at creation, never earned as a promotion.
-# Genin is the FIRST obtainable ninja rank, earned through Iruka's Genin Exam.
+# Normal ranks end at Jonin. Chunin requires the Chunin Exam, not a Kage
+# promotion. Kage is a separate Implementor-only appointment.
+# Ordinary rank promotions require reaching the current rank cap plus missions.
 STUDENT_LEVEL_CAP = 10
 # Rank-based caps on combat levels; Kage is an Implementor appointment.
 RANK_LEVEL_CAPS = {
     "student": STUDENT_LEVEL_CAP,
     "genin": 15,
-    "chunin": 80,
-    "special jonin": 135,
-    "jonin": 200,
-    "elite jonin": 250,
-    "village elder": 250,
+    "chunin": 35,
+    "special jonin": 100,
+    "jonin": 250,
     "kage": 250,
 }
 
 PROMOTION_LADDER: List[Tuple[int, int, str]] = [
     (RANK_LEVEL_CAPS["chunin"], 50, "special jonin"),
     (RANK_LEVEL_CAPS["special jonin"], 100, "jonin"),
-    (RANK_LEVEL_CAPS["jonin"], 500, "elite jonin"),
 ]
 
-RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin", "elite jonin", "village elder", "kage"]
+RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin", "kage"]
 
-# "kage" is deliberately NOT reachable through PROMOTION_LADDER above --
-# per explicit request, it can only ever be granted by an Implementor
-# (see commands.cmd_setkage), never automatically through level/mission
-# requirements like every other rank. At most one player per village
-# holds it at a time; appointing a new one demotes the previous holder
-# back to "village elder".
+# Kage is never an earned rank. Only SETKAGE can appoint it, and only one
+# person per village may hold the appointment at a time. Removal restores Jonin.
 
-# Promotions, per explicit request. Previously disabled while the
-# promotion ladder only covered up through Jonin (see git history /
-# README for the full "properly re-enabled" writeup) -- extended above
-# to cover every rank, so this can be safely turned back on.
+# Standard promotions stop at Jonin; the Chunin transition uses its exam.
 PROMOTIONS_ENABLED = True
 
 
@@ -112,15 +92,10 @@ GENIN_PROMOTION_MISSION_POINTS = 50
 def grandfather_legacy_rank(player: Player) -> tuple[str, str] | None:
     """One-time upgrade for pre-rank-cap characters already ABOVE their cap.
 
-    Give the first ordinary earned ninja rank whose cap covers the
-    character's existing level. This is intentionally *strictly greater*
-    than a rank's cap: reaching the cap normally still requires its exam
-    or promotion. Do not require retroactive exam completions or missions,
-    and never appoint Village Elder or Kage. The caller handles migration
-    versioning, persistence, and a deferred login announcement.
+    Give the first ordinary earned rank covering the saved level.
+    Never appoint Kage or an obsolete rank. The caller handles persistence.
     """
-    ordinary = ("student", "genin", "chunin", "special jonin",
-                "jonin", "elite jonin")
+    ordinary = ("student", "genin", "chunin", "special jonin", "jonin")
     original = player.village_rank
     if original not in ordinary:
         return None
@@ -140,6 +115,15 @@ def grandfather_legacy_rank(player: Player) -> tuple[str, str] | None:
     player.village_rank = chosen
     data_headbands.apply_rank_headband(player, chosen)
     return original, chosen
+
+
+def migrate_removed_rank(player: Player) -> bool:
+    """Convert removed legacy ranks on load without altering level or XP."""
+    if player.village_rank not in ("elite jonin", "village elder"):
+        return False
+    player.village_rank = "jonin"
+    data_headbands.apply_rank_headband(player, "jonin")
+    return True
 
 
 def award_genin_mission_points_if_applicable(session, player, new_rank: str) -> None:
