@@ -143,7 +143,7 @@ def try_cast(session, mob):
     import iron_ascension
     damage = iron_ascension.reduce_incoming(session, mob, damage)
     player.health -= damage
-    session.send(f"&R{mob.name} unleashes {name} for {damage_messages.describe_damage(damage)} damage!&x")
+    session.send(f"&R{mob.name} unleashes {name} for {damage_messages.describe_damage(damage, session.player)} damage!&x")
 
     effect = art.get("effect")
     if effect in status_effects.EFFECT_DEFS and random.randint(1, 100) <= art.get("effect_chance_pct", 100):
