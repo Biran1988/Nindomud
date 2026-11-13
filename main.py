@@ -61,13 +61,14 @@ def main():
             print(f"[Roadside encounters] Restored: {repaired}")
     except roadside_encounters.RoadsideInstallationError as error:
         print(f"[Roadside encounters] Repair safely skipped: {error}")
-    # Isolated Iron Ascension: 250 generated floors in its own reserved
-    # 30501-31500 block. No exits to the rest of the world are created.
+    # Live Iron Ascension: 250 transfer-only floors in 30501-31500, with
+    # one hidden entrance off the Grassland Border Trail (room 20674).
     import iron_ascension
     try:
         iron_ascension.install()
+        iron_ascension.install_entrance()
     except iron_ascension.IronAscensionError as error:
-        print(f"[Iron Ascension] Installation safely skipped: {error}")
+        print(f"[Iron Ascension] Installation/entrance safely skipped: {error}")
     import commands
     commands.COMMANDS["inn"] = roadside_encounters.cmd_inn
     commands.COMMANDS["ascension"] = iron_ascension.command
