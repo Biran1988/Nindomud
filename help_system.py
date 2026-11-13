@@ -5579,3 +5579,22 @@ DEFAULT_HELP_ENTRIES.append({
     ),
     "created_by": "System", "updated_by": "System", "updated_at": 0.0,
 })
+
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "sixdescendant",
+    "keywords": ["sixdescendant", "sixpathsset", "six paths descendant", "six paths bloodline"],
+    "title": "Six Paths Descendant (Immortal)",
+    "body": (
+        "Syntax: sixdescendant <player> <indra|ashura|off|status>\\n\\n"
+        "Any immortal can appoint a player as a Descendant of the Six Paths, "
+        "choosing Indra or Ashura. The grant is saved immediately and works "
+        "for online or offline characters. At level 75, descendants awaken "
+        "the selected branch's Six Paths Mode and techniques. An inherited "
+        "birth reincarnation is NOT overwritten, and appointed lineage does "
+        "not retroactively grant the reincarnation-only birth attribute or "
+        "resource bonuses. OFF revokes the appointment without changing "
+        "the character's original reincarnation. STATUS reports both. "
+        "Changing branches stops an active Six Paths mode."
+    ),
+    "created_by": "System", "updated_by": "System", "updated_at": 0.0,
+})
