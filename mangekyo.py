@@ -439,7 +439,7 @@ def process_amaterasu_room_fires(combat_module, world_module) -> None:
             dmg = random.randint(*data_mangekyo.AMATERASU_ROOM_BURN_PER_TICK)
             dmg = status_effects.reduce_incoming_damage(s.player.active_status_effects, dmg)
             s.player.health -= dmg
-            s.send(f"&RThe black flames engulfing this room sear you for {damage_messages.describe_damage(dmg)} damage!&x")
+            s.send(f"&RThe black flames engulfing this room sear you for {damage_messages.describe_damage(dmg, s.player)} damage!&x")
             if s.player.health <= 0:
                 if combat_module.try_trigger_izanagi(s):
                     pass
@@ -514,7 +514,7 @@ def process_amaterasu_player_burns(combat_module, session_module) -> None:
         dmg = random.randint(*data_mangekyo.AMATERASU_PLAYER_BURN_PER_TICK)
         dmg = status_effects.reduce_incoming_damage(player.active_status_effects, dmg)
         player.health -= dmg
-        s.send(f"&RAmaterasu's black flame burns you for {damage_messages.describe_damage(dmg)} damage!&x")
+        s.send(f"&RAmaterasu's black flame burns you for {damage_messages.describe_damage(dmg, s.player)} damage!&x")
         if player.health <= 0:
             if combat_module.try_trigger_izanagi(s):
                 pass
