@@ -35,7 +35,9 @@ def main():
             continue
         for expression in stmt.body:
             if (isinstance(expression, ast.Expr) and isinstance(expression.value, ast.Call)
-                    and isinstance(expression.value.func, ast.Name)):
+                    and isinstance(expression.value.func, ast.Name)
+                    and (expression.value.func.id == "main"
+                         or expression.value.func.id.startswith("test_"))):
                 calls.append(expression.value.func.id)
     failures = []
     passed = 0
