@@ -51,7 +51,7 @@ class GroupFollowTests(unittest.TestCase):
                                         connection_ip=f"198.51.100.{len(self.clients) + 20}")
         client.account = SimpleNamespace(name=name, staff_level="player")
         client.player = Player(name=name, account_name=name, village="leaf",
-                               room_vnum=75001, stamina=10)
+                               room_vnum=75001, stamina=10, level=10)
         client.state = session_module.State.PLAYING
         self.clients.append(client)
         return client
