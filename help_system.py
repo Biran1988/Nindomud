@@ -1064,30 +1064,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["promotion", "promote", "rank"],
         "title": "Promotion",
         "body": (
-            "Syntax: ask <kage> about promotion\n"
-            "\n"
-            "Description: Student is the automatic starting designation, not an obtainable rank. Genin is the first rank a player can earn, by passing Iruka's Genin Exam. Progression: Student -> Genin -> Chunin -> Special Jonin -> Jonin -> Elite Jonin -> Village Elder -> Kage. Every character starts as a Student, with full access to combat and missions from the very first moment. There is no separate Academy exam.\n"
-            "\n"
-            "Student -> Genin requires level 10, 100% mastery of Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, and Strong Fist Style; then find Iruka (mob VNUM 11) and use 'say Start Genin exam' to take the written Genin Exam. He selects 10 different Naruto anime questions from a 20-question pool, shuffling the four choices on each attempt. All 10 answers must be correct; one mistake ends that attempt. Passing awards a Genin headband and 50 mission points. See 'help genin exam'.\n"
-            "\n"
-            "Genin -> Chunin is earned by passing the Chunin Exam ('help exam') at level 15, not by asking the Kage.\n\nRank level caps: Student 10, Genin 15, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin 250, Village Elder 250, Kage 250.\n"
-            "\n"
-            "One-time legacy exception: Characters created before rank-level caps who already EXCEED their current rank's cap are automatically promoted to the first normal rank that permits their existing level when their old save is loaded. For example, a level-60 Genin becomes Chunin. Their level, XP, skill proficiency and mission history remain; appropriate headbands are awarded. This is not an exam bypass for new characters: those exactly AT a rank cap still must pass their next exam/promotion, and Village Elder and Kage always require staff appointment.\n"
-            "\n"
-            "Special Jonin, Jonin and Elite Jonin promotions currently use your village Kage's chamber and check the following level and mission requirements:\n"
-            "\n"
-            "  Special Jonin: level 80, 50 completed missions\n"
-            "  Jonin: level 135, 100 completed missions\n"
-            "  Elite Jonin: level 200, 500 completed missions\n"
-            ""
-            "\n"
-            "Village Elder has no automatic promotion or exam. Administrators may confer it with 'mset <player> rank village elder'.\n\nKage itself is never earned through a level/mission check -- it's appointed directly by staff (only one Kage per village at a time), and can also never be granted through a mob program's 'set_rank' action, specifically to protect that one-per-village rule.\n"
-            "\n"
-            "Every rank also carries its own headband, with a progressively larger Armor Class bonus -- promotion swaps it automatically, whichever of the paths above actually granted it.\n"
-            "\n"
-            "Every real rank change in the game -- Student -> Genin via Iruka's exam, Genin -> Chunin via the exam, or any Kage-granted promotion -- announces itself to EVERY connected player, not just the one being promoted: \"[Name] has been promoted to [Rank]!\"\n"
-            "\n"
-            "Date: 2026-09-02"
+            "Syntax: ask <kage> about promotion\n\nDescription: Every character starts as a Student. Normal progression: Student -> Genin -> Chunin -> Special Jonin -> Jonin. Jonin is the highest earnable ninja rank; Kage is a separate Implementor-only village appointment, never part of level progression.\n\nRank caps: Student 10, Genin 35, Chunin 100, Special Jonin 200, Jonin 250. An appointed Kage can also reach level 250.\n\nStudent -> Genin: at level 10, master the five fundamental skills (Shadow Shuriken Technique, Dynamic Entry, Demonic Illusion: Hell Viewing Technique, Throw Shuriken, Strong Fist Style) to 100%, then find Iruka (VNUM 11) and say Start Genin exam. Pass all 10 questions to earn the Genin headband and 50 mission points.\n\nGenin -> Chunin: at level 35 with 25 completed missions, pass the Forest of Death Chunin Exam ('exam'). Asking the Kage cannot bypass the exam.\n\nChunin -> Special Jonin: at level 100 with 50 completed missions, ask your village Kage about promotion.\n\nSpecial Jonin -> Jonin: at level 200 with 100 completed missions, ask your village Kage about promotion.\n\nJonin can continue gaining levels normally up to 250. No Elite Jonin or Village Elder rank remains. The command PROMOTE advances eligible characters by one normal rank only; it cannot grant Kage.\n\nKage appointment and removal use SETKAGE, restricted to Implementors. Only one Kage is allowed per village at a time. A former Kage returns to the ordinary ninja rank held before appointment (older saves default to Jonin).\n\nPromotions update the rank headband and announce rank changes globally. Previously introduced rank caps support a one-time legacy safeguard for old character saves; existing level, experience and proficiencies are preserved. Removed historical ranks are converted to Jonin when their saves load.\n\nDate: 2026-11-12"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -1098,17 +1075,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["exam", "chunin exam", "forest of death"],
         "title": "Chunin Exam",
         "body": (
-            "Syntax: exam\n"
-            "\n"
-            "Description: Enters the Forest of Death to attempt the Chunin Exam -- the only way to be promoted from Genin to Chunin. Requires at least level 15 and 25 completed missions, but is NOT level-capped beyond that minimum; a Genin who qualified a while ago can still take it at any time.\n"
-            "\n"
-            "On entry, you're given either a Heaven Scroll or an Earth Scroll at random. Defeat animals and rival ninja to find the other scroll. Scroll guardians carry the matching scrolls, and rival exam candidates may carry one as well. With both scrolls, reach the central tower (VNUM 357) and ASK PROCTOR EXAM (or SUBMIT SCROLLS). The proctor consumes both scrolls and sends you to VNUM 670. The Third Hokage explains Heaven and Earth and asks if you're ready. Answer YES to reveal a stronger shadow of yourself with a different class; combat does not begin until YOU ATTACK the shadow or target it with jutsu. NO postpones the fight; READY repeats his invitation. Winning grants Chunin rank and headband with a global announcement; defeat or LEAVE CONFIRM forfeits the exam. Your response survives quit and reboot. Older Hell Scrolls still count as Earth Scrolls.\n"
-            "\n"
-            "Leaving the exam with LEAVE CONFIRM forfeits the attempt and scrolls; ANKI, RECALL, and travel cannot skip the exam.\n"
-            "\n"
-            "Every failed attempt starts fresh with a newly assigned scroll. Leaving or dying forfeits both scrolls and any progress toward the final 1v1.\n"
-            "\n"
-            "Date: 2026-08-17"
+            "Syntax: exam\n\nDescription: Enters the Forest of Death for the Chunin Exam, required to advance from Genin to Chunin. Requires level 35 and at least 25 completed missions.\n\nYou receive a Heaven Scroll (VNUM 20800) or Earth Scroll (VNUM 20801). Defeat animals and rival ninja to obtain the other scroll. With both scrolls, reach the central tower (VNUM 357) and ASK PROCTOR EXAM or SUBMIT SCROLLS. The proctor takes the scrolls and sends you to the arena (VNUM 670). Hear the Third Hokage's speech; answer YES to summon your final opponent, then ATTACK it or use a jutsu to begin. Answer NO to postpone, or READY to hear the speech again. Win to become Chunin and receive a headband. Old Hell Scrolls still count as Earth Scrolls.\n\nLeaving with LEAVE CONFIRM or dying fails the attempt. Re-enter by typing EXAM.\n\nDate: 2026-11-12"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -1993,11 +1960,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["level"],
         "title": "Level",
         "body": (
-            "Syntax: level\n"
-            "\n"
-            "Description: Displays your current ninja level, total experience, the next-level threshold and XP still needed. The maximum level is 250, and levels 226-250 have progressively higher XP costs. Current rank caps: Student 10, Genin 15, Chunin 80, Special Jonin 135, Jonin 200, Elite Jonin/Village Elder/Kage 250. Reaching a rank cap stops further experience gains until you earn your promotion. Existing characters from before these limits who were already ABOVE a cap receive a one-time automatic rank adjustment on their next save load; new characters still take all required exams.\n"
-            "\n"
-            "Date: 2026-10-21"
+            "Syntax: level\n\nDescription: Displays your ninja level, total experience, next-level cumulative XP threshold, and additional XP needed. At a rank cap, no more XP can advance the character until they earn the next normal rank.\n\nRank caps: Student 10, Genin 35, Chunin 100, Special Jonin 200, Jonin 250, Kage 250. Jounin is the highest normal rank and becomes obtainable at level 200. Kage is only appointed using SETKAGE.\n\nMastered jutsu can earn additional damage breakthroughs at levels 100, 125, 150, 175, 200, 225, and 250.\n\nDate: 2026-11-12"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -3417,13 +3380,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["experience", "xp", "experience curve", "mob xp", "leveling"],
         "title": "Experience and Leveling",
         "body": (
-            "Syntax: score  |  prompt\n"
-            "\n"
-            "Description: Ninja levels use a progressive cumulative curve: the total XP at the start of a level is (level - 1) cubed, times 1,000. Each level therefore takes more experience than the one before it. Existing characters are migrated once while preserving the percentage they had already completed toward their next level.\n"
-            "\n"
-            "A mob at your level awards about 5% of your current level band before bonuses. Easier mobs award 10% less for every level below you and reach zero at ten levels below. Harder mobs gain 3% per level, capped at 130%. In a group, that calculation is made separately for each member before the group split. Large XP rewards retain any overflow toward later levels and can award more than one level from one kill, subject to your rank cap. Levels 226-250 require progressively more XP; extra earned XP is adjusted separately for each endgame level.\n"
-            "\n"
-            "Date: 2026-09-22"
+            "Syntax: score  |  prompt\n\nDescription: Ninja levels use the cumulative XP curve (level - 1) cubed, times 1,000. A same-level mob awards about 5% of the current level's XP band before bonuses; easier mobs lose 10% reward per level below the player (zero at ten levels below), while harder mobs gain 3% per level (capped at 130%).\n\nRank level caps: Student 10, Genin 35, Chunin 100, Special Jonin 200, Jonin 250, Kage 250. Genin and Chunin must pass their required exams or promotion gates before progressing past their cap. Jounin unlocks at level 200 and may level to 250. Kage is an Implementor-only appointment, not an earned promotion.\n\nLevel 100+ training awards 2 training points per level. Mastered-jutsu breakthroughs grant additional combat damage at levels 100, 125, 150, 175, 200, 225 and 250 if the jutsu has 100% proficiency. The final 25 levels have increased XP costs.\n\nDate: 2026-11-12"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -3599,13 +3556,7 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["setkage"],
         "title": "Setkage (staff)",
         "body": (
-            "Syntax: setkage <player>  |  setkage <player> remove\n"
-            "\n"
-            "Description: Appoints a player as their village's Kage -- the one rank in the game that's never reachable through the normal level/mission-based promotion ladder. Intended for someone voted in by their own community; the vote itself happens outside the game, but only an Implementor can make it official. The target must already be a Village Elder. At most one Kage per village at a time -- appointing a new one automatically relieves whoever held it before, back to Village Elder. 'setkage <player> remove' relieves the current Kage without appointing a replacement.\n"
-            "\n"
-            "&D(Staff only -- requires Implementor access.)&x\n"
-            "\n"
-            "Date: 2026-08-17"
+            "Syntax: setkage <player>  |  setkage <player> remove\n\nDescription: Implementor-only appointment of the Kage for a player's village. Kage is separate from the normal ninja rank ladder and is never earned by XP, missions, exams, PROMOTE or a mob program.\n\nOnly one Kage can exist per village. Appointing a replacement automatically relieves the current holder. When Kage is removed, their previous ordinary ninja rank is restored; older Kage saves without a stored previous rank return to Jonin.\n\n&D(Staff only -- requires Implementor access.)&x\n\nDate: 2026-11-12"
         ),
         "created_by": "System",
         "updated_by": "System",
@@ -5639,15 +5590,7 @@ DEFAULT_HELP_ENTRIES.extend([
         "keywords": ["promote player", "promote ninja rank", "next rank"],
         "title": "Promote Ninja Rank (Immortal)",
         "body": (
-            "Syntax: PROMOTE <playername>\\n\\n"
-            "Advances an online or offline character by exactly ONE step in "
-            "the standard ninja rank ladder: Student, Genin, Chunin, Special "
-            "Jonin, Jonin, Elite Jonin, Village Elder, Kage. Uses the usual "
-            "rank headband and global announcement; changes save immediately. "
-            "Student -> Genin also grants the normal 50 mission points. "
-            "Only the primary Implementor can appoint a Kage; that final "
-            "step uses the existing one-Kage-per-village rules. "
-            "Staff promotion is a DIFFERENT command: PROMOTEIMM."
+            "Syntax: PROMOTE <playername>\n\nAdvances an online or offline character exactly ONE rank in the normal ninja ladder: Student -> Genin -> Chunin -> Special Jonin -> Jonin. Changes save immediately, update the rank headband, and are announced globally. Student -> Genin also awards 50 mission points.\n\nJonin is the last standard rank, and level 250 is its maximum. Kage cannot be reached using PROMOTE; an Implementor must use SETKAGE instead. PROMOTEIMM is the unrelated staff-rank promotion command.\n\nDate: 2026-11-12"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
