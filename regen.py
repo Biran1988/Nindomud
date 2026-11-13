@@ -140,7 +140,7 @@ def tick_player(player) -> list:
         return []
 
     multiplier = POSITION_MULTIPLIER.get(player.position, 1.0)
-    if player.level <= BEGINNER_REGEN_MAX_LEVEL:
+    if getattr(player, "level", BEGINNER_REGEN_MAX_LEVEL + 1) <= BEGINNER_REGEN_MAX_LEVEL:
         multiplier *= BEGINNER_REGEN_MULTIPLIER
     room = world.WORLD.get(player.room_vnum)
     hospital = bool(room and ACCELERATED_HEALING_FLAG in room.flags)
