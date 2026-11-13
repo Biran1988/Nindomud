@@ -103,9 +103,8 @@ class Player:
     training_points: int = 0
     practice_points: int = 0
     mission_points: int = 0
-    # Iron Ascension achievements survive reconnects/restarts. Missing fields
-    # in older saved players use these safe defaults automatically.
-    iron_ascension_highest_floor: int = 0
+    # Iron Ascension saves only the one-time final reward entitlement.
+    # A player's current floor is not tracked separately or persisted as progress.
     iron_ascension_completed: bool = False
     iron_ascension_pending_items: List[str] = field(default_factory=list)
 
