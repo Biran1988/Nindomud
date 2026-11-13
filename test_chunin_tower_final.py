@@ -18,7 +18,7 @@ class ChuninTowerFinalTests(unittest.TestCase):
     def setUp(self):
         self.player = Player("CandidateExam", "CandidateExam", village="leaf")
         self.player.village_rank = "genin"
-        self.player.level = 15
+        self.player.level = 35
         self.player.primary_class = "taijutsu"
         self.player.maximum_health = 220
         self.player.maximum_chakra = 200
