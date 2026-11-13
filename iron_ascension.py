@@ -1,13 +1,19 @@
-"""Self-contained 250-floor Iron Ascension PvE tower.
+"""Live, 250-floor Iron Ascension tower, entered through a hidden road exit.
 
-The area is deliberately unreachable from the regular world; only staff
-teleports can enter until a builder deliberately adds an entrance. The
-installer does not delete or replace existing /data entries.
+The only physical tower exit is the floor-one return to Grassland Border
+Trail; defeating all other guardians transfers challengers directly.
+Saved world/area records are merged additively without replacing /data.
 """
 import random
 import time
 
 AREA_NAME = "Iron Ascension"
+# Existing Grassland Border Trail midway between Leaf, Grass, and Stone.
+# The generated road has NW/SE highway exits; NE is the free side passage.
+ROAD_ENTRANCE_VNUM = 20674
+ROAD_ENTRANCE_NAME = "Grassland Border Trail - "
+ROAD_EXIT_DIRECTION = "northeast"
+RETURN_EXIT_DIRECTION = "southwest"
 START = 30501
 END = 31500
 FLOORS = 250
@@ -44,6 +50,10 @@ def _validate_area():
     elif (entry.get("vnum_start"), entry.get("vnum_end")) != (START, END):
         raise IronAscensionError(
             "Iron Ascension has a different saved vnum range; no rooms changed.")
+    elif entry.get("prototype", False):
+        # Previously saved prototypes must be enabled as a normal live area.
+        # Change only the prototype flag; leave builder assignments alone.
+        areas.set_prototype(AREA_NAME, False)
 
 
 def install():
@@ -150,6 +160,63 @@ def install():
                    for m in combat.mobs_in_room(rv)):
             combat.spawn_mob(guardian_vnum(floor), rv)
 
+
+
+def install_entrance():
+    """Persist a hidden Grass Road entrance without touching unrelated rooms.
+
+    Unlike transfer-only combat floors, floor one has a normal exit back to
+    the trail. Only the single chosen exit and flag are merged into /data.
+    """
+    from copy import deepcopy
+    from dataclasses import asdict
+    import storage
+    import world
+
+    road = world.WORLD.get(ROAD_ENTRANCE_VNUM)
+    first = world.WORLD.get(START)
+    if road is None or first is None or not road.name.startswith(ROAD_ENTRANCE_NAME):
+        raise IronAscensionError(
+            f"Entrance unavailable: expected Grassland Border Trail at {ROAD_ENTRANCE_VNUM}.")
+    if (road.exits.get(ROAD_EXIT_DIRECTION) not in (None, START)
+            or first.exits.get(RETURN_EXIT_DIRECTION) not in (None, ROAD_ENTRANCE_VNUM)):
+        raise IronAscensionError("Entrance would overwrite a builder's existing road or tower exit.")
+    old_flags = road.exit_flags.get(ROAD_EXIT_DIRECTION, [])
+    if old_flags not in ([], ["hidden"]):
+        raise IronAscensionError("Entrance has custom exit flags; existing builder settings retained.")
+
+    state = storage.load_world_state()
+    if not isinstance(state, dict):
+        raise IronAscensionError("Saved world state could not be read.")
+    saved = state.get("rooms", {})
+    if saved is not None and not isinstance(saved, dict):
+        raise IronAscensionError("Saved world rooms are invalid; no changes made.")
+    record = (saved or {}).get(str(ROAD_ENTRANCE_VNUM))
+    if record is None:
+        record = {key: value for key, value in asdict(road).items() if key != "ground_ryo"}
+    if not isinstance(record, dict) or record.get("name") != road.name:
+        raise IronAscensionError("Saved road room does not match the current Grassland Trail.")
+    if record.get("exits", {}).get(ROAD_EXIT_DIRECTION) not in (None, START):
+        raise IronAscensionError("Saved road has a conflicting entrance; nothing overwritten.")
+    if record.get("exit_flags", {}).get(ROAD_EXIT_DIRECTION, []) not in ([], ["hidden"]):
+        raise IronAscensionError("Saved road has conflicting entrance flags; nothing overwritten.")
+
+    # Save the road's new hidden exit atomically BEFORE exposing it live.
+    if (record.get("exits", {}).get(ROAD_EXIT_DIRECTION) != START
+            or record.get("exit_flags", {}).get(ROAD_EXIT_DIRECTION) != ["hidden"]):
+        merged = deepcopy(state)
+        saved_rooms = merged.setdefault("rooms", {})
+        merged_record = deepcopy(record)
+        merged_record.setdefault("exits", {})[ROAD_EXIT_DIRECTION] = START
+        merged_record.setdefault("exit_flags", {})[ROAD_EXIT_DIRECTION] = ["hidden"]
+        saved_rooms[str(ROAD_ENTRANCE_VNUM)] = merged_record
+        storage.save_world_state(merged)
+
+    road.exits[ROAD_EXIT_DIRECTION] = START
+    road.exit_flags[ROAD_EXIT_DIRECTION] = ["hidden"]
+    # No links among levels; the only reverse route is floor one's way out.
+    first.exits[RETURN_EXIT_DIRECTION] = ROAD_ENTRANCE_VNUM
+    return ROAD_ENTRANCE_VNUM
 
 
 def ensure_guardian(floor):
