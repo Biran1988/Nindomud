@@ -74,23 +74,23 @@ def install():
             stage = STAGES[(floor - 1) // 50]
             description = (
                 "Black iron walls surround a narrow fighting platform. A lone "
-                "shinobi bars the staircase. Defeat the guardian to ascend."
+                "shinobi guards this platform. Defeat them to advance by transfer."
             )
             if floor == FLOORS:
                 description = (
                     "A crown of dark iron towers over the last arena. "
-                    "The Iron Kage awaits; no stairs lead higher."
+                    "The Iron Kage awaits the final challenger."
                 )
             room = world.Room(rv, f"Iron Ascension - Floor {floor}",
                               f"Floor {floor} of 250: {stage}.\n{description}",
                               safe=True)
             world.WORLD.add_room(room)
-        # Only join tower-owned rooms. Never make an external exit.
+        # Transfer-only tower: remove legacy UP/DOWN exits, including
+        # saved layouts from the previous challenge implementation.
         room = world.WORLD.get(rv)
-        if floor > 1:
-            room.exits.setdefault("down", rv - 1)
-        if floor < FLOORS:
-            room.exits.setdefault("up", rv + 1)
+        room.exits.clear()
+        room.exit_flags.clear()
+        room.exit_door_open.clear()
 
         mv = guardian_vnum(floor)
         if mv not in combat.MOB_TEMPLATES:
@@ -152,13 +152,26 @@ def install():
 
 
 
-def reset_run_on_login(session):
-    """A reconnect starts a new tower attempt, never a saved mid-tower run.
+def ensure_guardian(floor):
+    """Maintain a living opponent in a room entered mid-respawn."""
+    if not 1 <= floor <= FLOORS:
+        return
+    import combat
+    rv, mv = START + floor - 1, guardian_vnum(floor)
+    if mv not in combat.MOB_TEMPLATES:
+        return
+    if not any(m.template_vnum == mv and m.health > 0 for m in combat.mobs_in_room(rv)):
+        combat.spawn_mob(mv, rv)
+        # Replacing the guardian now must not duplicate it when the old
+        # delayed respawn timer fires.
+        combat._respawn_queue[:] = [
+            entry for entry in combat._respawn_queue
+            if not (entry[1] == mv and entry[2] == rv)
+        ]
 
-    Permanent achievements (best floor, final reward, pending items) remain
-    untouched. The cleared-floor gate is session-only and is NOT saved.
-    """
-    session._iron_ascension_run_cleared = 0
+
+def reset_run_on_login(session):
+    """A new authenticated session always restarts a tower visit at floor 1."""
     player = getattr(session, "player", None)
     if player is None or not floor_number(player.room_vnum):
         return False
@@ -166,39 +179,25 @@ def reset_run_on_login(session):
     if world.WORLD.get(START) is None:
         return False
     player.room_vnum = START
-
-    # A guardian killed before logout may still be waiting on its normal
-    # respawn timer. Don't leave a restarted run with nothing to fight.
-    import combat
-    first_vnum = guardian_vnum(1)
-    if first_vnum in combat.MOB_TEMPLATES and not any(
-            mob.template_vnum == first_vnum and mob.health > 0
-            for mob in combat.mobs_in_room(START)):
-        combat.spawn_mob(first_vnum, START)
-        # Avoid spawning a duplicate after the old queued respawn matures.
-        combat._respawn_queue[:] = [
-            entry for entry in combat._respawn_queue
-            if not (entry[1] == first_vnum and entry[2] == START)
-        ]
+    ensure_guardian(1)
+    session.send("&Y[Iron Ascension] The tower resets your challenge to floor 1.&x")
     return True
 
 
-
-def can_ascend(session, direction):
-    """False only for an illegal upward step; walking DOWN remains possible."""
-    if direction != "up":
-        return True
-    floor = floor_number(session.player.room_vnum)
-    if not floor or floor >= FLOORS:
-        return True
-    import combat
-    if getattr(session, "_iron_ascension_run_cleared", 0) < floor:
-        session.send("&RThe iron staircase is sealed. Defeat this floor's ninja first.&x")
+def _transfer(session, floor):
+    """Transfer to a sealed arena room without using any room exits."""
+    import world
+    import commands
+    rv = START + floor - 1
+    if world.WORLD.get(rv) is None:
+        session.send("&RThe next Iron Ascension arena is unavailable.&x")
         return False
-    if any(m.template_vnum == guardian_vnum(floor) and m.health > 0
-           for m in combat.mobs_in_room(session.player.room_vnum)):
-        session.send("&RThe guardian blocks your ascent. Defeat them before advancing.&x")
-        return False
+    ensure_guardian(floor)
+    session.player.room_vnum = rv
+    session.send(f"&CIron Ascension transports you to floor {floor} of {FLOORS}!&x")
+    import storage
+    storage.save_player(session.player)
+    commands.cmd_look(session, [])
     return True
 
 
@@ -220,28 +219,26 @@ def _hand_out(session):
 
 
 def defeated(session, mob):
-    """Called exactly once from ordinary mob-defeat handling."""
+    """Advance the killer after ALL ordinary kill rewards have been processed."""
     floor = floor_number(mob.room_vnum)
     if not floor or mob.template_vnum != guardian_vnum(floor):
-        return
+        return False
     player = session.player
     if player.room_vnum != mob.room_vnum:
-        return
-    if floor > getattr(session, "_iron_ascension_run_cleared", 0) + 1:
-        session.send("&RYou cannot claim a higher floor without clearing the earlier trials.&x")
-        return
-    session._iron_ascension_run_cleared = max(getattr(session, "_iron_ascension_run_cleared", 0), floor)
-    # A historical record, not a gate for later attempts.
-    player.iron_ascension_highest_floor = max(player.iron_ascension_highest_floor, floor)
+        return False
     if floor < FLOORS:
-        session.send(f"&YFloor {floor} cleared! The way UP to floor {floor + 1} is open.&x")
-    elif not player.iron_ascension_completed:
+        session.send(f"&YFloor {floor} defeated! The tower seal advances you.&x")
+        return _transfer(session, floor + 1)
+
+    # The only persistent tower state is the one-time reward entitlement.
+    if not player.iron_ascension_completed:
         player.iron_ascension_completed = True
         player.mission_points += 25
         player.mission_points_earned_total += 25
         for item in (HEART, SCROLL):
             if item not in player.inventory and item not in player.equipment.values():
-                player.iron_ascension_pending_items.append(item)
+                if item not in player.iron_ascension_pending_items:
+                    player.iron_ascension_pending_items.append(item)
         session.send("&YIRON ASCENSION CONQUERED! You earn 25 mission points!&x")
         _hand_out(session)
         from session import ACTIVE_SESSIONS
@@ -250,31 +247,9 @@ def defeated(session, mob):
                 other.send(f"&Y[IRON ASCENSION] {player.name} defeated the Iron Kage "
                            "and conquered all 250 floors!&x")
     else:
-        session.send("&YThe Iron Kage falls again. Your legendary reward is one-time only.&x")
-    import storage
-    storage.save_player(player)
-
-
-def return_from_final_floor(session, mob):
-    """Automatically reset tower challenger after the final guardian kill."""
-    player = session.player
-    last_room = START + FLOORS - 1
-    if (mob.template_vnum != guardian_vnum(FLOORS)
-            or mob.room_vnum != last_room or player.room_vnum != last_room
-            or not player.iron_ascension_completed):
-        return False
-    player.room_vnum = START
-    session._iron_ascension_run_cleared = 0
-    session.send("&YThe Iron Kage's final seal activates! You return to "
-                 "the entrance of Iron Ascension. You must climb the tower "
-                 "again to face the last guardian.&x")
-    import storage
-    storage.save_player(player)
-    import world
-    if world.WORLD.get(START):
-        import commands
-        commands.cmd_look(session, [])
-    return True
+        session.send("&YThe Iron Kage falls again. Legendary rewards are one-time only.&x")
+    session.send("&YThe Iron Kage's final seal returns you to the first arena.&x")
+    return _transfer(session, 1)
 
 
 def command(session, args):
@@ -289,11 +264,11 @@ def command(session, args):
         _hand_out(session)
         return
     session.send(
-        f"&WIron Ascension:&x personal best {player.iron_ascension_highest_floor}/250; "
-        f"current run cleared {getattr(session, '_iron_ascension_run_cleared', 0)}/250; "
-        f"completed: {'yes' if player.iron_ascension_completed else 'no'}. "
-        "A logout/reconnect restarts the run at floor 1. "
-        "Use UP after defeating a guardian. ASCENSION CLAIM collects pending rewards."
+        f"&WIron Ascension:&x current floor {floor_number(player.room_vnum) or 'outside tower'}/250; "
+        f"final reward claimed: {'yes' if player.iron_ascension_completed else 'no'}. "
+        "Defeating a guardian transfers you directly to the next floor. "
+        "Logging back in restarts at floor 1. "
+        "ASCENSION CLAIM collects pending one-time items."
     )
 
 
