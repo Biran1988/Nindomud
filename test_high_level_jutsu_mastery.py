@@ -33,7 +33,7 @@ class HighLevelJutsuMasteryTests(unittest.TestCase):
     def test_rank_caps_and_final_level(self):
         self.assertEqual(leveling.MAX_LEVEL, 250)
         self.assertEqual(leveling.rank_level_cap(Player(
-            "Elite", "Elite", village_rank="elite jonin", level=249)), 250)
+            "Jonin", "Jonin", village_rank="jonin", level=249)), 250)
 
 
 if __name__ == "__main__":
