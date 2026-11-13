@@ -10587,6 +10587,7 @@ COMMANDS = {
     "prompt": cmd_prompt,
     "password": cmd_password,
     "delete": cmd_delete,
+    "slay": __import__("slay_character").command,
     "help": help_system.cmd_help,
     "hedit": help_system.cmd_hedit,
     "quit": cmd_quit,
