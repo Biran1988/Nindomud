@@ -2262,6 +2262,9 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
             value_text = value_text.lower()
         if field == "village_rank":
             import kage
+            if value_text.lower() == "kage":
+                session.send("Use SETKAGE to appoint a Kage (one per village).")
+                return
             if value_text.lower() not in (*kage.RANK_ORDER, "student"):
                 session.send(f"'{value_text}' isn't a known rank or trainee status. "
                              f"Valid: student, {', '.join(kage.RANK_ORDER)}")
@@ -3145,46 +3148,47 @@ def cmd_remtip(session, args: List[str]) -> None:
 
 
 def cmd_setkage(session, args: List[str]) -> None:
-    """Implementor-only: appoints a player as their village's Kage --
-    the one rank in the game that's NEVER reachable through the normal
-    level/mission-based promotion ladder (kage.PROMOTION_LADDER), per
-    explicit request. Intended for a player voted in by their
-    community; the actual voting process happens outside the game, but
-    only an Implementor can act on it and make it official. At most
-    one Kage per village at a time -- appointing a new one automatically
-    demotes whoever held it before back to Village Elder. 'setkage
-    <player> remove' demotes without appointing a replacement."""
+    """Implementor-only appointment; Kage is not part of normal rank leveling.
+
+    Only one Kage may serve each village at a time. Appointments remember
+    the player's prior earned rank, restored if the position is removed.
+    """
     if not _require_implementor(session):
         return
-    if len(args) < 1:
-        session.send("Usage: setkage <player>\n       setkage <player> remove")
+    if not args or len(args) > 2 or (len(args) == 2 and args[1].lower() != "remove"):
+        session.send("Usage: setkage <player>\\n       setkage <player> remove")
         return
 
     player_name = args[0]
-    is_remove = len(args) >= 2 and args[1].lower() == "remove"
+    is_remove = len(args) == 2
 
     target, live_session = _find_target_player(player_name)
     if not target:
         session.send(f"No player named '{player_name}' found.")
         return
 
-    def _demote_to_elder(p, p_session) -> None:
-        p.village_rank = "village elder"
-        import data_headbands
-        data_headbands.apply_rank_headband(p, "village elder")
+    import kage
+    import data_headbands
+
+    def _restore_earned_rank(p, p_session) -> None:
+        previous = getattr(p, "rank_before_kage", "")
+        if previous in ("village elder", "elite jonin"):
+            previous = "jonin"
+        if previous not in kage.RANK_ORDER or previous == "kage":
+            previous = "jonin"  # compatibility for old Kage saves
+        p.village_rank = previous
+        p.rank_before_kage = ""
+        data_headbands.apply_rank_headband(p, previous)
+        storage.save_player(p)
         if p_session:
-            p_session.send("&YYou have been relieved of the Kage position -- you are once again a Village Elder.&x")
+            p_session.send(f"&YYou have been relieved of the Kage position and restored to {previous.title()}.&x")
             p_session.send_prompt()
-        else:
-            storage.save_player(p)
 
     if is_remove:
         if target.village_rank != "kage":
             session.send(f"{target.name} isn't a Kage.")
             return
-        _demote_to_elder(target, live_session)
-        if live_session:
-            storage.save_player(target)
+        _restore_earned_rank(target, live_session)
         session.send(f"{target.name} has been relieved of the Kage position.")
         _log(session.player.name, "player", 0, f"removed {target.name} as Kage of {target.village}")
         return
@@ -3192,14 +3196,8 @@ def cmd_setkage(session, args: List[str]) -> None:
     if target.village_rank == "kage":
         session.send(f"{target.name} is already the Kage of their village.")
         return
-    if target.village_rank != "village elder":
-        session.send(
-            f"{target.name} must be a Village Elder first (currently: {target.village_rank}) "
-            f"before being appointed Kage."
-        )
-        return
 
-    # Demote any existing Kage of the SAME village first -- only one at a time.
+    # Relieve the existing holder without affecting Kage in other villages.
     for existing in storage.all_players():
         if existing.village == target.village and existing.village_rank == "kage" and existing.name != target.name:
             existing_session = next(
@@ -3207,17 +3205,16 @@ def cmd_setkage(session, args: List[str]) -> None:
                 None,
             )
             live_existing = existing_session.player if existing_session else existing
-            _demote_to_elder(live_existing, existing_session)
-            if existing_session:
-                storage.save_player(live_existing)
+            _restore_earned_rank(live_existing, existing_session)
             session.send(f"{live_existing.name} has been relieved of the Kage position to make way.")
 
+    target.rank_before_kage = (target.village_rank if target.village_rank in kage.RANK_ORDER
+                               else "jonin")
     target.village_rank = "kage"
-    import data_headbands
     new_headband = data_headbands.apply_rank_headband(target, "kage")
     if live_session:
         live_session.send(
-            f"&r*** By decree of an Implementor, you have been appointed Kage! ***&x\n"
+            f"&r*** By decree of an Implementor, you have been appointed Kage! ***&x\\n"
             f"&YYou are equipped with {new_headband}.&x"
         )
         live_session.send_prompt()
