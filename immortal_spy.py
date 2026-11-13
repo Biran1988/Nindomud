@@ -4,7 +4,7 @@ Spy state is transient, never saved. Monitor content is not written to disk.
 """
 AUTHORIZED = frozenset(("administrator", "implementor"))
 SECRET_COMMANDS = frozenset(("password", "passwd", "pass", "changepassword",
-                            "setpassword", "resetpassword", "delete", "account"))
+                            "setpassword", "resetpassword", "delete", "slay", "account"))
 
 
 def _staff(session):
