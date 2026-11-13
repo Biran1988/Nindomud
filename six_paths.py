@@ -283,3 +283,62 @@ def command(session, args, soul=None):
     storage.save_player(player)
     session.send(f"&[213]You awaken {MODE_SKILLS[_soul(player)]}! Use sixpaths off to release it.&x")
     session.broadcast_room(f"&[213]{player.name} awakens an overwhelming Six Paths chakra!&x", exclude_self=True)
+
+
+def appoint_descendant(session, args):
+    """Administrator/Implementor assignment without rewriting birth heritage.
+
+    Syntax: sixdesc <character> <indra|ashura|none>. Both online and saved
+    offline characters can be appointed; established level-75 unlock rules
+    still apply. 'none' removes the appointment, not birth reincarnation.
+    """
+    account = getattr(session, "account", None)
+    if not account or account.staff_level not in ("administrator", "implementor"):
+        session.send("Six Paths lineage appointments require Administrator access.")
+        return
+    if len(args) != 2 or args[1].lower() not in ("indra", "ashura", "none"):
+        session.send("Usage: sixdesc <player> <indra|ashura|none>")
+        return
+
+    name, selection = args[0], args[1].lower()
+    if not name.isascii() or not name.isalpha() or not (2 <= len(name) <= 20):
+        session.send("Use an exact character name (2-20 letters).")
+        return
+
+    import olc
+    import storage
+    target, live_session = olc._find_target_player(name)
+    if target is None:
+        session.send(f"No saved character named '{name}' was found.")
+        return
+
+    replacement = "" if selection == "none" else selection
+    previous = getattr(target, "six_paths_descendant", "")
+    if replacement == previous:
+        session.send(f"{target.name}'s Six Paths descendant appointment is already {selection}.")
+        return
+
+    # A maintained mode may not keep the old lineage's effect after the
+    # lineage changes. Birth reincarnation is deliberately not modified.
+    if target.six_paths_active:
+        if live_session:
+            stop(live_session, "Your Six Paths mode fades as your lineage appointment changes.")
+        else:
+            target.six_paths_active = False
+    target.six_paths_descendant = replacement
+    messages = sync_skills(target)
+    storage.save_player(target)
+
+    title = selection.title() if replacement else "none"
+    session.send(f"{target.name}'s Six Paths descendant lineage is now {title} (saved). "
+                 "Their birth reincarnation is unchanged.")
+    if live_session:
+        live_session.send(
+            f"&[213]Your Six Paths descendant appointment is now {title}.&x"
+            if replacement else
+            "&YYour Six Paths descendant appointment has been withdrawn.&x"
+        )
+        for message in messages:
+            live_session.send(message)
+        live_session.send_prompt()
+
