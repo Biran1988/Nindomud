@@ -31,10 +31,9 @@ STUDENT_LEVEL_CAP = 10
 RANK_LEVEL_CAPS = {
     "student": STUDENT_LEVEL_CAP,
     "genin": 35,
-    "chunin": 100,
+    "chunin": 65,
     "special jonin": 200,
     "jonin": 250,
-    "kage": 250,
 }
 
 PROMOTION_LADDER: List[Tuple[int, int, str]] = [
@@ -42,10 +41,16 @@ PROMOTION_LADDER: List[Tuple[int, int, str]] = [
     (RANK_LEVEL_CAPS["special jonin"], 100, "jonin"),
 ]
 
-RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin", "kage"]
+RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin"]
 
-# Kage is never an earned rank. Only SETKAGE can appoint it, and only one
-# person per village may hold the appointment at a time. Removal restores Jonin.
+# Kage and Village Elder are titles, not earned progression ranks.
+# Kage appointment never changes earned rank or its level cap.
+
+
+def display_rank(player: Player) -> str:
+    """Display the earned rank and appointment without conflating them."""
+    earned = (player.village_rank or "student").title()
+    return f"{earned} (Kage)" if getattr(player, "is_kage", False) else earned
 
 # Standard promotions stop at Jonin; the Chunin transition uses its exam.
 PROMOTIONS_ENABLED = True

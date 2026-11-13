@@ -1948,7 +1948,7 @@ def cmd_who(session, args: List[str]) -> None:
         level_label = f"{WHO_LEVEL_COLOR}{p.level:>5}&W"
         village_info = VILLAGES.get(p.village)
         clan_text = (p.clan.title() if p.clan and p.clan != "none" else "None").ljust(WHO_CLAN_WIDTH)
-        if p.village_rank == "kage" and village_info:
+        if p.is_kage and village_info:
             rank_label = f"{KAGE_WHO_COLOR}{'Kage'.center(WHO_RANK_WIDTH)}&W"
             name_text = f"{ooc_titles.player_display(p)}, the {village_info['kage_title']} of {village_info['village_name']}"
         else:
@@ -1999,7 +1999,7 @@ def cmd_whois(session, args: List[str]) -> None:
 
     p = match.player
     village_display = _who_village_name(p.village)
-    rank_text = RANK_WHO_LABEL.get(p.village_rank, p.village_rank.title())
+    rank_text = kage.display_rank(p)
     lines = [f"&C{p.name}&x"]
     lines.append(p.description if p.description else f"{p.name} hasn't set a description.")
     lines.append("")
@@ -9503,7 +9503,7 @@ def build_score_lines(p, fighting_name: str, target_staff_level: Optional[str] =
     if target_staff_level and target_staff_level != "player":
         lines.append(f" &M[{target_staff_level.title()}]&x")
     lines += _score_fields(("Name", p.name), ("Village", village_full_name))
-    lines += _score_fields(("Rank", p.village_rank.title(), "&Y"),
+    lines += _score_fields(("Rank", kage.display_rank(p), "&Y"),
                            ("Clan", data_clans.display_name(p.clan)),
                            ("Class", p.primary_class.capitalize()))
     lines += _score_fields(("Level", p.level), ("Experience", p.experience),
@@ -9607,7 +9607,7 @@ def cmd_level(session, args: List[str]) -> None:
     lines = [
         _row("Level", p.level, "Experience", p.experience),
         _row("Next Level", next_xp, "XP Needed", xp_needed),
-        _row("Ninja Rank", p.village_rank.title(), "Rank Cap", cap),
+        _row("Ninja Rank", kage.display_rank(p), "Rank Cap", cap),
     ]
     if capped and cap < leveling.MAX_LEVEL:
         lines.append(" &YPromotion required to gain more levels.&x")
@@ -10139,7 +10139,7 @@ def cmd_garrison(session, args: List[str]) -> None:
     import territory
 
     player = session.player
-    if player.village_rank != "kage":
+    if not player.is_kage:
         session.send("Only your village's Kage can spend the village treasury on defenses.")
         return
     if not args or args[0].lower() != "buy" or len(args) != 2:
@@ -10169,7 +10169,7 @@ def cmd_trap(session, args: List[str]) -> None:
     import territory
 
     player = session.player
-    if player.village_rank != "kage":
+    if not player.is_kage:
         session.send("Only your village's Kage can spend the village treasury on defenses.")
         return
     if not args or args[0].lower() != "buy" or len(args) != 2:

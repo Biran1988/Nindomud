@@ -23,9 +23,6 @@ def command(session, args):
         session.send(f"{target.name}'s ninja rank '{current}' is not in the rank ladder.")
         return
     index = kage.RANK_ORDER.index(current)
-    if current == "kage":
-        session.send(f"{target.name} is already an appointed Kage.")
-        return
     if current == "jonin":
         session.send(f"{target.name} is already Jonin, the highest normal rank. An Implementor may use SETKAGE separately.")
         return
@@ -33,7 +30,7 @@ def command(session, args):
 
     import data_headbands
     target.village_rank = new_rank
-    item = data_headbands.apply_rank_headband(target, new_rank)
+    item = data_headbands.apply_rank_headband(target, "kage" if target.is_kage else new_rank)
     if new_rank == "genin":
         # The normal Genin promotion grants 50 mission points and a headband.
         kage.award_genin_mission_points_if_applicable(online or session, target, new_rank)

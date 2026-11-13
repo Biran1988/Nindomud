@@ -4,7 +4,7 @@
     "setkage"
   ],
   "title": "Setkage (staff)",
-  "body": "Syntax: setkage <player>  |  setkage <player> remove\n\nDescription: Implementor-only appointment of the Kage for a player's village. Kage is separate from the normal ninja rank ladder and is never earned by XP, missions, exams, PROMOTE or a mob program.\n\nOnly one Kage can exist per village. Appointing a replacement automatically relieves the current holder. When Kage is removed, their previous ordinary ninja rank is restored; older Kage saves without a stored previous rank return to Jonin.\n\n&D(Staff only -- requires Implementor access.)&x\n\nDate: 2026-11-12",
+  "body": "Syntax: setkage <player>  |  setkage <player> remove\n\nDescription: Implementor-only appointment of the Kage for a player's village. Kage is separate from the normal ninja rank ladder and is never earned by XP, missions, exams, PROMOTE or a mob program.\n\nOnly one Kage can exist per village. Appointing a replacement automatically relieves the current holder. Removing Kage leaves the earned ninja rank unchanged; older Kage saves recover their prior rank (or Jonin if unavailable).\n\n&D(Staff only -- requires Implementor access.)&x\n\nDate: 2026-11-12",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0

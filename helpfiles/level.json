@@ -4,7 +4,7 @@
     "level"
   ],
   "title": "Level",
-  "body": "Syntax: level\n\nDescription: Displays your ninja level, total experience, next-level cumulative XP threshold, and additional XP needed. At a rank cap, no more XP can advance the character until they earn the next normal rank.\n\nRank caps: Student 10, Genin 35, Chunin 100, Special Jonin 200, Jonin 250, Kage 250. Jounin is the highest normal rank and becomes obtainable at level 200. Kage is only appointed using SETKAGE.\n\nMastered jutsu can earn additional damage breakthroughs at levels 100, 125, 150, 175, 200, 225, and 250.\n\nDate: 2026-11-12",
+  "body": "Syntax: level\n\nDescription: Displays your ninja level, total experience, next-level cumulative XP threshold, and additional XP needed. At a rank cap, no more XP can advance the character until they earn the next normal rank.\n\nRank caps: Student 10, Genin 35, Chunin 65, Special Jonin 200, Jonin 250. Jounin is the highest normal rank and becomes obtainable at level 200. Kage is only appointed using SETKAGE.\n\nMastered jutsu can earn additional damage breakthroughs at levels 100, 125, 150, 175, 200, 225, and 250.\n\nDate: 2026-11-12",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
