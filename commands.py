@@ -10429,6 +10429,8 @@ COMMANDS = {
     "ban": cmd_ban,
     "reincarnation": reincarnation.command,
     "sixpaths": six_paths.command,
+    "sixdesc": six_paths.appoint_descendant,
+    "descendant": six_paths.appoint_descendant,
     "sixdescendant": __import__("six_paths_staff").command,
     "sixpathsset": __import__("six_paths_staff").command,
     "lightsaber": lightsabers.command,
