@@ -398,7 +398,12 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
     max_stamina = mob_stamina_for_level(level)
     import data_classes
     import biomes
-    derived_strength, derived_dexterity = derive_mob_combat_attributes(t.get("hit_roll", 0), effective_damage_dice)
+    # Effective hitroll must scale with auto-balance, too. The value must
+    # feed both the live Mob field and the derived Dexterity used by the
+    # real combat hit-chance formula (not merely appear in MSTAT).
+    effective_hit_roll = (max(t.get("hit_roll", 0), mob_balance.hit_roll_for_level(level))
+                          if auto_balance else t.get("hit_roll", 0))
+    derived_strength, derived_dexterity = derive_mob_combat_attributes(effective_hit_roll, effective_damage_dice)
     mob = Mob(
         instance_id=next(_id_counter), template_vnum=template_vnum,
         name=t.get("short_desc") or f"mob {template_vnum}",
@@ -407,7 +412,7 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         ryo_reward=(0 if template_vnum == TRAINING_DUMMY_VNUM else t["ryo_reward"]),
         damage_dice=effective_damage_dice,
         attacks=(1 if template_vnum == TRAINING_DUMMY_VNUM else mob_attacks_at_level(level, t.get("attacks", 1))),
-        armor_class=t.get("armor_class", 0), hit_roll=t.get("hit_roll", 0),
+        armor_class=t.get("armor_class", 0), hit_roll=effective_hit_roll,
         respawns=t.get("respawns", True), loot_items=list(t.get("loot_items", [])),
         chakra=max_chakra, maximum_chakra=max_chakra,
         stamina=max_stamina, maximum_stamina=max_stamina,
@@ -2804,24 +2809,28 @@ def resolve_pulse(session, *, retaliate: bool = True) -> None:
     if mob.summon_trap_applied:
         mob_to_hit -= mob.summon_trap_to_hit_penalty
     mob_to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, mob_to_hit))
-    if random.randint(1, 100) > mob_to_hit:
-        session.send(f"&C{mob.name} attacks you but misses!&x")
-        import room_actions
-        room_actions.emit(session, f"{mob.name} attacks {player.name} but misses.")
-        return
-
-    if player.kamui_intangibility_rounds_left > 0:
-        player.kamui_intangibility_rounds_left -= 1
-        session.send(f"&R{mob.name}'s attack passes straight through you!&x")
-        return
-
-    if random.randint(1, 100) <= derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance")) + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player) + hyuga.dodge(player) + eight_gates.dodge(player):
-        session.send(f"&CYou dodge {mob.name}'s attack!&x")
-        return
-
-    for _ in range(mob.attacks):
+    # Each NPC strike needs its own hit/miss and dodge roll. Previously
+    # one unlucky roll canceled ALL second/third attacks for that round,
+    # making high-level NPCs appear passive against evasive characters.
+    mob_attacks = max(1, int(mob.attacks))
+    dodge_chance = (derived_stats.dodge_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "dodge_chance"))
+                    + weather.night_dodge_bonus() + _sharingan_dodge_bonus(player)
+                    + hyuga.dodge(player) + eight_gates.dodge(player))
+    for _ in range(mob_attacks):
         if player.health <= 0:
             break
+        if random.randint(1, 100) > mob_to_hit:
+            session.send(f"&C{mob.name} attacks you but misses!&x")
+            import room_actions
+            room_actions.emit(session, f"{mob.name} attacks {player.name} but misses.")
+            continue
+        if player.kamui_intangibility_rounds_left > 0:
+            player.kamui_intangibility_rounds_left -= 1
+            session.send(f"&R{mob.name}'s attack passes straight through you!&x")
+            continue
+        if random.randint(1, 100) <= dodge_chance:
+            session.send(f"&CYou dodge {mob.name}'s attack!&x")
+            continue
         if _soto_uke_blocks(player, mob.level):
             session.send(f"&CYou use Soto Uke to block {mob.name}'s attack!&x")
             continue
