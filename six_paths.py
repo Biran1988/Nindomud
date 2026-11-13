@@ -59,19 +59,24 @@ def _soul(player):
         selected = getattr(player, "_staff_six_paths_soul", "")
         if selected in MODE_SKILLS:
             return selected
-        if getattr(player, "reincarnation", "") in MODE_SKILLS:
-            return player.reincarnation
-        return "indra"
-    return getattr(player, "reincarnation", "")
+    # Staff grants override only Six Paths mode/technique identity, never
+    # the character's immutable birth reincarnation and resource bonuses.
+    descendant = getattr(player, "six_paths_descendant", "")
+    if descendant in MODE_SKILLS:
+        return descendant
+    inherited = getattr(player, "reincarnation", "")
+    if inherited in MODE_SKILLS:
+        return inherited
+    return "indra" if _staff_can_test(player) else ""
 
 
 def eligible(player, soul=None):
     # Staff can test either mode without altering permanent reincarnation.
     if _staff_can_test(player):
         return soul is None or soul in MODE_SKILLS
-    inherited = getattr(player, "reincarnation", "")
-    return (inherited in MODE_SKILLS and getattr(player, "level", 0) >= MIN_LEVEL
-            and (soul is None or soul == inherited))
+    selected = _soul(player)
+    return (selected in MODE_SKILLS and getattr(player, "level", 0) >= MIN_LEVEL
+            and (soul is None or soul == selected))
 
 
 def active(player):
@@ -86,7 +91,7 @@ def sync_skills(player):
     if _staff_can_test(player) or not eligible(player):
         return messages
     import leveling
-    soul = player.reincarnation
+    soul = _soul(player)
     for name in (MODE_SKILLS[soul], *TECHNIQUES[soul]):
         if name not in player.learned_skills:
             player.learned_skills.append(name)
@@ -129,7 +134,7 @@ def vital_surge(session, target_words):
         session.send("Vital Surge restores only you. Usage: perform six paths vital surge")
         return
     if not eligible(player, "ashura") or not combat._can_use_jutsu(player, jutsu, key):
-        session.send("Vital Surge requires a level-75 Ashura reincarnation with Six Paths mode active.")
+        session.send("Vital Surge requires a level-75 Ashura lineage with Six Paths mode active.")
         return
     if combat._is_action_blocked(player) or status_effects.has_effect(player.active_status_effects, "silenced"):
         session.send("You cannot channel Vital Surge while unable to act or silenced.")
@@ -235,7 +240,7 @@ def command(session, args, soul=None):
     action = args[0].lower() if len(args) == 1 else "toggle" if not args else "invalid"
     if action == "status":
         if not eligible(player):
-            session.send("Six Paths powers awaken at level 75, only for Indra or Ashura reincarnations.")
+            session.send("Six Paths powers awaken at level 75 for Indra/Ashura reincarnations or appointed descendants.")
             return
         offense, defense, hit = bonuses(player)
         session.send(f"{MODE_SKILLS[_soul(player)]}: {'active' if active(player) else 'inactive'}, "
@@ -251,7 +256,7 @@ def command(session, args, soul=None):
         session.send("Usage: sixpaths [on|off|status]")
         return
     if not eligible(player):
-        session.send("Only Indra or Ashura reincarnations can awaken Six Paths powers at level 75.")
+        session.send("Only Indra/Ashura reincarnations or appointed descendants can awaken Six Paths powers at level 75.")
         return
     if player.six_paths_active:
         session.send("Your Six Paths power is already active.")
