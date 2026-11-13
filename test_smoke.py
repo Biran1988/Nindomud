@@ -6,15 +6,18 @@ Session (no real socket needed). Run with: python3 test_smoke.py
 import random
 import re
 import shutil
+import tempfile
 
 import storage
 
 random.seed(1234)  # deterministic combat rolls -- avoids flaky pass/fail on RNG
 
-storage.DATA_DIR = storage.DATA_DIR + "_test"
+# This legacy suite must not delete an existing operator data_test folder.
+# All tests and their derived subdirectories remain inside a disposable root.
+_SMOKE_DATA = tempfile.TemporaryDirectory(prefix="nindo-smoke-")
+storage.DATA_DIR = _SMOKE_DATA.name
 storage.ACCOUNTS_DIR = storage.DATA_DIR + "/accounts"
 storage.PLAYERS_DIR = storage.DATA_DIR + "/players"
-shutil.rmtree(storage.DATA_DIR, ignore_errors=True)
 storage.ensure_dirs()
 
 import content            # noqa: E402
