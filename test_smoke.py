@@ -7250,108 +7250,83 @@ def test_player_bounties():
 
 
 def test_player_kage_rank():
-    """Per explicit request: a new "kage" rank, the one rank in the
-    game deliberately NEVER reachable through the normal level/mission
-    promotion ladder (kage.PROMOTION_LADDER) -- only an Implementor can
-    grant it (olc.cmd_setkage), intended for a player voted in by their
-    own community (the vote itself happens outside the game). Covers:
-    the rank ladder/headband tier actually exists and is wired
-    correctly (a real bug found live: _RANK_COST had no "kage" entry
-    and would have crashed the moment the headband registration loop
-    reached it), the staff command's full validation (non-Implementor
-    refused, target must already be a Village Elder, can't double-
-    appoint), successful appointment (rank, headband, and the who-list
-    title all update), the "only one Kage per village" auto-demotion
-    of a predecessor, and explicit removal. Also covers a genuine,
-    pre-existing bug found and fixed while building this: the
-    who-list's "Village Leaders" section used to key entirely off
-    staff_level, so a staff member with no Kage rank at all would show
-    a false "Kage, the Hokage of..." title -- now it only shows that
-    for someone who genuinely holds the rank."""
-    import kage as kage_module
+    """End-to-end Kage appointment is separate from earned rank."""
     import data_headbands
-    import olc
+    import kage
     import re
 
-    assert kage_module.RANK_ORDER[-1] == "kage"
+    assert kage.RANK_ORDER[-1] == "jonin"
+    assert "kage" not in kage.RANK_LEVEL_CAPS
     assert data_headbands.RANK_ORDER[-1] == "kage"
-    assert data_headbands.RANK_HEADBAND_AC_BONUS["kage"] > data_headbands.RANK_HEADBAND_AC_BONUS["village elder"]
+    assert data_headbands.RANK_HEADBAND_AC_BONUS["kage"] > data_headbands.RANK_HEADBAND_AC_BONUS["jonin"]
 
     out = []
 
     def new_session(name, password, village):
         s = Session(lambda t: out.append(t), lambda: out.append("[[CLOSED]]"))
         out.clear()
-        for line in [name, "y", password, village, "taijutsu", __import__("data_clans").CLANS_BY_VILLAGE[village][0], "balanced", "male",
-                     "tan", "black", "brown", "athletic", "confident", "y"]:
+        for line in [name, "y", password, village, "taijutsu",
+                     __import__("data_clans").CLANS_BY_VILLAGE[village][0],
+                     "balanced", "male", "tan", "black", "brown",
+                     "athletic", "confident", "y"]:
             s.handle_line(line)
             out.clear()
+        assert s.player is not None
         return s
 
     imp = new_session("Kagetestimp", "KageTestImpPass123", "leaf")
     imp.account.staff_level = "implementor"
-
     non_imp = new_session("Kagetestbuilder", "KageTestBuilderPass1", "leaf")
     non_imp.account.staff_level = "builder"
-
     first = new_session("Kagetestfirst", "KageTestFirstPass123", "leaf")
     second = new_session("Kagetestsecond", "KageTestSecondPass1", "leaf")
+    first.player.village_rank = "chunin"
+    second.player.village_rank = "jonin"
 
-    # A non-Implementor can't use this at all, even as a builder.
     non_imp.handle_line("setkage Kagetestfirst")
-    text_denied = "".join(out)
+    denied = "".join(out)
     out.clear()
-    assert "implementor" in text_denied.lower()
-    assert first.player.village_rank != "kage"
+    assert "implementor" in denied.lower()
+    assert not first.player.is_kage
 
-    # Must already be a Village Elder.
-    imp.handle_line("setkage Kagetestfirst")
-    text_not_elder = "".join(out)
-    out.clear()
-    assert "village elder" in text_not_elder.lower()
-    assert first.player.village_rank != "kage"
-
-    first.player.village_rank = "village elder"
-    second.player.village_rank = "village elder"
-
+    # An appointment is not a rank promotion or a Village Elder gate.
     imp.handle_line("setkage Kagetestfirst")
     out.clear()
-    assert first.player.village_rank == "kage"
+    assert first.player.is_kage
+    assert first.player.village_rank == "chunin"
     assert "Kage's Headband" in first.player.equipment.get("head", "")
 
-    # Can't double-appoint the same player.
     imp.handle_line("setkage Kagetestfirst")
-    text_double = "".join(out)
+    doubled = "".join(out)
     out.clear()
-    assert "already" in text_double.lower()
+    assert "already" in doubled.lower()
 
-    # The who-list bug fix: the genuine Kage shows the real title;
-    # non-Kage staff in the same section does NOT.
     first.handle_line("who")
-    text_who = re.sub(r"\x1b\[[0-9;]*m", "", "".join(out))
+    listing = re.sub(r"\\x1b\\[[0-9;]*m", "", "".join(out))
     out.clear()
-    assert "Kagetestfirst, the Hokage of Konohagakure" in text_who
-    assert "Kagetestimp, the Hokage of Konohagakure" not in text_who
+    assert "Kagetestfirst, the Hokage of Konohagakure" in listing
+    assert "Kagetestimp, the Hokage of Konohagakure" not in listing
 
-    # Appointing a second Kage of the SAME village auto-demotes the first.
+    # Only one Kage per village; replacement preserves both earned ranks.
     imp.handle_line("setkage Kagetestsecond")
     out.clear()
-    assert second.player.village_rank == "kage"
-    assert first.player.village_rank == "village elder"
+    assert second.player.is_kage
+    assert second.player.village_rank == "jonin"
+    assert not first.player.is_kage
+    assert first.player.village_rank == "chunin"
     assert "Kage's Headband" not in first.player.equipment.get("head", "")
 
-    # Explicit removal, no replacement appointed.
     imp.handle_line("setkage Kagetestsecond remove")
     out.clear()
-    assert second.player.village_rank == "village elder"
+    assert not second.player.is_kage
+    assert second.player.village_rank == "jonin"
 
-    # Removing a non-Kage is refused cleanly.
     imp.handle_line("setkage Kagetestsecond remove")
-    text_remove_non_kage = "".join(out)
+    refused = "".join(out)
     out.clear()
-    assert "isn't a kage" in text_remove_non_kage.lower()
+    assert "isn't a kage" in refused.lower()
 
-    print("PLAYER KAGE RANK TEST PASSED")
+    print("PLAYER KAGE APPOINTMENT TEST PASSED")
 
 
 def test_war_territory_system():
@@ -18092,7 +18067,7 @@ def test_rank_headbands():
     p = Player(name="Headbandpromotetestjob", account_name="headbandpromotetestjob", village="leaf", primary_class="ninjutsu")
     p.village_rank = "chunin"
     data_headbands.apply_rank_headband(p, "chunin")
-    p.level = 40
+    p.level = 65
     p.completed_missions = [f"m{i}" for i in range(50)]
 
     result = kage.handle_promotion_request(p)
