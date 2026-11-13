@@ -97,6 +97,7 @@ class ForgedItemAltGuardTests(unittest.TestCase):
         self.creator.player.inventory = [self.name]
         self.alt.player.inventory = ["A Plain Stick"]
         t = trade.start_trade(self.creator, self.alt)
+        t.accepted = t.confirmed_a = t.confirmed_b = True
         t.offer_a["items"].append(self.name)
         t.offer_b["items"].append("A Plain Stick")
         before_a = list(self.creator.player.inventory)

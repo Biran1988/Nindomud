@@ -618,4 +618,6 @@ CHANGELOG = [
 
     ("15.463", "Three 30-minute village perks now activate MUD-wide at random times in each 24-hour cycle. One double or triple boost is drawn for each of experience, damage, and ryo. The game announces each active window, and the schedule survives reboots."),
 
+    ("15.464", "Fixed a startup syntax error, strengthened trade consent and final balance/item validation, and made account and shared-registry saves atomic. Updated rank regression checks and restored the experience overflow help explanation."),
+
 ]

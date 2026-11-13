@@ -32,6 +32,22 @@ def ensure_dirs():
     os.makedirs(_ideas_dir(), exist_ok=True)
 
 
+def _atomic_write_json(path: str, value) -> None:
+    """Replace a JSON save only after serialization and disk writing succeed."""
+    payload = json.dumps(value, indent=2)
+    directory = os.path.dirname(path)
+    fd, temp_path = tempfile.mkstemp(prefix=".save-", suffix=".tmp", dir=directory)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            file.write(payload)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temp_path, path)
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+
 def _bug_reports_dir() -> str:
     """Computed fresh each call (not cached at import time), same
     reasoning as _jackpots_path() below -- so test_smoke.py reassigning
@@ -114,8 +130,7 @@ def load_jackpots() -> dict:
 
 def save_jackpots(jackpots: dict) -> None:
     ensure_dirs()
-    with open(_jackpots_path(), "w", encoding="utf-8") as f:
-        json.dump(jackpots, f, indent=2)
+    _atomic_write_json(_jackpots_path(), jackpots)
 
 
 def _bounties_path() -> str:
@@ -138,8 +153,7 @@ def load_bounties() -> dict:
 
 def save_bounties(bounties: dict) -> None:
     ensure_dirs()
-    with open(_bounties_path(), "w", encoding="utf-8") as f:
-        json.dump(bounties, f, indent=2)
+    _atomic_write_json(_bounties_path(), bounties)
 
 
 def _territory_path() -> str:
@@ -163,8 +177,7 @@ def load_territory() -> dict:
 
 def save_territory(state: dict) -> None:
     ensure_dirs()
-    with open(_territory_path(), "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+    _atomic_write_json(_territory_path(), state)
 
 
 def _spawn_points_path() -> str:
@@ -189,8 +202,7 @@ def load_spawn_points() -> dict:
 
 def save_spawn_points(state: dict) -> None:
     ensure_dirs()
-    with open(_spawn_points_path(), "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+    _atomic_write_json(_spawn_points_path(), state)
 
 
 def _custom_templates_path() -> str:
@@ -233,8 +245,7 @@ def load_custom_templates() -> dict:
 
 def save_custom_templates(state: dict) -> None:
     ensure_dirs()
-    with open(_custom_templates_path(), "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+    _atomic_write_json(_custom_templates_path(), state)
 
 
 def _teams_path() -> str:
@@ -257,8 +268,7 @@ def load_teams() -> dict:
 
 def save_teams(state: dict) -> None:
     ensure_dirs()
-    with open(_teams_path(), "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2)
+    _atomic_write_json(_teams_path(), state)
 
 
 def _chatlog_path() -> str:
@@ -284,8 +294,7 @@ def load_chatlog() -> list:
 
 def save_chatlog(entries: list) -> None:
     ensure_dirs()
-    with open(_chatlog_path(), "w", encoding="utf-8") as f:
-        json.dump(entries, f, indent=2)
+    _atomic_write_json(_chatlog_path(), entries)
 
 
 def _world_state_path() -> str:
@@ -389,8 +398,7 @@ def load_tips() -> list:
 
 def save_tips(tips: list) -> None:
     ensure_dirs()
-    with open(_tips_path(), "w", encoding="utf-8") as f:
-        json.dump(tips, f, indent=2)
+    _atomic_write_json(_tips_path(), tips)
 
 
 def _auctions_path() -> str:
@@ -413,8 +421,7 @@ def load_auctions() -> dict:
 
 def save_auctions(auctions: dict) -> None:
     ensure_dirs()
-    with open(_auctions_path(), "w", encoding="utf-8") as f:
-        json.dump(auctions, f, indent=2)
+    _atomic_write_json(_auctions_path(), auctions)
 
 
 def _areas_path() -> str:
@@ -437,8 +444,7 @@ def load_areas() -> dict:
 
 def save_areas(areas: dict) -> None:
     ensure_dirs()
-    with open(_areas_path(), "w", encoding="utf-8") as f:
-        json.dump(areas, f, indent=2)
+    _atomic_write_json(_areas_path(), areas)
 
 
 def _safe_key(name: str) -> str:
@@ -457,8 +463,7 @@ def account_exists(name: str) -> bool:
 
 def save_account(account: Account) -> None:
     ensure_dirs()
-    with open(account_path(account.name), "w", encoding="utf-8") as f:
-        json.dump(account.to_dict(), f, indent=2)
+    _atomic_write_json(account_path(account.name), account.to_dict())
 
 
 def load_account(name: str) -> Optional[Account]:
@@ -516,18 +521,7 @@ def save_player(player: Player) -> None:
     import data_kekkei_genkai
     data_kekkei_genkai.sync_elemental_release(player)
     ensure_dirs()
-    path = player_path(player.name)
-    payload = json.dumps(player.to_dict(), indent=2)
-    fd, temp_path = tempfile.mkstemp(prefix=".player-", suffix=".tmp", dir=PLAYERS_DIR)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            f.write(payload)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(temp_path, path)
-    finally:
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
+    _atomic_write_json(player_path(player.name), player.to_dict())
 
 
 # Legacy (pre-color) prompt presets, mapped to their current colored

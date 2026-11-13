@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 import combat
 import commands
 import leveling
+import kage
 import missions
 import skill_training
 from models import Player
@@ -15,7 +16,8 @@ class RankCappedRewardMessageTests(unittest.TestCase):
     def setUp(self):
         self.player = Player(
             "NoXpTester", "NoXpTester", village="leaf", village_rank="genin",
-            level=15, experience=leveling.cumulative_xp_for_level(15),
+            level=kage.RANK_LEVEL_CAPS["genin"],
+            experience=leveling.cumulative_xp_for_level(kage.RANK_LEVEL_CAPS["genin"]),
         )
         self.starting_xp = self.player.experience
 

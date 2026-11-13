@@ -225,7 +225,7 @@ class WhirlpoolTests(unittest.TestCase):
         for vnum in (6051, 6052, 6053, 6055, 6057):
             self.assertIn(vnum, combat.MOB_TEMPLATES)
         headbands = [p["short_desc"] for p in olc.OBJECT_TEMPLATES.values() if "Uzushio" in p["short_desc"]]
-        self.assertEqual(len(headbands), 8)
+        self.assertEqual(len(headbands), len(kage.RANK_ORDER))
 
     def test_new_trap_ids_do_not_clobber_exam_guardians_or_existing_village_ids(self):
         content.populate()

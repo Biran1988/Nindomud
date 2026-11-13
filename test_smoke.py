@@ -1416,9 +1416,8 @@ def test_kage_promotions_enabled():
 
     # Every remaining promotion in the ladder, each with its own headband upgrade.
     ladder = [
-        (80, 50, "special jonin", "A Konoha Special Jonin Headband"),
-        (135, 100, "jonin", "A Konoha Jonin Headband"),
-        (200, 500, "elite jonin", "A Konoha Elite Jonin Headband"),
+        (100, 50, "special jonin", "A Konoha Special Jonin Headband"),
+        (200, 100, "jonin", "A Konoha Jonin Headband"),
     ]
 
     # Unqualified for the first ladder step: refused, exact requirements shown, rank unchanged.
@@ -1426,7 +1425,7 @@ def test_kage_promotions_enabled():
     text_refused = "".join(out)
     out.clear()
     assert s.player.village_rank == "chunin"
-    assert "level 80" in text_refused.lower()
+    assert "level 100" in text_refused.lower()
     assert "50 completed mission" in text_refused.lower()
 
     for level, missions, expected_rank, expected_headband in ladder:
@@ -1444,7 +1443,7 @@ def test_kage_promotions_enabled():
     text_top = "".join(out)
     out.clear()
     assert "no further promotion available" in text_top.lower()
-    assert s.player.village_rank == "elite jonin"
+    assert s.player.village_rank == "jonin"
 
     print("KAGE PROMOTIONS ENABLED TEST PASSED")
 
@@ -2122,8 +2121,13 @@ def test_mset_rank_alias():
     assert "isn't a known rank" in text
 
     s2.handle_line("mset Yamatorank rank village elder")
+    text = "".join(out)
     out.clear()
-    assert s1.player.village_rank == "village elder"
+    assert s1.player.village_rank == "chunin"
+    assert "isn't a known rank" in text
+    s2.handle_line("mset Yamatorank rank jonin")
+    out.clear()
+    assert s1.player.village_rank == "jonin"
 
     print("MSET RANK ALIAS TEST PASSED")
 

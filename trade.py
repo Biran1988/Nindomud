@@ -102,15 +102,27 @@ def cancel_trade(trade: Trade) -> None:
 
 
 def complete_trade(trade: Trade) -> None:
-    """Moves both sides' staged offers in one atomic step -- only ever
-    called once both_confirmed() is genuinely True. Each side loses
-    exactly what they staged and gains exactly what the other side
-    staged; nothing is validated for existence here (the caller,
-    commands.cmd_trade, is responsible for keeping each offer in sync
-    with what's actually still in that player's inventory/ryo as
-    items get added/removed during negotiation)."""
+    """Validate the current agreement before moving either offer in memory.
+
+    Offers are not escrow: players can spend money or consume items while
+    negotiating. Recheck both sides at the transaction boundary.
+    """
+    from collections import Counter
+
+    if (not trade.accepted or not trade.both_confirmed()
+            or trade.session_a.trade is not trade
+            or trade.session_b.trade is not trade):
+        raise ValueError("Both players must accept and confirm the current trade.")
     player_a = trade.session_a.player
     player_b = trade.session_b.player
+    if player_a.room_vnum != player_b.room_vnum:
+        raise ValueError("Both players must be in the same room to trade.")
+    for player, offer in ((player_a, trade.offer_a), (player_b, trade.offer_b)):
+        if (type(offer["ryo"]) is not int or offer["ryo"] < 0
+                or offer["ryo"] > player.ryo):
+            raise ValueError("Trade blocked: an offered ryo balance is no longer available.")
+        if Counter(offer["items"]) - Counter(player.inventory):
+            raise ValueError("Trade blocked: an offered item is no longer available.")
     import crafted_provenance
     # Validate both sides before moving even one item or one ryo. A
     # staged trade can outlive an IP or item change.

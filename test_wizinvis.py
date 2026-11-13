@@ -54,7 +54,8 @@ class WizardInvisibilityTests(unittest.TestCase):
         self.viewer_out.clear()
         commands.dispatch(self.staff, "wizinvis", ["on"])
         self.assertTrue(self.staff.player.wizinvis)
-        self.assertTrue(json.loads(open(storage.player_path("Admin")).read())["wizinvis"])
+        with open(storage.player_path("Admin"), encoding="utf-8") as saved:
+            self.assertTrue(json.load(saved)["wizinvis"])
         commands.cmd_who(self.viewer, [])
         self.assertNotIn("Admin", "".join(self.viewer_out))
         self.viewer_out.clear()

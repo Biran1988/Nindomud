@@ -4692,12 +4692,17 @@ def cmd_trade(session, args: List[str]) -> None:
             session.send("There's nobody here by that name.")
             return
         if session.trade and session.trade.other(session) is target_session and not session.trade.accepted:
-            # WE were the one invited -- this is the accept.
+            if session is session.trade.session_a:
+                session.send("Your trade proposal is still awaiting their acceptance.")
+                return
             session.trade.accepted = True
             session.send(f"You accept {target_session.player.name}'s trade offer.")
             target_session.send(f"{player.name} accepts your trade offer.")
             return
-        if target_session.trade and target_session.trade.accepted:
+        if session.trade:
+            session.send("Cancel your pending trade before proposing another.")
+            return
+        if target_session.trade:
             session.send(f"{target_session.player.name} is already trading with someone else.")
             return
         import trade as trade_module
@@ -4800,7 +4805,7 @@ def cmd_trade(session, args: List[str]) -> None:
             except ValueError as exc:
                 active_trade.reset_confirmations()
                 session.send(str(exc))
-                other.send("Trade blocked: a crafted item cannot be received by an alt.")
+                other.send(str(exc))
                 return
             session.send("&GThe trade is complete!&x")
             other.send("&GThe trade is complete!&x")

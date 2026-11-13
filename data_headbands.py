@@ -1,23 +1,9 @@
+"""Rank-specific village headbands.
+
+Headband bonuses live in item prototypes, while display colors use the
+registered rarity. Five ordinary ranks and the appointed Kage rank each
+have a headband; promotion replaces the equipped headband and its bonuses.
 """
-Rank headbands.
-
-Extends the existing village headband (previously a single, purely
-cosmetic item per village, granted once at chargen and never touched
-again) into a full progression matching kage.RANK_ORDER, per explicit
-request: each rank gets its own headband, colored distinctly, with a
-progressively larger stat bonus.
-
-Reuses the exact same "(+N Armor Class)" name-suffix mechanism every
-other piece of armor in the game already uses (see commands.
-craft_stat_bonus_suffix / parse_crafted_bonus) -- no new combat wiring
-was needed at all, since commands.equipped_armor_class_bonus() already
-sums this bonus across every worn slot, "head" included. "Colored"
-reuses the existing 5-tier rarity system (data_rarity.py) the same
-way, since that's the one color mechanism already wired into every
-place an item's name is displayed (inventory, equipment, sell,
-etc.) -- rather than inventing a second, parallel coloring system
-that would only work in the one or two places built to know about it.
-There are five ordinary ranks plus the separately appointed Kage.
 
 from typing import Optional
 
