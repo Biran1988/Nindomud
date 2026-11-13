@@ -8474,12 +8474,16 @@ def _find_object_prototype_by_name(item_name: str):
     same substring-match convention used everywhere else in this file."""
     import technique_names
     import scroll_writing
+    if not isinstance(item_name, str) or not item_name:
+        return None
     query = technique_names.scroll_name(scroll_writing.plain_name(item_name)).lower()
     for proto in olc.OBJECT_TEMPLATES.values():
-        if query == proto["short_desc"].lower():
+        label = proto.get("short_desc")
+        if isinstance(label, str) and query == label.lower():
             return proto
     for proto in olc.OBJECT_TEMPLATES.values():
-        if query in proto["short_desc"].lower() or proto["short_desc"].lower() in query:
+        label = proto.get("short_desc")
+        if isinstance(label, str) and label and (query in label.lower() or label.lower() in query):
             return proto
     return None
 
@@ -8487,9 +8491,14 @@ def _find_object_prototype_by_name(item_name: str):
 def _find_object_vnum_by_name(item_name: str):
     """Same reverse lookup as _find_object_prototype_by_name, but
     returns the vnum itself (needed to check set_vnums membership)."""
+    # Broken equipment in older saves can leave a None-valued slot.
+    # Never call .lower() on that placeholder during a combat hit roll.
+    if not isinstance(item_name, str) or not item_name:
+        return None
     query = item_name.lower()
     for vnum, proto in olc.OBJECT_TEMPLATES.items():
-        if query in proto["short_desc"].lower() or proto["short_desc"].lower() in query:
+        label = proto.get("short_desc")
+        if isinstance(label, str) and label and (query in label.lower() or label.lower() in query):
             return vnum
     return None
 
@@ -8523,6 +8532,8 @@ def equipped_set_bonus_percent(player) -> int:  # player: Player or combat.Mob -
     equipped_vnums = set()
     resolved = []
     for item_name in player.equipment.values():
+        if not isinstance(item_name, str) or not item_name:
+            continue
         vnum = _find_object_vnum_by_name(item_name)
         if vnum is not None:
             equipped_vnums.add(vnum)
