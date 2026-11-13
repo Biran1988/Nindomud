@@ -61,6 +61,45 @@ class MobBalanceTests(unittest.TestCase):
         actual = dice.average(first.damage_dice) + first.strength - 10
         self.assertLessEqual(abs(actual - expected), 2)
 
+    def test_hitroll_scales_at_attack_tier_boundaries_and_is_used_by_combat(self):
+        import derived_stats
+        previous = 0
+        for level in (1, 50, 99, 100, 200, 201, 250):
+            with self.subTest(level=level):
+                expected = mob_balance.hit_roll_for_level(level)
+                self.assertGreaterEqual(expected, previous)
+                previous = expected
+                self.template["level"] = level
+                mob = combat.spawn_mob(self.vnum, self.room)
+                self.assertEqual(mob.hit_roll, expected)
+                self.assertEqual(mob.dexterity, expected + 10)
+                self.assertEqual(derived_stats.hit_roll(mob), expected)
+                self.assertEqual(mob.attacks, combat.mob_attacks_at_level(level))
+        self.assertEqual(mob_balance.hit_roll_for_level(100), 60)
+        self.assertEqual(mob_balance.hit_roll_for_level(250), 150)
+
+    def test_manual_hitroll_and_autobalance_off_are_respected(self):
+        self.template["level"] = 250
+        self.template["hit_roll"] = 220
+        stronger = combat.spawn_mob(self.vnum, self.room)
+        self.assertEqual(stronger.hit_roll, 220)
+        self.template["hit_roll"] = 5
+        standard = combat.spawn_mob(self.vnum, self.room)
+        self.assertEqual(standard.hit_roll, mob_balance.hit_roll_for_level(250))
+        self.template["auto_balance"] = False
+        custom = combat.spawn_mob(self.vnum, self.room)
+        self.assertEqual((custom.hit_roll, custom.dexterity), (5, 15))
+
+    def test_staff_hitroll_scaling_persists_and_preview_reports_value(self):
+        session = SimpleNamespace(account=SimpleNamespace(staff_level="administrator"), send=Mock())
+        mob_balance.cmd_mobscale(session, ["hitroll", "150"])
+        self.assertEqual(mob_balance.settings()["hitroll_percent"], 150)
+        self.template["level"] = 100
+        mob = combat.spawn_mob(self.vnum, self.room)
+        self.assertEqual(mob.hit_roll, 90)
+        mob_balance.cmd_mobscale(session, ["preview", "100"])
+        self.assertIn("+90 hitroll", session.send.call_args.args[0])
+
     def test_mset_manual_override_respects_existing_dice(self):
         self.template.update({"auto_balance": False, "hit_dice": "1d1+39",
                               "damage_dice": "1d1+3"})
