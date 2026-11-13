@@ -42,7 +42,7 @@ class HiddenExitTrackingTests(unittest.TestCase):
             ["north", "east"])
 
     def test_hidden_tracking_unlock_requires_level_50_and_the_skill(self):
-        player = Player("Scout", "Scout", level=49, village_rank="elite jonin")
+        player = Player("Scout", "Scout", level=49, village_rank="jonin")
         player.learned_skills = ["Track", "Advanced Tracking", "Hidden Tracking"]
         self.assertFalse(tracking.has_hidden_tracking(player))
         player.level = 50
@@ -67,7 +67,7 @@ class ExperienceCarryoverTests(unittest.TestCase):
 
     def character(self, level=50):
         player = Player("LevelTester", "LevelTester", level=level,
-                        village_rank="elite jonin", primary_class="taijutsu")
+                        village_rank="jonin", primary_class="taijutsu")
         player.experience = leveling.cumulative_xp_for_level(level)
         return player
 
