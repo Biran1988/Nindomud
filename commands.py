@@ -9965,12 +9965,9 @@ def cmd_prompt(session, args: List[str]) -> None:
         session.send(f"Current prompt format: {player.prompt_string or PRESETS['default']}")
         return
     arg = args[0].lower()
-    if arg == "help":
-        session.send(
-            "Usage: prompt <preset|off|default|custom format>\n"
-            "Presets: " + ", ".join(PRESETS.keys()) + "\n"
-            "Tokens: %h %H %c %C %s %S %x %X %q %r %m %l %v %k %p %e"
-        )
+    if arg == "help" and len(args) == 1:
+        import help_system
+        help_system.cmd_help(session, ["prompt"])
         return
     if arg == "off":
         player.prompt_string = "off"

@@ -210,36 +210,8 @@ DEFAULT_HELP_ENTRIES = [
     {
         "primary_keyword": "colors",
         "keywords": ["colors", "color", "colour", "color codes", "ansi"],
-        "title": "Color Codes",
-        "body": (
-            "Syntax: prompt <text with &&codes>  |  description <text with &&codes>  |  biography <text with &&codes>\n"
-            "\n"
-            "Description: Color codes add color to text you write yourself -- your prompt ('prompt'), description ('description'), and biography ('biography') all support them.\n"
-            "\n"
-            "A code is an && followed by one letter, applying to everything after it until the next code or a reset. Always end colored text with &&x to reset back to normal.\n"
-            "\n"
-            "Standard colors:\n"
-            "  &&R red      &&G green    &&Y yellow   &&B blue\n"
-            "  &&C cyan     &&M magenta  &&W white    &&D dark gray\n"
-            "\n"
-            "Bright/bold versions -- same letters, lowercase:\n"
-            "  &&r bright red      &&g bright green    &&y bright yellow   &&b bright blue\n"
-            "  &&c bright cyan     &&m bright magenta  &&w bright white    &&d bright gray\n"
-            "\n"
-            "Two more:\n"
-            "  &&O orange (a convenience shortcut -- see below for how it's made)\n"
-            "  &&x reset -- turns color back off; always use this when you're done\n"
-            "\n"
-            "256-color codes: &&[N] where N is a number from 0 to 255, for finer shades than the named codes above (&&O orange is actually &&[208] under the hood). Example: &&[196] is a bright red, &&[27] is a deep blue.\n"
-            "\n"
-            "Example: prompt &&RHP:%h&&x sets your prompt so 'HP:' shows in red and the rest stays normal.\n"
-            "\n"
-            "(If a code ever needs to appear as plain text instead of applying its color -- like every example on this very page -- type &&&& instead of a single &&.)\n"
-            "\n"
-            "If you'd rather see plain text with no color at all, ask a staff member -- there's no player-facing toggle for this yet.\n"
-            "\n"
-            "Date: 2026-08-17"
-        ),
+        "title": "Color Codes - Live Color Reference",
+        "body": "&CCOLOR CODES - LIVE COLOR REFERENCE&x\n\nThe names in this guide are actually displayed in their named colors.\nThe codes printed at left are literal text you can copy into a prompt.\nColors last until the next code; always finish with &&x to reset.\n\n&WSTANDARD COLORS (uppercase code)&x\n  &&R  &RRed&x                &&G  &GGreen&x\n  &&Y  &YYellow&x             &&B  &BBlue&x\n  &&C  &CCyan&x               &&M  &MMagenta&x\n  &&W  &WWhite&x              &&D  &DDark gray&x\n\n&WBRIGHT / BOLD COLORS (lowercase code)&x\n  &&r  &rBright red&x         &&g  &gBright green&x\n  &&y  &yBright yellow&x      &&b  &bBright blue&x\n  &&c  &cBright cyan&x        &&m  &mBright magenta&x\n  &&w  &wBright white&x       &&d  &dBright gray&x\n\n&WEXTRAS&x\n  &&O    &OOrange&x\n  &&x    Reset to normal text\n\n&W256-COLOR PALETTE&x\n  &&[N] or &&N  Choose xterm color number N from 0 through 255.\n  &&[196]  &[196]Bright xterm red&x    &&[208]  &[208]Orange&x\n  &&[27]   &[27]Deep blue&x           &&[46]   &[46]Bright green&x\n  &&[129]  &[129]Violet&x              &&[226]  &[226]Bright yellow&x\n  &&O is a short alias for &&[208].\n  Your client must support ANSI/256-color rendering to see these shades.\n\n&WCOPYABLE EXAMPLES&x\n  Type: prompt &&RHP:%h/%H &&BCH:%c/%C &&GST:%s/%S&&x\n  Looks like: &RHP:100/120 &BCH:150/200 &GST:75/90&x\n  Type: prompt &&[196]HP:%h/%H &&[39]CH:%c/%C&&x\n  Looks like: &[196]HP:100/120 &[39]CH:150/200&x\n\n&WIMPORTANT&x\n  A single & followed by a valid code changes the color.\n  Write &&&& to print a literal ampersand instead of changing color.\n  Example: &&&&r displays the text &r, not a colored word.\n  If you have disabled ANSI colors, the names still show in plain text.\n  Also see HELP PROMPT for every usable prompt token and preset.",
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
@@ -2102,15 +2074,9 @@ DEFAULT_HELP_ENTRIES = [
     },
     {
         "primary_keyword": "prompt",
-        "keywords": ["prompt"],
-        "title": "Prompt",
-        "body": (
-            "Syntax: prompt [format string]\n"
-            "\n"
-            "Description: Shows or changes your combat prompt format (the HP/Chakra/Stamina/XP/Ryo line shown after most commands). With no argument, shows your current format.\n"
-            "\n"
-            "Date: 2026-08-17"
-        ),
+        "keywords": ["prompt", "custom prompt", "prompt format", "prompt tokens", "prompt presets"],
+        "title": "Prompt - Complete Customization Guide",
+        "body": "&CPROMPT - COMPLETE CUSTOMIZATION GUIDE&x\n\n&WCOMMANDS&x\n  prompt                    Show your current format (the actual codes).\n  prompt help               Read this complete customization guide.\n  prompt default            Restore the full default prompt.\n  prompt basic              HP, Chakra and Stamina only.\n  prompt combat             Resources and your enemy's health percent.\n  prompt detailed           Village, rank, level, resources, XP, ryo, MP.\n  prompt minimal            Compact resource numbers.\n  prompt off                Hide the prompt entirely.\n  prompt <format>           Replace it with your own text and tokens.\n\n&WALL WORKING PLACEHOLDERS (case matters)&x\n  &RHEALTH&x       %h current HP             %H maximum HP\n  &BCHAKRA&x       %c current Chakra         %C maximum Chakra\n  &GSTAMINA&x      %s current Stamina        %S maximum Stamina\n  &CEXPERIENCE&x   %x current total XP       %X XP needed for next level\n               %q XP remaining until the next level\n  &YPROGRESSION&x  %l ninja level            %k displayed ninja rank\n               %v current village         %p primary class\n  &YMONEY&x        %r ryo                    %m mission points\n  &WENEMY&x        %e target HP as a percent %n target name\n  &WSTAFF ONLY&x   %V current room VNUM (blank for players)\n  &WLITERAL&x      %% prints a percent sign (%)\n\n&WRESERVED BUT CURRENTLY BLANK&x\n  %t, %a, %d and %E are recognized, but currently show no data.\n  They are not active time, alignment, day or effect meters.\n  Enemy tokens %e and %n are also blank outside combat.\n\n&WMAKE YOUR OWN PROMPT&x\n  Any words, spacing, punctuation, and separators are yours to change.\n  Tokens are case-sensitive: %h is current HP, %H is max HP.\n  Use &-color codes to color the labels AND numbers. End with &&x.\n  A color applies to everything until the next color or &&x reset.\n  For the full palette and 256-color options, type HELP COLORS.\n\n&WEXAMPLES - COPY THESE COMMANDS&x\n  Simple:    prompt &&RHP:%h/%H &&BCH:%c/%C &&GST:%s/%S&&x\n  Preview:   &RHP:100/120 &BCH:150/200 &GST:75/90&x\n\n  Progress:  prompt &&CLevel %l &&W[%k] &&YXP:%q left &&MRyo:%r&&x\n  Preview:   &CLevel 35 &W[Genin] &YXP:250 left &MRyo:1200&x\n\n  Combat:    prompt &&RHP:%h/%H &&GSt:%s/%S &&WTarget:%n %e%%&&x\n  Preview:   &RHP:100/120 &GSt:75/90 &WTarget:Bandit 80%&x\n\n  256-color: prompt &&[208]HP:%h/%H &&[39]Chakra:%c/%C&&x\n  Preview:   &[208]HP:100/120 &[39]Chakra:150/200&x\n\n&WAVAILABLE PRESETS&x\n  default  - &RHP &BChakra &GStamina &CXP &YRyo&x\n  basic    - &RHP &BChakra &GStamina&x\n  combat   - &RHP &BChakra &GStamina &WEnemy %&x\n  detailed - &CVillage/Rank/Level &RHP &BChakra &GStamina &CXP &YRyo &MMP&x\n  minimal  - &RHP &BChakra &GStamina&x (short format)\n\n&WNOTES&x\n  Prompt text and chosen preset are saved with your character.\n  PROMPT DEFAULT restores the standard layout; PROMPT OFF hides it.\n  PROMPT alone shows the raw format, not a rendered preview.\n  PROMPT HELP and HELP PROMPT show the same guide.\n  To show a literal & in colored text, type &&&&.",
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
