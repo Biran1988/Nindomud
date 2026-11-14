@@ -1,6 +1,16 @@
-"""Permanent teacher-practice introductions for ordinary learned skills."""
+"""Permanent teacher-practice introductions and common mastery rate for skills."""
+import random
+
 import data_jutsu
 import data_passives
+
+# 200% more effort = three times as many qualifying attempts on average.
+MASTERY_EFFORT_MULTIPLIER = 3
+
+
+def mastery_gain_roll(chance_pct: int) -> bool:
+    """One mastery progress roll, three times harder than the former chance."""
+    return random.randint(1, 100 * MASTERY_EFFORT_MULTIPLIER) <= max(0, min(100, chance_pct))
 
 
 def exempt_by_design(skill_name: str) -> bool:

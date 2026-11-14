@@ -276,8 +276,9 @@ def _work_step(session, state):
         cap = signature_moves.SIGNATURE_CAP if signature_moves.selected_name(player) == skill else 100
         if current >= cap:
             return
-        # Match live combat's percentage curve: mastery gets harder with use.
-        if random.randint(1, 100) <= cap - current:
+        # Match live combat's 3x-slower mastery curve.
+        import skill_training
+        if skill_training.mastery_gain_roll(cap - current):
             player.skill_proficiencies[skill] = current + 1
             state["gains"] += 1
             import elemental_mastery

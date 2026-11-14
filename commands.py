@@ -5236,7 +5236,8 @@ def _practice_gain(player) -> int:
     """Percentage points gained per practice attempt, scaled by
     Intelligence -- higher Int means faster proficiency growth.
     Floor of 1 so practicing is never a no-op even at very low Int."""
-    return max(1, player.intelligence // 2)
+    import skill_training
+    return max(1, player.intelligence // (2 * skill_training.MASTERY_EFFORT_MULTIPLIER))
 
 
 def proficiency_level_name(pct: int) -> str:
@@ -7029,8 +7030,12 @@ def _award_job_action_xp(session, job: str, amount: int) -> None:
     before = jobs.get_job_xp(session.player, job)
     level_messages = jobs.add_job_xp(session.player, job, earned_xp)
     gained = jobs.get_job_xp(session.player, job) - before
-    if gained > 0:
-        perk_note = f" &Y(x{multiplier:g} EXP perk)&x" if multiplier != 1.0 else ""
+    # Still show +0 XP after a successful job action at the job level cap.
+    # No XP is awarded or persisted in this case; crafting/gathering rewards
+    # remain unchanged. Zero-amount calls on nonmaxed jobs stay silent.
+    if gained > 0 or jobs.get_job_level(session.player, job) >= jobs.MAX_JOB_LEVEL:
+        perk_note = (f" &Y(x{multiplier:g} EXP perk)&x"
+                     if gained > 0 and multiplier != 1.0 else "")
         session.send(f"&G+{gained:,} {job.capitalize()} XP&x{perk_note}")
     for message in level_messages:
         session.send(message)

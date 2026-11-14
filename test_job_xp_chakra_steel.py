@@ -55,9 +55,17 @@ class JobXpGainTests(unittest.TestCase):
         self.assertIn("+40 Fishing XP", msgs[1])
         self.assertNotIn("perk", msgs[1].lower())
 
-    def test_zero_and_capped_job_xp_not_falsely_displayed(self):
+    def test_capped_job_shows_zero_earned_without_changing_saved_xp(self):
         self.player.job_levels["fishing"] = jobs.MAX_JOB_LEVEL
+        self.player.job_xp["fishing"] = jobs.job_xp_for_level(jobs.MAX_JOB_LEVEL)
+        before = self.player.job_xp["fishing"]
         commands._award_job_action_xp(self.session, "fishing", 30)
+        self.assertEqual(jobs.get_job_xp(self.player, "fishing"), before)
+        messages = [call.args[0] for call in self.session.send.call_args_list]
+        self.assertEqual(len(messages), 1)
+        self.assertIn("+0 Fishing XP", messages[0])
+
+    def test_nonmaxed_zero_awards_remain_silent(self):
         commands._award_job_action_xp(self.session, "mining", 0)
         self.assertFalse(any(" XP" in call.args[0] for call in self.session.send.call_args_list))
 

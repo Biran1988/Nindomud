@@ -75,7 +75,7 @@ def maintain_skill(player, skill_name: str, session=None) -> None:
             timers[skill_name] = now
         return
     timers[skill_name] = now
-    if random.randint(1, 100) <= cap - current:
+    if skill_training.mastery_gain_roll(cap - current):
         player.skill_proficiencies[skill_name] = min(cap, current + 1)
         import leveling
         messages = leveling.grant_experience(player, 10)

@@ -1501,7 +1501,7 @@ PASSIVE_GROWTH_CHANCE_PCT = 20  # per combat round
 PASSIVE_GROWTH_AMOUNT = 1
 
 
-USAGE_GROWTH_PER_HIT = 2  # matches SHADOW_CLONE_MASTERY_GAIN_PER_CAST's own established rate, for consistency
+USAGE_GROWTH_PER_HIT = 2  # a successful roll still grants 2%, but now rolls 3x less often
 
 
 def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None:
@@ -1511,6 +1511,9 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
     The teacher practice cap never gates natural usage growth: even
     a weapon skill at 7% can improve by attacking in combat. Teacher
     practice remains a guaranteed way to train up to its own cap.
+
+    Usage growth now succeeds one third as often (200% more effort),
+    without altering the +2% granted on a successful roll.
 
     Usage growth is a genuine roll, not a guarantee, per
     direct request/confirmation ("Let's make practice % much lower to
@@ -1549,7 +1552,7 @@ def grow_skill_from_usage(player: Player, skill_name: str, session=None) -> None
            if signature_moves.selected_name(player) == skill_name else 100)
     if current >= cap:
         return
-    if random.randint(1, 100) > (cap - current):
+    if not skill_training.mastery_gain_roll(cap - current):
         return
     new_pct = min(cap, current + USAGE_GROWTH_PER_HIT)
     player.skill_proficiencies[skill_name] = new_pct
@@ -1572,6 +1575,7 @@ def tick_passive_skill_growth(player: Player) -> list:
     """Passive skills gain proficiency automatically from being in
     combat -- never from `practice`. Called once per combat round.
     Returns messages for any skill that just grew."""
+    import skill_training
     messages = []
     for skill in player.learned_skills:
         jutsu = data_jutsu.JUTSU.get(skill.lower())
@@ -1588,7 +1592,7 @@ def tick_passive_skill_growth(player: Player) -> list:
                if signature_moves.selected_name(player) == skill else 100)
         if current >= cap:
             continue
-        if random.randint(1, 100) <= PASSIVE_GROWTH_CHANCE_PCT:
+        if skill_training.mastery_gain_roll(PASSIVE_GROWTH_CHANCE_PCT):
             new_pct = min(cap, current + PASSIVE_GROWTH_AMOUNT)
             player.skill_proficiencies[skill] = new_pct
             experience_before = player.experience
@@ -3018,8 +3022,11 @@ def use_shadow_clone_jutsu(session) -> None:
     player.chakra -= chakra_cost
     player.cooldowns["shadow clone jutsu"] = now + jutsu["cooldown"]
 
+    import skill_training
     mastery = player.skill_proficiencies.get("Shadow Clone Jutsu", 0)
-    new_mastery = min(100, mastery + SHADOW_CLONE_MASTERY_GAIN_PER_CAST)
+    new_mastery = mastery
+    if mastery < 100 and skill_training.mastery_gain_roll(100):
+        new_mastery = min(100, mastery + SHADOW_CLONE_MASTERY_GAIN_PER_CAST)
     player.skill_proficiencies["Shadow Clone Jutsu"] = new_mastery
     if new_mastery > mastery:
         xp = (new_mastery - mastery) * 10
