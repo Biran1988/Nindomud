@@ -112,6 +112,8 @@ _ITEM_VNUMS = {
     "death_scroll": 9810,
     "info_scroll": 9811,
     "advanced_clone_scroll": 9812,
+    # Fixed, craft-only containers; never replace builder-owned existing objects.
+    "backpack_iron": 20980, "backpack_steel": 20981, "backpack_chakra": 20982,
 }
 
 
@@ -257,6 +259,16 @@ def _register_shared_items() -> None:
             if _ac_bonus:
                 olc.OBJECT_TEMPLATES[_headband_vnum]["stat_bonuses"]["armor_class"] = _ac_bonus
             _headband_vnum += 1
+
+    # Each craftable backpack owns its actual storage limit, NOT an increase
+    # to a character's ordinary 20 inventory slots. Existing OLC edits win.
+    for tier, recipe in data_crafting.BACKPACK_RECIPES.items():
+        vnum = _ITEM_VNUMS["backpack_" + tier]
+        if vnum not in olc.OBJECT_TEMPLATES:
+            make(vnum, recipe["name"], "container", recipe["price"])
+            olc.OBJECT_TEMPLATES[vnum]["container_capacity"] = recipe["capacity"]
+            olc.OBJECT_TEMPLATES[vnum]["description"] = (
+                f"A reinforced backpack holding up to {recipe['capacity']} items.")
 
     # Kindling base rod, upgraded tiers registered above.
     make(_ITEM_VNUMS["rod_kindling"], "A Kindling Fishing Rod", "tool", 50)

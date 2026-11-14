@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "backpack",
+  "keywords": [
+    "backpacks",
+    "bag",
+    "craft backpack"
+  ],
+  "title": "Craftable Backpacks",
+  "body": "CRAFT BACKPACK IRON (15 items: Sturdy Oak Log + Iron Ingot) | STEEL (30 items: Ironwood Log + Steel Ingot) | CHAKRA (50 items: Ancient Heartwood Log + Chakra Steel Ingot). Bukijutsu level 25+ may craft all three; other classes level 100+ may craft Iron only. PUT <item> IN BACKPACK and GET <item> FROM BACKPACK to store/retrieve; BACKPACK <name> inspects contents, BACKPACK lists capacity. Empty your backpack before transferring or dropping it. Nested containers are disallowed.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

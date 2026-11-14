@@ -5601,3 +5601,27 @@ DEFAULT_HELP_ENTRIES.extend([
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
     },
 ])
+
+
+# A separately craftable, carried container with real independent capacity.
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "backpack",
+    "keywords": ["backpacks", "bag", "craft backpack", "storage backpack"],
+    "title": "Craftable Backpacks",
+    "body": (
+        "Craft backpack iron | craft backpack steel | craft backpack chakra\n"
+        "Iron Backpack: 15 items; 1 Sturdy Oak Log + 1 Iron Ingot. "
+        "Steel Backpack: 30 items; 1 Ironwood Log + 1 Steel Ingot. "
+        "Chakra Steel Backpack: 50 items; 1 Ancient Heartwood Log + "
+        "1 Chakra Steel Ingot.\n\n"
+        "Bukijutsu level 25+ crafts all tiers. Other classes level 100+ "
+        "can make iron only. Backpacks remain in your ordinary inventory "
+        "but store items in separate slots: PUT <item> IN BACKPACK, "
+        "GET <item> FROM BACKPACK. Type BACKPACK or BACKPACK <name> "
+        "to view contents and capacity. Use 2.BACKPACK to pick a second "
+        "container. Up to 50 individual items fit in the Chakra Steel "
+        "version; they do not increase your normal 20 inventory slots. "
+        "Nested containers are forbidden. Empty a backpack before "
+        "dropping, giving, trading, selling or auctioning it."
+    ),
+})

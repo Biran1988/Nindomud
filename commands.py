@@ -702,7 +702,10 @@ def cmd_auction(session, args: List[str]) -> None:
         if crafted_provenance.denied(match, player, session=session):
             session.send(crafted_provenance.DENIED)
             return
-        player.inventory.remove(match)
+        if inventory.has_stored_contents(player, match):
+            session.send("Empty your backpack before auctioning it.")
+            return
+        inventory.remove_carried(player, match)
         auction_id = auction.create_listing(player.name, match, starting_bid, duration_seconds, buyout_price)
         session.send(
             f"You list {rarity_colored_name(match)} for auction (#{auction_id}), "
@@ -3102,7 +3105,7 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
         session.send(f"You can't {verb} {match}.")
         return
 
-    player.inventory.remove(match)
+    inventory.remove_carried(player, match)
     previous = player.equipment.get(wear_loc)
     if previous and previous != match:
         ok, reason = inventory.add_item(player.inventory, previous)
@@ -3159,7 +3162,7 @@ def _wear_all(session) -> None:
             continue
         if wear_loc in player.equipment:
             continue
-        player.inventory.remove(item)
+        inventory.remove_carried(player, item)
         player.equipment[wear_loc] = item
         _apply_equipment_stat_bonuses(player, item, sign=1)
         if wear_loc == "wielded":
@@ -4291,7 +4294,7 @@ def cmd_deliver(session, args: List[str]) -> None:
         return
 
     for _ in range(carried):
-        player.inventory.remove(next(item for item in player.inventory if item.lower() == "a bundle of weeds"))
+        inventory.remove_carried(player, next(item for item in player.inventory if item.lower() == "a bundle of weeds"))
 
     session.send(f"You hand {villager.name} {carried} bundle(s) of weeds.")
     for message in missions.on_weeds_delivered(player, villager.template_vnum, carried):
@@ -6662,7 +6665,7 @@ def cmd_sell(session, args: List[str]) -> None:
         dish_price = cooking.price_for_dish(match)
         base_price = dish_price if dish_price is not None else item_types.base_sell_price(match)
         price = 500 if is_feather else max(1, int(base_price * multiplier))
-        player.inventory.remove(match)
+        inventory.remove_carried(player, match)
         player.ryo += price
         session.send(f"You sell {match} for {price} ryo.")
         return
@@ -6697,7 +6700,7 @@ def cmd_sell(session, args: List[str]) -> None:
     dish_price = cooking.price_for_dish(match)
     base_price = dish_price if dish_price is not None else item_types.base_sell_price(match)
     price = max(1, int(base_price * data_shops.sell_multiplier(shop_type)))
-    player.inventory.remove(match)
+    inventory.remove_carried(player, match)
     player.ryo += price
     session.send(f"You sell {match} for {price} ryo.")
 
@@ -7269,7 +7272,7 @@ def cmd_smelt(session, args: List[str]) -> None:
         if ore_name not in player.inventory:
             session.send(f"You no longer have {ore_name} to smelt.")
             return
-        player.inventory.remove(ore_name)
+        inventory.remove_carried(player, ore_name)
 
         ingot_name = mining.smelt_ore(ore_name.lower())
         proto = _find_object_prototype_by_name(ingot_name)
@@ -7471,7 +7474,7 @@ def cmd_cook(session, args: List[str]) -> None:
             return
         if pot_name is not None and not _use_held_job_tool(session, held_tool):
             return
-        player.inventory.remove(ingredient_name)
+        inventory.remove_carried(player, ingredient_name)
 
         result = cooking.attempt_cook(job_level, ingredient_name.lower(), effective_pot)
         if result["burned"]:
@@ -7527,7 +7530,7 @@ def cmd_gemcut(session, args: List[str]) -> None:
             return
         if not _use_held_job_tool(session, held_tool):
             return
-        player.inventory.remove(raw_gem)
+        inventory.remove_carried(player, raw_gem)
         ok, reason = inventory.add_item(player.inventory, result_name)
         if not ok:
             player.inventory.append(raw_gem)
@@ -7597,7 +7600,7 @@ def cmd_inlay(session, args: List[str]) -> None:
         if not _use_held_job_tool(session, held_tool):
             return
         proto["gem_inlay"] = gem_key
-        player.inventory.remove(gem_name)
+        inventory.remove_carried(player, gem_name)
         world_autosave.mark_dirty()
         storage.save_player(player)
         element = gem_inlays.ELEMENT_GEMS.get(gem_key)
@@ -7685,7 +7688,7 @@ def _craft_gathering_tool(session, args: List[str]) -> None:
         taken = []
         for expected in materials:
             item = next(x for x in player.inventory if x.casefold() == expected.casefold())
-            player.inventory.remove(item)
+            inventory.remove_carried(player, item)
             taken.append(item)
         ok, reason = inventory.add_item(player.inventory, result)
         if not ok:
@@ -7697,6 +7700,72 @@ def _craft_gathering_tool(session, args: List[str]) -> None:
         storage.save_player(player)
 
     session.send(f"You begin forging {result} from {materials[0]} and {materials[1]}...")
+    session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, resolve)
+
+
+def _craft_backpack(session, args: List[str]) -> None:
+    """Forge an inventory container with its own 15/30/50 item capacity.
+
+    Syntax: CRAFT BACKPACK <IRON|STEEL|CHAKRA>. The backpack itself uses
+    one ordinary inventory slot; its contents use separate persisted slots.
+    """
+    import data_crafting
+    player = session.player
+    tier = " ".join(w.lower() for w in args).strip()
+    tier = {"chakra steel": "chakra", "chakra-steel": "chakra"}.get(tier, tier)
+    recipe = data_crafting.BACKPACK_RECIPES.get(tier)
+    if not recipe:
+        session.send("Usage: craft backpack <iron|steel|chakra>")
+        return
+    if not data_crafting.can_craft(player):
+        session.send("Backpack forging requires Bukijutsu level 25+ or any class level 100+.")
+        return
+    if tier != "iron" and player.primary_class != "bukijutsu":
+        session.send("Only Bukijutsu blacksmiths can forge Steel and Chakra Steel backpacks.")
+        return
+    if session.is_busy():
+        session.send("You're already busy with something.")
+        return
+
+    materials = (recipe["wood"], recipe["ingot"])
+    def available():
+        return all(any(item.casefold() == needed.casefold()
+                       for item in player.inventory) for needed in materials)
+
+    if not available():
+        session.send(f"To craft {recipe['name']}, carry {materials[0]} and {materials[1]}.")
+        return
+    if not jobs.try_deduct_action_stamina(player):
+        session.send("You don't have enough stamina.")
+        return
+
+    def resolve():
+        if (not data_crafting.can_craft(player)
+                or (tier != "iron" and player.primary_class != "bukijutsu")):
+            session.send("You no longer meet the backpack crafting requirements.")
+            return
+        if not available():
+            session.send("You no longer have the backpack crafting materials.")
+            return
+        # Do not consume the ingredients if the finished item cannot fit.
+        working = list(player.inventory)
+        for needed in materials:
+            working.remove(next(item for item in working
+                                if item.casefold() == needed.casefold()))
+        fits, reason = inventory.add_item(working, recipe["name"])
+        if not fits:
+            session.send(inventory.full_message(reason, recipe["name"]))
+            return
+        for needed in materials:
+            item = next(item for item in player.inventory
+                        if item.casefold() == needed.casefold())
+            inventory.remove_carried(player, item)
+        inventory.add_item(player.inventory, recipe["name"])
+        storage.save_player(player)
+        session.send(f"&GYou craft {recipe['name']}! It holds up to {recipe['capacity']} items. "
+                     "Use PUT <item> IN BACKPACK and GET <item> FROM BACKPACK.&x")
+
+    session.send(f"You start forging {recipe['name']} from {materials[0]} and {materials[1]}...")
     session.start_timed_action("crafting", CRAFT_DELAY_SECONDS, resolve)
 
 
@@ -7717,6 +7786,9 @@ def cmd_craft(session, args: List[str]) -> None:
     import data_crafting
 
     player = session.player
+    if args and args[0].lower() in ("backpack", "bag"):
+        _craft_backpack(session, args[1:])
+        return
     if args and args[0].lower() in ("tool", "rod", "axe", "pickaxe"):
         kind = args[0].lower()
         selection = ([w.lower() for w in args[1:]] if kind == "tool" else
@@ -7756,7 +7828,7 @@ def cmd_craft(session, args: List[str]) -> None:
             if available is None:
                 session.send("You no longer have Medicinal Herbs. The pill is not made.")
                 return
-            player.inventory.remove(available)
+            inventory.remove_carried(player, available)
             ok, reason = inventory.add_item(player.inventory, result)
             if not ok:
                 player.inventory.append(available)
@@ -7776,7 +7848,7 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
+        session.send("Usage: craft backpack <iron|steel|chakra> | craft tool <rod|axe|pickaxe> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()
@@ -7897,9 +7969,9 @@ def cmd_craft(session, args: List[str]) -> None:
                 session.send(inventory.full_message(reason, item_name))
                 return
             for item in material_items[:2]:
-                player.inventory.remove(item)
+                inventory.remove_carried(player, item)
             if selected_gem:
-                player.inventory.remove(selected_gem)
+                inventory.remove_carried(player, selected_gem)
             olc.OBJECT_TEMPLATES[vnum] = proto
             inlay_note = f" with a Cut {gem_key.title()} inlay" if gem_key else ""
             session.send(f"&WYou craft {rarity_colored_name(item_name)} from two {metal}s{inlay_note}!&x")
@@ -7954,6 +8026,9 @@ def cmd_give(session, args: List[str]) -> None:
     if parcel and courier_missions.is_parcel(parcel):
         courier_missions.try_deliver(session, target_query)
         return
+    if parcel and inventory.has_stored_contents(player, parcel):
+        session.send("Empty your backpack before giving it away.")
+        return
 
     if not target_session:
         shopkeeper = next(
@@ -7976,7 +8051,7 @@ def cmd_give(session, args: List[str]) -> None:
             if crafted_provenance.denied(match, player, session=session):
                 session.send(crafted_provenance.DENIED)
                 return
-            player.inventory.remove(match)
+            inventory.remove_carried(player, match)
             player.shop_stock.append({"item_name": match, "price": None,
                                       "item_vnum": playershops.item_vnum_for_stock(match)})
             session.send(
@@ -8004,7 +8079,7 @@ def cmd_give(session, args: List[str]) -> None:
             prototype = _find_object_prototype_by_name(match)
             obj_vnum = next((v for v, template in olc.OBJECT_TEMPLATES.items()
                              if template is prototype), 0)
-            player.inventory.remove(match)
+            inventory.remove_carried(player, match)
             session.send(f"You give {rarity_colored_name(match)} to {scripted_mob.name}.")
             old_vnum = getattr(session, "_mudprog_object_vnum", 0)
             old_name = getattr(session, "_mudprog_object_name", "")
@@ -8038,7 +8113,7 @@ def cmd_give(session, args: List[str]) -> None:
     if not ok:
         session.send(f"{target_session.player.name} has no room for that.")
         return
-    player.inventory.remove(match)
+    inventory.remove_carried(player, match)
     session.send(f"You give {rarity_colored_name(match)} to {target_session.player.name}.")
     target_session.send(f"{player.name} gives you {rarity_colored_name(match)}.")
     import room_actions
@@ -8190,8 +8265,12 @@ def cmd_drop(session, args: List[str]) -> None:
                for item in player.inventory):
             session.send("Your Iron Ascension rewards are soulbound and cannot be dropped.")
             return
+        if any(player.backpack_contents.values()):
+            session.send("Empty your backpacks before using DROP ALL.")
+            return
         dropped = list(player.inventory)
         player.inventory.clear()
+        player.backpack_contents.clear()
         room.ground_items.extend(dropped)
         counts = inventory.slot_counts(dropped)
         summary = ", ".join(
@@ -8217,8 +8296,11 @@ def cmd_drop(session, args: List[str]) -> None:
     if match.endswith(" [glued]"):
         session.send("That item is glued to you and cannot be dropped.")
         return
+    if inventory.has_stored_contents(player, match):
+        session.send("Empty your backpack before dropping it.")
+        return
 
-    player.inventory.remove(match)
+    inventory.remove_carried(player, match)
     room.ground_items.append(match)
     session.send(f"You drop {rarity_colored_name(match)}.")
     import room_actions
@@ -8357,6 +8439,32 @@ def _find_backpack_position(player, backpack_query: str):
     return candidates_with_positions[index - 1]
 
 
+def cmd_backpack(session, args: List[str]) -> None:
+    """Show a carried container's own item capacity and stored contents."""
+    player = session.player
+    if not args:
+        bags = [(position, name) for position, name in enumerate(player.inventory)
+                if (proto := _find_object_prototype_by_name(name))
+                and proto.get("container_capacity", 0) > 0]
+        if not bags:
+            session.send("You aren't carrying a backpack or container.")
+            return
+        session.send("Your containers:\n" + "\n".join(
+            f"  {name}: {len(player.backpack_contents.get(str(pos), []))}/"
+            f"{_find_object_prototype_by_name(name)['container_capacity']} items"
+            for pos, name in bags))
+        return
+    position, name = _find_backpack_position(player, " ".join(args).lower())
+    if position is None:
+        session.send("You aren't carrying a container by that name.")
+        return
+    contents = player.backpack_contents.get(str(position), [])
+    capacity = _find_object_prototype_by_name(name)["container_capacity"]
+    lines = [f"{rarity_colored_name(name)} ({len(contents)}/{capacity} items):"]
+    lines += [f"  {rarity_colored_name(item)}" for item in contents] if contents else ["  (empty)"]
+    session.send("\n".join(lines))
+
+
 def cmd_put(session, args: List[str]) -> None:
     """'put <item> in <backpack>' -- per direct confirmation (Section
     158): moves an item from ordinary inventory INTO a real container
@@ -8397,6 +8505,10 @@ def cmd_put(session, args: List[str]) -> None:
     if match.endswith(" [glued]"):
         session.send("That item is glued to you and cannot be stored.")
         return
+    match_proto = _find_object_prototype_by_name(match)
+    if match_proto and match_proto.get("container_capacity", 0) > 0:
+        session.send("Containers cannot be placed inside other containers.")
+        return
     if item_position == position:
         session.send("You can't put a container inside itself.")
         return
@@ -8408,17 +8520,9 @@ def cmd_put(session, args: List[str]) -> None:
         session.send(f"{rarity_colored_name(backpack_name)} is full.")
         return
 
-    del player.inventory[item_position]
-    # If the item removed came BEFORE the backpack in the list, every
-    # later real position (including the backpack's own) just shifted
-    # down by one -- re-key backpack_contents to the correct, new
-    # position, or this backpack's own contents would silently point
-    # at the wrong real slot from here on.
+    inventory.remove_carried_at(player, item_position)
     if item_position < position:
-        new_position = position - 1
-        if str(position) in player.backpack_contents:
-            player.backpack_contents[str(new_position)] = player.backpack_contents.pop(str(position))
-        position = new_position
+        position -= 1
     contents = player.backpack_contents.setdefault(str(position), [])
     contents.append(match)
     session.send(f"You put {rarity_colored_name(match)} in {rarity_colored_name(backpack_name)}.")
@@ -8814,7 +8918,7 @@ def cmd_channel(session, args: List[str]) -> None:
             session.send("Your village's Kage chamber is unavailable. Contact an administrator.")
         return
 
-    player.inventory.remove(match)
+    inventory.remove_carried(player, match)
 
     if revealing_tertiary:
         player.chakra_nature_tertiary = biomes.roll_tertiary_chakra_nature(
@@ -8969,7 +9073,7 @@ def cmd_read(session, args: List[str]) -> None:
     player.skill_proficiencies[display] = leveling.initial_proficiency(player)
     import skill_training
     skill_training.grant_without_practice(player, display)
-    player.inventory.remove(match)
+    inventory.remove_carried(player, match)
     if jutsu_key == "reaper death seal":
         reverse = data_jutsu.JUTSU["reverse reaper seal"]["display_name"]
         if reverse not in player.learned_skills:
@@ -10585,6 +10689,7 @@ COMMANDS = {
     "drop.all": lambda session, args: cmd_drop(session, ["all"]),
     "get": cmd_get,
     "put": cmd_put,
+    "backpack": cmd_backpack, "bag": cmd_backpack,
     "read": cmd_read, "study": cmd_read,
     "channel": cmd_channel,
     "buy": cmd_buy,

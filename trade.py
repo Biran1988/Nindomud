@@ -124,6 +124,12 @@ def complete_trade(trade: Trade) -> None:
         if Counter(offer["items"]) - Counter(player.inventory):
             raise ValueError("Trade blocked: an offered item is no longer available.")
     import crafted_provenance
+    import inventory
+    # Backpacks store their contents in the original owner's save data.
+    # A transfer can only move an empty container, not silently lose contents.
+    for player, offer in ((player_a, trade.offer_a), (player_b, trade.offer_b)):
+        if any(inventory.has_stored_contents(player, name) for name in offer["items"]):
+            raise ValueError("Empty your backpack before trading it.")
     # Validate both sides before moving even one item or one ryo. A
     # staged trade can outlive an IP or item change.
     for item in trade.offer_a["items"]:
@@ -138,9 +144,9 @@ def complete_trade(trade: Trade) -> None:
             raise ValueError(crafted_provenance.DENIED)
 
     for item in trade.offer_a["items"]:
-        player_a.inventory.remove(item)
+        inventory.remove_carried(player_a, item)
     for item in trade.offer_b["items"]:
-        player_b.inventory.remove(item)
+        inventory.remove_carried(player_b, item)
     player_a.inventory.extend(trade.offer_b["items"])
     player_b.inventory.extend(trade.offer_a["items"])
 

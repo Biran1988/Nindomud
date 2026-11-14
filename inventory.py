@@ -88,3 +88,42 @@ def full_message(reason: str, item_name: str) -> str:
     if reason == "stack_full":
         return f"You're already carrying the maximum of {item_name} ({MAX_STACK_SIZE})."
     return f"Your inventory is full ({MAX_INVENTORY_SLOTS} different items max)."
+
+
+
+def has_stored_contents(player, item_name: str) -> bool:
+    """Whether ANY matching carried container has stored items.
+
+    Empty containers can be transferred; populated containers are kept on
+    their owner until emptied because saved contents belong to that player's
+    own inventory index, not a movable object instance.
+    """
+    return any(0 <= int(index) < len(player.inventory)
+               and player.inventory[int(index)] == item_name and bool(items)
+               for index, items in getattr(player, "backpack_contents", {}).items())
+
+
+def remove_carried_at(player, position: int) -> str:
+    """Remove one item and reindex every remaining backpack atomically.
+
+    Never allow a backpack with contents to be removed from inventory;
+    otherwise saved contents could be orphaned or attached to another bag.
+    """
+    contents = getattr(player, "backpack_contents", None)
+    if contents and contents.get(str(position)):
+        raise ValueError("Empty your backpack before moving it.")
+    name = player.inventory.pop(position)
+    if contents is None:
+        return name  # legacy test/mob actors may have only inventory
+    shifted = {}
+    for key, items in contents.items():
+        old_pos = int(key)
+        if old_pos != position:
+            shifted[str(old_pos - 1 if old_pos > position else old_pos)] = items
+    player.backpack_contents = shifted
+    return name
+
+
+def remove_carried(player, item_name: str) -> str:
+    """Like inventory.remove(name), but preserve carried container indices."""
+    return remove_carried_at(player, player.inventory.index(item_name))

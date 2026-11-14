@@ -140,3 +140,15 @@ TOOL_NAMES = {
 
 def job_tool_name(kind: str, tier: str) -> str:
     return TOOL_NAMES[(kind, tier)]
+
+
+# Craftable storage backpacks reuse the established separate container slots.
+# Ingredients and class gates match the material-based forge professions.
+BACKPACK_RECIPES = {
+    "iron": {"name": "An Ironbound Oak Backpack", "capacity": 15,
+             "wood": "A Sturdy Oak Log", "ingot": "An Iron Ingot", "price": 1100},
+    "steel": {"name": "A Steel Ironwood Backpack", "capacity": 30,
+              "wood": "An Ironwood Log", "ingot": "A Steel Ingot", "price": 6500},
+    "chakra": {"name": "A Chakra Steel Heartwood Backpack", "capacity": 50,
+               "wood": "An Ancient Heartwood Log", "ingot": "A Chakra Steel Ingot", "price": 90000},
+}

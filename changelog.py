@@ -630,4 +630,5 @@ CHANGELOG = [
     ("15.471", "The highest-tier Chakra Steel Heartwood Pickaxe now strongly favors Chakra Steel ore, produces very little iron, and has a 20% chance of a bonus gem after a successful ore find."),
     ("15.472", "The highest-tier Chakra Steel Heartwood Fishing Rod now catches only high-tier Koi and Leviathan, when unlocked by Fishing level, instead of filling catches with low-level fish."),
     ("15.473", "The highest-tier Chakra Steel Heartwood Axe now yields only Elder Oak, Ancient Heartwood and Yew (when unlocked), never Kindling, Birch, Sturdy Oak or Ironwood."),
+    ("15.474", "Added craftable Iron (15-item), Steel (30-item), and Chakra Steel (50-item) backpacks using real wood and ingot recipes. PUT/GET and BACKPACK inspect their separate saved contents; nested containers and transfers of filled bags are blocked to protect items."),
 ]
