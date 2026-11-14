@@ -41,7 +41,7 @@ class LegacyTechniquesTests(unittest.TestCase):
         with patch.object(leveling.storage, "save_player"):
             leveling.sync_universal_skills(self.player)
         self.assertNotIn("1000 Years of Death", self.player.learned_skills)
-        scroll = olc.OBJECT_TEMPLATES[9810]["short_desc"]
+        scroll = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS["death_scroll"]]["short_desc"]
         self.player.inventory.append(scroll)
         commands.cmd_read(self.session, ["scroll", "of", "100", "years", "of", "death"])
         self.assertIn("1000 Years of Death", self.player.learned_skills)

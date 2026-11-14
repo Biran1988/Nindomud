@@ -64,7 +64,7 @@ class InfoScrollTests(unittest.TestCase):
             self.assertEqual(info["short_desc"], "An Info Scroll")
             self.assertTrue(info["scroll_message_writable"])
             self.assertEqual(info["scroll_jutsu"], "")
-            track = olc.OBJECT_TEMPLATES[9771]
+            track = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS["track_scroll"]]
             self.assertEqual(track["scroll_jutsu"], "track")
             self.assertFalse(track.get("scroll_message_writable", False))
 

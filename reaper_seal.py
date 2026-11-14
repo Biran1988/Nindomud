@@ -10,7 +10,7 @@ import uuid
 SEAL_KEY = "reaper death seal"
 REVERSE_KEY = "reverse reaper seal"
 MASK_VNUM = 9820
-SCROLL_VNUM = 9821
+SCROLL_VNUM = 31537  # Moved to Scroll Jutsu area; verified by catalog regression
 MASK_NAME = "A Shikigami Mask"
 SCROLL_NAME = "A Scroll of the Reaper Death Seal"
 ROOM_BASE = 1500000

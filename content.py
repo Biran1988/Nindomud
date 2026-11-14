@@ -34,6 +34,7 @@ import lumberjack
 import mining
 import cooking
 import olc
+import jutsu_scroll_catalog
 import playershops
 import spawn_points
 import world
@@ -102,16 +103,16 @@ _ITEM_VNUMS = {
     # Lumberjack tools (Mining's own moved to the new 20100+ range)
     "axe_copper": 20200, "axe_iron": 20201, "axe_steel": 20202,
     "axe_chakra_steel": 20203, "axe_blacksteel": 20204, "axe_diamond_edged": 20205,
-    "genin_study_scroll": 9750,
-    "track_scroll": 9771,
+    "genin_study_scroll": jutsu_scroll_catalog.vnum_for("shadow shuriken technique"),
+    "track_scroll": jutsu_scroll_catalog.vnum_for("track"),
     "chakra_paper": 9801,
     "demon_wind": 9802, "exploding_note": 9803, "smoke_bomb": 9804,
     "poison_gas_bomb": 9805, "exploding_clay": 9806, "mighty_fan": 9807,
     "glue_pot": 9808,
     "medicinal_herbs": 9809,
-    "death_scroll": 9810,
+    "death_scroll": jutsu_scroll_catalog.vnum_for("1000 years of death"),
     "info_scroll": 9811,
-    "advanced_clone_scroll": 9812,
+    "advanced_clone_scroll": jutsu_scroll_catalog.vnum_for("advanced shadow clone jutsu"),
     # Fixed, craft-only containers; never replace builder-owned existing objects.
     "backpack_iron": 20980, "backpack_steel": 20981, "backpack_chakra": 20982,
 }
@@ -159,21 +160,7 @@ def _register_shared_items() -> None:
             and info_proto.get("item_type") == "scroll"
             and not info_proto.get("scroll_jutsu")):
         info_proto["scroll_message_writable"] = True
-    if _ITEM_VNUMS["death_scroll"] not in olc.OBJECT_TEMPLATES:
-        make(_ITEM_VNUMS["death_scroll"], "A Scroll of 1000 Years of Death", "scroll", 0)
-        olc.OBJECT_TEMPLATES[_ITEM_VNUMS["death_scroll"]]["scroll_jutsu"] = "1000 years of death"
-    # Optional high-level scroll: builder-spawnable and rewardable, not
-    # automatically sold in starter village shops. Saved OLC data wins.
-    if _ITEM_VNUMS["advanced_clone_scroll"] not in olc.OBJECT_TEMPLATES:
-        make(_ITEM_VNUMS["advanced_clone_scroll"],
-             "An Advanced Shadow Clone Scroll", "scroll", 15000)
-        scroll = olc.OBJECT_TEMPLATES[_ITEM_VNUMS["advanced_clone_scroll"]]
-        scroll["scroll_jutsu"] = "advanced shadow clone jutsu"
-        scroll["level"] = 75
-        scroll["description"] = (
-            "An advanced shadow-clone technique for delegating gathering and "
-            "training at a local work site. READ to learn it at level 75."
-        )
+    jutsu_scroll_catalog.install(migrate_saved=False)
     # Backfill persistent tiered tool prototypes on existing servers as well:
     # this must run BEFORE the legacy early-return for old shared items.
     for _kind, _vnumprefix in (("rod", "rod"), ("pickaxe", "pickaxe"), ("axe", "axe")):
@@ -215,15 +202,6 @@ def _register_shared_items() -> None:
     make(_ITEM_VNUMS["ramen"], "A Bowl of Ramen", "food", 12)
     make(_ITEM_VNUMS["canteen"], "A Canteen of Water", "drink", 5)
     make(_ITEM_VNUMS["tea"], "A Cup of Green Tea", "drink", 6)
-    make(_ITEM_VNUMS["genin_study_scroll"], "A Genin Study Scroll", "scroll", 0)
-    olc.OBJECT_TEMPLATES[_ITEM_VNUMS["genin_study_scroll"]]["scroll_jutsu"] = "shadow shuriken technique"
-    make(_ITEM_VNUMS["track_scroll"], "A Track Scroll", "scroll", 500)
-    olc.OBJECT_TEMPLATES[_ITEM_VNUMS["track_scroll"]]["scroll_jutsu"] = "track"
-    olc.OBJECT_TEMPLATES[_ITEM_VNUMS["track_scroll"]]["long_desc"] = "A weathered scroll, sealed with a hunter-nin's own mark, lies here."
-    olc.OBJECT_TEMPLATES[_ITEM_VNUMS["track_scroll"]]["description"] = (
-        "A hunter-nin's own training scroll, teaching a technique for picking up and "
-        "following a trail across real distance -- reading it unlocks the Track jutsu."
-    )
     make(_ITEM_VNUMS["shirt"], "A Basic Ninja Shirt", "armor", 20, wear_loc="body")
     make(_ITEM_VNUMS["pants"], "Basic Ninja Pants", "armor", 20, wear_loc="legs")
     make(_ITEM_VNUMS["sandals"], "A Basic Ninja Sandals", "armor", 15, wear_loc="feet")
@@ -747,6 +725,10 @@ def populate() -> None:
     reaper_seal.restore_world()
     import technique_names
     technique_names.migrate_templates()
+    # Final pass after saved world, spawn templates, and all builder edits win.
+    # Register ordered 31501-32000 scrolls, migrate old scroll object IDs,
+    # and leave the user's rooms and non-scroll objects untouched.
+    jutsu_scroll_catalog.install()
 
     # Special event proctor is guaranteed without creating a saved spawn point.
     chunin_exam.ensure_proctor()
