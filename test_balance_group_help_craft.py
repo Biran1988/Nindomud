@@ -134,7 +134,10 @@ class ForgingAndExamineTests(unittest.TestCase):
                enter_single_line=lambda prompt, cb: cb("chakra steel"))
         with patch("world_autosave.mark_dirty") as saved:
             commands.cmd_craft(s, ["weapon", "sword", "Storm", "Blade"])
-        self.assertIn("Storm Blade", player.inventory)
+        import crafted_identity
+        crafted = [item for item in player.inventory if crafted_identity.display(item) == "Storm Blade"]
+        self.assertEqual(len(crafted), 1)
+        self.assertIsNotNone(crafted_identity.vnum(crafted[0]))
         self.assertNotIn("A Chakra Steel Ingot", player.inventory)
         prototypes = [proto for proto in olc.OBJECT_TEMPLATES.values()
                       if proto.get("short_desc") == "Storm Blade"]

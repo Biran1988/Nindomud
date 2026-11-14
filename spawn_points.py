@@ -283,7 +283,10 @@ def _spawn_one(kind: str, vnum: int, room_vnum: int) -> None:
     elif kind == "item":
         proto = olc.OBJECT_TEMPLATES.get(vnum)
         if proto:
-            room.ground_items.append(proto["short_desc"])
+            import crafted_identity
+            item = (crafted_identity.encode(proto["short_desc"], vnum)
+                    if proto.get("crafted_vnum_identity") else proto["short_desc"])
+            room.ground_items.append(item)
 
 
 def respawn_missing_mobs_in_area(area) -> int:

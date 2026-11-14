@@ -74,28 +74,27 @@ def is_chakra_steel_weapon(item: str) -> bool:
     canonical format for existing saved weapons. A developer-made item
     can also declare explicit material provenance on its own prototype.
     """
-    import olc
+    import crafted_identity
     original_name = base_item(item)
     if not original_name:
         return False
-    for proto in olc.OBJECT_TEMPLATES.values():
-        if proto.get("short_desc", "").casefold() != original_name.casefold():
-            continue
-        if proto.get("item_type") != "weapon" or proto.get("weapon_type") not in data_weapons.WEAPON_TYPES:
-            return False
-        materials = proto.get("craft_materials")
-        if isinstance(materials, (tuple, list)) and materials:
-            return "chakra steel ingot" in {str(x).casefold() for x in materials}
-        description = str(proto.get("description", "")).casefold()
-        # Only the specific canonical forging statement, not a player's
-        # custom display name or description with incidental keywords.
-        import re
-        legacy = re.fullmatch(
-            r"a crafted weapon named .+, forged from ([a-z ]+) and ([a-z ]+)\.",
-            description,
-        )
-        return bool(legacy and "chakra steel ingot" in legacy.groups())
-    return False
+    linked = (crafted_identity.resolve(original_name) if crafted_identity.marked(original_name)
+              else crafted_identity.legacy_match(original_name))
+    if not linked:
+        return False
+    proto = linked[1]
+    if proto.get("item_type") != "weapon" or proto.get("weapon_type") not in data_weapons.WEAPON_TYPES:
+        return False
+    materials = proto.get("craft_materials")
+    if isinstance(materials, (tuple, list)) and materials:
+        return "chakra steel ingot" in {str(x).casefold() for x in materials}
+    description = str(proto.get("description", "")).casefold()
+    import re
+    legacy = re.fullmatch(
+        r"a crafted weapon named .+, forged from ([a-z ]+) and ([a-z ]+)\.",
+        description,
+    )
+    return bool(legacy and "chakra steel ingot" in legacy.groups())
 
 
 def _known_elements(player):
@@ -108,11 +107,12 @@ def _known_elements(player):
 
 
 def _owned_item(player, query):
-    query = query.lower()
-    for item in player.inventory:
-        if query in base_item(item).lower():
-            return item
-    return None
+    import inventory
+    import crafted_identity
+    index, keyword = inventory.parse_indexed_query(query.lower())
+    matches = [item for item in player.inventory
+               if keyword in crafted_identity.display(base_item(item)).lower()]
+    return matches[index - 1] if 1 <= index <= len(matches) else None
 
 
 def _pay(session, key):

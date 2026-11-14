@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "durability",
+  "keywords": [
+    "durability",
+    "gear durability",
+    "armor durability",
+    "weapon durability",
+    "breaking equipment"
+  ],
+  "title": "Crafted Weapon and Armor Durability",
+  "body": "Syntax: examine <crafted item>\n\nEvery forged weapon or armor piece has durability stored on its object, not in its name. Iron gear starts with 2,500 durability, Steel with 5,000, and Chakra Steel with 10,000. Wielded crafted weapons lose 1 durability per landed melee strike, including PvP. Each landed hit against a player has a small 10% chance to wear down one piece of crafted armor by 1. At zero durability the equipment breaks, disappears, and its individual item VNUM is released for future crafting. Examine displays the exact remaining and maximum durability, regardless of Examine proficiency. The item name, inventory line and equipment name never gain a durability counter or suffix. Gathering tool remaining uses also appear in EXAMINE without a visible name suffix. Ordinary non-crafted combat gear is unaffected.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

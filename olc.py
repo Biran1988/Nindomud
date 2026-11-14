@@ -687,7 +687,10 @@ def cmd_oinvoke(session, args: List[str]) -> None:
     if not room:
         session.send(f"Room {room_vnum} does not exist.")
         return
-    room.ground_items.append(prototype["short_desc"])
+    import crafted_identity
+    item = (crafted_identity.encode(prototype["short_desc"], vnum)
+            if prototype.get("crafted_vnum_identity") else prototype["short_desc"])
+    room.ground_items.append(item)
     _log(session.player.name, "object", vnum, f"invoked in room {room_vnum}")
     session.send(f"{prototype['short_desc']} appears in room {room_vnum}.")
 
@@ -3561,7 +3564,11 @@ def cmd_oset(session, args: List[str]) -> None:
             session.send(f"No object prototype {vnum} exists.")
             return
         room = world.WORLD.get(session.player.room_vnum)
-        room.ground_items.append(OBJECT_TEMPLATES[vnum]["short_desc"])
+        import crafted_identity
+        proto = OBJECT_TEMPLATES[vnum]
+        item = (crafted_identity.encode(proto["short_desc"], vnum)
+                if proto.get("crafted_vnum_identity") else proto["short_desc"])
+        room.ground_items.append(item)
         _log(session.player.name, "object", vnum, f"loaded onto the ground in room {room.vnum}")
         session.send(f"{OBJECT_TEMPLATES[vnum]['short_desc']} appears on the ground.")
         return

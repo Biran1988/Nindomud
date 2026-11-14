@@ -2954,10 +2954,21 @@ def cmd_inventory(session, args: List[str]) -> None:
         session.send("You aren't carrying anything.")
         return
     counts = inventory.slot_counts(player.inventory)
+    # Distinct VNUMs can share a visible label. Number just those entries
+    # to make it obvious they are separate items and can be targeted by
+    # 1.keyword / 2.keyword without exposing internal item metadata.
+    from collections import Counter
+    labels = {name: rarity_colored_name(tool_durability.display_name(name))
+              for name in counts}
+    duplicate_labels = Counter(labels.values())
+    visible_index = {}
     lines = []
     for name, count in counts.items():
-        colored = rarity_colored_name(tool_durability.display_name(name))
+        colored = labels[name]
         shown = f"{colored} (x{count})" if count > 1 else colored
+        if duplicate_labels[colored] > 1:
+            visible_index[colored] = visible_index.get(colored, 0) + 1
+            shown = f"{visible_index[colored]}. {shown}"
         illusion = player.genjutsu_item_illusions.get(name)
         if illusion:
             shown += f" &M(appears as {illusion['alias']})&x"
@@ -3086,14 +3097,16 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
         return
     query = " ".join(args).lower()
 
-    already_equipped = next((item for item in player.equipment.values() if _item_matches(query, item)), None)
-    if already_equipped:
-        session.send(f"You are already using {already_equipped}.")
-        return
-
+    # Inventory items take precedence. Two separate VNUMs can have the
+    # same visible name, so don't reject a new piece just because its label
+    # matches something already equipped. Numbered keywords select copies.
     match = find_indexed_item(query, player.inventory)
     if not match:
-        session.send(f"You aren't carrying anything like '{query}'.")
+        already_equipped = find_indexed_item(query, list(player.equipment.values()))
+        if already_equipped:
+            session.send(f"You are already using {already_equipped}.")
+        else:
+            session.send(f"You aren't carrying anything like '{query}'.")
         return
 
     import iron_ascension
@@ -3192,9 +3205,12 @@ def cmd_remove(session, args: List[str]) -> None:
         _remove_all(session)
         return
 
-    match_slot = "offhand" if query in ("offhand", "off hand") and player.equipment.get("offhand") else next(
-        (slot for slot, item in player.equipment.items() if _item_matches(query, item)), None
-    )
+    # Support removing one of several identically named pieces in different
+    # equipment slots without confusing their separate prototype VNUMs.
+    selected = find_indexed_item(query, list(player.equipment.values()))
+    match_slot = ("offhand" if query in ("offhand", "off hand") and player.equipment.get("offhand")
+                  else next((slot for slot, item in player.equipment.items()
+                             if item is not None and item == selected), None))
     if not match_slot:
         session.send(f"You aren't wearing or wielding anything like '{query}'.")
         return
@@ -6400,10 +6416,13 @@ def cmd_buy(session, args: List[str]) -> None:
             session.send("You can't afford that.")
             return
         import crafted_provenance
-        if crafted_provenance.denied(obj["short_desc"], player, session=session):
+        import crafted_identity
+        item_ref = (crafted_identity.encode(obj["short_desc"], obj_vnum)
+                    if obj.get("crafted_vnum_identity") else obj["short_desc"])
+        if crafted_provenance.denied(item_ref, player, session=session):
             session.send(crafted_provenance.DENIED)
             return
-        ok, reason = inventory.add_item(player.inventory, obj["short_desc"])
+        ok, reason = inventory.add_item(player.inventory, item_ref)
         if not ok:
             session.send(inventory.full_message(reason, obj["short_desc"]))
             return
@@ -8094,11 +8113,11 @@ def cmd_craft(session, args: List[str]) -> None:
             if jobs.get_job_level(player, "gemcutter") < required_gem_level:
                 session.send(f"That gem requires Gemcutter level {required_gem_level} to inlay.")
                 return
-        # Item names are saved as strings. Reject duplicate object names so
-        # gemstone inlays cannot accidentally change another player's gear.
-        if any(p.get("short_desc", "").casefold() == item_name.casefold()
-               for p in olc.OBJECT_TEMPLATES.values()):
-            session.send("That item name is already in use. Choose a unique forged-item name.")
+        # Display names may repeat. The item VNUM is the only unique key.
+        # Reserve the internal identity syntax so item names cannot spoof it.
+        import crafted_identity
+        if crafted_identity.marked(item_name):
+            session.send("That item name contains reserved item metadata.")
             return
 
         def ingots():
@@ -8119,10 +8138,6 @@ def cmd_craft(session, args: List[str]) -> None:
                 return
             if selected_gem and selected_gem not in player.inventory:
                 session.send("You no longer carry the selected cut gem.")
-                return
-            if any(p.get("short_desc", "").casefold() == item_name.casefold()
-                   for p in olc.OBJECT_TEMPLATES.values()):
-                session.send("That name was already taken; the forge is cancelled.")
                 return
             stat_value = data_crafting.combined_stat_value(metal, metal)
             vnum = _allocate_crafted_item_vnum()
@@ -8152,9 +8167,19 @@ def cmd_craft(session, args: List[str]) -> None:
             import equipment_durability
             equipment_durability.initialise(proto)
 
+            # Mark the original name-only prototype when a second forged item
+            # shares its display name, so old saved inventories keep resolving
+            # to their original item instead of the new crafted copy.
+            exact_existing = [p for p in olc.OBJECT_TEMPLATES.values()
+                              if p.get("short_desc", "").casefold() == item_name.casefold()]
+            if len(exact_existing) == 1 and not exact_existing[0].get("crafted_vnum_identity"):
+                original = exact_existing[0]
+            else:
+                original = None
+            proto["crafted_vnum_identity"] = True
+            item_ref = crafted_identity.encode(item_name, vnum)
             # Do not consume ingredients unless the resulting item fits.
-            # Revert the new prototype if the inventory is at capacity.
-            ok, reason = inventory.add_item(player.inventory, item_name)
+            ok, reason = inventory.add_item(player.inventory, item_ref)
             if not ok:
                 session.send(inventory.full_message(reason, item_name))
                 return
@@ -8162,6 +8187,8 @@ def cmd_craft(session, args: List[str]) -> None:
                 inventory.remove_carried(player, item)
             if selected_gem:
                 inventory.remove_carried(player, selected_gem)
+            if original is not None:
+                original["legacy_name_owner"] = True
             olc.OBJECT_TEMPLATES[vnum] = proto
             inlay_note = f" with a Cut {gem_key.title()} inlay" if gem_key else ""
             session.send(f"&WYou craft {rarity_colored_name(item_name)} from two {metal}s{inlay_note}!&x")
@@ -8758,7 +8785,8 @@ def _item_matches(query: str, item_name: str) -> bool:
     Other terms keep their previous partial matching behavior (e.g.
     'iron rod' still finds 'An Ironwood Fishing Rod').
     """
-    item_lower = item_name.lower()
+    import crafted_identity
+    item_lower = crafted_identity.display(item_name).lower()
     item_words = item_lower.split()
     return all((word in item_words if word == "axe" else word in item_lower)
                for word in query.lower().split())
@@ -8782,14 +8810,18 @@ def find_indexed_item(query: str, items):
 
 
 def _find_object_prototype_by_name(item_name: str):
-    """Reverse lookup: player inventory is plain name strings, not
-    linked to a vnum, so to find which oset prototype a carried item
-    corresponds to (for scroll_jutsu, etc.) we match on short_desc --
-    same substring-match convention used everywhere else in this file."""
+    """Resolve forged gear by saved VNUM, legacy equipment by name."""
     import technique_names
     import scroll_writing
+    import crafted_identity
     if not isinstance(item_name, str) or not item_name:
         return None
+    if crafted_identity.marked(item_name):
+        linked = crafted_identity.resolve(item_name)
+        return linked[1] if linked else None
+    legacy = crafted_identity.legacy_match(item_name)
+    if legacy:
+        return legacy[1]
     query = technique_names.scroll_name(scroll_writing.plain_name(item_name)).lower()
     for proto in olc.OBJECT_TEMPLATES.values():
         label = proto.get("short_desc")
@@ -8809,6 +8841,13 @@ def _find_object_vnum_by_name(item_name: str):
     # Never call .lower() on that placeholder during a combat hit roll.
     if not isinstance(item_name, str) or not item_name:
         return None
+    import crafted_identity
+    if crafted_identity.marked(item_name):
+        linked = crafted_identity.resolve(item_name)
+        return linked[0] if linked else None
+    legacy = crafted_identity.legacy_match(item_name)
+    if legacy:
+        return legacy[0]
     query = item_name.lower()
     for vnum, proto in olc.OBJECT_TEMPLATES.items():
         label = proto.get("short_desc")
@@ -9036,7 +9075,8 @@ def rarity_colored_name(item_name: str) -> str:
     _examine_rarity_colored_name below."""
     import lightsabers
     import ninja_arts
-    clean_name = tool_durability.base_name(ninja_arts.base_item(item_name))
+    import crafted_identity
+    clean_name = crafted_identity.display(tool_durability.base_name(ninja_arts.base_item(item_name)))
     themed = legendary_items.styled_name(clean_name)
     return themed if themed is not None else lightsabers.display_name(clean_name)
 

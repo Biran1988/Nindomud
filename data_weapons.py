@@ -135,6 +135,15 @@ def weapon_type_for_item(item_name: str) -> Optional[str]:
     if not item_name:
         return None
     import olc
+    import crafted_identity
+    if crafted_identity.marked(item_name):
+        linked = crafted_identity.resolve(item_name)
+        weapon_type = linked[1].get("weapon_type") if linked else None
+        return weapon_type if weapon_type in WEAPON_TYPES else None
+    legacy = crafted_identity.legacy_match(item_name)
+    if legacy:
+        weapon_type = legacy[1].get("weapon_type")
+        return weapon_type if weapon_type in WEAPON_TYPES else None
     query = item_name.lower()
     # The exact prototype wins over broader names such as "A Basic Kunai"
     # matching a builder's distinct item named "Kunai".

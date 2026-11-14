@@ -35,7 +35,10 @@ class AuraCraftingTests(unittest.TestCase):
                 name = f"Unique Aura {case_number} " + "_".join(selector)
                 with patch.object(commands.world_autosave, "mark_dirty") if hasattr(commands, 'world_autosave') else patch('world_autosave.mark_dirty'):
                     commands.cmd_craft(session, ["armor", *selector, name])
-                self.assertIn(name, session.player.inventory)
+                import crafted_identity
+                matches = [i for i in session.player.inventory if crafted_identity.display(i) == name]
+                self.assertEqual(len(matches), 1)
+                self.assertIsNotNone(crafted_identity.vnum(matches[0]))
                 proto = next(p for p in olc.OBJECT_TEMPLATES.values() if p.get("short_desc") == name)
                 self.assertEqual(proto["wear_loc"], "chakra aura")
                 self.assertEqual(proto["item_type"], "armor")

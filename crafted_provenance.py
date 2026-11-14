@@ -48,13 +48,19 @@ def stamped_prototype(item_name: str):
     """Resolve exact unique item identity; unknown/duplicate is not trusted."""
     import olc
     import ninja_arts
+    import crafted_identity
+    if crafted_identity.marked(item_name):
+        linked = crafted_identity.resolve(item_name)
+        return linked[1] if linked else None
+    linked = crafted_identity.legacy_match(ninja_arts.base_item(item_name))
+    if linked:
+        return linked[1]
     name = ninja_arts.base_item(item_name)
     matches = [p for p in olc.OBJECT_TEMPLATES.values()
-               if (p.get("short_desc", "").casefold() == name.casefold()
-                   or name.casefold() in {
-                       str(previous).casefold()
-                       for previous in p.get("previous_short_descs", [])
-                   })]
+               if name.casefold() in {
+                   str(previous).casefold()
+                   for previous in p.get("previous_short_descs", [])
+               }]
     return matches[0] if len(matches) == 1 else None
 
 

@@ -196,7 +196,8 @@ class Session:
         # Per-unit crafted pill metadata lives in legacy item strings but is
         # never part of a player's visible item name; examine shows its level.
         from pill_crafting import display_name
-        text = display_name(text)
+        import crafted_identity
+        text = crafted_identity.display(display_name(text))
         text = _terminal_safe_text(text)
         if highlight_jutsu:
             text = jutsu_colors.highlight_names(text)

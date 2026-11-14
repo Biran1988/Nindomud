@@ -48,10 +48,11 @@ def initialise(proto):
 
 def _forged_item(item_name, expected_type):
     import olc
-    for vnum, proto in olc.OBJECT_TEMPLATES.items():
-        if (proto.get("short_desc", "").casefold() == str(item_name).casefold()
-                and proto.get("item_type") == expected_type and maximum(proto)):
-            return vnum, proto
+    import crafted_identity
+    linked = (crafted_identity.resolve(item_name) if crafted_identity.marked(item_name)
+              else crafted_identity.legacy_match(item_name))
+    if linked and linked[1].get("item_type") == expected_type and maximum(linked[1]):
+        return linked
     return None, None
 
 

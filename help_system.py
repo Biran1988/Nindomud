@@ -5623,3 +5623,15 @@ DEFAULT_HELP_ENTRIES.append({
         "lumberjack and gemcutter (1.5 times ordinary specialty payouts)."
     ),
 })
+
+# New forged gear has a hidden VNUM marker and no longer needs globally
+# unique display names; all copies still have distinct saved prototype data.
+for _forge_help in DEFAULT_HELP_ENTRIES:
+    if _forge_help.get("primary_keyword") == "craft":
+        _forge_help["body"] += (
+            "\n\nYou may reuse any crafted weapon or armor display name. "
+            "Each new item has its own unique object VNUM and its own "
+            "durability, gems, and bonuses. When several matching "
+            "items are carried, use 2.<keyword> (or 3.<keyword>) to "
+            "select a specific copy. Staff can display each item's VNUM."
+        )

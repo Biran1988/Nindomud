@@ -50,16 +50,17 @@ def equipped_gems(actor) -> list:
     import olc
     import ninja_arts
     found = []
+    import crafted_identity
     for _slot, name in getattr(actor, "equipment", {}).items():
         if not name:
             continue
-        base_name = ninja_arts.base_item(name)
-        matches = [p for p in olc.OBJECT_TEMPLATES.values()
-                   if p.get("short_desc", "").casefold() == base_name.casefold()]
-        # Name-only inventory means ambiguously named prototypes are unsafe.
-        if len(matches) != 1:
+        if crafted_identity.marked(name):
+            linked = crafted_identity.resolve(name)
+        else:
+            linked = crafted_identity.legacy_match(ninja_arts.base_item(name))
+        if not linked:
             continue
-        gem = inlaid(matches[0])
+        gem = inlaid(linked[1])
         if gem:
             found.append(gem)
     return found
@@ -84,13 +85,13 @@ def reduce_counter_damage(actor, element: str, damage: int) -> int:
     return max(1, damage * (100 - resist) // 100) if resist else damage
 
 def forged_prototype(name: str):
-    """Refuse duplicate names so an inlay cannot silently modify other items."""
-    import olc
-    matches = [p for p in olc.OBJECT_TEMPLATES.values()
-               if p.get("short_desc", "").casefold() == name.casefold()]
-    if len(matches) != 1:
+    """Resolve the exact forged VNUM, including same-name equipment."""
+    import crafted_identity
+    linked = (crafted_identity.resolve(name) if crafted_identity.marked(name)
+              else crafted_identity.legacy_match(name))
+    if not linked:
         return None
-    proto = matches[0]
+    proto = linked[1]
     return (proto if proto.get("item_type") in ("weapon", "armor")
             and proto.get("craft_materials") else None)
 

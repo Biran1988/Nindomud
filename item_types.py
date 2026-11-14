@@ -61,6 +61,13 @@ RAW_FOOD_NAMES = frozenset(
 
 def classify_item(item_name: str) -> str:
     """Returns one of: weapon, armor, food, drink, medical, misc."""
+    import crafted_identity
+    if crafted_identity.marked(item_name):
+        linked = crafted_identity.resolve(item_name)
+        if not linked:
+            return "misc"
+        item_type = linked[1].get("item_type", "misc")
+        return item_type if item_type in BASE_SELL_PRICE else "misc"
     name_lower = item_name.strip().lower()
     # Raw and processed gathering materials have different dedicated buyers.
     if (name_lower in {name for name, *_ in mining.FIND_TABLE}
@@ -108,6 +115,14 @@ def _prototype_sell_price(item_name: str) -> Optional[int]:
     nothing matches, so the caller falls back to the flat category
     price."""
     import olc
+    import crafted_identity
+    if crafted_identity.marked(item_name):
+        linked = crafted_identity.resolve(item_name)
+        return (max(1, int(linked[1].get("cost", 0) * PROTOTYPE_SELL_FRACTION))
+                if linked else None)
+    legacy = crafted_identity.legacy_match(item_name)
+    if legacy:
+        return max(1, int(legacy[1].get("cost", 0) * PROTOTYPE_SELL_FRACTION))
     query = item_name.lower()
     for proto in olc.OBJECT_TEMPLATES.values():
         if proto["short_desc"].lower() == query:
