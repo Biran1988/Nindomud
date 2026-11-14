@@ -5510,7 +5510,7 @@ _GATHERING_TIER_HELP = {
         "For Chakra Aura armor use CRAFT ARMOR AURA <name>, "
         "CRAFT ARMOR CA <name>, or CRAFT ARMOR CHAKRA AURA <name>. "
         "Choose iron, steel or chakra steel at the material prompt; "
-        "weapons and armor consume two matching metal ingots, not wood. "
+        "weapons and armor consume two matching metal ingots, no wood required. "
         "Craft pill <antidote|medicine> <level> is Bukijutsu-only from level 25."
     ),
 }

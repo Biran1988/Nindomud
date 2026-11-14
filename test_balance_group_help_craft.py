@@ -167,10 +167,13 @@ class ForgingAndExamineTests(unittest.TestCase):
     def test_steel_axe_reduces_scraps_and_elder_oak_is_level_sixty(self):
         find = {name: (level, weight) for name, level, weight, _ in lumberjack.FIND_TABLE}
         self.assertEqual(find["an elder oak log"][0], 60)
-        for tier in (2, 3):
-            table = {name: weight for name, _, weight, _ in lumberjack.weighted_find_table(tier)}
-            self.assertLess(table["a bundle of kindling"], find["a bundle of kindling"][1])
-            self.assertLess(table["a birch branch"], find["a birch branch"][1])
+        table = {name: weight for name, _, weight, _ in lumberjack.weighted_find_table(2)}
+        self.assertLess(table["a bundle of kindling"], find["a bundle of kindling"][1])
+        self.assertLess(table["a birch branch"], find["a birch branch"][1])
+        # Chakra Steel Heartwood axes have an intentionally exclusive
+        # endgame pool, not merely lower odds for starter materials.
+        top = {name for name, _, _, _ in lumberjack.weighted_find_table(3)}
+        self.assertEqual(top, {"an elder oak log", "an ancient heartwood log", "a yew log"})
 
 
 class HelpCoverageTests(unittest.TestCase):
