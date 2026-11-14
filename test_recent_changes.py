@@ -37,6 +37,30 @@ class RecentChangesTests(unittest.TestCase):
             self.assertIn(version, pages[0])
         self.assertLess(pages[0].index("15.429"), pages[0].index("15.425"))
 
+
+    def test_november_rank_mastery_and_gathering_releases_are_published(self):
+        """Every public gameplay feature merged after 15.464 belongs on CHANGES."""
+        entries = dict(changelog.CHANGELOG)
+        expected = {
+            "15.465": ("Student", "Genin", "Chunin", "Special Jonin", "250"),
+            "15.466": ("Kage", "appointed", "headbands"),
+            "15.467": ("mastery", "three times", "Shadow Clone"),
+            "15.468": ("+0 Job XP", "maximum level"),
+            "15.469": ("HOLD AXE", "pickaxes"),
+            "15.470": ("CRAFT ARMOR AURA", "CRAFT ARMOR CA", "CHAKRA AURA"),
+            "15.471": ("Pickaxe", "Chakra Steel ore", "20%"),
+            "15.472": ("Fishing Rod", "Koi", "Leviathan"),
+            "15.473": ("Heartwood Axe", "Kindling", "Birch", "Sturdy Oak"),
+        }
+        for version, terms in expected.items():
+            with self.subTest(version=version):
+                self.assertIn(version, entries)
+                for term in terms:
+                    self.assertIn(term, entries[version])
+        positions = [version for version, _ in changelog.CHANGELOG]
+        self.assertEqual(positions[-len(expected):], list(expected))
+        self.assertEqual(len(positions), len(set(positions)))
+
     def test_road_migration_omitted_from_new_changelog_entries(self):
         text = "\n".join(summary for _, summary in changelog.CHANGELOG[-7:]).lower()
         # Player-facing roadside missions belong on the board. The

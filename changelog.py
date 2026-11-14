@@ -620,4 +620,14 @@ CHANGELOG = [
 
     ("15.464", "Fixed a startup syntax error, strengthened trade consent and final balance/item validation, and made account and shared-registry saves atomic. Updated rank regression checks and restored the experience overflow help explanation."),
 
+    # November 2026 player-facing release changes, restored from merged commits.
+    ("15.465", "Updated earned ninja rank progression: Student caps at level 10, Genin at 35, Chunin at 65, Special Jonin at 200, and Jonin can reach level 250. Kage and Village Elder are not additional earned rank hurdles."),
+    ("15.466", "Kage is now an immortal-appointed village title separate from earned rank. Kage powers and displays follow the appointment; saved legacy Kage characters retain their progress and eligible headbands when migrated."),
+    ("15.467", "Jutsu and skill mastery now takes roughly three times the previous effort (200% harder). Slower growth applies to teacher practice, combat use, passive and maintained techniques, Shadow Clone casting, and working-clone training."),
+    ("15.468", "Successful gathering and crafting jobs now display +0 Job XP after that job reaches its maximum level, without adding experience or changing normal item rewards."),
+    ("15.469", "HOLD AXE, REMOVE AXE, and numbered axe selections now match woodcutting axes rather than matching the axe substring inside mining pickaxes. HOLD PICKAXE still works normally."),
+    ("15.470", "Chakra Aura armor can be crafted using CRAFT ARMOR AURA, CRAFT ARMOR CA, or CRAFT ARMOR CHAKRA AURA followed by the item name. All three aliases use the normal Chakra Aura equipment slot."),
+    ("15.471", "The highest-tier Chakra Steel Heartwood Pickaxe now strongly favors Chakra Steel ore, produces very little iron, and has a 20% chance of a bonus gem after a successful ore find."),
+    ("15.472", "The highest-tier Chakra Steel Heartwood Fishing Rod now catches only high-tier Koi and Leviathan, when unlocked by Fishing level, instead of filling catches with low-level fish."),
+    ("15.473", "The highest-tier Chakra Steel Heartwood Axe now yields only Elder Oak, Ancient Heartwood and Yew (when unlocked), never Kindling, Birch, Sturdy Oak or Ironwood."),
 ]
