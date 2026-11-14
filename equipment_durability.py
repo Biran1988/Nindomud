@@ -19,7 +19,8 @@ def maximum(proto):
     if proto.get("item_type") not in ("weapon", "armor") or not materials:
         return 0
     material = str(materials[0]).lower()
-    return MATERIAL_DURABILITY.get(material, 0)
+    base = MATERIAL_DURABILITY.get(material, 0)
+    return base * (2 if proto.get("gem_inlay") == "diamond" else 1)
 
 
 def state(proto):
@@ -29,7 +30,13 @@ def state(proto):
         return None
     top = int(proto.get("max_durability") or cap)
     remaining = int(proto.get("durability", top))
-    return max(0, remaining), max(1, top)
+    # Preserve the percentage of wear on old Diamond-inlaid gear. An old
+    # 500/2500 weapon becomes 1000/5000, not a fully repaired weapon.
+    # Subsequent wear events persist the converted values exactly once.
+    if proto.get("gem_inlay") == "diamond" and top < cap:
+        remaining = round(remaining * cap / max(1, top))
+        top = cap
+    return max(0, min(remaining, top)), max(1, top)
 
 
 def initialise(proto):

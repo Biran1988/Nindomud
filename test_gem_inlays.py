@@ -78,27 +78,27 @@ class GemInlayTests(unittest.TestCase):
                 self.assertEqual(gem_inlays.reduce_counter_damage(player, element, 100), 100)
                 olc.OBJECT_TEMPLATES.pop(875333, None)
 
-    def test_legendary_diamond_is_stronger_and_works_on_armor_or_weapon(self):
-        self.assertEqual(gem_inlays.strength("diamond"), 20)
+    def test_legacy_diamond_weapon_and_armor_double_remaining_durability(self):
+        import equipment_durability
+        self.assertEqual(gem_inlays.strength("diamond"), 0)
         name, proto = self._forged("diamond")
         player = models.Player("GemFighter", "GemFighter")
         player.equipment["wielded"] = name
-        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 22)
-        self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 22)
-        self.assertEqual(commands.equipped_armor_class_bonus(player), 10)
-        self.assertEqual(gem_inlays.diamond_critical_chance_bonus(player), 5)
+        proto["durability"] = 900
+        proto["max_durability"] = 5000  # old pre-diamond durable gear
+        self.assertEqual(equipment_durability.state(proto), (1800, 10000))
+        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 2)
+        self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 2)
+        self.assertEqual(commands.equipped_armor_class_bonus(player), 0)
         self.assertEqual(gem_inlays.elemental_jutsu_multiplier(player, "fire"), 1.0)
         self.assertEqual(gem_inlays.reduce_counter_damage(player, "water", 100), 100)
-        # The same diamond protects and boosts criticals when on armor.
         proto.update(item_type="armor", wear_loc="body")
         player.equipment["wielded"] = ""
         player.equipment["body"] = name
-        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 22)
-        self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 22)
-        self.assertEqual(commands.equipped_armor_class_bonus(player), 10)
-        self.assertEqual(gem_inlays.diamond_critical_chance_bonus(player), 5)
+        self.assertEqual(equipment_durability.state(proto), (1800, 10000))
+        self.assertEqual(commands.equipped_armor_class_bonus(player), 0)
 
-    def test_multiple_diamonds_are_capped_without_affecting_other_gems(self):
+    def test_multiple_diamonds_grant_no_stats_or_elemental_bonuses(self):
         from copy import deepcopy
         base_name, proto = self._forged("diamond")
         player = models.Player("GemStack", "GemStack")
@@ -111,18 +111,83 @@ class GemInlayTests(unittest.TestCase):
             olc.OBJECT_TEMPLATES[vnum] = other
             self.addCleanup(olc.OBJECT_TEMPLATES.pop, vnum, None)
             player.equipment[slot] = other["short_desc"]
-        self.assertEqual(gem_inlays.equipment_flat_bonus(player), 100)
-        self.assertEqual(gem_inlays.diamond_armor_class_bonus(player), 30)
-        self.assertEqual(gem_inlays.diamond_critical_chance_bonus(player), 15)
+        self.assertEqual(gem_inlays.equipment_flat_bonus(player), 0)
+        self.assertEqual(gem_inlays.elemental_jutsu_multiplier(player, "fire"), 1.0)
+        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 10)
 
-    def test_generated_help_explains_non_elemental_diamond_bonuses(self):
+    def test_generated_help_explains_diamond_durability(self):
         import help_system
         by_key = {entry["primary_keyword"]: entry["body"]
                   for entry in help_system.DEFAULT_HELP_ENTRIES}
-        for key in ("inlay", "craft"):
-            self.assertIn("+20 Hitroll", by_key[key])
-            self.assertIn("+10 Armor Class", by_key[key])
-            self.assertIn("critical chance", by_key[key])
+        self.assertIn("doubling remaining and maximum", by_key["inlay"])
+        self.assertIn("doubles remaining and maximum", by_key["craft"])
+
+    def test_diamond_inlay_on_individual_tool_preserves_wear_and_saved_marker(self):
+        import tool_durability
+        player = models.Player("GemTool", "GemTool", stamina=100)
+        player.job_levels["gemcutter"] = 80
+        player.equipment["tool"] = "A Copper Chisel"
+        worn = "A Copper Pickaxe [125/250 uses]"
+        player.inventory[:] = [worn, "A Copper Pickaxe", "A Cut Diamond"]
+        messages = []
+        session = SimpleNamespace(player=player, send=messages.append,
+                                  is_busy=lambda: False, pending=None)
+        session.start_timed_action = lambda _kind, _delay, finish: setattr(session, "pending", finish)
+        with patch.object(storage, "save_player"), patch("world_autosave.mark_dirty"):
+            commands.cmd_inlay(session, ["pickaxe", "with", "diamond"])
+            self.assertIsNotNone(session.pending)
+            session.pending()
+        enhanced = player.inventory[0]
+        self.assertEqual(enhanced, "A Copper Pickaxe [diamond] [250/500 uses]")
+        self.assertTrue(tool_durability.has_diamond(enhanced))
+        self.assertEqual(tool_durability.base_name(enhanced), "A Copper Pickaxe")
+        self.assertEqual(tool_durability.display_name(enhanced), "A Copper Pickaxe")
+        self.assertEqual(tool_durability.uses_left(enhanced), (250, 500))
+        self.assertEqual(tool_durability.spend_use(enhanced),
+                         "A Copper Pickaxe [diamond] [249/500 uses]")
+        self.assertEqual(player.inventory[1], "A Copper Pickaxe")  # ordinary pick unaffected
+        self.assertNotIn("A Cut Diamond", player.inventory)
+        self.assertTrue(player.equipment["tool"].startswith("A Copper Chisel [249/250 uses]"))
+        loaded = models.Player.from_dict(player.to_dict())
+        self.assertEqual(loaded.inventory[0], enhanced)
+        self.assertTrue(any("doubled" in m for m in messages))
+
+    def test_only_diamond_can_enhance_a_tool_and_cannot_stack(self):
+        import tool_durability
+        player = models.Player("GemTool", "GemTool", stamina=100)
+        player.job_levels["gemcutter"] = 80
+        player.equipment["tool"] = "A Copper Chisel"
+        player.inventory = ["A Copper Axe", "A Cut Ruby", "A Cut Diamond"]
+        messages = []
+        session = SimpleNamespace(player=player, send=messages.append,
+                                  is_busy=lambda: False, pending=None)
+        session.start_timed_action = lambda _kind, _delay, finish: setattr(session, "pending", finish)
+        commands.cmd_inlay(session, ["axe", "with", "ruby"])
+        self.assertIn("only", messages[-1].lower())
+        self.assertEqual(player.inventory[0], "A Copper Axe")
+        with patch.object(storage, "save_player"), patch("world_autosave.mark_dirty"):
+            commands.cmd_inlay(session, ["axe", "with", "diamond"])
+            session.pending()
+        self.assertTrue(tool_durability.has_diamond(player.inventory[0]))
+        player.inventory.append("A Cut Diamond")
+        messages.clear()
+        commands.cmd_inlay(session, ["axe", "with", "diamond"])
+        self.assertIn("already", messages[-1].lower())
+        self.assertEqual(tool_durability.uses_left(player.inventory[0]), (500, 500))
+
+    def test_new_diamond_forge_initialises_double_maximum(self):
+        import equipment_durability
+        proto = dict(olc.DEFAULT_OBJECT_FIELDS)
+        proto.update(item_type="weapon", craft_materials=["iron ingot", "iron ingot"],
+                     gem_inlay="diamond")
+        equipment_durability.initialise(proto)
+        self.assertEqual(equipment_durability.state(proto), (5000, 5000))
+        proto.update(item_type="armor", craft_materials=["chakra steel ingot"] * 2)
+        equipment_durability.initialise(proto)
+        self.assertEqual(equipment_durability.state(proto), (20000, 20000))
+        proto["gem_inlay"] = "ruby"
+        equipment_durability.initialise(proto)
+        self.assertEqual(equipment_durability.state(proto), (10000, 10000))
 
     def test_forged_inlay_works_after_weapon_elemental_enchantment(self):
         name, _ = self._forged("ruby")

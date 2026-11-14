@@ -632,4 +632,5 @@ CHANGELOG = [
     ("15.473", "The highest-tier Chakra Steel Heartwood Axe now yields only Elder Oak, Ancient Heartwood and Yew (when unlocked), never Kindling, Birch, Sturdy Oak or Ironwood."),
     ("15.474", "Added craftable Iron (15-item), Steel (30-item), and Chakra Steel (50-item) backpacks using real wood and ingot recipes. PUT/GET and BACKPACK inspect their separate saved contents; nested containers and transfers of filled bags are blocked to protect items."),
     ("15.475", "Legendary Diamond inlays now grant +20 Hitroll and +20 Damroll, plus +10 Armor Class and +5 percentage points melee critical chance on equipped weapons or armor. Diamond AC/critical bonuses stack up to +30 AC/+15 points; elemental gems are unchanged."),
+    ("15.476", "Reworked Legendary Diamond into a durability-only inlay: doubles a forged weapon or armor's remaining and maximum durability, including older Diamond gear, with no Hitroll/Damroll/AC/critical bonuses. All tools now accept Diamond-only inlays to double their remaining and maximum uses individually; one Diamond per item, persistent through saves and trading."),
 ]

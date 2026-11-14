@@ -5750,34 +5750,39 @@ def cmd_examine(session, args: List[str]) -> None:
     if proto:
         import gem_inlays
         import elemental_counters
-        if proto.get("gem_inlay"):
-            gem = proto["gem_inlay"]
+        gem = (("diamond" if tool_durability.has_diamond(match) else None)
+               if proto.get("item_type") == "tool" else proto.get("gem_inlay"))
+        if gem:
             lines.append(f"&WGem Inlay:&x {gem.title()} (permanent, 1 slot)")
-            lines.append(f"&WAdded Gem Bonuses:&x Hitroll +{gem_inlays.strength(gem)}, Damageroll +{gem_inlays.strength(gem)}")
-            original = proto.get("stat_bonuses", {})
-            if proto.get("item_type") == "weapon":
-                lines.append(
-                    f"&WWeapon Total:&x Hitroll +{original.get('hitroll', 0) + gem_inlays.strength(gem)}, "
-                    f"Damageroll +{original.get('damroll', 0) + gem_inlays.strength(gem)} "
-                    "(original forge stats + gem)"
-                )
+            if gem == "diamond":
+                lines.append("&WLegendary Diamond:&x Doubles this item's durability and remaining "
+                             "uses; no Hitroll, Damroll, Armor Class or critical bonus.")
             else:
-                lines.append("&WArmor:&x Original defense and all other forged stats are unchanged.")
-            element = gem_inlays.ELEMENT_GEMS.get(gem)
-            if element:
-                lines.append(f"&WElemental Gem:&x +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% {element.title()} jutsu damage; "
-                             f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% {elemental_counters.counters(element).title()} resistance")
-            elif gem == "diamond":
-                lines.append(
-                    f"&WLegendary Diamond:&x +{gem_inlays.DIAMOND_ARMOR_CLASS_PER_GEM} Armor Class, "
-                    f"+{gem_inlays.DIAMOND_CRITICAL_CHANCE_PER_GEM}% melee critical chance "
-                    f"(maximum +{gem_inlays.DIAMOND_ARMOR_CLASS_CAP} AC and "
-                    f"+{gem_inlays.DIAMOND_CRITICAL_CHANCE_CAP}% critical from Diamonds)")
+                lines.append(f"&WAdded Gem Bonuses:&x Hitroll +{gem_inlays.strength(gem)}, "
+                             f"Damageroll +{gem_inlays.strength(gem)}")
+                original = proto.get("stat_bonuses", {})
+                if proto.get("item_type") == "weapon":
+                    lines.append(
+                        f"&WWeapon Total:&x Hitroll +{original.get('hitroll', 0) + gem_inlays.strength(gem)}, "
+                        f"Damageroll +{original.get('damroll', 0) + gem_inlays.strength(gem)} "
+                        "(original forge stats + gem)"
+                    )
+                else:
+                    lines.append("&WArmor:&x Original defense and all other forged stats are unchanged.")
+                element = gem_inlays.ELEMENT_GEMS.get(gem)
+                if element:
+                    lines.append(f"&WElemental Gem:&x +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% "
+                                 f"{element.title()} jutsu damage; "
+                                 f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% "
+                                 f"{elemental_counters.counters(element).title()} resistance")
         if proto.get("weapon_type"):
             lines.append(f"&WWeapon Type:&x {data_weapons.display_name(proto['weapon_type'])}")
         if proto.get("gem_bonuses"):
             bonuses = proto["gem_bonuses"]
-            lines.append(f"&WGem Inlay Potential:&x Hitroll +{bonuses.get('hitroll', 0)}, Damageroll +{bonuses.get('damroll', 0)}")
+            if proto.get("short_desc", "").casefold() == "a cut diamond":
+                lines.append("&WGem Inlay Potential:&x Double item durability (weapons, armor, tools).")
+            else:
+                lines.append(f"&WGem Inlay Potential:&x Hitroll +{bonuses.get('hitroll', 0)}, Damageroll +{bonuses.get('damroll', 0)}")
         lines.append(f"&WCost:&x {proto.get('cost', 0):,} ryo   &WWeight:&x {proto.get('weight', 1)}")
 
     if appraisal_pct < 80:
@@ -7545,12 +7550,17 @@ def cmd_gemcut(session, args: List[str]) -> None:
             return
         gem_proto = _find_object_prototype_by_name(result_name)
         bonuses = gem_proto.get("gem_bonuses", {}) if gem_proto else {}
-        session.send(
-            f"You cut {raw_gem} into {result_name}! "
-            f"Its {gem_proto.get('rarity', 'common') if gem_proto else 'common'} quality stores "
-            f"Hitroll +{bonuses.get('hitroll', 0)} and Damageroll +{bonuses.get('damroll', 0)} "
-            "for a permanent forge or inlay upgrade."
-        )
+        if result_name.casefold() == "a cut diamond":
+            session.send(f"You cut {raw_gem} into {result_name}! "
+                         "Inlay it to double a forged weapon/armor's durability "
+                         "or an individual tool's remaining and maximum uses.")
+        else:
+            session.send(
+                f"You cut {raw_gem} into {result_name}! "
+                f"Its {gem_proto.get('rarity', 'common') if gem_proto else 'common'} quality stores "
+                f"Hitroll +{bonuses.get('hitroll', 0)} and Damageroll +{bonuses.get('damroll', 0)} "
+                "for a permanent forge or inlay upgrade."
+            )
         _award_job_action_xp(session, "gemcutter", xp)
 
     session.send(f"You carefully start cutting {raw_gem}...")
@@ -7558,15 +7568,18 @@ def cmd_gemcut(session, args: List[str]) -> None:
 
 
 def cmd_inlay(session, args: List[str]) -> None:
-    """Place one cut gem into a uniquely forged weapon or armor, no name suffix."""
+    """Inlay forged gear with a cut gem, or a tool with Diamond only.
+
+    Ordinary job tools share prototypes, so their Diamond is recorded on
+    the individual item string, never on the shared prototype.
+    """
     import gem_inlays
-    import elemental_counters
     import world_autosave
     player = session.player
     words = " ".join(args)
     item_query, separator, gem_query = words.partition(" with ")
     if not separator or not item_query.strip() or not gem_query.strip():
-        session.send("Usage: inlay <forged item> with <cut gem>")
+        session.send("Usage: inlay <forged item|tool> with <cut gem> (tools: diamond only)")
         return
     if session.is_busy():
         session.send("You're already busy with something.")
@@ -7575,19 +7588,27 @@ def cmd_inlay(session, args: List[str]) -> None:
     if strip_crafted_suffix(held_tool).casefold() not in gemcutter.CHISELS:
         session.send("Hold a Copper Chisel to inlay a cut gem.")
         return
-    forged = find_indexed_item(item_query.casefold(), player.inventory)
+    item = find_indexed_item(item_query.casefold(), player.inventory)
     gem_name = gem_inlays.available_cut_gem(player, gem_query)
-    proto = gem_inlays.forged_prototype(forged) if forged else None
-    if not proto:
-        session.send("That must be a uniquely named forged weapon or armor in your inventory.")
-        return
-    if proto.get("gem_inlay"):
-        session.send("This item already has a permanent gemstone inlay.")
-        return
     if not gem_name:
         session.send("You must carry the selected Cut Gem.")
         return
     gem_key = gem_inlays.gem_from_cut_item(gem_name)
+    forged_proto = gem_inlays.forged_prototype(item) if item else None
+    tool_proto = (gem_inlays.diamond_tool_prototype(item)
+                  if item and not forged_proto else None)
+    if not forged_proto and not tool_proto:
+        session.send("Inlays require forged weapons or armor, or a genuine tool (Diamond only).")
+        return
+    if tool_proto and gem_key != "diamond":
+        session.send("Tools can only be enchanted with Cut Diamonds.")
+        return
+    if forged_proto and forged_proto.get("gem_inlay"):
+        session.send("This item already has a permanent gemstone inlay.")
+        return
+    if tool_proto and tool_durability.has_diamond(item):
+        session.send("This tool already has a permanent Diamond inlay.")
+        return
     required_level = min(level for output, level, _xp in gemcutter.RECIPES.values()
                          if output.casefold() == gem_name.casefold())
     if jobs.get_job_level(player, "gemcutter") < required_level:
@@ -7598,26 +7619,52 @@ def cmd_inlay(session, args: List[str]) -> None:
         return
 
     def resolve() -> None:
-        if (forged not in player.inventory or gem_name not in player.inventory
-                or gem_inlays.forged_prototype(forged) is not proto
-                or proto.get("gem_inlay")):
+        if item not in player.inventory or gem_name not in player.inventory:
             session.send("Your items changed; the gem inlay was cancelled.")
             return
+        if forged_proto:
+            if (gem_inlays.forged_prototype(item) is not forged_proto
+                    or forged_proto.get("gem_inlay")):
+                session.send("Your equipment changed; the inlay was cancelled.")
+                return
+        else:
+            if (gem_inlays.diamond_tool_prototype(item) is not tool_proto
+                    or tool_durability.has_diamond(item)):
+                session.send("Your tool changed; the inlay was cancelled.")
+                return
         if not _use_held_job_tool(session, held_tool):
             return
-        proto["gem_inlay"] = gem_key
+        if forged_proto:
+            forged_proto["gem_inlay"] = gem_key
+            # equipment_durability.state handles existing worn gear without
+            # resetting or healing its wear. Persist new top and remaining now.
+            if gem_key == "diamond":
+                import equipment_durability
+                durability = equipment_durability.state(forged_proto)
+                if durability:
+                    forged_proto["durability"], forged_proto["max_durability"] = durability
+            world_autosave.mark_dirty()
+        else:
+            new_tool = tool_durability.with_diamond(item)
+            if not new_tool:
+                session.send("This tool cannot be enhanced again.")
+                return
+            # Replace precisely one instance, not a shared object prototype.
+            player.inventory[player.inventory.index(item)] = new_tool
         inventory.remove_carried(player, gem_name)
-        world_autosave.mark_dirty()
         storage.save_player(player)
-        element = gem_inlays.ELEMENT_GEMS.get(gem_key)
-        detail = (f" +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% {element} jutsu and "
-                  f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% "
-                  f"{elemental_counters.counters(element)} resistance"
-                  if element else "")
-        session.send(f"&GYou securely inlay {gem_name} into {forged}. "
-                     "Its original stats are preserved; EXAMINE it for the added bonuses.&x")
+        if forged_proto:
+            session.send(f"&GYou permanently inlay {gem_name} into {item}. "
+                         "Its remaining and maximum durability are doubled; EXAMINE it.&x"
+                         if gem_key == "diamond" else
+                         f"&GYou permanently inlay {gem_name} into {item}. "
+                         "Its original stats are preserved; EXAMINE it for the added bonuses.&x")
+        else:
+            session.send(f"&GYou inlay {gem_name} into {tool_durability.base_name(item)}! "
+                         "Its remaining and maximum tool uses are doubled. "
+                         "EXAMINE shows the increased durability.&x")
 
-    session.send(f"You begin setting {gem_name} into {forged}...")
+    session.send(f"You begin setting {gem_name} into {item}...")
     session.start_timed_action("gem inlay", COOK_DELAY_SECONDS, resolve)
 
 
@@ -7951,8 +7998,6 @@ def cmd_craft(session, args: List[str]) -> None:
             proto["description"] = (f"A crafted {kind} named {item_name}, "
                                     f"forged from {metal} and {metal}.")
             proto["craft_materials"] = [metal, metal]
-            import equipment_durability
-            equipment_durability.initialise(proto)
             import crafted_provenance
             crafted_provenance.stamp(proto, session)
             if kind == "weapon":
@@ -7967,6 +8012,10 @@ def cmd_craft(session, args: List[str]) -> None:
 
             if gem_key:
                 proto["gem_inlay"] = gem_key
+            # Set durability after item type and gem are known; previously
+            # initialisation happened while the prototype was still 'misc'.
+            import equipment_durability
+            equipment_durability.initialise(proto)
 
             # Do not consume ingredients unless the resulting item fits.
             # Revert the new prototype if the inventory is at capacity.
@@ -8782,8 +8831,7 @@ def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
         proto = _find_object_prototype_by_name(item_name)
         prototype_bonus = proto.get("stat_bonuses", {}).get("armor_class", 0) if proto else 0
         total += abs(prototype_bonus) + parse_crafted_bonus(item_name, "armor_class")
-    import gem_inlays
-    return total + gem_inlays.diamond_armor_class_bonus(player)
+    return total
 
 
 def reduce_weapon_damage(defender, weapon_type: str, damage: int) -> int:

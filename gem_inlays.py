@@ -1,4 +1,4 @@
-"""Cut gemstone inlays for uniquely forged weapons and armor.
+"""Cut gemstone inlays for uniquely forged gear and diamond-enhanced tools.
 
 Only genuinely forged prototype records may accept an inlay. The inlay is
 stored on the saved object prototype (never in the visible item name).
@@ -21,20 +21,15 @@ ELEMENTAL_COUNTER_RESIST_PERCENT = 15
 MAX_ELEMENTAL_BONUS_PERCENT = 30
 MAX_ELEMENTAL_RESIST_PERCENT = 30
 
-# Legendary Diamond is a non-elemental combat gem. Its protection and
-# critical bonuses are usable on forged weapons OR armor while equipped.
-DIAMOND_FLAT_BONUS = 20  # Hitroll AND Damroll; elemental gems grant 10.
-DIAMOND_ARMOR_CLASS_PER_GEM = 10
-DIAMOND_ARMOR_CLASS_CAP = 30
-DIAMOND_CRITICAL_CHANCE_PER_GEM = 5  # percentage points
-DIAMOND_CRITICAL_CHANCE_CAP = 15
+# Diamond doubles item durability instead of granting combat stats.
+DIAMOND_DURABILITY_MULTIPLIER = 2
 
 def strength(gem: str) -> int:
     gem = gem.lower()
     if gem in ELEMENT_GEMS:
         return ELEMENTAL_FLAT_BONUS
     if gem == "diamond":
-        return DIAMOND_FLAT_BONUS
+        return 0
     return LOWER_GEMS.get(gem, 0)
 
 def cut_name(gem: str) -> str:
@@ -72,18 +67,6 @@ def equipped_gems(actor) -> list:
 def equipment_flat_bonus(actor) -> int:
     return sum(strength(gem) for gem in equipped_gems(actor))
 
-def diamond_armor_class_bonus(actor) -> int:
-    """Extra all-purpose Armor Class from any equipped Diamond item."""
-    return min(DIAMOND_ARMOR_CLASS_CAP,
-               equipped_gems(actor).count("diamond") * DIAMOND_ARMOR_CLASS_PER_GEM)
-
-
-def diamond_critical_chance_bonus(actor) -> int:
-    """Extra physical melee crit chance in percentage points, capped."""
-    return min(DIAMOND_CRITICAL_CHANCE_CAP,
-               equipped_gems(actor).count("diamond") * DIAMOND_CRITICAL_CHANCE_PER_GEM)
-
-
 def elemental_jutsu_multiplier(actor, element: str) -> float:
     if element not in ELEMENT_GEMS.values():
         return 1.0
@@ -110,6 +93,17 @@ def forged_prototype(name: str):
     proto = matches[0]
     return (proto if proto.get("item_type") in ("weapon", "armor")
             and proto.get("craft_materials") else None)
+
+def diamond_tool_prototype(item_name: str):
+    """Resolve one genuine tool prototype without altering all instances."""
+    import olc
+    import tool_durability
+    base = tool_durability.base_name(item_name).casefold()
+    matches = [proto for proto in olc.OBJECT_TEMPLATES.values()
+               if proto.get("item_type") == "tool"
+               and proto.get("short_desc", "").casefold() == base]
+    return matches[0] if len(matches) == 1 else None
+
 
 def available_cut_gem(player, query: str):
     from inventory import parse_indexed_query

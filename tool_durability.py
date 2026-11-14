@@ -11,11 +11,12 @@ import re
 
 DEFAULT_USES = 250
 _USES_SUFFIX = re.compile(r" \[(\d+)/(\d+) uses\]$", re.IGNORECASE)
+_DIAMOND_SUFFIX = re.compile(r" \[diamond\]$", re.IGNORECASE)
 
 
 def base_name(item_name: str) -> str:
     """Strip only this module's trailing durability annotation."""
-    return _USES_SUFFIX.sub("", item_name)
+    return _DIAMOND_SUFFIX.sub("", _USES_SUFFIX.sub("", item_name))
 
 
 def uses_left(item_name: str) -> tuple:
@@ -37,6 +38,21 @@ def uses_left(item_name: str) -> tuple:
     return total, total
 
 
+def has_diamond(item_name: str) -> bool:
+    """True only for this individually diamond-inlaid tool."""
+    return bool(_DIAMOND_SUFFIX.search(_USES_SUFFIX.sub("", item_name)))
+
+
+def with_diamond(item_name: str) -> str | None:
+    """Double actual remaining and maximum uses once, with a saved marker."""
+    if has_diamond(item_name):
+        return None
+    remaining, total = uses_left(item_name)
+    if remaining <= 0:
+        return None
+    return f"{base_name(item_name)} [diamond] [{remaining * 2}/{total * 2} uses]"
+
+
 def display_name(item_name: str) -> str:
     """Only display the genuine name; tool uses appear under EXAMINE."""
     return base_name(item_name)
@@ -47,4 +63,5 @@ def spend_use(item_name: str) -> str | None:
     remaining, total = uses_left(item_name)
     if remaining <= 1:
         return None
-    return f"{base_name(item_name)} [{remaining - 1}/{total} uses]"
+    marker = " [diamond]" if has_diamond(item_name) else ""
+    return f"{base_name(item_name)}{marker} [{remaining - 1}/{total} uses]"

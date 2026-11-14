@@ -39,7 +39,7 @@ def test_vnums_gems_and_cutting():
         ("rough_quartz", "cut_quartz", "uncommon", 2),
         ("raw_sapphire", "cut_sapphire", "epic", 10),
         ("raw_ruby", "cut_ruby", "epic", 10),
-        ("raw_diamond", "cut_diamond", "legendary", 20),
+        ("raw_diamond", "cut_diamond", "legendary", 0),
     ):
         raw = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS[raw_key]]
         cut = olc.OBJECT_TEMPLATES[content._ITEM_VNUMS[cut_key]]

@@ -2642,7 +2642,7 @@ DEFAULT_HELP_ENTRIES = [
         "title": "Gemcut",
         "body": (
             "Syntax: gemcut <raw gem>\n\n"
-            "Description: Hold a Copper Chisel (item VNUM 20803), then cut a Rough Quartz, Raw Sapphire, Raw Ruby, or Raw Diamond found while mining. Gemcutter levels 1, 25, 55, and 80 unlock them respectively. Quartz grants +2 Hitroll/Damroll; five elemental gems grant +10 Hitroll/Damroll and +15% matching jutsu damage and counter resistance; Legendary Diamond grants +20 Hitroll/Damroll, +10 Armor Class and +5 percentage points melee critical chance when inlaid and equipped (up to +30 AC and +15 points critical chance from Diamonds). Cut gems have no combat effect until forged into equipment or inlaid. Cutting costs 1-2 Stamina and takes a few seconds. Each completed cut wears the chisel by one use; it breaks after 250 uses by default. Other job tools wear on every completed attempt, including failed gathers and burned meals. Remaining uses appear in inventory and eq.\n"
+            "Description: Hold a Copper Chisel (item VNUM 20803), then cut a Rough Quartz, Raw Sapphire, Raw Ruby, or Raw Diamond found while mining. Gemcutter levels 1, 25, 55, and 80 unlock them respectively. Quartz grants +2 Hitroll/Damroll; five elemental gems grant +10 Hitroll/Damroll and +15% matching jutsu damage and counter resistance; Legendary Diamond provides no combat stats: it doubles remaining and maximum durability of any uniquely forged weapon or armor or an individual tool. Tools accept Diamond gems only. Cut gems have no combat effect until forged into equipment or inlaid. Cutting costs 1-2 Stamina and takes a few seconds. Each completed cut wears the chisel by one use; it breaks after 250 uses by default. Other job tools wear on every completed attempt, including failed gathers and burned meals. Remaining uses appear in inventory and eq.\n"
             "\nDate: 2026-09-25"
         ),
         "created_by": "System", "updated_by": "System", "updated_at": 0.0,
@@ -5632,8 +5632,8 @@ for _gem_help_entry in DEFAULT_HELP_ENTRIES:
     if _gem_help_entry.get("primary_keyword") == "craft":
         _gem_help_entry["body"] += (
             "\n\nDiamond inlays: use a Cut Diamond (Gemcutter 80) during "
-            "forge creation or with INLAY on an existing unique forged "
-            "weapon or armor. Once equipped it adds +20 Hitroll and "
-            "+20 Damroll, +10 Armor Class and +5 percentage points melee "
-            "critical chance (the last two cap at +30 AC/+15 points)."
+            "forge creation or with INLAY on existing uniquely forged "
+            "weapons/armor or any tool. It doubles remaining and maximum "
+            "durability/uses, without granting combat stats. Only Diamond "
+            "may be inlaid into tools. One Diamond per item."
         )

@@ -5,7 +5,7 @@
     "gemcutting"
   ],
   "title": "Gemcut",
-  "body": "Syntax: gemcut <gem>\n\nHold a Copper Chisel (VNUM 20803). Every bonus gem found while mining can be cut: Rough Quartz, Jade, Amber, Garnet, Amethyst, Topaz, Sapphire, Emerald, Ruby and Diamond. Legacy Raw Sapphire, Raw Ruby and Raw Diamond are also cuttable.\n\nGemcutter job levels: Quartz 1, Jade 10, Amber 20, Garnet 30, the five elemental gems (Amethyst, Topaz, Sapphire, Emerald, Ruby) 60, Diamond 80. Each cut takes stamina and one chisel use.\n\nCut gems can be added during new equipment forging (choose metal \"iron with ruby\") or embedded in an existing uniquely named forged weapon/armor with 'inlay <item> with <gem>'. Cut gems carried but not inlaid grant no combat stats. See help inlay.\n\nDate: 2026-11-02",
+  "body": "Syntax: gemcut <gem>\n\nHold a Copper Chisel (VNUM 20803). Every bonus gem found while mining can be cut: Rough Quartz, Jade, Amber, Garnet, Amethyst, Topaz, Sapphire, Emerald, Ruby and Diamond. Legacy Raw Sapphire, Raw Ruby and Raw Diamond are also cuttable.\n\nGemcutter job levels: Quartz 1, Jade 10, Amber 20, Garnet 30, the five elemental gems (Amethyst, Topaz, Sapphire, Emerald, Ruby) 60, Diamond 80. Each cut takes stamina and one chisel use.\n\nCut gems can be added during new equipment forging (choose metal \"iron with ruby\") or embedded in an existing uniquely named forged weapon/armor with 'inlay <item> with <gem>'. Cut gems carried but not inlaid grant no combat stats. Legendary Diamond doubles remaining and maximum durability on forged weapons and armor, or remaining and maximum uses on an individual tool; it grants no stats. Tools accept Diamond only. See help inlay.\n\nDate: 2026-11-02",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
