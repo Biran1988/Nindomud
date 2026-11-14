@@ -21,12 +21,20 @@ ELEMENTAL_COUNTER_RESIST_PERCENT = 15
 MAX_ELEMENTAL_BONUS_PERCENT = 30
 MAX_ELEMENTAL_RESIST_PERCENT = 30
 
+# Legendary Diamond is a non-elemental combat gem. Its protection and
+# critical bonuses are usable on forged weapons OR armor while equipped.
+DIAMOND_FLAT_BONUS = 20  # Hitroll AND Damroll; elemental gems grant 10.
+DIAMOND_ARMOR_CLASS_PER_GEM = 10
+DIAMOND_ARMOR_CLASS_CAP = 30
+DIAMOND_CRITICAL_CHANCE_PER_GEM = 5  # percentage points
+DIAMOND_CRITICAL_CHANCE_CAP = 15
+
 def strength(gem: str) -> int:
     gem = gem.lower()
     if gem in ELEMENT_GEMS:
         return ELEMENTAL_FLAT_BONUS
     if gem == "diamond":
-        return 12
+        return DIAMOND_FLAT_BONUS
     return LOWER_GEMS.get(gem, 0)
 
 def cut_name(gem: str) -> str:
@@ -63,6 +71,18 @@ def equipped_gems(actor) -> list:
 
 def equipment_flat_bonus(actor) -> int:
     return sum(strength(gem) for gem in equipped_gems(actor))
+
+def diamond_armor_class_bonus(actor) -> int:
+    """Extra all-purpose Armor Class from any equipped Diamond item."""
+    return min(DIAMOND_ARMOR_CLASS_CAP,
+               equipped_gems(actor).count("diamond") * DIAMOND_ARMOR_CLASS_PER_GEM)
+
+
+def diamond_critical_chance_bonus(actor) -> int:
+    """Extra physical melee crit chance in percentage points, capped."""
+    return min(DIAMOND_CRITICAL_CHANCE_CAP,
+               equipped_gems(actor).count("diamond") * DIAMOND_CRITICAL_CHANCE_PER_GEM)
+
 
 def elemental_jutsu_multiplier(actor, element: str) -> float:
     if element not in ELEMENT_GEMS.values():

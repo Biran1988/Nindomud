@@ -5767,6 +5767,12 @@ def cmd_examine(session, args: List[str]) -> None:
             if element:
                 lines.append(f"&WElemental Gem:&x +{gem_inlays.ELEMENTAL_JUTSU_BONUS_PERCENT}% {element.title()} jutsu damage; "
                              f"{gem_inlays.ELEMENTAL_COUNTER_RESIST_PERCENT}% {elemental_counters.counters(element).title()} resistance")
+            elif gem == "diamond":
+                lines.append(
+                    f"&WLegendary Diamond:&x +{gem_inlays.DIAMOND_ARMOR_CLASS_PER_GEM} Armor Class, "
+                    f"+{gem_inlays.DIAMOND_CRITICAL_CHANCE_PER_GEM}% melee critical chance "
+                    f"(maximum +{gem_inlays.DIAMOND_ARMOR_CLASS_CAP} AC and "
+                    f"+{gem_inlays.DIAMOND_CRITICAL_CHANCE_CAP}% critical from Diamonds)")
         if proto.get("weapon_type"):
             lines.append(f"&WWeapon Type:&x {data_weapons.display_name(proto['weapon_type'])}")
         if proto.get("gem_bonuses"):
@@ -8776,7 +8782,8 @@ def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
         proto = _find_object_prototype_by_name(item_name)
         prototype_bonus = proto.get("stat_bonuses", {}).get("armor_class", 0) if proto else 0
         total += abs(prototype_bonus) + parse_crafted_bonus(item_name, "armor_class")
-    return total
+    import gem_inlays
+    return total + gem_inlays.diamond_armor_class_bonus(player)
 
 
 def reduce_weapon_damage(defender, weapon_type: str, damage: int) -> int:

@@ -38,6 +38,7 @@ way.
 
 import jutsu_colors
 import general_skills
+import gem_inlays
 import itertools
 import random
 import time
@@ -2502,7 +2503,9 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False, signatur
     dmg = sword_styles.damage_bonus(player, dmg)
     dmg = _weapon_expert_damage(player, dmg)
     dmg = int(dmg * (100 + _summon_weapon_buff_damage_percent(player)) / 100)
-    is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
+    crit_chance = derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
+    crit_chance = min(100, crit_chance + gem_inlays.diamond_critical_chance_bonus(player))
+    is_crit = random.randint(1, 100) <= crit_chance
     if is_crit:
         dmg = int(dmg * 1.5)
     dmg = commands_module.reduce_weapon_damage(mob, data_weapons.weapon_type_for_item(player.equipment.get("wielded", "")), dmg)
@@ -4076,7 +4079,9 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     dmg = sword_styles.damage_bonus(player, dmg)
     dmg = _weapon_expert_damage(player, dmg)
     dmg = int(dmg * (100 + _summon_weapon_buff_damage_percent(player)) / 100)
-    is_crit = random.randint(1, 100) <= derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
+    crit_chance = derived_stats.critical_chance(player, set_bonus + data_personality.personality_bonus_percent(player, "critical_chance"))
+    crit_chance = min(100, crit_chance + gem_inlays.diamond_critical_chance_bonus(player))
+    is_crit = random.randint(1, 100) <= crit_chance
     if is_crit:
         dmg = int(dmg * 1.5)
 

@@ -78,6 +78,52 @@ class GemInlayTests(unittest.TestCase):
                 self.assertEqual(gem_inlays.reduce_counter_damage(player, element, 100), 100)
                 olc.OBJECT_TEMPLATES.pop(875333, None)
 
+    def test_legendary_diamond_is_stronger_and_works_on_armor_or_weapon(self):
+        self.assertEqual(gem_inlays.strength("diamond"), 20)
+        name, proto = self._forged("diamond")
+        player = models.Player("GemFighter", "GemFighter")
+        player.equipment["wielded"] = name
+        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 22)
+        self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 22)
+        self.assertEqual(commands.equipped_armor_class_bonus(player), 10)
+        self.assertEqual(gem_inlays.diamond_critical_chance_bonus(player), 5)
+        self.assertEqual(gem_inlays.elemental_jutsu_multiplier(player, "fire"), 1.0)
+        self.assertEqual(gem_inlays.reduce_counter_damage(player, "water", 100), 100)
+        # The same diamond protects and boosts criticals when on armor.
+        proto.update(item_type="armor", wear_loc="body")
+        player.equipment["wielded"] = ""
+        player.equipment["body"] = name
+        self.assertEqual(commands.equipped_weapon_hitroll_bonus(player), 22)
+        self.assertEqual(commands.equipped_weapon_damroll_bonus(player), 22)
+        self.assertEqual(commands.equipped_armor_class_bonus(player), 10)
+        self.assertEqual(gem_inlays.diamond_critical_chance_bonus(player), 5)
+
+    def test_multiple_diamonds_are_capped_without_affecting_other_gems(self):
+        from copy import deepcopy
+        base_name, proto = self._forged("diamond")
+        player = models.Player("GemStack", "GemStack")
+        player.equipment["wielded"] = base_name
+        for i, slot in enumerate(("body", "head", "hands", "feet"), start=1):
+            other = deepcopy(proto)
+            other["short_desc"] = f"Unique Diamond {i}"
+            other["wear_loc"] = slot
+            vnum = 875333 + i
+            olc.OBJECT_TEMPLATES[vnum] = other
+            self.addCleanup(olc.OBJECT_TEMPLATES.pop, vnum, None)
+            player.equipment[slot] = other["short_desc"]
+        self.assertEqual(gem_inlays.equipment_flat_bonus(player), 100)
+        self.assertEqual(gem_inlays.diamond_armor_class_bonus(player), 30)
+        self.assertEqual(gem_inlays.diamond_critical_chance_bonus(player), 15)
+
+    def test_generated_help_explains_non_elemental_diamond_bonuses(self):
+        import help_system
+        by_key = {entry["primary_keyword"]: entry["body"]
+                  for entry in help_system.DEFAULT_HELP_ENTRIES}
+        for key in ("inlay", "craft"):
+            self.assertIn("+20 Hitroll", by_key[key])
+            self.assertIn("+10 Armor Class", by_key[key])
+            self.assertIn("critical chance", by_key[key])
+
     def test_forged_inlay_works_after_weapon_elemental_enchantment(self):
         name, _ = self._forged("ruby")
         player = models.Player("GemFighter", "GemFighter")
