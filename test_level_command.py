@@ -26,7 +26,7 @@ class LevelCommandTests(unittest.TestCase):
         self.assertEqual(shown, "\n".join((
             commands._row("Level", 25, "Experience", 15_500_000),
             commands._row("Next Level", threshold, "XP Needed", 125_000),
-            commands._row("Ninja Rank", "Chunin", "Rank Cap", 100),
+            commands._row("Ninja Rank", "Chunin", "Rank Cap", 65),
         )))
         score = commands.build_score_lines(self.player, "Nobody")
         plain = re.sub(r"&(?:\[\d+\]|.)", "", "\n".join(score))

@@ -2265,9 +2265,9 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
             if value_text.lower() == "kage":
                 session.send("Use SETKAGE to appoint a Kage (one per village).")
                 return
-            if value_text.lower() not in (*kage.RANK_ORDER, "student"):
+            if value_text.lower() not in kage.RANK_ORDER:
                 session.send(f"'{value_text}' isn't a known rank or trainee status. "
-                             f"Valid: student, {', '.join(kage.RANK_ORDER)}")
+                             f"Valid: {', '.join(kage.RANK_ORDER)}")
                 return
             value_text = value_text.lower()
         setattr(target, field, value_text.lower() if field in ("village", "primary_class", "clan") else value_text)
@@ -3171,12 +3171,9 @@ def cmd_setkage(session, args: List[str]) -> None:
     import data_headbands
 
     def _restore_earned_rank(p, p_session) -> None:
-        previous = getattr(p, "rank_before_kage", "")
-        if previous in ("village elder", "elite jonin"):
-            previous = "jonin"
-        if previous not in kage.RANK_ORDER or previous == "kage":
-            previous = "jonin"  # compatibility for old Kage saves
-        p.village_rank = previous
+        # Appointments never overwrite rank, even after promotion in office.
+        previous = p.village_rank
+        p.is_kage = False
         p.rank_before_kage = ""
         data_headbands.apply_rank_headband(p, previous)
         storage.save_player(p)
@@ -3185,7 +3182,7 @@ def cmd_setkage(session, args: List[str]) -> None:
             p_session.send_prompt()
 
     if is_remove:
-        if target.village_rank != "kage":
+        if not target.is_kage:
             session.send(f"{target.name} isn't a Kage.")
             return
         _restore_earned_rank(target, live_session)
@@ -3193,13 +3190,13 @@ def cmd_setkage(session, args: List[str]) -> None:
         _log(session.player.name, "player", 0, f"removed {target.name} as Kage of {target.village}")
         return
 
-    if target.village_rank == "kage":
+    if target.is_kage:
         session.send(f"{target.name} is already the Kage of their village.")
         return
 
     # Relieve the existing holder without affecting Kage in other villages.
     for existing in storage.all_players():
-        if existing.village == target.village and existing.village_rank == "kage" and existing.name != target.name:
+        if existing.village == target.village and existing.is_kage and existing.name != target.name:
             existing_session = next(
                 (s for s in __import__("session").ACTIVE_SESSIONS if s.player and s.player.name == existing.name),
                 None,
@@ -3208,9 +3205,8 @@ def cmd_setkage(session, args: List[str]) -> None:
             _restore_earned_rank(live_existing, existing_session)
             session.send(f"{live_existing.name} has been relieved of the Kage position to make way.")
 
-    target.rank_before_kage = (target.village_rank if target.village_rank in kage.RANK_ORDER
-                               else "jonin")
-    target.village_rank = "kage"
+    target.rank_before_kage = ""
+    target.is_kage = True
     new_headband = data_headbands.apply_rank_headband(target, "kage")
     if live_session:
         live_session.send(

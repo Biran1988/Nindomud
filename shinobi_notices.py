@@ -5,6 +5,8 @@ time, so leveling.py and jobs.py can report progress without circular imports.
 Only real, online characters trigger a server-wide announcement.
 """
 
+import kage
+
 
 def arrival(name: str) -> str:
     return (
@@ -24,7 +26,7 @@ def welcome(player, village_name: str) -> str:
     return (
         "\n&[208]+----------------------------------------------+&x\n"
         f"&[223]  WELCOME TO YOUR NINJA WAY, {player.name.upper()}&x\n"
-        f"&[244]  {village_name}  |  {player.village_rank.title()}&x\n"
+        f"&[244]  {village_name}  |  {kage.display_rank(player)}&x\n"
         "&[208]+----------------------------------------------+&x\n"
         "&[223]Your journey continues. Forge your own nindo.&x"
     )
