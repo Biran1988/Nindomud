@@ -76,6 +76,7 @@ class PromptAndColorHelpTests(unittest.TestCase):
         uncolored=colors.render(body,False)
         self.assertIn('&r',uncolored)
         self.assertIn('Bright red',uncolored)
+        self.assertIn('Example: &&r displays literal &r',uncolored)
         self.assertNotIn('\x1b[',uncolored)
 
     def test_prompt_examples_only_use_real_tokens(self):
