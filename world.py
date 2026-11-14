@@ -215,6 +215,17 @@ def reconcile_apartment_ownership() -> None:
     deleted_ranges = [(entry["start"], entry["end"])
                       for entry in storage.load_world_state().get("deleted_areas", [])]
     saved_players = storage.all_players()
+    # The builder's Apartment area can remain prototype: expansion ownership
+    # and exits are reconstructed from player deeds after area snapshots load.
+    # Existing legacy expansions are not moved or renumbered.
+    if any(entry.get("vnum") is not None
+           for player in saved_players
+           for entry in player.apartment_expansions.values()
+           if isinstance(entry, dict)):
+        try:
+            apartments.ensure_expansion_area()
+        except ValueError as error:
+            print(f"[Apartments] Cannot reserve expansion area: {error}")
     for player in saved_players:
         if player.apartment_room_vnum is not None:
             room = WORLD.get(player.apartment_room_vnum)
@@ -244,7 +255,7 @@ def reconcile_apartment_ownership() -> None:
                         if WORLD.get(parent_vnum) is None:
                             continue  # parent not built yet this pass -- try again next pass
                         direction = entry["direction"]
-                        new_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type)
+                        new_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, room_type, player)
                         if any(start <= new_vnum <= end for start, end in deleted_ranges):
                             del remaining[room_type]
                             made_progress = True
@@ -259,18 +270,28 @@ def reconcile_apartment_ownership() -> None:
                             del remaining[room_type]
                             made_progress = True
                             continue
-                        new_room = Room(
-                            new_vnum, f"{player.name}'s {room_type.capitalize()}",
-                            apartments.ROOM_TYPE_DESCRIPTIONS[room_type],
-                        )
+                        if existing is not None and existing.apartment_room_type == room_type:
+                            # Preserve the saved room's real custom description,
+                            # flags, door configuration and programs. The old
+                            # reconcile built a fresh Room over these on reboot.
+                            new_room = existing
+                        else:
+                            new_room = Room(
+                                new_vnum, f"{player.name}'s {room_type.capitalize()}",
+                                apartments.ROOM_TYPE_DESCRIPTIONS[room_type],
+                            )
+                            WORLD.add_room(new_room)
                         new_room.apartment = True
                         new_room.owner = player.name
                         new_room.safe = True
-                        WORLD.add_room(new_room)
                         apartments.setup_expansion_room(new_room, room_type)
                         parent_room = WORLD.get(parent_vnum)
-                        if direction not in parent_room.exits:
-                            WORLD.link(parent_vnum, direction, new_vnum)
+                        if not apartments.restore_expansion_link(parent_room, direction, new_room):
+                            # A conflicting exit can be a deliberate builder edit:
+                            # never overwrite it, but make the failure visible.
+                            print(f"[Apartments] Exit conflict restoring "
+                                  f"{player.name}'s {room_type}: "
+                                  f"{parent_vnum} {direction} {new_vnum}")
                         if room_type == "storage":
                             new_room.ground_items = player.storage_room_items
                         del remaining[room_type]
@@ -297,7 +318,8 @@ def reconcile_apartment_ownership() -> None:
     # save-world generation may still contain them on disk. Reconcile
     # the durable deeds here so sold rooms cannot return after reboot.
     valid_expansions = {
-        (player.apartment_room_vnum, room_type): player.name.casefold()
+        apartments.expansion_room_vnum(player.apartment_room_vnum, room_type, player):
+            (player.name.casefold(), room_type, player.apartment_room_vnum)
         for player in saved_players
         if player.apartment_room_vnum is not None
         for room_type in player.apartment_expansions
@@ -307,6 +329,26 @@ def reconcile_apartment_ownership() -> None:
         room_type = room.apartment_room_type
         if not room.apartment or room_type not in (*apartments.APARTMENT_VNUM_TYPES, apartments.EMPTY_ROOM_TYPE):
             continue
+        if apartments.EXPANSION_VNUM_START <= vnum <= apartments.EXPANSION_VNUM_END:
+            # New rooms have no arithmetic relationship to their base.
+            # Reclaim only stale apartments we created, not builder rooms.
+            expected = valid_expansions.get(vnum)
+            if expected is not None:
+                if expected[0] == (room.owner or "").casefold() and room_type == expected[1]:
+                    continue
+                # A mismatched ownership record is NOT safe to delete.
+                continue
+            if not room.owner or room_type == apartments.EMPTY_ROOM_TYPE:
+                continue
+            # No saved deed owns this generated room any longer. Other rooms
+            # in the Apartment prototype area have no owner and are untouched.
+            _destroy_fallback = next((p.apartment_room_vnum for p in saved_players
+                                      if p.name.casefold() == room.owner.casefold()
+                                      and p.apartment_room_vnum is not None), None)
+            if _destroy_fallback is not None:
+                apartments._destroy_expansion_vnum(vnum, _destroy_fallback)
+            continue
+        # Legacy expansions still use base*10 + fixed room type index.
         base_vnum, offset = divmod(vnum, 10)
         if offset >= len(apartments.APARTMENT_VNUM_TYPES):
             continue
@@ -314,9 +356,10 @@ def reconcile_apartment_ownership() -> None:
         base = WORLD.get(base_vnum)
         if (not base or not base.apartment
                 or room_type not in (slot_type, apartments.EMPTY_ROOM_TYPE)):
-            continue  # Not one of the generated apartment expansion slots.
-        expected_owner = valid_expansions.get((base_vnum, slot_type))
-        if room_type == slot_type and expected_owner == (room.owner or "").casefold():
+            continue
+        expected = valid_expansions.get(vnum)
+        if (expected and expected[0] == (room.owner or "").casefold()
+                and room_type == expected[1]):
             continue
         apartments._destroy_expansion_vnum(vnum, base_vnum)
 

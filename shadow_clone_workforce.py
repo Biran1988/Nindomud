@@ -355,7 +355,7 @@ def _destination(player):
     room = world.WORLD.get(base) if base is not None else None
     if room and room.apartment and room.owner == player.name:
         if apartments.owns_expansion_room(player, "storage"):
-            storage = world.WORLD.get(apartments.expansion_room_vnum(base, "storage"))
+            storage = world.WORLD.get(apartments.expansion_room_vnum(base, "storage", player))
             if storage and storage.owner == player.name and storage.apartment_room_type == "storage":
                 # Storage room's ground_items is already player-backed and saved.
                 return storage, True

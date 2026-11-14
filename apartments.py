@@ -1,9 +1,10 @@
 """Player-owned apartments and their expansion rooms.
 
-Each apartment has one permanent base room and up to five optional
-rooms, each attached directly to that base. Historical hallway VNUM
-positions remain reserved in the deterministic numbering formula so
-existing saved bedrooms, kitchens, etc. never change their identity.
+New expansions live in the dedicated Apartment area (32001-32500).
+Existing expansions keep their original VNUMs: old player saves store only
+room types, directions and costs, so moving them blindly would break exits,
+locations and potentially storage. New expansions save an explicit VNUM with
+the deed, surviving reboot and even future allocation-rule changes.
 Previously purchased hallways remain recognized for resale and cleanup,
 but no more can be bought.
 
@@ -16,6 +17,10 @@ but retains its original base room as a vacant "Empty apartment".
 # Keep the original type indexes to prevent changing saved expansion VNUMs.
 APARTMENT_VNUM_TYPES = ("hallway", "bedroom", "kitchen", "pond", "storage", "farming")
 APARTMENT_ROOM_TYPES = list(APARTMENT_VNUM_TYPES[1:])
+
+EXPANSION_AREA_NAME = "apartment"
+EXPANSION_VNUM_START = 32001
+EXPANSION_VNUM_END = 32500
 
 ROOM_TYPE_DESCRIPTIONS = {
     "hallway": "A plain connecting hallway. Nothing special here, just a place to pass through.",
@@ -39,7 +44,7 @@ def owns_expansion_room(player, room_type: str) -> bool:
     import world
     if player.apartment_room_vnum is None:
         return False
-    room = world.WORLD.get(expansion_room_vnum(player.apartment_room_vnum, room_type))
+    room = world.WORLD.get(expansion_room_vnum(player.apartment_room_vnum, room_type, player))
     return bool(room and room.apartment and room.owner == player.name
                 and room.apartment_room_type in (room_type, EMPTY_ROOM_TYPE))
 
@@ -80,7 +85,7 @@ def delete_expansion_room(player, room_type: str, sessions=None) -> bool:
     """Free one owned expansion VNUM, without deleting unrelated builder rooms."""
     if player.apartment_room_vnum is None or not owns_expansion_room(player, room_type):
         return False
-    vnum = expansion_room_vnum(player.apartment_room_vnum, room_type)
+    vnum = expansion_room_vnum(player.apartment_room_vnum, room_type, player)
     _destroy_expansion_vnum(vnum, player.apartment_room_vnum, sessions)
     return True
 
@@ -112,7 +117,7 @@ def owns_room_at(player, vnum: int) -> bool:
     if vnum == player.apartment_room_vnum:
         return True
     return any(
-        expansion_room_vnum(player.apartment_room_vnum, room_type) == vnum
+        expansion_room_vnum(player.apartment_room_vnum, room_type, player) == vnum
         for room_type in player.apartment_expansions
     )
 
@@ -122,14 +127,93 @@ def refund_for_cost(cost: int) -> int:
     return int(cost * config.APARTMENT_SELL_REFUND_PERCENT)
 
 
-def expansion_room_vnum(apartment_vnum: int, room_type: str) -> int:
-    """Deterministic: apartment vnum (e.g. 1071) * 10 + the room
-    type's fixed index in APARTMENT_ROOM_TYPES (e.g. bedroom=1) gives
-    10711 -- safely outside the 4-digit range every other room in the
-    game uses, so no collision risk, and always the SAME vnum for the
-    SAME apartment+type pair, which is what makes reconciliation at
-    startup work without tracking vnums separately."""
+def expansion_room_vnum(apartment_vnum: int, room_type: str, player=None) -> int:
+    """Return the purchased room's VNUM, or the historical legacy VNUM.
+
+    Old saves have no explicit VNUM and MUST retain their old identity; new
+    purchases record a 32001-32500 VNUM directly on the saved expansion.
+    """
+    if player is not None:
+        entry = getattr(player, "apartment_expansions", {}).get(room_type, {})
+        if isinstance(entry, dict) and entry.get("vnum") is not None:
+            return int(entry["vnum"])
     return apartment_vnum * 10 + APARTMENT_VNUM_TYPES.index(room_type)
+
+
+def ensure_expansion_area() -> None:
+    """Reserve Apartment 32001-32500, preserving an existing builder area.
+
+    Prototype is an OLC *editing* designation, not a reason to discard
+    player-owned rooms. We do not turn a builder's prototype flag off.
+    """
+    import areas
+    import storage
+
+    area = areas.find_area(EXPANSION_AREA_NAME)
+    if area is not None:
+        if (area.vnum_start > EXPANSION_VNUM_START
+                or area.vnum_end < EXPANSION_VNUM_END):
+            raise ValueError(
+                f"Area '{area.name}' must cover Apartment expansion VNUMs "
+                f"{EXPANSION_VNUM_START}-{EXPANSION_VNUM_END}; found "
+                f"{area.vnum_start}-{area.vnum_end}.")
+        return
+    # Respect an explicit builder deletion rather than re-creating a removed
+    # area unasked, which could silently reoccupy somebody else's VNUMs.
+    for entry in storage.load_world_state().get("deleted_areas", []):
+        if entry.get("start", EXPANSION_VNUM_END + 1) <= EXPANSION_VNUM_END and \
+                entry.get("end", EXPANSION_VNUM_START - 1) >= EXPANSION_VNUM_START:
+            raise ValueError("The Apartment expansion VNUM range was deleted; restore its area first.")
+    areas.register_area(EXPANSION_AREA_NAME, EXPANSION_VNUM_START,
+                        EXPANSION_VNUM_END, "system")
+
+
+def allocate_expansion_vnum(player) -> int:
+    """Choose an unoccupied Apartment VNUM without touching existing rooms.
+
+    Active world rooms, stored deeds (including offline players) and saved
+    world snapshots all reserve their numbers. No silent reassignment.
+    """
+    import storage
+    import world
+
+    ensure_expansion_area()
+    used = set(world.WORLD.rooms)
+    for resident in storage.all_players():
+        if resident.apartment_room_vnum is None:
+            continue
+        for kind in resident.apartment_expansions:
+            if kind in APARTMENT_VNUM_TYPES:
+                used.add(expansion_room_vnum(resident.apartment_room_vnum, kind, resident))
+    for kind in player.apartment_expansions:
+        if kind in APARTMENT_VNUM_TYPES:
+            used.add(expansion_room_vnum(player.apartment_room_vnum, kind, player))
+    # Even if an OLC room was saved but not loaded into WORLD for some reason,
+    # its persisted VNUM remains off-limits for new construction.
+    used.update(int(v) for v in storage.load_world_state().get("rooms", {}))
+    for vnum in range(EXPANSION_VNUM_START, EXPANSION_VNUM_END + 1):
+        if vnum not in used:
+            return vnum
+    raise ValueError("Apartment expansion area 32001-32500 is full; no room can be built.")
+
+
+def restore_expansion_link(parent_room, direction: str, expansion_room) -> bool:
+    """Repair BOTH sides on reboot, including a missing reverse exit.
+
+    Never overwrite an unrelated builder exit. Existing door/key flags on
+    both ends remain intact; this only repairs the destination mappings.
+    """
+    import world
+    reverse = world.OPPOSITE_DIRECTION.get(direction)
+    if reverse is None:
+        return False
+    if parent_room.exits.get(direction) not in (None, expansion_room.vnum):
+        return False
+    if expansion_room.exits.get(reverse) not in (None, parent_room.vnum):
+        return False
+    parent_room.exits[direction] = expansion_room.vnum
+    expansion_room.exits[reverse] = parent_room.vnum
+    return True
 
 
 def expansion_cost(rooms_already_owned: int) -> int:

@@ -2901,7 +2901,11 @@ DEFAULT_HELP_ENTRIES = [
             "\n"
             "&WSelling:&x 'sell room <type>' removes a purchased expansion room and frees its VNUM, refunding 50% of its cost. If it has legacy rooms attached, sell the children first. 'sell apartment' removes ALL owned expansion rooms and exits (including legacy hallways), frees their VNUMs, refunds 50% of each purchase, and restores the permanent main room to a vacant 'Empty apartment' for the next buyer. 'redit flags apartment' toggles the apartment flag on vacant builder rooms.\n"
             "\n"
-            "Date: 2026-08-17"
+            "&WExpansion VNUMs and reboot safety:&x Newly purchased Bedroom, Kitchen, Pond, Storage or Farming rooms use the Apartment area VNUMs 32001-32500. A free VNUM is saved with your deed, and both exits are restored on reboot. Rooms are generated on purchase; there is no need to pre-create them. The builder's Apartment area may remain prototype. VNUM or area conflicts prevent purchase without a charge.\n"
+            "\n"
+            "Existing expansions retain their original VNUMs, storage and builder edits; they are NOT moved automatically. A missing return exit to your main room is repaired on startup when the path is free. Existing unrelated exits are never overwritten.\n"
+            "\n"
+            "Date: 2026-11-14"
         ),
         "created_by": "System",
         "updated_by": "System",

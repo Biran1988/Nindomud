@@ -1217,7 +1217,7 @@ class Session:
         # persists.
         if "storage" in player.apartment_expansions and player.apartment_room_vnum is not None:
             import apartments
-            storage_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, "storage")
+            storage_vnum = apartments.expansion_room_vnum(player.apartment_room_vnum, "storage", player)
             storage_room = world.WORLD.get(storage_vnum)
             if storage_room is not None:
                 storage_room.ground_items = player.storage_room_items

@@ -32,6 +32,8 @@ class ApartmentTests(unittest.TestCase):
             patch.object(world.WORLD, "rooms", self.rooms),
             patch.object(combat, "MOBS_BY_ROOM", {}),
             patch.object(storage, "save_player"),
+            patch.object(storage, "all_players", return_value=[]),
+            patch.object(apartments, "ensure_expansion_area"),
             patch.object(world_autosave, "mark_dirty"),
             patch.object(spawn_points, "remove_all_spawn_points", return_value=0),
             patch.object(session, "ACTIVE_SESSIONS", [self.s]),
@@ -66,7 +68,8 @@ class ApartmentTests(unittest.TestCase):
         from types import SimpleNamespace as NS
         initial_ryo = self.owner.ryo
         commands.cmd_buy(self.s, ["room", "healing", "north"])
-        bedroom_vnum = apartments.expansion_room_vnum(100, "bedroom")
+        bedroom_vnum = apartments.expansion_room_vnum(100, "bedroom", self.owner)
+        self.assertEqual(bedroom_vnum, 32001)
         bedroom = self.rooms[bedroom_vnum]
         self.assertEqual(self.owner.ryo, initial_ryo - config.APARTMENT_EXPANSION_BASE_COST)
         self.assertEqual(set(self.owner.apartment_expansions), {"bedroom"})
@@ -93,11 +96,12 @@ class ApartmentTests(unittest.TestCase):
 
     def test_only_main_room_can_create_new_expansion(self):
         commands.cmd_buy(self.s, ["room", "bedroom", "north"])
-        self.assertIn(1001, self.rooms)
+        self.assertIn(32001, self.rooms)
         self.assertEqual(self.owner.apartment_expansions["bedroom"]["parent_vnum"], 100)
-        self.owner.room_vnum = 1001
+        self.assertEqual(self.owner.apartment_expansions["bedroom"]["vnum"], 32001)
+        self.owner.room_vnum = 32001
         commands.cmd_buy(self.s, ["room", "kitchen", "east"])
-        self.assertNotIn(1002, self.rooms)
+        self.assertNotIn(32002, self.rooms)
         self.assertIn("main apartment", self.s.send.call_args.args[0])
 
     def test_selling_a_room_frees_vnum_exits_and_door_flags(self):
