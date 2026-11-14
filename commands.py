@@ -8449,15 +8449,17 @@ def _get_from_backpack(session, item_query: str, backpack_query: str) -> None:
 
 
 def _item_matches(query: str, item_name: str) -> bool:
-    """Word-level match: every word in `query` must appear somewhere in
-    `item_name`, not necessarily contiguously. Fixes a real bug found
-    while adding crafted item names with a stat-bonus suffix: a plain
-    `query in item_name` substring check fails for a query that skips a
-    middle word -- 'iron rod' is not a contiguous substring of 'an iron
-    fishing rod', even though it's an obviously intended match. Used
-    everywhere an item is looked up by a player-typed partial name."""
+    """Match item keywords in any order, retaining familiar partial names.
+
+    'axe' is a standalone keyword, not a suffix of 'pickaxe': HOLD AXE,
+    REMOVE AXE, and indexed AXE selection must target lumberjack axes.
+    Other terms keep their previous partial matching behavior (e.g.
+    'iron rod' still finds 'An Ironwood Fishing Rod').
+    """
     item_lower = item_name.lower()
-    return all(word in item_lower for word in query.lower().split())
+    item_words = item_lower.split()
+    return all((word in item_words if word == "axe" else word in item_lower)
+               for word in query.lower().split())
 
 
 def find_indexed_item(query: str, items):
