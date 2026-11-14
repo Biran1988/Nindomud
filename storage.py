@@ -561,6 +561,10 @@ def load_player(name: str) -> Optional[Player]:
     legacy_experience_curve = "experience_curve_version" not in raw
     legacy_sage_training = raw.get("sage_training_interval_version", 1) < 2
     player = Player.from_dict(raw)
+    # Rehome saved characters/deeds after the one-time village room migration.
+    # The old storage expansion VNUMs remain fixed even if the main room moves.
+    import village_room_relocation
+    village_room_relocation.remap_player(player)
     legacy_kage_migrated = raw.get("village_rank") == "kage"
     import kage
     obsolete_rank_migrated = kage.migrate_removed_rank(player)

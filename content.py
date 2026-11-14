@@ -645,6 +645,11 @@ def populate() -> None:
     import world_persistence
     world_persistence.apply_saved_world()
 
+    # Existing builder-created village rooms predate the registered areas.
+    # Rehome the old rooms and their saved spawn references before spawning.
+    import village_room_relocation
+    village_room_relocation.relocate_saved_rooms()
+
     # Spawn points are the FINAL reconciliation pass. Reapply their latest
     # authoritative prototypes, then restore only genuinely missing mobs and
     # items. This ordering prevents a stale world snapshot from making a

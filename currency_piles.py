@@ -45,9 +45,11 @@ def restore_piles():
         room.ground_ryo.clear()
     if not isinstance(data, dict):
         return
+    import village_room_relocation
+    moves = village_room_relocation.load_moves()
     for vnum, values in data.items():
         try:
-            room = world.WORLD.get(int(vnum))
+            room = world.WORLD.get(moves.get(int(vnum), int(vnum)))
         except (ValueError, TypeError):
             continue
         if room is not None and isinstance(values, list):
