@@ -143,7 +143,7 @@ class HalloweenFarmingTests(unittest.TestCase):
         session = NS(player=player, send=Mock())
         with patch("storage.save_player"):
             commands.cmd_eat(session, ["candy", "corn"])
-        self.assertEqual(player.health, 200)
+        self.assertEqual(player.health, 300)  # food healing doubled
         self.assertNotIn(halloween_event.CANDY_NAMES[0], player.inventory)
         self.assertGreater(player.holiday_xp_boost_until, 0)
 
