@@ -42,6 +42,20 @@ FIND_TABLE = [
     ("a leviathan", 90, 1, 500),
 ]
 
+# Chakra Steel Heartwood rods only catch high-end fish. Starting at Fishing
+# 75 they catch Koi; at 90 they can also land the rare Leviathan.
+TOP_TIER_MIN_FISH_LEVEL = 75
+TOP_TIER_WEIGHTS = {"a koi": 4, "a leviathan": 8}
+
+
+def weighted_find_table(tier: int):
+    if tier != 3:
+        return FIND_TABLE
+    return [(name, required, TOP_TIER_WEIGHTS.get(name, weight), xp)
+            for name, required, weight, xp in FIND_TABLE
+            if required >= TOP_TIER_MIN_FISH_LEVEL]
+
+
 FAIL_CHANCE_BASE = 20
 FAIL_CHANCE_FLOOR = 2
 
@@ -58,5 +72,6 @@ def attempt_catch(job_level: int, rod_name: str) -> dict:
     tool = RODS.get(rod_name.lower())
     if tool is None:
         raise ValueError("Unknown fishing rod")
-    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
+    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR,
+                                        weighted_find_table(tool["tier"]),
                                         max_resource_level=tool["max_resource_level"], tier=tool["tier"])

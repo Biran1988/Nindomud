@@ -64,3 +64,10 @@ and administrator modifications intact. Never replace the live folder wholesale.
 Run `python -m unittest test_crafted_gathering_tools` and the full
 `python -m unittest discover -p 'test_*.py'` to verify the recipes and resource
 pool overlap.
+
+## Endgame resource filtering
+
+- Chakra Steel Heartwood rods only catch Koi (Fishing 75) and Leviathan (90), with better odds for Leviathan at 90.
+- Chakra Steel Heartwood pickaxes heavily favor Chakra Steel Ore and have a 20% chance of a bonus gem after each successful ore find, compared with 3% for basic picks. Iron Ore is exceptionally uncommon at that tier.
+- Chakra Steel Heartwood axes only yield Elder Oak, Ancient Heartwood and Yew, subject to Lumberjack level. No Kindling, Birch, Sturdy Oak, or Ironwood.
+- `craft armor aura <name>`, `craft armor ca <name>`, `craft armor chakra aura <name>` all save armor with the canonical `chakra aura` slot.

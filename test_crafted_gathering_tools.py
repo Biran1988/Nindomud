@@ -87,6 +87,11 @@ class CraftedGatheringToolsTests(unittest.TestCase):
                     with patch.object(gathering_job.random, "randint", return_value=100), \
                          patch.object(gathering_job.random, "choices", side_effect=choices):
                         result = attempt(100, toolname)
+                    if spec["tier"] == 3:
+                        allowed = {name for name, *_ in (
+                            fishing.weighted_find_table(3) if table is fishing.RODS else
+                            mining.weighted_find_table(3) if table is mining.PICKAXES else
+                            lumberjack.weighted_find_table(3))}
                     self.assertEqual(set(captured), allowed)
                     self.assertEqual(result["name"], find[next(i for i,x in enumerate(find) if x[0] == result["name"])][0])
         self.assertIn("an ancient heartwood log", {n for n, *_ in lumberjack.FIND_TABLE if n in seen} | {n for n,*_ in lumberjack.FIND_TABLE})

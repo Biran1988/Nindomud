@@ -7199,7 +7199,8 @@ def cmd_mine(session, args: List[str]) -> None:
         session.send(f"You mine {rarity_colored_name(display_name)}!")
         _award_job_action_xp(session, "mining", find["xp"])
 
-        bonus = gems.roll_bonus_gem()
+        # Top-tier pickaxes have the highest chance of unearthing bonus gems.
+        bonus = gems.roll_bonus_gem(mining.gem_chance_for_tool(tool_name.lower()))
         if bonus:
             gem_name, gem_rarity = bonus
             gem_proto = _find_object_prototype_by_name(gem_name)
@@ -7775,22 +7776,29 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot> <name> | craft pill <antidote|medicine> <level>")
+        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()
+    name_start = 2
     if kind == "weapon":
         if args[1].lower() not in data_weapons.WEAPON_TYPES:
             session.send(f"That's not a real weapon type. Choose from: {', '.join(sorted(data_weapons.WEAPON_TYPES))}.")
             return
         sub_type = args[1].lower()
     else:
-        if args[1].lower() not in olc.ARMOR_WEAR_LOCATIONS:
-            session.send(f"That's not a real armor slot. Choose from: {', '.join(sorted(olc.ARMOR_WEAR_LOCATIONS))}.")
+        slot = args[1].lower()
+        if slot == "chakra" and len(args) >= 4 and args[2].lower() == "aura":
+            slot = "chakra aura"
+            name_start = 3
+        # Keep the actual equipment slot canonical for wear, saves and combat bonuses.
+        sub_type = {"ca": "chakra aura", "aura": "chakra aura",
+                    "chakra_aura": "chakra aura"}.get(slot, slot)
+        if sub_type not in olc.ARMOR_WEAR_LOCATIONS:
+            session.send(f"That's not a real armor slot. Choose from: {', '.join(sorted(olc.ARMOR_WEAR_LOCATIONS))}, aura, ca.")
             return
-        sub_type = args[1].lower()
 
-    item_name = " ".join(args[2:])
+    item_name = " ".join(args[name_start:])
     if not item_name:
         session.send("You need to give your crafted item a name.")
         return

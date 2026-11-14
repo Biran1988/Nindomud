@@ -38,17 +38,22 @@ def tool_required_level(tool_name: str):
     return gathering_job.tool_required_level(tool_name, AXES)
 
 
-# Steel and chakra-steel axes still CAN find low-tier wood, but the rates
-# fall sharply so higher-tier tools overwhelmingly harvest useful logs.
+# Steel-tier tools reduce lower-grade wood. The final Chakra Steel
+# Heartwood axe excludes Kindling, Birch, Sturdy Oak and Ironwood entirely.
 LOW_TIER_MULTIPLIERS = {
     2: {"a bundle of kindling": .03, "a birch branch": .04,
         "a sturdy oak log": .40},
-    3: {"a bundle of kindling": .005, "a birch branch": .01,
-        "a sturdy oak log": .15},
 }
+TOP_TIER_MIN_WOOD_LEVEL = 60
+TOP_TIER_WEIGHTS = {"an elder oak log": 3,
+                    "an ancient heartwood log": 15, "a yew log": 9}
 
 
 def weighted_find_table(tier: int):
+    if tier == 3:
+        return [(name, required, TOP_TIER_WEIGHTS.get(name, weight), xp)
+                for name, required, weight, xp in FIND_TABLE
+                if required >= TOP_TIER_MIN_WOOD_LEVEL]
     factors = LOW_TIER_MULTIPLIERS.get(tier, {})
     return [(name, required, weight * factors.get(name, 1.0), xp)
             for name, required, weight, xp in FIND_TABLE]

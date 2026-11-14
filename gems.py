@@ -25,20 +25,18 @@ GEM_TABLE = [
     ("a diamond", "legendary", 1, "brilliant clear"),
 ]
 
-# Flat and deliberately tiny -- "very rare across the board", the same
-# for a level-1 miner with a basic pickaxe as a level-100 miner with a
-# chakra steel one. Unlike mining's own fail chance/rarity odds, this
-# is NOT adjusted by job level or pickaxe tier at all.
+# The default chance is still 3% for basic mining. Mining passes a
+# tool-specific rate, up to 20% for the top-tier Heartwood pickaxe.
 FIND_CHANCE_PERCENT = 3
 
 
-def roll_bonus_gem():
+def roll_bonus_gem(chance_percent: int = FIND_CHANCE_PERCENT):
     """Rolled once per SUCCESSFUL mining attempt (not a failed one --
     see commands.cmd_mine). Returns (name, rarity) if a bonus gem
     turned up this time, or None most of the time. A found gem is an
     EXTRA on top of the normal ore/ingot result, not a replacement
     for it."""
-    if random.randint(1, 100) > FIND_CHANCE_PERCENT:
+    if random.randint(1, 100) > chance_percent:
         return None
     weights = [entry[2] for entry in GEM_TABLE]
     name, rarity, _, _color = random.choices(GEM_TABLE, weights=weights, k=1)[0]

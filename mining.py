@@ -8,9 +8,7 @@ import gathering_job
 
 MINEABLE_BIOMES = {"mountain"}
 
-# Deliberately just one tool for now, per explicit request -- more
-# tiers may return once the broader crafting revamp this is part of
-# is further along.
+# Four permanent mining tool tiers, with higher tiers improving ore quality.
 PICKAXES = {
     "a copper pickaxe": {"required_level": 1, "max_resource_level": 1, "tier": 0},
     "an ironbound oak pickaxe": {"required_level": 15, "max_resource_level": 25, "tier": 1},
@@ -29,6 +27,28 @@ FIND_TABLE = [
     ("a steel ore", 20, 30, 40),
     ("a chakra steel ore", 50, 12, 100),
 ]
+
+# At the highest tier, mining heavily prioritizes Chakra Steel rather than
+# returning common iron. Less powerful pickaxes retain their old tables.
+HIGHEST_TIER_WEIGHTS = {"an iron ore": 1, "a steel ore": 7,
+                        "a chakra steel ore": 90}
+# Chance of an additional gem per successful ore find, by pickaxe tier.
+GEM_CHANCE_BY_TIER = {0: 3, 1: 5, 2: 8, 3: 20}
+
+
+def weighted_find_table(tier: int):
+    if tier != 3:
+        return FIND_TABLE
+    return [(name, required, HIGHEST_TIER_WEIGHTS.get(name, weight), xp)
+            for name, required, weight, xp in FIND_TABLE]
+
+
+def gem_chance_for_tool(tool_name: str) -> int:
+    tool = PICKAXES.get(tool_name.lower())
+    if tool is None:
+        raise ValueError("Unknown pickaxe")
+    return GEM_CHANCE_BY_TIER[tool["tier"]]
+
 
 FAIL_CHANCE_BASE = 20   # % chance to fail at Mining level 1, matching fishing/lumberjack's own convention
 FAIL_CHANCE_FLOOR = 2   # % chance to fail even at max level -- never guaranteed
@@ -54,7 +74,8 @@ def attempt_mine(job_level: int, tool_name: str) -> dict:
     tool = PICKAXES.get(tool_name.lower())
     if tool is None:
         raise ValueError("Unknown pickaxe")
-    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
+    return gathering_job.attempt_gather(job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR,
+                                        weighted_find_table(tool["tier"]),
                                         max_resource_level=tool["max_resource_level"], tier=tool["tier"])
 
 
