@@ -2486,7 +2486,7 @@ def _player_attack_mob_once(session, player, mob, guaranteed_hit=False, signatur
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + eight_gates.accuracy(player) + __import__("susanoo").accuracy_bonus(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + general_skills.elemental_accuracy(player) + sword_styles.accuracy_bonus(player) + eight_gates.accuracy(player) + __import__("susanoo").accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attack_verb = data_weapons.attack_verb_for_item(player.equipment.get("wielded", ""))
     weapon_skill = data_weapons.skill_for_item(player.equipment.get("wielded", ""))
@@ -3090,12 +3090,17 @@ def use_elemental_clone_jutsu(session, jutsu_key: str) -> None:
     session.send(f"&CYou form hand signs and create {spawned[0].name}!&x (Upkeep: {SHADOW_CLONE_UPKEEP_PER_CLONE} chakra/round.)")
 
 
-def use_barrier(session) -> None:
-    """Level-35 general defensive buff, active for three minutes in one room."""
+def use_barrier(session, jutsu_key: str = "barrier") -> None:
+    """Cast one of the nonstacking defensive barriers bound to this room."""
+    keys = {"barrier": "barrier", "reinforced barrier": "reinforced_barrier",
+            "fortress barrier": "fortress_barrier"}
+    if jutsu_key not in keys:
+        session.send("That is not a barrier technique.")
+        return
     player = session.player
-    jutsu = data_jutsu.JUTSU["barrier"]
-    if not _can_use_jutsu(player, jutsu, "barrier"):
-        session.send("You don't know Barrier.")
+    jutsu = data_jutsu.JUTSU[jutsu_key]
+    if not _can_use_jutsu(player, jutsu, jutsu_key):
+        session.send(f"You have not learned and practiced {jutsu['display_name']} yet.")
         return
     if _is_action_blocked(player) or getattr(session, "pending_cast", None) is not None:
         session.send("You are unable to raise a barrier right now.")
@@ -3104,21 +3109,31 @@ def use_barrier(session) -> None:
         session.send("You are silenced and cannot use jutsu right now!")
         return
     now = time.time()
-    if now < player.cooldowns.get("barrier", 0):
-        session.send("Barrier is still recovering.")
+    if now < player.cooldowns.get(jutsu_key, 0):
+        session.send(f"{jutsu['display_name']} is still recovering.")
         return
-    chakra_cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
-    if player.chakra < chakra_cost:
+    effect = keys[jutsu_key]
+    active = [name for name in keys.values() if name in player.active_status_effects]
+    if any(status_effects.EFFECT_DEFS[name]["damage_reduction_pct"] >
+           status_effects.EFFECT_DEFS[effect]["damage_reduction_pct"] for name in active):
+        session.send("A stronger barrier already protects you. Release it by moving rooms first.")
+        return
+    cost = jutsu_balance.cast_cost(player, jutsu, "chakra")
+    if player.chakra < cost:
         session.send("You don't have enough chakra.")
         return
-    player.chakra -= chakra_cost
-    player.cooldowns["barrier"] = now + jutsu["cooldown"]
+    player.chakra -= cost
+    player.cooldowns[jutsu_key] = now + jutsu["cooldown"]
     duration = signature_moves.duration(player, jutsu, jutsu_balance.boosted_duration(
-        player, jutsu, status_effects.EFFECT_DEFS["barrier"]["duration"], effect="barrier"))
-    status_effects.apply_effect(player.active_status_effects, "barrier", source="barrier",
-                                duration_override=duration)
-    grow_skill_from_usage(player, "Barrier", session=session)
-    session.send(f"&CA chakra barrier rises around you, negating 25% of incoming damage for {duration} seconds. It breaks if you leave the room.&x")
+        player, jutsu, status_effects.EFFECT_DEFS[effect]["duration"], effect=effect))
+    for other in keys.values():
+        player.active_status_effects.pop(other, None)
+    status_effects.apply_effect(player.active_status_effects, effect,
+                                source=jutsu_key, duration_override=duration)
+    grow_skill_from_usage(player, jutsu["display_name"], session=session)
+    reduction = status_effects.EFFECT_DEFS[effect]["damage_reduction_pct"]
+    session.send(f"&C{jutsu['display_name']} rises around you, reducing incoming damage "
+                 f"by {reduction}% for {duration} seconds. Moving rooms breaks it.&x")
 
 
 def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> None:
@@ -3203,7 +3218,7 @@ def use_jutsu(session, jutsu_key: str, mob: Mob, fan_direction: str = None) -> N
     mob_armor_class = derived_stats.armor_class(mob) - commands_module.equipped_armor_class_bonus(mob)
     import hidden_mist
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, mob_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, mob) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + general_skills.elemental_accuracy(player)
     to_hit += _genjutsu_hit_bonus(player, jutsu) + jutsu.get("accuracy_bonus", 0)
     if jutsu.get("class_requirement") == "taijutsu":
         to_hit += eight_gates.accuracy(player)
@@ -3444,7 +3459,7 @@ def use_jutsu_on_player(session, jutsu_key: str, target_session, damage_multipli
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + (eight_gates.accuracy(player) if jutsu.get("class_requirement") == "taijutsu" else 0)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + _genjutsu_hit_bonus(player, jutsu) + hidden_mist.advantage(player, target) + jutsu.get("accuracy_bonus", 0) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + general_skills.elemental_accuracy(player) + (eight_gates.accuracy(player) if jutsu.get("class_requirement") == "taijutsu" else 0)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     if random.randint(1, 100) > to_hit:
         jutsu_colors.send(session, f"You use {colored_name} on {target.name}, but it misses!")
@@ -4060,7 +4075,7 @@ def _player_attack_target_once(session, player, target_session, target, guarante
     target_set_bonus = commands_module.equipped_set_bonus_percent(target)
     target_armor_class = derived_stats.armor_class(target, target_set_bonus + data_personality.personality_bonus_percent(target, "armor_class") + tailed_beasts.rampage_bonus_percent(target) + tailed_beasts.mode_bonus_percent(target)) - commands_module.equipped_armor_class_bonus(target)
     import sage_mode
-    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + sword_styles.accuracy_bonus(player) + eight_gates.accuracy(player) + __import__("susanoo").accuracy_bonus(player)
+    to_hit = derived_stats.to_hit_chance(player_hit_roll, target_armor_class) + weather.combat_accuracy_modifier() + _sharingan_hitroll_bonus(player) + hyuga.accuracy(player) - _accuracy_penalty_from_effects(player) + hidden_mist.advantage(player, target) + sage_mode.accuracy(player) + general_skills.focused_accuracy(player) + general_skills.elemental_accuracy(player) + sword_styles.accuracy_bonus(player) + eight_gates.accuracy(player) + __import__("susanoo").accuracy_bonus(player)
     to_hit = max(derived_stats.TO_HIT_MIN_PCT, min(derived_stats.TO_HIT_MAX_PCT, to_hit))
     attacker_wielded = player.equipment.get("wielded", "")
     attack_verb = data_weapons.attack_verb_for_item(attacker_wielded)

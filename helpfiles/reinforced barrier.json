@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "reinforced barrier",
+  "keywords": [
+    "reinforced barrier"
+  ],
+  "title": "Reinforced Barrier (General, level 70)",
+  "body": "Syntax: perform reinforced barrier\n\nUpgrade to the level-35 Barrier. Unlocks at level 70 for every class (practice once first). Cast a layered defensive field for up to 240 seconds before duration scaling, reducing all incoming damage by 35%. The field is bound to your present room and breaks immediately when you leave by walking, teleporting, recalling or being transferred.\n\nCosts 65 Chakra before level scaling; cooldown 18 seconds. Recasting a Barrier tier replaces any weaker/equal room-bound Barrier. The tiers do not stack, nor do they multiply with personal Sanctuary or Elemental Shield. A weaker tier cannot replace an active stronger one. See HELP BARRIER and HELP FORTRESS BARRIER.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

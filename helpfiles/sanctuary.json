@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "sanctuary",
+  "keywords": [
+    "sanctuary"
+  ],
+  "title": "Sanctuary (General, level 90)",
+  "body": "Syntax: sanctuary [on|off] | perform sanctuary [on|off]\n\nAt level 90, all ninja classes learn Sanctuary. Practice the skill once before first use. ON activates a personal protective aura that halves all incoming damage, from player attacks, mobs and ordinary damaging statuses. It follows you when moving, even if you leave a room-bound Barrier behind. OFF ends the aura manually. The command without arguments toggles it.\n\nInitial cost: 60 Chakra before level scaling; upkeep 5 Chakra every five seconds while active, including outside combat. Cooldown: 20 seconds before scaling. If you cannot pay upkeep, Sanctuary automatically switches off. It remains saved on your character across relogs until you turn it off or cannot sustain it.\n\nSanctuary, Elemental Shield and all Barrier tiers do NOT add or multiply their damage reductions. The strongest active reduction applies (50% from Sanctuary). See HELP ELEMENTAL SHIELD, HELP BARRIER.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

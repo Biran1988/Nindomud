@@ -706,6 +706,36 @@ JUTSU["barrier"] = {
     "jutsu_type": "buff", "tier": 2, "element": "none",
 }
 
+# Room-bound defense upgrades. They do not stack with each other or with
+# Sanctuary/Elemental Shield: the strongest percentage reduction wins.
+for _key, _name, _level, _cost, _cooldown, _tier in (
+    ("reinforced barrier", "Reinforced Barrier", 70, 65, 18.0, 3),
+    ("fortress barrier", "Fortress Barrier", 150, 120, 25.0, 4),
+):
+    JUTSU[_key] = {
+        "jutsu_id": "general_" + _key.replace(" ", "_"), "display_name": _name,
+        "class_requirement": "general", "level_requirement": _level,
+        "chakra_cost": _cost, "stamina_cost": 0, "cooldown": _cooldown,
+        "damage": None, "damage_type": None, "effect": None,
+        "jutsu_type": "buff", "tier": _tier, "element": "none",
+    }
+
+# Player-bound, manually toggled defense (NOT room-bound like Barrier).
+JUTSU["sanctuary"] = {
+    "jutsu_id": "general_sanctuary", "display_name": "Sanctuary",
+    "class_requirement": "general", "level_requirement": 90,
+    "chakra_cost": 60, "stamina_cost": 0, "cooldown": 20.0,
+    "damage": None, "damage_type": None, "effect": None,
+    "jutsu_type": "general_utility", "tier": 3, "element": "none",
+}
+JUTSU["elemental shield"] = {
+    "jutsu_id": "general_elemental_shield", "display_name": "Elemental Shield",
+    "class_requirement": "general", "level_requirement": 100,
+    "chakra_cost": 70, "stamina_cost": 0, "cooldown": 20.0,
+    "damage": None, "damage_type": None, "effect": None,
+    "jutsu_type": "general_utility", "tier": 3, "element": "none",
+}
+
 
 def _genjutsu(name, level, cost, damage=None, effect=None, **options):
     return {

@@ -38,16 +38,26 @@ def eligible_for_catalog(key, jutsu):
     return jutsu.get("class_requirement") in CLASS_ORDER and not jutsu.get("jinchuriki_only")
 
 
-def entries():
-    """Stable contiguous IDs: GENERAL, NINJUTSU, TAIJUTSU, GENJUTSU, BUKIJUTSU.
 
-    Alphabetize by jutsu's registered display name *within* each class;
-    this does not change when players learn skills or an item is consumed.
+# Frozen original catalog order: released scroll VNUMs are persistent IDs.
+# Later new techniques are appended, never inserted into the old slots.
+BASE_SCROLL_KEYS = ('1000 years of death', 'advanced shadow clone jutsu', 'advanced tracking', 'barrier', 'binding formula seal', 'black flame suppression seal', 'byakugan', 'camouflage', 'celestial byakugan', 'celestial eight trigrams judgment', 'chakra lock seal', 'chakra siphon seal', 'chakra suppression seal', 'eight trigrams mountain crusher', 'eight trigrams one hundred twenty-eight palms', 'eight trigrams palms revolving heaven', 'eight trigrams sixteen palms', 'eight trigrams sixty-four palms', 'eight trigrams thirty-two palms', 'eight trigrams three hundred sixty-one palms', 'eight trigrams twin lions crumbling attack', 'eight trigrams vacuum palm', 'eight trigrams vacuum wall palm', 'fate sight', 'flowing barrier seal', 'focused mind', 'gentle fist: chakra point strike', 'gentle fist: one blow body', 'gentle fist: tenketsu needle', 'gentle step twin lion fists', 'golden wheel reincarnation explosion', 'hand sign suppression seal', 'imbued barrier seal', 'mind suppression seal', 'multi exit barrier', 'protecting eight trigrams sixty-four palms', 'reaper death seal', 'release jutsu', 'reverse reaper seal', 'seal release', 'sealing jutsu', 'sensory detect', 'silent movement', 'silver wheel reincarnation explosion', 'summoning contract break', 'summoning contract seal', 'teleportation anchor seal', 'tenseigan chakra mode', 'timed barrier seal', 'track', 'almighty push', 'atomic dissolution', 'blast cascade', 'blast clay shot', 'blazing pulse', 'burning horizon', 'chakra ball', 'chidori', 'chishin', 'corrosive steam wave', 'deep forest bloom', 'deido bunshin', 'demonic mirroring ice crystals', 'detonation field', 'dual chidori', 'earth rasengan', 'earth wall crusher', 'fire rasengan', 'fireball jutsu', 'flash spark', 'flashfire storm', 'full body chidori', 'gale spark', 'guiding lightning', 'heat needle', 'hidden mist jutsu', 'ice prison', 'ice senbon', 'iron sand maelstrom', 'iron sand volley', 'juuha shou', 'kamui intangibility', 'kamui limb removal', 'kamui pocket dimension', 'karyuu endan', 'laser current', 'lava snare', 'lightning rasengan', 'lightning strike jutsu', 'magma torrent', 'magnetic bind', 'maximum chidori', 'mizu bunshin', 'molten pebbles', 'nanairo no rasengan', 'oodama rasengan', 'particle cage', 'particle spear', 'raikiri', 'raiton kage bunshin', 'rasengan', 'retsudotensho', 'scalding spray', 'scorching mirage', 'shadow clone jutsu', 'shadow shuriken technique', 'six paths rinnegan', 'six paths sage mode', 'six paths vital surge', 'storm dragon torrent', 'suigadan', 'suna bunshin', 'tempest lance', 'thunderhead bind', 'truth-seeking orb barrage', 'universal pull', 'ushiro shishou', 'vapor cloak burst', 'water dragon jutsu', 'water rasengan', 'water release: glue technique', 'wind blade jutsu', 'wind rasengan', 'wood binding roots', 'wood splinter barrage', 'atomic lotus strike', 'blast knuckle', 'blazing flash kick', 'choku zuki', 'cinder heel', 'daytime tiger', 'detonation rising knee', 'disintegration heel', 'dynamic entry', 'empi', 'evening elephant', 'explosive lotus barrage', 'flash ember jab', 'forest pulse palm', 'front lotus', 'frost knuckle', 'gale spark step', 'gate of death', 'gate of healing', 'gate of life', 'gate of limit', 'gate of opening', 'gate of pain', 'gate of view', 'gate of wonder', 'glacier heel', 'guiding thunder knee', 'heat mirage roundhouse', 'iron sand knuckle', 'kihon dachi', 'kumade', 'mae geri', 'magma hammer fist', 'magnetic cyclone kick', 'mirrored lotus rush', 'morning peacock', 'neko ashi dachi', 'nidan kyten geri', 'night guy', 'nova impact palm', 'oi zuki', 'particle palm', 'polar lock grip', 'pressure burst fist', 'reverse lotus', 'rootbreaker sweep', 'sanchin dachi', 'scalding palm', 'searing elbow', 'sokuto', 'solar flare fist', 'soto uke', 'storm current jab', 'stormbreaker rush', 'tamashiwara', 'tempest spiral rush', 'thornwood jab', 'thunderwind heel', 'vapor rising knee', 'volcanic axe kick', 'amaterasu', 'chisei', 'chokkan', 'demonic illusion hell viewing technique', 'devils taunt', 'distortion flame', 'greater henge', 'henge', 'illusion walk', 'insect eyes', 'izanami', 'jigaku gouka', 'jubaku satsu', 'kanashibari', 'kasumi juusha', 'kekkei no me', 'kokohi arazu', 'kokuangyou', 'kori shinchu', 'narakumi', 'nehan shouja', 'niju kokohi arazu', 'oboro bunshin', 'phantom soldiers', 'silent genjutsu', 'snakes embrace', 'soundless sound', 'suzu senbon', 'tsukuyomi', 'ultimate henge', 'counter kunai', 'demon wind shuriken', 'disenchantment', 'dual wield', 'exploding clay', 'exploding note', 'explosive tag kunai', 'fan techniques', 'flying swallow', 'multi-kunai throw', 'multi-shuriken throw', 'poison gas bomb', 'samurai sabre', 'smoke bomb', 'throw kunai', 'throw shuriken', 'toxin binding', 'trap disabling', 'weapon enchantment', 'weapon expert')
+
+def entries():
+    """Preserve the original class-ordered 235 VNUMs; append new jutsu.
+
+    Appending is essential: inserting into the general section would shift
+    the IDs of existing builder scrolls and overwrite saved configurations.
     """
-    keys = [key for key, jutsu in data_jutsu.JUTSU.items()
-            if eligible_for_catalog(key, jutsu)]
-    keys.sort(key=lambda key: (CLASS_ORDER.index(data_jutsu.JUTSU[key]["class_requirement"]),
-                              data_jutsu.JUTSU[key]["display_name"].casefold(), key))
+    available = {key for key, jutsu in data_jutsu.JUTSU.items()
+                 if eligible_for_catalog(key, jutsu)}
+    # The original 235 VNUMs already exist in live saved /data and may be
+    # customized or spawned by builders. Never shift those identifiers.
+    keys = [key for key in BASE_SCROLL_KEYS if key in available]
+    additions = sorted(available.difference(BASE_SCROLL_KEYS),
+                       key=lambda key: (CLASS_ORDER.index(data_jutsu.JUTSU[key]["class_requirement"]),
+                                        data_jutsu.JUTSU[key]["display_name"].casefold(), key))
+    keys.extend(additions)
     if len(keys) > END_VNUM - START_VNUM + 1:
         raise RuntimeError("Scroll Jutsu area 31501-32000 cannot fit the current catalog")
     return tuple((START_VNUM + index, key, data_jutsu.JUTSU[key])

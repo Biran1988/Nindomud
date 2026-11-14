@@ -3,8 +3,8 @@
   "keywords": [
     "barrier"
   ],
-  "title": "Barrier",
-  "body": "Syntax: perform barrier\n\nDescription: A defensive chakra barrier negates 25% of incoming damage for three minutes without changing Armor Class. Leaving the room breaks it. Raises a defensive barrier for three minutes (25% less incoming damage, no Armor Class bonus). Moving to another room breaks it. Usable with any chakra nature. Unlocks at level 35. Costs 30 Chakra and 0 Stamina; 12 second cooldown.\n\nDate: 2026-09-27",
+  "title": "Barrier (General Defensive Jutsu)",
+  "body": "Syntax: perform barrier\n\nA room-bound chakra guard learned by everyone at level 35. Reduces incoming damage by 25% for 180 seconds before duration scaling. Any room change removes the effect immediately, including teleportation and staff transfers. Costs 30 Chakra before level scaling and has a 12-second cooldown.\n\nAdvanced room-bound defenses:\n  Reinforced Barrier (level 70): 35% reduction, 240 seconds, 65 Chakra.\n  Fortress Barrier (level 150): 45% reduction, 300 seconds, 120 Chakra.\n\nUse PERFORM REINFORCED BARRIER or PERFORM FORTRESS BARRIER. They replace weaker room-bound barriers; reductions never stack.\n\nPlayer-bound toggles (work while moving):\n  Sanctuary (level 90): 50% less damage, 5 Chakra upkeep per 5 seconds.\n  Elemental Shield (level 100): 30% less damage, +5 accuracy, +15% own-nature jutsu damage; 6 Chakra upkeep per 5 seconds.\n\nThe strongest active reduction always wins; you never become invulnerable by combining shields. Normal practice requirements apply.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0.0

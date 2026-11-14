@@ -3648,7 +3648,7 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             jutsu_colors.send(session, f"Sneak up on whom? Usage: perform {jutsu_key} <target>.")
             return
     if jutsu_data.get("jutsu_type") == "buff":
-        combat.use_barrier(session)
+        combat.use_barrier(session, jutsu_key)
         return
     if jutsu_data.get("jutsu_type") == "elemental_clone":
         combat.use_elemental_clone_jutsu(session, jutsu_key)

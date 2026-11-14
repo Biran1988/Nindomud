@@ -45,6 +45,24 @@ EFFECT_DEFS = {
         "message": "A chakra barrier surrounds {target}.",
         "damage_reduction_pct": 25,
     },
+    "reinforced_barrier": {
+        "display_name": "Reinforced Barrier", "duration": 240,
+        "message": "A layered chakra barrier surrounds {target}.",
+        "damage_reduction_pct": 35,
+    },
+    "fortress_barrier": {
+        "display_name": "Fortress Barrier", "duration": 300,
+        "message": "A dense fortress of chakra surrounds {target}.",
+        "damage_reduction_pct": 45,
+    },
+    "sanctuary": {
+        "display_name": "Sanctuary", "duration": 1, "toggled": True,
+        "message": None, "damage_reduction_pct": 50,
+    },
+    "elemental_shield": {
+        "display_name": "Elemental Shield", "duration": 1, "toggled": True,
+        "message": None, "damage_reduction_pct": 30,
+    },
     "blinded": {
         "display_name": "Blinded", "duration": 2,
         "message": "Blinding pain disrupts {target}!",
@@ -220,7 +238,7 @@ def has_effect(effects: Dict[str, dict], name: str) -> bool:
 
 
 def reduce_incoming_damage(effects: Dict[str, dict], amount: int) -> int:
-    """Barrier mitigates damage after other defenses, for any incoming hit."""
+    """Apply the strongest active protection, never multiply stacked shields."""
     if amount <= 0:
         return amount
     reduction = max((EFFECT_DEFS.get(name, {}).get("damage_reduction_pct", 0)

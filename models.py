@@ -56,7 +56,8 @@ class Player:
         if name == "room_vnum" and "room_vnum" in self.__dict__ and self.room_vnum != value:
             effects = self.__dict__.get("active_status_effects")
             if isinstance(effects, dict):
-                effects.pop("barrier", None)
+                for room_bound in ("barrier", "reinforced_barrier", "fortress_barrier"):
+                    effects.pop(room_bound, None)
         object.__setattr__(self, name, value)
 
     # Permanent choices (Section 3) -- protected from player edits

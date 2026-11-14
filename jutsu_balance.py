@@ -93,7 +93,9 @@ def boosted_damage(actor, jutsu, damage):
     # without turning the lowest-level starter move into a capstone attack.
     gained = max(0, int(getattr(actor, "level", 1)) - int(jutsu.get("level_requirement", 1)))
     multiplier *= 1 + min(.35, gained / 500.0)
-    return max(1, int(round(damage * multiplier)))
+    result = max(1, int(round(damage * multiplier)))
+    import general_skills
+    return general_skills.elemental_jutsu_damage(actor, jutsu, result)
 
 def boosted_duration(actor, jutsu, seconds, *, is_pvp=False, effect=None):
     """Increase each jutsu's lasting power without indefinite hard-locks."""

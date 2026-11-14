@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "elemental shield",
+  "keywords": [
+    "elemental shield"
+  ],
+  "title": "Elemental Shield (General, level 100)",
+  "body": "Syntax: elemental shield [on|off] | perform elemental shield [on|off]\n\nUnlocks at level 100 for all four classes. Practice once with a teacher. Inspired by the Raikage's lightning chakra armor, but shaped by YOUR OWN revealed chakra nature. Surround yourself in a moving chakra mantle that reduces all incoming damage by 30%, grants +5 accuracy on attacks, and increases your own element-matching offensive jutsu damage by 15%. Fire, Water, Wind, Earth, Lightning and other natural chakra natures can use it. If no chakra nature is selected, it still protects you but cannot boost elemental attacks.\n\nInitial cost: 70 Chakra before level scaling. Maintenance: 6 Chakra every five seconds, in or out of combat. Cooldown: 20 seconds. The toggle follows you across rooms and persists through saves/relogs; it ends when switched OFF or its upkeep is unaffordable.\n\nDoes not stack defensive percentages with Sanctuary or any Barrier. Sanctuary's 50% protection wins over Elemental Shield's 30%, but the offensive bonus remains active. See HELP SANCTUARY.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

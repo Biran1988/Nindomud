@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "fortress barrier",
+  "keywords": [
+    "fortress barrier"
+  ],
+  "title": "Fortress Barrier (General, level 150)",
+  "body": "Syntax: perform fortress barrier\n\nThe master-level evolution of Barrier, available to every class at level 150 after practicing once. Raise a dense chakra fortress around yourself for up to 300 seconds before duration scaling, preventing 45% of incoming damage. The protection is tied to your current ROOM: leaving it instantly breaks the shield.\n\nCosts 120 Chakra before level scaling; cooldown 25 seconds. Automatically replaces an older/lesser room-bound Barrier. Damage-reduction percentages never stack with Sanctuary or Elemental Shield. Sanctuary remains the strongest at 50%, but follows its owner between rooms. See HELP SANCTUARY.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}
