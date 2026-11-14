@@ -90,7 +90,7 @@ def test_each_job_tool_wears_on_failed_attempts_and_kitchen_exception():
 
     fish = next(iter(cooking.INGREDIENTS))
     player.equipment["tool"] = "A Copper Cooking Pot"
-    player.inventory.append(fish)
+    player.inventory.extend([fish, "A Bundle of Kindling"])
     with patch.object(commands.world.WORLD, "get", return_value=None), \
          patch.object(cooking, "attempt_cook", return_value={"burned": True}):
         commands.cmd_cook(session, [fish])
@@ -98,7 +98,7 @@ def test_each_job_tool_wears_on_failed_attempts_and_kitchen_exception():
     assert tool_durability.uses_left(player.equipment["tool"])[0] == 249
 
     player.equipment.pop("tool")
-    player.inventory.append(fish)
+    player.inventory.extend([fish, "A Birch Branch"])
     kitchen = SimpleNamespace(apartment_room_type="kitchen", owner=player.name)
     with patch.object(commands.world.WORLD, "get", return_value=kitchen), \
          patch.object(cooking, "attempt_cook", return_value={"burned": True}):

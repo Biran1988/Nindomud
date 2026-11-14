@@ -516,6 +516,7 @@ def consume_candy(session, query):
                  CANDY_NAMES[2]: ("stamina", 100),
                  CANDY_NAMES[3]: ("health", 175)}
     field, amount = resources[item]
+    amount *= 2  # edible Halloween candy follows food recovery rebalance
     p = session.player
     previous = getattr(p, field)
     setattr(p, field, min(getattr(p, "maximum_" + field), previous + amount))

@@ -60,6 +60,37 @@ class ApartmentTests(unittest.TestCase):
         commands.cmd_buy(self.s, ["room", "hallway", "north"])
         self.assertNotIn(1000, self.rooms)
 
+    def test_healing_room_alias_buys_the_same_bedroom_without_extra_room(self):
+        import regen
+        import config
+        from types import SimpleNamespace as NS
+        initial_ryo = self.owner.ryo
+        commands.cmd_buy(self.s, ["room", "healing", "north"])
+        bedroom_vnum = apartments.expansion_room_vnum(100, "bedroom")
+        bedroom = self.rooms[bedroom_vnum]
+        self.assertEqual(self.owner.ryo, initial_ryo - config.APARTMENT_EXPANSION_BASE_COST)
+        self.assertEqual(set(self.owner.apartment_expansions), {"bedroom"})
+        self.assertEqual(bedroom.apartment_room_type, "bedroom")
+        self.assertIn("accelerated_healing", bedroom.flags)
+        self.assertTrue(regen.is_healing_room(bedroom))
+        commands.cmd_buy(self.s, ["room", "bedroom", "east"])
+        self.assertEqual(set(self.owner.apartment_expansions), {"bedroom"})
+        self.assertEqual(self.owner.ryo, initial_ryo - config.APARTMENT_EXPANSION_BASE_COST)
+
+        # Even a legacy saved bedroom missing the flag must heal.
+        bedroom.flags.remove("accelerated_healing")
+        self.assertTrue(regen.is_healing_room(bedroom))
+        player = NS(room_vnum=bedroom_vnum, position="standing", level=100,
+                    health=100, maximum_health=1000, chakra=100,
+                    maximum_chakra=1000, stamina=100, maximum_stamina=1000,
+                    chakra_control=10)
+        regen.tick_player(player)
+        self.assertGreaterEqual(player.health - 100, 50)
+        self.assertGreaterEqual(player.chakra - 100, 75)
+        self.assertGreaterEqual(player.stamina - 100, 100)
+        bedroom.owner = None
+        self.assertFalse(regen.is_healing_room(bedroom))
+
     def test_only_main_room_can_create_new_expansion(self):
         commands.cmd_buy(self.s, ["room", "bedroom", "north"])
         self.assertIn(1001, self.rooms)

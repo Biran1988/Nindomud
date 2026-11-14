@@ -134,6 +134,21 @@ def tick_sharingan_idle(player) -> list:
     return messages
 
 
+def is_healing_room(room) -> bool:
+    """Hospitals and owned apartment bedrooms provide the same recovery.
+
+    A legacy bedroom missing its historical accelerated_healing flag still
+    counts, without mutating saved rooms or changing other apartment types.
+    """
+    if room is None:
+        return False
+    if ACCELERATED_HEALING_FLAG in room.flags:
+        return True
+    return bool(getattr(room, "apartment", False)
+                and getattr(room, "owner", None)
+                and getattr(room, "apartment_room_type", None) == "bedroom")
+
+
 def tick_player(player) -> list:
     """Apply a natural regeneration tick silently outside combat."""
     if player.health <= 0:
@@ -143,7 +158,7 @@ def tick_player(player) -> list:
     if getattr(player, "level", BEGINNER_REGEN_MAX_LEVEL + 1) <= BEGINNER_REGEN_MAX_LEVEL:
         multiplier *= BEGINNER_REGEN_MULTIPLIER
     room = world.WORLD.get(player.room_vnum)
-    hospital = bool(room and ACCELERATED_HEALING_FLAG in room.flags)
+    hospital = is_healing_room(room)
     if hospital:
         multiplier *= HOSPITAL_MULTIPLIER
 

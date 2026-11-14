@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "shop type gemcutter",
+  "keywords": [
+    "shop type gemcutter"
+  ],
+  "title": "Gemcutter Buyer",
+  "body": "Builder: MSET <mob vnum> SHOPKEEPER ON, then MSET <mob vnum> SHOPTYPE gemcutter.\nBuys rough and cut gems, including Diamond. Pays 1.5 times the standard item sale price, compared with 0.5 at general stores. Use SELL <name>, SELL ALL <name>, BUY and LIST.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

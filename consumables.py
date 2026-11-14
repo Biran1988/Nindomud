@@ -93,6 +93,18 @@ for _raw, _recipe in farming.EDIBLE_CROPS.items():
         "message": "You enjoy {item}. Cooking brings out a hearty, satisfying meal.",
     }
 
+# Food restores twice its former resource benefit. Medical healing, drinks,
+# and regeneration do not use this multiplier. The legendary Leviathan
+# Fillet is an explicit 5,000-Stamina exception, not a multiplied base.
+FOOD_RECOVERY_MULTIPLIER = 2
+LEVIATHAN_STAMINA_RECOVERY = 5000
+
+
+def food_recovery_amount(name: str, base: int) -> int:
+    return (LEVIATHAN_STAMINA_RECOVERY if name.casefold() == "a leviathan fillet"
+            else base * FOOD_RECOVERY_MULTIPLIER)
+
+
 # Which command verb is expected for each category -- eating a healing
 # salve or drinking a rice ball should be refused with a hint at the
 # right verb, not silently accepted.
@@ -252,7 +264,8 @@ def consume(session, verb: str, query: str) -> None:
             })
     else:
         resource = data["restore"]
-        amount = data["amount"]
+        amount = (food_recovery_amount(_name, data["amount"])
+                  if expected_category == "food" else data["amount"])
         current = getattr(player, resource)
         maximum = getattr(player, f"maximum_{resource}")
         actual_gain = min(maximum, current + amount) - current

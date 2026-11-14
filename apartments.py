@@ -19,7 +19,7 @@ APARTMENT_ROOM_TYPES = list(APARTMENT_VNUM_TYPES[1:])
 
 ROOM_TYPE_DESCRIPTIONS = {
     "hallway": "A plain connecting hallway. Nothing special here, just a place to pass through.",
-    "bedroom": "A cozy bedroom, well-suited for resting and recovering faster than anywhere else.",
+    "bedroom": "A private healing bedroom: recover Health, Chakra and Stamina at village-hospital rates (10x standing, 30x sleeping) while out of combat.",
     "kitchen": "A fully stocked kitchen -- no need to hold a cooking pot here.",
     "pond": "A small outdoor pond, calm water perfect for fishing.",
     "storage": "A sturdy storage room -- whatever you leave here stays, even through a server restart.",

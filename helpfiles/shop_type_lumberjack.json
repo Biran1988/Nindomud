@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "shop type lumberjack",
+  "keywords": [
+    "shop type lumberjack"
+  ],
+  "title": "Lumberjack Buyer",
+  "body": "Builder: MSET <mob vnum> SHOPKEEPER ON, then MSET <mob vnum> SHOPTYPE lumberjack.\nBuys harvested wood: Kindling, Birch, and Oak/Ironwood/Heartwood/Yew logs. Pays 1.5 times the standard item sale price, compared with 0.5 at general stores. Use SELL <name>, SELL ALL <name>, BUY and LIST.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

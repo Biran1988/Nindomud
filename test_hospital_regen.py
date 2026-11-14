@@ -18,6 +18,21 @@ class HospitalRegenerationTests(unittest.TestCase):
             chakra_control=10,
         )
 
+    def test_apartment_bedroom_is_healing_room_even_without_flag(self):
+        import apartments
+        bedroom = world.Room(9812, "Bedroom", "Restful bedroom")
+        bedroom.apartment = True
+        bedroom.owner = "Owner"
+        bedroom.apartment_room_type = "bedroom"
+        self.assertTrue(regen.is_healing_room(bedroom))
+        bedroom.apartment_room_type = "kitchen"
+        self.assertFalse(regen.is_healing_room(bedroom))
+        bedroom.apartment_room_type = "bedroom"
+        bedroom.owner = None
+        self.assertFalse(regen.is_healing_room(bedroom))
+        apartments.setup_expansion_room(bedroom, "bedroom")
+        self.assertTrue(regen.is_healing_room(bedroom))
+
     def test_natural_regen_still_occurs_outside_hospital(self):
         with patch.object(world.WORLD, "get", return_value=self.normal):
             regen.tick_player(self.player)

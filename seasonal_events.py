@@ -249,7 +249,7 @@ def eat_july_fourth_food(session, query: str) -> bool:
         return True
     item = matches[index - 1]
     session.player.inventory.remove(item)
-    resources = {"chakra": 60, "stamina": 60} if item == BOMB_POP else {"health": 100, "stamina": 100}
+    resources = {"chakra": 120, "stamina": 120} if item == BOMB_POP else {"health": 200, "stamina": 200}
     gains = []
     for resource, amount in resources.items():
         before = getattr(session.player, resource)
@@ -327,7 +327,7 @@ def eat_turkey(session, query: str) -> bool:
     gains = []
     for resource in ("health", "chakra", "stamina"):
         before = getattr(player, resource)
-        setattr(player, resource, min(getattr(player, f"maximum_{resource}"), before + 100))
+        setattr(player, resource, min(getattr(player, f"maximum_{resource}"), before + 200))
         gains.append(f"{getattr(player, resource) - before} {resource}")
     player.holiday_xp_boost_until = max(player.holiday_xp_boost_until, time.time() + 1800)
     storage.save_player(player)
@@ -387,6 +387,7 @@ def use_holiday_item(session, query: str) -> bool:
         session.send(f"You open {item} and find {prize}!")
     else:
         resource, amount = CANDIES[item]
+        amount *= 2  # seasonal edible treats now have doubled recovery too
         player = session.player
         before = getattr(player, resource)
         setattr(player, resource, min(getattr(player, f"maximum_{resource}"), before + amount))

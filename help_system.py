@@ -2571,7 +2571,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: smelt <ore>\n"
             "\n"
-            "Description: Converts a raw ore (from Mining) into its ingot -- An Iron Ore into An Iron Ingot, A Steel Ore into A Steel Ingot, A Chakra Steel Ore into A Chakra Steel Ingot. Gated by Mining level (1/20/50 respectively). The 20 tiered ore species (Rock Salt/Copper/Tin/Silver, Common through Legendary) are also smeltable, each tier into its own matching-tier ingot -- always level 1, since these aren't part of any level-gated crafting-chain progression, just flavor/sell value. Costs 1-2 Stamina and takes a real delay to resolve, but always succeeds once you meet the level requirement and still have the ore -- the randomness already happened when you found the ore in the first place. No tool or location required; works anywhere.\n"
+            "Description: Converts a raw ore (from Mining) into its ingot -- An Iron Ore into An Iron Ingot, A Steel Ore into A Steel Ingot, A Chakra Steel Ore into A Chakra Steel Ingot. Gated by Mining level (1/20/50 respectively). The 20 tiered ore species (Rock Salt/Copper/Tin/Silver, Common through Legendary) are also smeltable, each tier into its own matching-tier ingot -- always level 1, since these aren't part of any level-gated crafting-chain progression, just flavor/sell value. Costs 1-2 Stamina and takes a real delay to resolve, but always succeeds once you meet the level requirement and still have the ore -- the randomness already happened when you found the ore in the first place. Outside a room marked FURNACE, each smelt burns one carried log (Sturdy Oak, Ironwood, Elder Oak, Ancient Heartwood or Yew). Furnace rooms need no wood; builders mark them with RSET FLAGS FURNACE. No held tool is required.\n"
             "\n"
             "Ingots are what every crafting recipe in the game (Weaponsmith, Armorsmith, and every job's own tool-crafting) actually uses -- smelting is simply how you turn what Mining finds into something craftable.\n"
             "\n"
@@ -2607,7 +2607,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: cook <fish>\n"
             "\n"
-            "Description: Cooks a raw fish into a dish for the Cooking job. Hold a Copper Cooking Pot, or stand in your own apartment kitchen to cook without one. Costs 1-2 Stamina and takes a few seconds. Meals can burn. Each pot used loses one use per attempt, even when a meal burns, and breaks after 250 uses by default. Cooking in your own kitchen without a pot uses no tool.\n"
+            "Description: Cooks a raw fish into a dish for the Cooking job. Hold a Copper Cooking Pot, or stand in your own apartment kitchen to cook without one. Costs 1-2 Stamina and takes a few seconds. Meals can burn. Each pot used loses one use per attempt, even when a meal burns, and breaks after 250 uses by default. Cooking in your own kitchen without a pot uses no tool. Each attempt burns ONE carried wood item (Kindling, Birch or any log), including in a kitchen, even if the dish burns.\n"
             "\n"
             "Cooking also raises your Max Chakra -- each Cooking level adds its own level number, stacking cumulatively, same math as Farming uses for Max Stamina. See 'help farm' for the exact math.\n"
             "\n"
@@ -5637,3 +5637,23 @@ for _gem_help_entry in DEFAULT_HELP_ENTRIES:
             "durability/uses, without granting combat stats. Only Diamond "
             "may be inlaid into tools. One Diamond per item."
         )
+
+
+# Dynamic help complements persistent helpfiles without overwriting builder edits.
+DEFAULT_HELP_ENTRIES.append({
+    "primary_keyword": "pawnshop",
+    "keywords": ["pawn", "pawn broker", "shop type pawnshop"],
+    "title": "NPC Pawnshops",
+    "body": (
+        "MSET <vnum> SHOPKEEPER ON; MSET <vnum> SHOPTYPE PAWNSHOP.\n"
+        "SELL <item> or SELL ALL <item> pawns transferable valued items "
+        "at normal general-store prices; the pawnshop stores each item. "
+        "LIST shows available stock. BUY <item> or BUY ALL <item> "
+        "sells stored items back for 150% of their purchase payout. "
+        "Pawn stock survives restarts for each shopkeeper and room, "
+        "and any player can purchase it. Items with no value, mission "
+        "cargo, soulbound items, and filled backpacks are not accepted. "
+        "Four premium shop types are also available: mining, farming, "
+        "lumberjack and gemcutter (1.5 times ordinary specialty payouts)."
+    ),
+})

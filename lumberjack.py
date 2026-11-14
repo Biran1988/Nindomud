@@ -46,7 +46,7 @@ LOW_TIER_MULTIPLIERS = {
 }
 TOP_TIER_MIN_WOOD_LEVEL = 60
 TOP_TIER_WEIGHTS = {"an elder oak log": 3,
-                    "an ancient heartwood log": 15, "a yew log": 9}
+                    "an ancient heartwood log": 15, "a yew log": 10}
 
 
 def weighted_find_table(tier: int):

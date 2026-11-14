@@ -6091,6 +6091,17 @@ def cmd_list(session, args: List[str]) -> None:
         return
 
     if shopkeeper:
+        import pawnshops
+        if pawnshops.is_pawnshop(shopkeeper):
+            pawned = pawnshops.stock(shopkeeper, player.room_vnum)
+            lines = [f"&W{shopkeeper.name.capitalize()} Pawnshop — for sale:&x"]
+            lines += [f"  {rarity_colored_name(row['item_name'])} - {row['price']:,} ryo"
+                      for row in pawned]
+            if not pawned:
+                lines.append("  (nothing has been pawned here yet)")
+            lines.append("&D(Buys any eligible item with a value; resells each pawned copy at a markup.)&x")
+            session.send("\n".join(lines))
+            return
         shop_items = combat.mob_shop_items(shopkeeper)
         buys_categories = combat.mob_shop_buys_categories(shopkeeper)
         lines = [f"&W{shopkeeper.name.capitalize()} offers for sale:&x"]
@@ -6101,7 +6112,17 @@ def cmd_list(session, args: List[str]) -> None:
                 lines.append(f"  {rarity_colored_name(obj['short_desc'])} - {obj['cost']} ryo{level_text}")
         if not shop_items:
             lines.append("  (nothing in stock right now)")
-        if buys_categories:
+        template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
+        shoptype = template.get("shop_type", "general")
+        special_note = {
+            "farming": "Only buys raw crops and medicinal herbs; premium payouts.",
+            "mining": "Only buys ores and ingots; premium payouts.",
+            "lumberjack": "Only buys harvested lumber; premium payouts.",
+            "gemcutter": "Only buys rough and cut gems; premium payouts.",
+        }.get(shoptype)
+        if special_note:
+            lines.append(f"&D({special_note})&x")
+        elif buys_categories:
             lines.append(f"&D(Only buys {', '.join(buys_categories)} items.)&x")
         else:
             lines.append("&D(Buys any item, but at a lower price than a specialty shop.)&x")
@@ -6170,10 +6191,14 @@ def cmd_buy(session, args: List[str]) -> None:
         if len(args) != 3:
             session.send(
                 f"Usage: buy room <type> <direction>\n"
-                f"Types: {', '.join(apartments.APARTMENT_ROOM_TYPES)}"
+                f"Types: {', '.join(apartments.APARTMENT_ROOM_TYPES)} (healing = bedroom)"
             )
             return
         room_type = args[1].lower()
+        # "Healing" is an alias for the existing Bedroom, not another room
+        # type or VNUM. Saved apartments and the one-bedroom limit stay intact.
+        if room_type in ("healing", "healingroom", "healing-room"):
+            room_type = "bedroom"
         direction = world.normalize_direction(args[2])
         if room_type not in apartments.APARTMENT_ROOM_TYPES:
             session.send(f"'{args[1]}' isn't a room type. Choose one of: {', '.join(apartments.APARTMENT_ROOM_TYPES)}")
@@ -6348,6 +6373,15 @@ def cmd_buy(session, args: List[str]) -> None:
         if not args:
             session.send("Buy what?")
             return
+        import pawnshops
+        if pawnshops.is_pawnshop(shopkeeper):
+            ok, result, price = pawnshops.buy(shopkeeper, player, " ".join(args).lower(), session=session)
+            if not ok:
+                session.send(result)
+                return
+            session.send(f"You buy {rarity_colored_name(result)} back from the pawnshop for {price:,} ryo.")
+            _fire_item_trigger(session, result, "get")
+            return
         query = " ".join(args).lower()
         obj_vnum = next(
             (v for v in combat.mob_shop_items(shopkeeper)
@@ -6467,6 +6501,25 @@ def _buy_multiple(session, args: List[str]) -> None:
         if not unlimited and count < limit and not stop_reason:
             stop_reason = "The shop has no more of that item in stock."
 
+    elif shopkeeper and __import__("pawnshops").is_pawnshop(shopkeeper):
+        import pawnshops
+        available = [entry for entry in pawnshops.stock(shopkeeper, player.room_vnum)
+                     if _item_matches(query, entry["item_name"])]
+        if not available:
+            session.send(f"{shopkeeper.name.capitalize()} has no matching pawned items.")
+            return
+        count = len(available) if unlimited else min(limit, len(available))
+        for _ in range(count):
+            ok, result, price = pawnshops.buy(shopkeeper, player, query, session=session)
+            if not ok:
+                stop_reason = result
+                break
+            bought.append(result)
+            total_ryo += price
+            _fire_item_trigger(session, result, "get")
+        if not unlimited and count < limit and not stop_reason:
+            stop_reason = "The pawnshop has no more of that item in stock."
+
     else:
         if shopkeeper:
             obj_vnum = next((
@@ -6529,6 +6582,27 @@ def _buy_multiple(session, args: List[str]) -> None:
         message += f" {stop_reason}"
     session.send(message)
 
+
+
+def _npc_shop_accepts(shopkeeper, item_name: str, category: str) -> bool:
+    """Check explicit builder buying settings before specialty material rules."""
+    import data_shops
+    template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
+    explicitly_allowed = template.get("shop_buys_categories", [])
+    categories = combat.mob_shop_buys_categories(shopkeeper)
+    if categories and category not in categories:
+        return False
+    if explicitly_allowed:
+        return True
+    return data_shops.can_buy_item(template.get("shop_type", "general"), item_name, category)
+
+
+def _npc_shop_sale_multiplier(shopkeeper) -> float:
+    import data_shops
+    template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
+    if template.get("shop_buys_categories") and template.get("shop_type", "general") == "general":
+        return 1.0
+    return data_shops.sell_multiplier(template.get("shop_type", "general"))
 
 
 def cmd_sell(session, args: List[str]) -> None:
@@ -6650,6 +6724,22 @@ def cmd_sell(session, args: List[str]) -> None:
             session.send("Sell what?")
             return
         query = " ".join(args).lower()
+        import pawnshops
+        if pawnshops.is_pawnshop(shopkeeper):
+            ordinal, keyword = inventory.parse_indexed_query(query)
+            positions = [i for i, item in enumerate(player.inventory)
+                         if _item_matches(keyword, item)]
+            if ordinal > len(positions):
+                session.send(f"You aren't carrying anything like '{query}'.")
+                return
+            sold, amount, skipped, reason = pawnshops.sell_positions(
+                shopkeeper, player, [positions[ordinal - 1]])
+            if not sold:
+                session.send(reason or "That item cannot be pawned.")
+                return
+            session.send(f"You pawn {rarity_colored_name(sold[0])} for {amount:,} ryo. "
+                         "It is now available for anyone to buy from this pawnshop.")
+            return
         match = find_indexed_item(query, player.inventory)
         if not match:
             session.send(f"You aren't carrying anything like '{query}'.")
@@ -6669,10 +6759,10 @@ def cmd_sell(session, args: List[str]) -> None:
         buys_categories = combat.mob_shop_buys_categories(shopkeeper)
         import seasonal_events
         is_feather = match == seasonal_events.TURKEY_FEATHER
-        if buys_categories and category not in buys_categories and not is_feather:
+        if not _npc_shop_accepts(shopkeeper, match, category) and not is_feather:
             session.send(f"{shopkeeper.name.capitalize()} doesn't buy {category} items.")
             return
-        multiplier = 1.0 if buys_categories else 0.5
+        multiplier = _npc_shop_sale_multiplier(shopkeeper)
         dish_price = cooking.price_for_dish(match)
         base_price = dish_price if dish_price is not None else item_types.base_sell_price(match)
         price = 500 if is_feather else max(1, int(base_price * multiplier))
@@ -6703,7 +6793,7 @@ def cmd_sell(session, args: List[str]) -> None:
 
     category = item_types.classify_item(match)
     shop_type = shop["type"]
-    if not data_shops.can_sell_here(shop_type, category):
+    if not data_shops.can_buy_item(shop_type, match, category):
         shop_info = data_shops.SHOP_TYPES[shop_type]
         session.send(f"{shop_info['display_name']} doesn't buy {category} items.")
         return
@@ -6755,6 +6845,20 @@ def _sell_multiple(session, args: List[str]) -> None:
         session.send(f"You aren't carrying anything like '{query}'.")
         return
 
+    import pawnshops
+    if shopkeeper and pawnshops.is_pawnshop(shopkeeper):
+        sold, amount, skipped, reason = pawnshops.sell_positions(
+            shopkeeper, player, [i for i, _ in selected])
+        if not sold:
+            session.send(reason or "No matching items are eligible to pawn.")
+            return
+        details = ", ".join(f"{name} x{n}" for name, n in inventory.slot_counts(sold).items())
+        msg = f"You pawn {len(sold)} item(s) for {amount:,} ryo: {details}."
+        if skipped:
+            msg += f" {skipped} matching item(s) could not be pawned."
+        session.send(msg)
+        return
+
     import seasonal_events
     sold = []
     total_ryo = 0
@@ -6775,14 +6879,14 @@ def _sell_multiple(session, args: List[str]) -> None:
         category = item_types.classify_item(item)
         is_feather = item == seasonal_events.TURKEY_FEATHER
         if shopkeeper:
-            if buys_categories and category not in buys_categories and not is_feather:
+            if not _npc_shop_accepts(shopkeeper, item, category) and not is_feather:
                 rejected_category = category
                 skipped += 1
                 continue
-            multiplier = 1.0 if buys_categories else 0.5
+            multiplier = _npc_shop_sale_multiplier(shopkeeper)
         else:
             shop_type = shop["type"]
-            if not data_shops.can_sell_here(shop_type, category):
+            if not data_shops.can_buy_item(shop_type, item, category):
                 rejected_category = category
                 skipped += 1
                 continue
@@ -7237,22 +7341,17 @@ def cmd_mine(session, args: List[str]) -> None:
 
 
 def cmd_smelt(session, args: List[str]) -> None:
-    """Smelting (mining.py) -- converts a raw ore (an iron ore/a steel
-    ore/a chakra steel ore) into the ingot every downstream crafting
-    recipe in the game already depends on by exact name. Gated by
-    Mining level (matching the ore's own implicit tier), costs 1-2
-    stamina like every other job action, and takes a real delay to
-    resolve -- but always succeeds once level and material checks
-    pass, since the randomness already happened at the mining step
-    that produced the ore in the first place. No location or tool
-    requirement, unlike the gathering jobs -- smelting works
-    anywhere."""
-    player = session.player
+    """Turn carried ore into an ingot, consuming a log outside furnaces.
 
+    Builder-designated furnace rooms supply their own heat. Everywhere
+    else one carried Lumberjack LOG is used per smelt, cheapest first.
+    """
+    import wood_fuel
+
+    player = session.player
     if session.is_busy():
         session.send("You're already busy with something.")
         return
-
     if not args:
         session.send("Usage: smelt <ore>")
         return
@@ -7275,6 +7374,12 @@ def cmd_smelt(session, args: List[str]) -> None:
         )
         return
 
+    if (not wood_fuel.is_furnace(world.WORLD.get(player.room_vnum))
+            and wood_fuel.find_fuel(player.inventory, logs_only=True) is None):
+        session.send("Smelting away from a furnace requires one log in your inventory. "
+                     "Use a furnace room or bring a Sturdy Oak Log or better.")
+        return
+
     if not jobs.try_deduct_action_stamina(player):
         session.send("You don't have enough stamina.")
         return
@@ -7283,12 +7388,24 @@ def cmd_smelt(session, args: List[str]) -> None:
         if ore_name not in player.inventory:
             session.send(f"You no longer have {ore_name} to smelt.")
             return
-        inventory.remove_carried(player, ore_name)
+        # Recheck the current room and inventory at resolution: an item
+        # can be traded, dropped, or moved while the timed action runs.
+        at_furnace = wood_fuel.is_furnace(world.WORLD.get(player.room_vnum))
+        fuel = None if at_furnace else wood_fuel.find_fuel(player.inventory, logs_only=True)
+        if not at_furnace and fuel is None:
+            session.send("Your smelting fails: you need one log as fuel or a furnace room. "
+                         "The ore is not consumed.")
+            return
 
         ingot_name = mining.smelt_ore(ore_name.lower())
         proto = _find_object_prototype_by_name(ingot_name)
         display_name = proto["short_desc"] if proto else ingot_name
 
+        # Retain the existing molten-slag overflow rule; fuel is consumed
+        # for this attempt even when there is no space to carry the ingot.
+        inventory.remove_carried(player, ore_name)
+        if fuel is not None:
+            inventory.remove_carried(player, fuel)
         ok, reason = inventory.add_item(player.inventory, display_name)
         if not ok:
             session.send(f"You smelt {rarity_colored_name(display_name)}, but had nowhere to put it!")
@@ -7296,9 +7413,11 @@ def cmd_smelt(session, args: List[str]) -> None:
             session.send("It cools into a useless slag heap and crumbles away.")
             return
 
+        if fuel is not None:
+            session.send(f"You burn {fuel} to heat the smelter.")
         session.send(f"You smelt {ore_name} into {rarity_colored_name(display_name)}!")
 
-    session.send(f"You stoke the forge and begin smelting {ore_name}...")
+    session.send(f"You begin smelting {ore_name}...")
     session.start_timed_action("mining", FISHING_DELAY_SECONDS, resolve)
 
 
@@ -7433,8 +7552,11 @@ def cmd_cook(session, args: List[str]) -> None:
 
     Ingredients are consumed when the timed action resolves. Cooking uses
     the regular burn chance, costs, tool wear, and Cooking job XP for
-    either kind of ingredient. Medicinal Herbs are not food.
+    either kind of ingredient. One carried Lumberjack wood item fuels each
+    cooking attempt, even if the player is using an apartment kitchen.
+    Medicinal Herbs are not food.
     """
+    import wood_fuel
     player = session.player
 
     if session.is_busy():
@@ -7475,6 +7597,11 @@ def cmd_cook(session, args: List[str]) -> None:
             return
     effective_pot = pot_name if pot_name is not None else "a copper cooking pot"
 
+    if wood_fuel.find_fuel(player.inventory) is None:
+        session.send("Cooking requires one wood item in your inventory, "
+                     "such as Kindling, Birch or a Log (even in a kitchen).")
+        return
+
     if not jobs.try_deduct_action_stamina(player):
         session.send("You don't have enough stamina.")
         return
@@ -7483,13 +7610,20 @@ def cmd_cook(session, args: List[str]) -> None:
         if ingredient_name not in player.inventory:
             session.send(f"You no longer have {ingredient_name} to cook.")
             return
+        fuel = wood_fuel.find_fuel(player.inventory)
+        if fuel is None:
+            session.send("Your cooking stops: you have no wood to burn. "
+                         "The ingredient is not consumed.")
+            return
         if pot_name is not None and not _use_held_job_tool(session, held_tool):
             return
         inventory.remove_carried(player, ingredient_name)
+        inventory.remove_carried(player, fuel)
 
         result = cooking.attempt_cook(job_level, ingredient_name.lower(), effective_pot)
         if result["burned"]:
-            session.send(f"You burn {ingredient_name} to a crisp! It's ruined.")
+            session.send(f"You burn {ingredient_name} to a crisp! It's ruined. "
+                         f"Your {fuel} was consumed as cooking fuel.")
             return
 
         display_name = result["name"]
@@ -7502,6 +7636,7 @@ def cmd_cook(session, args: List[str]) -> None:
             return
 
         session.send(f"You cooked {ingredient_name.lower()}.")
+        session.send(f"You burn {fuel} as cooking fuel.")
         _award_job_action_xp(session, "cooking", result["xp"])
 
     session.send(f"You start cooking {ingredient_name}...")

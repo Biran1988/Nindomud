@@ -57,7 +57,7 @@ class SeasonalTests(unittest.TestCase):
                 self.assertTrue(events.use_fireworks(session, "fireworks"))
                 self.assertTrue(events.eat_july_fourth_food(session, "popsicle"))
                 self.assertTrue(events.eat_july_fourth_food(session, "bbq"))
-                self.assertEqual((session.player.health, session.player.chakra, session.player.stamina), (100, 65, 100))
+                self.assertEqual((session.player.health, session.player.chakra, session.player.stamina), (100, 75, 100))
                 events.sync_uncle_sam(date(2026, 7, 5))
                 for room in events.kage_rooms():
                     self.assertFalse(combat.mobs_in_room(room))
@@ -151,7 +151,7 @@ class SeasonalTests(unittest.TestCase):
                 self.assertTrue(events.use_holiday_item(session, "egg"))
                 self.assertIn("A Spring Chocolate", session.player.inventory)
                 self.assertTrue(events.use_holiday_item(session, "chocolate"))
-                self.assertEqual(session.player.health, 70)
+                self.assertEqual(session.player.health, 100)
                 self.assertGreater(session.player.holiday_xp_boost_until, 0)
 
 

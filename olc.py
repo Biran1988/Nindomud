@@ -914,6 +914,7 @@ VALID_ROOM_FLAGS = {
     "CapturePoint",        # territory.py -- makes this room a war/territory control point
     "accelerated_healing",  # regen.py -- faster regen in this room
     "no_wander",            # prevent ambient Wander mobs and roaming tailed beasts entering via exits
+    "furnace",              # cmd_smelt: built-in smelter, no carried log needed
     "safe",                 # PvP safety; synchronized with legacy room.safe for compatibility
     "apartment",            # room.apartment -- marks a purchasable apartment shell
 }

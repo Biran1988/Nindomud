@@ -31,6 +31,31 @@ SHOP_TYPES = {
         "allowed_sell_categories": {"food"},
         "sell_multiplier": 1.0,
     },
+    "mining": {
+        "display_name": "Mining Supply Buyer",
+        "allowed_sell_categories": {"ore"},
+        "sell_multiplier": 1.5,
+    },
+    "farming": {
+        "display_name": "Farm Produce Buyer",
+        "allowed_sell_categories": {"food", "misc"},
+        "sell_multiplier": 1.5,
+    },
+    "lumberjack": {
+        "display_name": "Lumber Merchant",
+        "allowed_sell_categories": {"wood"},
+        "sell_multiplier": 1.5,
+    },
+    "gemcutter": {
+        "display_name": "Gemstone Dealer",
+        "allowed_sell_categories": {"gem"},
+        "sell_multiplier": 1.5,
+    },
+    "pawnshop": {
+        "display_name": "Pawnshop",
+        "allowed_sell_categories": None,
+        "sell_multiplier": 0.5,
+    },
 }
 
 
@@ -41,3 +66,14 @@ def can_sell_here(shop_type: str, category: str) -> bool:
 
 def sell_multiplier(shop_type: str) -> float:
     return SHOP_TYPES[shop_type]["sell_multiplier"]
+
+
+def can_buy_item(shop_type: str, item_name: str, category: str) -> bool:
+    """Check a specialty's real produce, not merely broad food keywords."""
+    if shop_type == "farming":
+        import farming
+        farm_names = {name.casefold() for name, *_ in farming.FIND_TABLE}
+        farm_names.update(name.casefold() for name in farming.EDIBLE_CROPS)
+        farm_names.add("medicinal herbs")
+        return item_name.casefold() in farm_names
+    return can_sell_here(shop_type, category)

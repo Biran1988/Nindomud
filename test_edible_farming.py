@@ -44,7 +44,7 @@ class EdibleFarmFoodTests(unittest.TestCase):
                     self.player.inventory = [item]
                     self.player.stamina = 0
                     consumables.consume(self.session, "eat", item)
-                    self.assertEqual(self.player.stamina, amount)
+                    self.assertEqual(self.player.stamina, amount * consumables.FOOD_RECOVERY_MULTIPLIER)
                     self.assertEqual(self.player.inventory, [])
                     self.assertTrue(any("recover" in line.lower()
                                         for line in self.messages))
@@ -54,7 +54,7 @@ class EdibleFarmFoodTests(unittest.TestCase):
         self.player.equipment["tool"] = "A Copper Cooking Pot"
         for raw, recipe in farming.EDIBLE_CROPS.items():
             with self.subTest(crop=raw):
-                self.player.inventory = [raw]
+                self.player.inventory = [raw, "A Bundle of Kindling"]
                 self.player.stamina = 200
                 with (patch.object(commands.world.WORLD, "get", return_value=None),
                       patch.object(commands, "_use_held_job_tool", return_value=True),

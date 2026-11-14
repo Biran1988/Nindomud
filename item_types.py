@@ -17,6 +17,10 @@ import cooking
 import data_weapons
 import farming
 import fishing
+import mining
+import lumberjack
+import gems
+import gemcutter
 
 ARMOR_KEYWORDS = [
     "shirt", "pants", "sandals", "headband", "armor", "robe", "vest",
@@ -35,6 +39,9 @@ BASE_SELL_PRICE = {
     "drink": 2,
     "medical": 6,
     "misc": 1,
+    "ore": 4,
+    "wood": 3,
+    "gem": 6,
 }
 
 # What fraction of an item's own registered OLC cost a shop pays for
@@ -55,6 +62,17 @@ RAW_FOOD_NAMES = frozenset(
 def classify_item(item_name: str) -> str:
     """Returns one of: weapon, armor, food, drink, medical, misc."""
     name_lower = item_name.strip().lower()
+    # Raw and processed gathering materials have different dedicated buyers.
+    if (name_lower in {name for name, *_ in mining.FIND_TABLE}
+            or name_lower in mining.SMELTING_RECIPES
+            or name_lower.endswith(" ore") or name_lower.endswith(" ingot")):
+        return "ore"
+    if name_lower in {name for name, *_ in lumberjack.FIND_TABLE}:
+        return "wood"
+    if (name_lower in {name for name, *_ in gems.GEM_TABLE}
+            or name_lower in gemcutter.RECIPES
+            or name_lower in {v[0].casefold() for v in gemcutter.RECIPES.values()}):
+        return "gem"
     if name_lower in RAW_FOOD_NAMES:
         return "food"
     _match_name, data = consumables.find_consumable(item_name)
