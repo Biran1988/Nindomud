@@ -58,7 +58,9 @@ class RecentChangesTests(unittest.TestCase):
                 for term in terms:
                     self.assertIn(term, entries[version])
         positions = [version for version, _ in changelog.CHANGELOG]
-        self.assertEqual(positions[-len(expected):], list(expected))
+        # Future public releases may append more entries after these.
+        self.assertEqual([version for version in positions if version in expected],
+                         list(expected))
         self.assertEqual(len(positions), len(set(positions)))
 
     def test_road_migration_omitted_from_new_changelog_entries(self):
