@@ -4,8 +4,8 @@
     "leave",
     "leave exam"
   ],
-  "title": "Leave (Chunin Exam)",
-  "body": "Syntax: leave confirm\n\nDescription: Forfeits the current Chunin Exam and all carried Heaven/Earth scrolls. Returns you to your village. To retry from the beginning, type EXAM. No progress or scrolls are preserved after forfeiture.\n\nDate: 2026-11-03",
+  "title": "Leave (Chuunin Exam)",
+  "body": "Syntax: leave confirm\n\nDescription: Forfeits the current Chuunin Exam and all carried Heaven/Earth scrolls. Returns you to your village. To retry from the beginning, type EXAM. No progress or scrolls are preserved after forfeiture.\n\nDate: 2026-11-03",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
