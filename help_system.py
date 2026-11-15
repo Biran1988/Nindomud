@@ -2340,9 +2340,9 @@ DEFAULT_HELP_ENTRIES = [
         "keywords": ["buy"],
         "title": "Buy",
         "body": (
-            "Syntax: buy <item>\n"
+            "Syntax: buy <list number> | buy <item> | buy all <item> | buy <quantity> <item>\n"
             "\n"
-            "Description: Purchases an item from a shopkeeper in the room. Your level must be at least the item's level; if it is too low, the purchase is refused without charging you. Use 'list' to see prices and item level requirements.\n"
+            "Description: Type LIST to see numbered shop stock. BUY 2 buys the SECOND listed item (one copy), while BUY 2 SARDINE buys TWO sardines and BUY SARDINE still buys by name. Numbered buying works at NPC stores, player shops and pawnshops, with individual prices respected. Your level must be at least the item's level; if it is too low, the purchase is refused without charging you.\n"
             "\n"
             "'buy apartment' and 'buy room <type> <direction>' are special cases -- see 'help apartment' for details. At your own village's Kage chamber, 'buy' also purchases village-wide perks and legendary items from the Kage instead -- see 'help legendary items'.\n"
             "\n"
@@ -2393,7 +2393,7 @@ DEFAULT_HELP_ENTRIES = [
         "body": (
             "Syntax: list\n"
             "\n"
-            "Description: Shows what a shopkeeper in the room has for sale, with prices.\n"
+            "Description: Shows shop stock with prices and numbers such as [1] and [2]. Type BUY 2 to buy the second listed item; BUY 2 <item name> still buys two copies by name. Player shops number only priced stock, and pawnshops number individual copies.\n"
             "\n"
             "Date: 2026-08-17"
         ),
