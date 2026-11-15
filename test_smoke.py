@@ -2016,6 +2016,7 @@ def test_who_list_alignment_and_rank_colors():
     length) full name is shown; rank text itself is colored, distinctly
     per rank tier."""
     import commands as commands_module
+    import colors
 
     def make(name, pw, village, cls, clan=None):
         out = []
@@ -2055,9 +2056,9 @@ def test_who_list_alignment_and_rank_colors():
     # Rank text is actually colored -- genin (green) and village
     # elder (red) should use different color codes.
     assert commands_module.RANK_WHO_COLOR["genin"] == "&G"
-    assert commands_module.RANK_WHO_COLOR["jonin"] == "&R"
+    assert commands_module.RANK_WHO_COLOR["jonin"] == "&Y"
     assert commands_module.RANK_WHO_COLOR["genin"] != commands_module.RANK_WHO_COLOR["jonin"]
-    assert "\x1b[32m" in raw  # green, from genin's rank color actually rendering
+    assert colors.render("&G", True) in raw  # modern bright-green Genin rank
 
     print("WHO LIST ALIGNMENT AND RANK COLORS TEST PASSED")
 
