@@ -1469,7 +1469,7 @@ def cmd_rset(session, args: List[str]) -> None:
             "rset always acts on the room you're standing in. 'create'/'goto' teleport you to the target room first, so every other subcommand naturally follows.\n"
             "'rset name' or 'rset desc' with no text opens an interactive editor.\n"
             "'rset flags apartment' toggles housing; 'rset flags playershop' toggles shops.\n"
-            "'rset flags forest' chooses forest; 'rset flags biome_none' clears biome.\n"
+            "'rset flags forest' chooses forest; repeat it to clear the biome.\n"
             "'rset flags' lists all flags and biome choices.\n"
             "'rset resetmsg <text|off>' sets this room's own atmospheric flavor line, shown periodically -- overrides its area's own reset message (see 'area set <name> resetmsg') if that area has one too.\n"
             "'rset flags safe' toggles PvP safety in this room (blocks attacking other players here).\n"
@@ -1790,13 +1790,13 @@ def cmd_rset(session, args: List[str]) -> None:
                 + "\n" + _field_list("Biome flags (choose exactly one)", set(room_flags.BIOMES),
                                      {flag: flag for flag in room_flags.BIOMES})
                 + "\n&WCurrent:&x " + (", ".join(room.flags) or "(none)")
-                + "\nUsage: rset flags <flag> | rset flags biome_none"
+                + "\nUsage: rset flags <flag> (repeat to remove)"
                 + "\nBiome short names work: forest, mountain, ocean, etc."
             )
             return
         name = room_flags.canonical(" ".join(rest))
         name = _canonical_flag(name, VALID_ROOM_FLAGS) or name
-        if name not in VALID_ROOM_FLAGS and name != "biome_none":
+        if name not in VALID_ROOM_FLAGS:
             session.send("Unknown room flag. Type RSET FLAGS for valid options.")
             return
         if name in {"apartment", "player_shop"}:
