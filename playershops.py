@@ -100,7 +100,7 @@ def stock_for_display(shopkeeper_mob) -> list:
             for entry in owner.shop_stock] if owner else []
 
 
-def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
+def buy_from_shop(shopkeeper_mob, buyer, item_query: str, *, listing_index=None):
     """Returns (ok, item_name_or_error_message, price). On success,
     the second element is the item's own name (so the caller --
     commands.cmd_buy -- can format its own rarity-colored message);
@@ -111,12 +111,21 @@ def buy_from_shop(shopkeeper_mob, buyer, item_query: str):
     if owner is None:
         return False, "That shop's owner doesn't seem to exist anymore.", None
 
-    match = next(
-        (entry for entry in owner.shop_stock
-         if entry["price"] is not None and item_query in stock_item_name(entry).lower()),
-        None,
-    )
+    # Numeric BUY selects the exact priced row shown by LIST. This also
+    # distinguishes same-name items with different individual prices.
+    if listing_index is not None:
+        priced = [entry for entry in owner.shop_stock if entry["price"] is not None]
+        match = (priced[listing_index - 1]
+                 if 1 <= listing_index <= len(priced) else None)
+    else:
+        match = next(
+            (entry for entry in owner.shop_stock
+             if entry["price"] is not None and item_query in stock_item_name(entry).lower()),
+            None,
+        )
     if not match:
+        if listing_index is not None:
+            return False, "That item number is not on the shop list. Type LIST.", None
         return False, f"{shopkeeper_mob.name.capitalize()} doesn't sell that.", None
     item_name = stock_item_name(match)
     import crafted_provenance
