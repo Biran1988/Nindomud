@@ -104,10 +104,13 @@ def _scroll_template(vnum, key, data):
             0 if key in ("1000 years of death", _EXISTING_RESTRICTED_SCROLL,
                          "shadow shuriken technique") else 500)
     description = (
-        "READ to learn a passive numbered attack. Bukijutsu unlocks this scroll "
-        "at its listed level; Second Attack requires level 100 for other classes. "
-        "Practice the learned skill to raise its chance to activate."
-        if key in data_jutsu.MULTI_ATTACK_SCROLLS else
+        "Retired teaching scroll kept for compatibility with old builds. "
+        "Second Attack is automatic at level 25; Third Attack at level 75 "
+        "for EVERY class. READ is unnecessary; this item is not consumed."
+        if key in ("second attack", "third attack") else
+        "READ to learn a Bukijutsu-only passive numbered attack at the "
+        "scroll's level requirement. Practice raises activation chance."
+        if key in ("fourth attack", "fifth attack") else
         "An advanced shadow-clone technique for delegating gathering "
         "and training at a local work site. READ to learn it at level 75."
         if key == "advanced shadow clone jutsu" else
