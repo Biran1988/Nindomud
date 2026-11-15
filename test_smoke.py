@@ -1836,18 +1836,16 @@ def test_partial_jutsu_names():
 
 
 def test_extended_color_system():
-    """The color system now has 3 tiers: the original 8 named colors
-    (unchanged), 8 new bright/bold variants (lowercase letters, 16
-    named colors total), and the full 256-color xterm palette via a
-    &[N] bracket syntax -- usable directly in a custom prompt string."""
+    """SMAUG/SWR lowercase-dark uppercase-bright named colors and the
+    full xterm-256 bracketed palette work in prompts and normal output."""
     import colors
 
-    # Original named colors are untouched.
-    assert colors.render("&RHP&x", True) == "\x1b[31mHP\x1b[0m"
-
-    # New bright/bold variants.
-    assert colors.render("&rBright Red&x", True) == "\x1b[1;31mBright Red\x1b[0m"
-    assert colors.render("&wBright White&x", True) == "\x1b[1;37mBright White\x1b[0m"
+    # SWR-style shades: uppercase bright, lowercase dark.
+    assert colors.render("&RHP&x", True) == colors.ANSI_CODES["&R"] + "HP" + colors.ANSI_CODES["&x"]
+    assert colors.render("&rDark Red&x", True) == colors.ANSI_CODES["&r"] + "Dark Red" + colors.ANSI_CODES["&x"]
+    assert colors.render("&wGray&x", True) == colors.ANSI_CODES["&w"] + "Gray" + colors.ANSI_CODES["&x"]
+    assert colors.ANSI_CODES["&r"] != colors.ANSI_CODES["&R"]
+    assert colors.ANSI_CODES["&w"] != colors.ANSI_CODES["&W"]
 
     # Full 256-color palette via bracket syntax.
     assert colors.render("&[208]Orange&x", True) == "\x1b[38;5;208mOrange\x1b[0m"
