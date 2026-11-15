@@ -460,11 +460,14 @@ def cmd_mstat(session, args: List[str]) -> None:
     if shop_flags.is_shopkeeper_template(t):
         stock_names = [OBJECT_TEMPLATES[v]["short_desc"] for v in t.get("shop_items", []) if v in OBJECT_TEMPLATES]
         import data_shops
-        specialty = shop_flags.shop_type(t)
-        allowed = t.get("shop_buys_categories", []) or data_shops.SHOP_TYPES.get(
-            specialty, data_shops.SHOP_TYPES["general"])["allowed_sell_categories"]
+        specialty = shop_flags.explicit_specialty(t)
+        # Specialty flags determine the shop's actual buy rules.  Custom
+        # categories are only applicable to plain Shopkeeper merchants.
+        allowed = (data_shops.SHOP_TYPES[specialty]["allowed_sell_categories"]
+                   if specialty else t.get("shop_buys_categories", []))
+        active_flag = shop_flags.SHOP_FLAGS[specialty] if specialty else "Shopkeeper"
         buys = ", ".join(sorted(allowed)) if allowed else "anything"
-        lines.append(f"&WShopkeeper:&x &Gyes&x   &WType:&x {specialty}   &WBuys:&x {buys}")
+        lines.append(f"&WShopkeeper:&x &Gyes&x   &WMerchant flag:&x {active_flag}   &WBuys:&x {buys}")
         lines.append(f"&WStock:&x {_fmt_list(stock_names)}")
         import npc_schedules
         opening = t.get("shop_open_hour", -1)
