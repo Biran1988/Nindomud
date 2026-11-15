@@ -846,23 +846,30 @@ APPRAISAL_LEVEL_REQUIREMENT = 20
 # Second Attack unlocks at level 25 for Bukijutsu, level 100 for
 # Ninjutsu/Taijutsu/Genjutsu. Third, Fourth, and Fifth Attack are
 # Bukijutsu-specific; only Bukijutsu can progress beyond two attacks.
-# All four are auto-granted
-# the moment a qualifying character reaches the level (leveling.py's
-# level-up rewards, and leveling.sync_universal_skills() for a
-# returning high-level player), exactly the same mechanism as
-# Examine above -- not taught by a scroll/teacher. Each is trainable
-# via 'practice' afterward like any other skill; the % chance of that
-# extra attack actually landing in a given combat round scales with
-# proficiency (see combat.py's attack-count resolution), so a freshly
-# -granted skill at 0% doesn't immediately double a character's damage
-# output -- it has to be trained up first, same as everything else
-# proficiency-gated in this game.
+# The four numbered attacks are scroll-only for new learners.
+# Existing characters who already know them keep their skills/mastery.
+# Level-up and login sync do not grant these scroll skills.
+# PRAC can train them after learning; each attack's proficiency controls
+# its chance to trigger, and a failed numbered attack ends the chain.
 MULTI_ATTACK_SKILLS = [
     ("Second Attack", 25, None),
     ("Third Attack", 50, "bukijutsu"),
     ("Fourth Attack", 75, "bukijutsu"),
     ("Fifth Attack", 90, "bukijutsu"),
 ]
+
+# Stable scroll keys are distinct from ordinary castable JUTSU. These
+# teach passive numbered melee skills using the existing READ mechanism.
+MULTI_ATTACK_SCROLLS = {
+    name.casefold(): {
+        "display_name": name,
+        "level_requirement": level,
+        "class_requirement": required_class or "general",
+        "jutsu_type": "numbered_attack_scroll",
+        "scroll_only": True,
+    }
+    for name, level, required_class in MULTI_ATTACK_SKILLS
+}
 
 
 def multi_attack_required_level(player, skill_name: str, default_level: int) -> int:
