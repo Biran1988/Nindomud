@@ -23,6 +23,14 @@ class ImmortalJutsuTests(unittest.TestCase):
                             if not j.get("jinchuriki_only")))
         self.assertNotIn("Tailed Beast Bomb", player.learned_skills)
         self.assertIn("1000 Years of Death", player.learned_skills)  # scroll-only
+        self.assertIn("Second Attack", player.learned_skills)
+        self.assertEqual(player.skill_proficiencies["Second Attack"], 100)
+        self.assertNotIn("Third Attack", player.learned_skills)  # Bukijutsu restriction
+        blade = Player("Blade", "Blade", level=250, primary_class="bukijutsu")
+        blade._immortal_skill_mastery = True
+        self.assertTrue(leveling.grant_immortal_jutsu(blade))
+        self.assertTrue(all(blade.skill_proficiencies[name] == 100 for name, _, _
+                            in data_jutsu.MULTI_ATTACK_SKILLS))
 
         session = Session(lambda text: None, lambda: None)
         session.account = Account("Tester", "salt", "hash", staff_level="helper")
