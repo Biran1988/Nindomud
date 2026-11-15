@@ -70,7 +70,10 @@ def colorful_name(key: str, name: str = None) -> str:
     last_shade = None
     for char in name:
         if not char.isspace():
-            shade = palette[(letters // 3) % len(palette)]
+            # Short names like Kai still need more than one visible shade.
+            # Keep the established three-letter chunks for longer names.
+            chunk_size = 1 if sum(ch.isalpha() for ch in name) <= 3 else 3
+            shade = palette[(letters // chunk_size) % len(palette)]
             if shade != last_shade:
                 chunks.append(f"&[{shade}]")
                 last_shade = shade
