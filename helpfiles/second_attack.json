@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "second attack",
+  "keywords": [
+    "second attack",
+    "second extra attack"
+  ],
+  "title": "Second Attack - Scroll-Learned Passive Attack",
+  "body": "Syntax: READ A SCROLL OF SECOND ATTACK | PRAC SECOND ATTACK\n\nLevel required: 25 for Bukijutsu; 100 for all other classes.\nHow learned: SCROLL ONLY (object VNUM 31740, Scroll Jutsu area 31501-32000). Not granted on level-up or login. Characters who learned it in previous releases keep their mastery.\nEffect: One extra melee attack roll during each combat round. It activates during normal melee combat without a command or Chakra charge. This attack uses its own proficiency as its activation chance; a failed attack roll stops all later numbered attacks that round.\nAfter learning, use PRAC SECOND ATTACK with a teacher, then improve proficiency through successful combat use. New readers start at 0% mastery. A successful READ consumes the scroll; failed, underlevel, class-ineligible or already-known reads do not consume it.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
