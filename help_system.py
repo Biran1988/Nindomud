@@ -3742,7 +3742,7 @@ DEFAULT_HELP_ENTRIES = [
             "  Garrison           -- war/territory defender designation; set automatically and accurately on every garrison mob, see 'help territory'\n"
             "  Trap               -- war/territory trap designation; set automatically and accurately on every trap mob, see 'help trap'\n"
             "  Npc                -- base flag every non-player mob carries; a pure category label, no mechanical effect of its own by design\n"
-            "  Shopkeeper         -- the real shop mechanism is a separate field set elsewhere; this flag alone has no mechanical check\n"
+            "  Shopkeeper         -- activates an NPC merchant; ShopFood, ShopMining and other ShopX flags select its specialty\n"
             "\n"
             "Date: 2026-08-17"
         ),
@@ -5612,7 +5612,7 @@ for _gem_help_entry in DEFAULT_HELP_ENTRIES:
 # Dynamic help complements persistent helpfiles without overwriting builder edits.
 DEFAULT_HELP_ENTRIES.append({
     "primary_keyword": "pawnshop",
-    "keywords": ["pawn", "pawn broker", "shop type pawnshop"],
+    "keywords": ["pawn", "pawn broker", "shop specialty pawnshop"],
     "title": "NPC Pawnshops",
     "body": (
         "MSET <mob vnum> FLAGS ShopPawnshop.\n"
@@ -5655,20 +5655,20 @@ for _defense_entry in _DEFENSE_HELP_PAGES:
 
 
 # Builder quality-of-life shop flags and opt-in object scaling.
-DEFAULT_HELP_ENTRIES.append({'primary_keyword': 'shop flags', 'keywords': ['shop flags', 'shop builder', 'merchant flags'], 'title': 'NPC Shop Specialty Flags (staff)', 'body': 'MSET <mob vnum> FLAGS ShopGeneral / ShopWeapons / ShopBlacksmith / ShopFood / ShopMining / ShopFarming / ShopLumberjack / ShopGemcutter / ShopPawnshop. This single flag sets the entire shop specialty and automatically enables the Shopkeeper role. Choosing another specialty replaces the previous one; there is never more than one active. MSET <vnum> FLAGS Shopkeeper creates a general/custom merchant. MSET <vnum> FLAGS -ShopMining removes only that specialty, leaving the shopkeeper as a general merchant. MSET <vnum> FLAGS -Shopkeeper removes the merchant role and all specialties. SHOPTYPE and SHOPKEEPER ON/OFF have been removed as builder commands: flags are the only switches. Use MSET ADDITEM <mob vnum> <item vnum> to stock shops; generic Shopkeeper mobs may still specify SHOPBUYSCATEGORIES for custom categories. Trading hours and persistent pawnshop stock are unchanged.', 'created_by': 'System', 'updated_by': 'System', 'updated_at': 0.0})
+DEFAULT_HELP_ENTRIES.append({'primary_keyword': 'shop flags', 'keywords': ['shop flags', 'shop builder', 'merchant flags'], 'title': 'NPC Shop Specialty Flags (staff)', 'body': 'MSET <mob vnum> FLAGS ShopGeneral / ShopWeapons / ShopBlacksmith / ShopFood / ShopMining / ShopFarming / ShopLumberjack / ShopGemcutter / ShopPawnshop. This single flag sets the entire shop specialty and automatically enables the Shopkeeper role. Choosing another specialty replaces the previous one; there is never more than one active. MSET <vnum> FLAGS Shopkeeper creates a general/custom merchant. MSET <vnum> FLAGS -ShopMining removes only that specialty, leaving the shopkeeper as a general merchant. MSET <vnum> FLAGS -Shopkeeper removes the merchant role and all specialties. Merchant role and specialty are controlled exclusively by mob flags. Use MSET ADDITEM <mob vnum> <item vnum> to stock shops; generic Shopkeeper mobs may still specify SHOPBUYSCATEGORIES for custom categories. Trading hours and persistent pawnshop stock are unchanged.', 'created_by': 'System', 'updated_by': 'System', 'updated_at': 0.0})
 DEFAULT_HELP_ENTRIES.append({'primary_keyword': 'itemscale', 'keywords': ['itemscale', 'item balance', 'item scaling', 'auto balance items'], 'title': 'Item Auto-Balance (staff)', 'body': 'Syntax: itemscale | itemscale preview <level> | itemscale <damage|armor|value|uses> <25-400|+/-delta> | itemscale reset <field|all>\n\nItem AutoBalance is opt-in; old player gear, crafted items, and custom objects remain unchanged.\n\nBuilder: OSET <vnum> ITEMTYPE weapon|armor|tool; OSET <vnum> LEVEL <1-250>; OSET <vnum> FLAGS AutoBalance. Remove with OSET <vnum> FLAGS -AutoBalance. Use OSTAT <vnum> to preview effective fields.\n\nAdministrator: ITEMSCALE to see current percentages, ITEMSCALE PREVIEW <level>, ITEMSCALE DAMAGE <25-400>, ITEMSCALE ARMOR <25-400>, ITEMSCALE VALUE <25-400>, ITEMSCALE USES <25-400>, ITEMSCALE ARMOR +10 or ITEMSCALE DAMAGE -10 to shift a current percentage, ITEMSCALE RESET DAMAGE or ITEMSCALE RESET ALL.\n\nOnly flagged level 1-250 items are affected. Weapon base damage, armor AC protection, shop value, and tool maximum uses are calculated from item level and saved global settings. Explicit item DAMAGE, armor STATBONUS ARMOR_CLASS, COST and custom USES override their corresponding automatic values. The item name, VNUM, forged stats, gems and manual builder settings are never overwritten. Settings save to data/item_balance.json; runtime values update immediately (previously used tool durability is preserved).', 'created_by': 'System', 'updated_by': 'System', 'updated_at': 0.0})
 for _page in DEFAULT_HELP_ENTRIES:
     if _page.get("primary_keyword") == "mset":
-        _page["body"] += '\n\nMSET <mob vnum> FLAGS ShopGeneral / ShopWeapons / ShopBlacksmith / ShopFood / ShopMining / ShopFarming / ShopLumberjack / ShopGemcutter / ShopPawnshop. This single flag sets the entire shop specialty and automatically enables the Shopkeeper role. Choosing another specialty replaces the previous one; there is never more than one active. MSET <vnum> FLAGS Shopkeeper creates a general/custom merchant. MSET <vnum> FLAGS -ShopMining removes only that specialty, leaving the shopkeeper as a general merchant. MSET <vnum> FLAGS -Shopkeeper removes the merchant role and all specialties. SHOPTYPE and SHOPKEEPER ON/OFF have been removed as builder commands: flags are the only switches. Use MSET ADDITEM <mob vnum> <item vnum> to stock shops; generic Shopkeeper mobs may still specify SHOPBUYSCATEGORIES for custom categories. Trading hours and persistent pawnshop stock are unchanged.'
+        _page["body"] += '\n\nMSET <mob vnum> FLAGS ShopGeneral / ShopWeapons / ShopBlacksmith / ShopFood / ShopMining / ShopFarming / ShopLumberjack / ShopGemcutter / ShopPawnshop. This single flag sets the entire shop specialty and automatically enables the Shopkeeper role. Choosing another specialty replaces the previous one; there is never more than one active. MSET <vnum> FLAGS Shopkeeper creates a general/custom merchant. MSET <vnum> FLAGS -ShopMining removes only that specialty, leaving the shopkeeper as a general merchant. MSET <vnum> FLAGS -Shopkeeper removes the merchant role and all specialties. Merchant role and specialty are controlled exclusively by mob flags. Use MSET ADDITEM <mob vnum> <item vnum> to stock shops; generic Shopkeeper mobs may still specify SHOPBUYSCATEGORIES for custom categories. Trading hours and persistent pawnshop stock are unchanged.'
     elif _page.get("primary_keyword") == "pawnshop":
         _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopPawnshop.'
-    elif _page.get("primary_keyword") == 'shop type mining':
+    elif _page.get("primary_keyword") == 'shop specialty mining':
         _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopMining'
-    elif _page.get("primary_keyword") == 'shop type farming':
+    elif _page.get("primary_keyword") == 'shop specialty farming':
         _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopFarming'
-    elif _page.get("primary_keyword") == 'shop type lumberjack':
+    elif _page.get("primary_keyword") == 'shop specialty lumberjack':
         _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopLumberjack'
-    elif _page.get("primary_keyword") == 'shop type gemcutter':
+    elif _page.get("primary_keyword") == 'shop specialty gemcutter':
         _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopGemcutter'
 
 # Flag-only merchants: keep generated defaults consistent with checked-in helpfiles.
