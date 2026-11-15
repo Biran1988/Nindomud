@@ -4372,6 +4372,11 @@ DEFAULT_HELP_ENTRIES = [entry for entry in DEFAULT_HELP_ENTRIES
                         if entry["primary_keyword"] not in _recent_pages]
 DEFAULT_HELP_ENTRIES.extend(recent_help.PAGES)
 
+# Original anime-inspired combat arts: render help from the live scaled
+# jutsu table so packaged help, in-game help and real mechanics agree.
+import anime_arts
+DEFAULT_HELP_ENTRIES.extend(anime_arts.help_pages(data_jutsu.JUTSU))
+
 # Several older authored pages include a fixed damage range in their prose.
 # Refresh that one range from the live jutsu table after level scaling, while
 # preserving their individual explanations, costs and command syntax.

@@ -659,4 +659,5 @@ CHANGELOG = [
     ("15.500", "Standardized all player-facing ninja rank labels to Chuunin and Jounin on WHO, SCORE, promotions, exam messages, headbands, automatic rank help and prompts. Legacy saved rank IDs and old headband inventory names remain compatible."),
     ("15.501", "Standardized all named ampersand colors to SWR/SMAUGFUSS lowercase-dark and uppercase-bright shades, including gray/white and purple/magenta. Preserved 256-color support and reset behavior."),
     ("15.502", "PROMPT BIRAN now uses white separators, dark current and bright maximum HP/Chakra/Stamina values, plus dark-yellow Ryo. Existing Biran presets migrate without overwriting custom prompts."),
+    ("15.503", "Added 16 original anime-inspired jutsu: four each for Ninjutsu, Taijutsu, Genjutsu and Bukijutsu at levels 25/50/75/100. Each has damage, status effects, cooldowns, individual help and shortcuts; existing level/login unlocks, first practice, elemental/weapon checks and cross-class scrolls apply."),
 ]

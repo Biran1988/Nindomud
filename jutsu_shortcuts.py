@@ -2,6 +2,23 @@
 
 # These are explicit so future jutsu additions never rename an existing shortcut.
 JUTSU_SHORTCUTS = {
+    # Anime-inspired class arts (explicit keys prevent shortcut drift).
+    'dragonfire pulse': 'dfpulse',
+    'spirit cannon': 'spcannon',
+    'lightning dragon cascade': 'ldcascade',
+    'celestial nova sphere': 'cnsphere',
+    'flashstep palm': 'fstep',
+    'breathing rhythm rush': 'brrhythm',
+    'titanbreaker fist': 'tbreaker',
+    'meteor drive combo': 'mdcombo',
+    'phantom floor maze': 'pfmaze',
+    'mirrored guild hall': 'mghall',
+    'endless void stage': 'evstage',
+    'refracted memory prison': 'rmprison',
+    'starstream sword dance': 'ssdance',
+    'moonfang draw': 'mfang',
+    'ember breathing cut': 'ebcut',
+    'comet blade finale': 'cbfinal',
     'chakra suppression seal': 'wnin',
     'mind suppression seal': 'wgen',
     'hand sign suppression seal': 'whand',
