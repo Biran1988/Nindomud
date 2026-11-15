@@ -170,7 +170,8 @@ class DefensiveJutsuTests(unittest.TestCase):
         for key in ('reinforced barrier','fortress barrier','sanctuary','elemental shield'):
             self.assertTrue(31736 <= jutsu_scroll_catalog.vnum_for(key) <=31739)
         # Existing assigned scrolls are never shifted by later technique additions.
-        self.assertEqual(jutsu_scroll_catalog.vnum_for('dragonfire pulse'), 31744)
+        self.assertEqual(jutsu_scroll_catalog.vnum_for('celestial nova sphere'), 31744)
+        self.assertEqual(jutsu_scroll_catalog.vnum_for('dragonfire pulse'), 31745)
         self.assertEqual(len(jutsu_scroll_catalog.entries()[243:]), 16)
 
     def test_help_matches_real_values(self):
