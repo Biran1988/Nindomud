@@ -326,14 +326,8 @@ def grant_experience(player: Player, amount: int) -> List[str]:
             player.skill_proficiencies["Handsigns"] = initial_proficiency(player)
             lines.append("You have unlocked:\n  Handsigns")
 
-        for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
-            if required_class and player.primary_class != required_class:
-                continue
-            needed = data_jutsu.multi_attack_required_level(player, skill_name, level_req)
-            if player.level >= needed and skill_name not in player.learned_skills:
-                player.learned_skills.append(skill_name)
-                player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
-                lines.append(f"You have unlocked:\n  {skill_name}")
+        # Numbered attacks are now learned from scrolls, not level-up.
+        # Existing learned attacks and their proficiency are preserved.
 
         for passive in samurai_sabre_progression.sync_passives(player):
             lines.append(f"You have unlocked:\n  {passive} (passive +5% Samurai Sabre damage)")
@@ -396,11 +390,26 @@ def sync_universal_skills(player: Player) -> List[str]:
                                  if name not in buki_attacks]
 
     for old_name, new_name in data_jutsu.SKILL_RENAMES.items():
+        if old_name == new_name:
+            continue
         if old_name in player.learned_skills:
-            idx = player.learned_skills.index(old_name)
-            player.learned_skills[idx] = new_name
-            if old_name in player.skill_proficiencies:
-                player.skill_proficiencies[new_name] = player.skill_proficiencies.pop(old_name)
+            if new_name in player.learned_skills:
+                player.learned_skills.remove(old_name)
+            else:
+                idx = player.learned_skills.index(old_name)
+                player.learned_skills[idx] = new_name
+            lines.append(f"&Y(Your existing {old_name} skill is now named {new_name}.)&x")
+        if old_name in player.skill_proficiencies:
+            previous = player.skill_proficiencies.pop(old_name)
+            player.skill_proficiencies[new_name] = max(
+                previous, player.skill_proficiencies.get(new_name, 0))
+        for attribute in ("practiced_skills", "practice_exempt_skills"):
+            skills = getattr(player, attribute, None)
+            if skills is not None and old_name in skills:
+                skills[:] = list(dict.fromkeys(
+                    new_name if skill == old_name else skill for skill in skills))
+        if getattr(player, "signature_move", None) == old_name:
+            player.signature_move = new_name
 
     for skill in data_jutsu.UNIVERSAL_STARTING_SKILLS:
         # Resolve through any rename first -- UNIVERSAL_STARTING_SKILLS
@@ -438,21 +447,17 @@ def sync_universal_skills(player: Player) -> List[str]:
         player.skill_proficiencies["Chakra Charge"] = initial_proficiency(player)
         lines.append("&Y(New since your last login: you have learned Chakra Charge!)&x")
 
-    for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
-        if required_class and player.primary_class != required_class:
-            continue
-        needed = data_jutsu.multi_attack_required_level(player, skill_name, level_req)
-        if player.level < needed:
-            # Old saves could already contain level-25 Second Attack on a
-            # non-Bukijutsu character. Retain its proficiency for level 100,
-            # but keep it locked until that level is actually reached.
-            if skill_name == "Second Attack" and skill_name in player.learned_skills:
-                player.learned_skills.remove(skill_name)
-            continue
-        if skill_name not in player.learned_skills:
-            player.learned_skills.append(skill_name)
-            player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
-            lines.append(f"&Y(New since your last login: you have learned {skill_name}!)&x")
+    # Backfill previously missed level-unlocked skills on every login.
+    import data_handsigns
+    if (player.level >= data_handsigns.HANDSIGNS_MIN_LEVEL
+            and "Handsigns" not in player.learned_skills):
+        player.learned_skills.append("Handsigns")
+        player.skill_proficiencies.setdefault("Handsigns", initial_proficiency(player))
+        lines.append("&Y(New since your last login: you have learned Handsigns!)&x")
+
+    # Scroll-taught extra attacks must never be backfilled on login.
+    # Old learned skills/mastery persist, and the combat level checks still
+    # block early Second Attack for non-Bukijutsu until level 100.
 
     for passive in samurai_sabre_progression.sync_passives(player):
         lines.append(f"&Y(New since your last login: you have learned {passive}!)&x")
