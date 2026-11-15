@@ -73,8 +73,28 @@ AUDIT_LOG_PATH = os.path.join(storage.DATA_DIR, "olc_audit.log")
 # "hide until a real item exists" pattern used for weapon types
 # elsewhere), but are defined now so future armor can use them without
 # revisiting this system.
-WEAR_LOCATIONS = {"head", "body", "legs", "feet", "hands", "waist", "finger", "neck", "piercing", "back", "chakra aura", "wielded", "tool"}
-ARMOR_WEAR_LOCATIONS = {"head", "body", "legs", "feet", "hands", "waist", "finger", "neck", "piercing", "back", "chakra aura"}
+# Preserve old saved slot keys (finger/neck/piercing). These are the real
+# equipment dictionary keys; alternate labels map to them at OSET time.
+JEWELRY_PAIRED_SLOTS = {
+    "finger": ("finger", "finger2"),
+    "ear": ("ear", "ear2"),
+    "wrist": ("wrist", "wrist2"),
+}
+WEAR_LOC_ALIASES = {
+    "ring": "finger", "ring1": "finger", "ring2": "finger2",
+    "left ring": "finger", "right ring": "finger2",
+    "earring": "ear", "earring1": "ear", "earring2": "ear2",
+    "left earring": "ear", "right earring": "ear2",
+    "bracelet": "wrist", "bracelet1": "wrist", "bracelet2": "wrist2",
+    "left bracelet": "wrist", "right bracelet": "wrist2",
+    "necklace": "neck", "nose piercing": "nose", "nosepiercing": "nose",
+}
+ARMOR_WEAR_LOCATIONS = {
+    "head", "body", "legs", "feet", "hands", "waist", "finger", "finger2",
+    "neck", "piercing", "nose", "ear", "ear2", "wrist", "wrist2",
+    "back", "chakra aura",
+}
+WEAR_LOCATIONS = ARMOR_WEAR_LOCATIONS | {"wielded", "tool"}
 
 DEFAULT_OBJECT_FIELDS = {
     "keywords": [], "short_desc": "", "long_desc": "", "description": "",
@@ -3452,7 +3472,11 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
         import data_rarity
         return f"'rarity' should be one of: {', '.join(data_rarity.RARITY_ORDER)}. Current: '{o.get('rarity', '')}'.\nUsage: oset <vnum> rarity <tier>"
     if field == "wear_loc":
-        return f"'{display}' is where this can be equipped -- head/body/legs/feet/hands/waist/finger (armor), or wielded/tool. Current: '{o.get('wear_loc', '')}'.\nUsage: oset <vnum> {display} <slot>\nLeave it blank on a weapon/tool itemtype and it auto-fills."
+        return (f"'{display}' is an equipment slot. Current: '{o.get('wear_loc', '')}'.\\n"
+                "Jewelry: ring/finger, earring/ear, bracelet/wrist (2 each),\\n"
+                "necklace/neck, nose, and the existing piercing slot.\\n"
+                "Other armor: head/body/legs/feet/hands/waist/back/chakra aura.\\n"
+                f"Usage: oset <vnum> {display} <slot> (or finger2/ear2/wrist2).")
     if field == "extra_flags":
         return f"'{display}' accepts: {', '.join(sorted(f.replace('_', '') for f in VALID_ITEM_EXTRA_FLAGS))}. Current: {', '.join(o.get('extra_flags', [])) or '(empty)'}\nUsage: oset <vnum> {display} <flag>   (or -<flag> to remove)"
     if field == "set_vnums":
@@ -3520,7 +3544,8 @@ def cmd_oset(session, args: List[str]) -> None:
             "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
             "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
             "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
-            "&DItem balance: new weapon/armor/tool objects receive AutoBalance automatically; set level 1-250.&x",
+            "&DNew weapons/armor/tools: AutoBalance starts ON.&x",
+            "&DSet item level 1-250 to activate item scaling.&x",
         "&DAdmins: itemscale preview 100 | itemscale damage 125 | itemscale armor +10.&x",
         "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
             "&DOlder underscore spellings still work.&x",
@@ -3733,6 +3758,8 @@ def cmd_oset(session, args: List[str]) -> None:
         if field == "item_type" and value_text.lower() != "weapon" and o.get("weapon_type"):
             session.send("Clear weapontype with 'oset <vnum> weapontype none' before changing a weapon's itemtype.")
             return
+        if field == "wear_loc":
+            value_text = WEAR_LOC_ALIASES.get(value_text.lower(), value_text.lower())
         if field == "wear_loc" and value_text and value_text.lower() not in WEAR_LOCATIONS:
             session.send(
                 f"'{value_text}' isn't a known wear location. Valid: "

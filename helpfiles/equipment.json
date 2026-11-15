@@ -5,8 +5,8 @@
     "eq"
   ],
   "title": "Equipment",
-  "body": "Syntax: equipment  (alias: eq)\n\nDescription: Shows every wear location, including empty slots, along with what you currently have worn, wielded, and held.\n\nDate: 2026-08-17",
+  "body": "Syntax: equipment (alias: eq)\n\nLists all available wearable slots and currently equipped items, including both fingers, ears and wrists, the necklace, nose and existing piercing slot. Empty slots are shown. Jewelry bonuses apply per equipped piece.\n\nDate: 2026-11-15",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }

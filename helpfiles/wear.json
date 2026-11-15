@@ -4,8 +4,8 @@
     "wear"
   ],
   "title": "Wear",
-  "body": "Syntax: wear <item>  |  wear all\n\nDescription: Equips armor or a weapon from your inventory into its own slot. 'wear kunai' wields the kunai, just like 'wield kunai'. Use 'hold' for tools. 'wear all' equips armor, weapons, and tools into their own free slots, skipping any occupied slot.\n\nDate: 2026-08-17",
+  "body": "Syntax: wear <item> | wear all\n\nWEAR equips armor, jewelry, or weapons from inventory. WIELD equips weapons, HOLD equips tools. WEAR ALL fills empty equipment slots without replacing existing gear.\n\nJewelry may occupy two separate ring slots (finger/finger2), two earring slots (ear/ear2), two bracelet slots (wrist/wrist2), one necklace (neck), one nose piercing (nose), and the existing general facial piercing slot. Two identical pieces can be worn together. Rings, earrings and bracelets automatically use the next free slot; a third piece is refused without removing one. Equipment and EQ show each slot.\n\nUse REMOVE <item>, REMOVE 2.<item>, or REMOVE finger2/ear2/wrist2 to take off a specific piece. Staff set item wear locations with OSET <vnum> WEARLOC ring/earring/bracelet/necklace/nose; saved finger, neck and piercing items remain compatible.\n\nDate: 2026-11-15",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }

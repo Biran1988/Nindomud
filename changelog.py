@@ -661,4 +661,5 @@ CHANGELOG = [
     ("15.502", "PROMPT BIRAN now uses white separators, dark current and bright maximum HP/Chakra/Stamina values, plus dark-yellow Ryo. Existing Biran presets migrate without overwriting custom prompts."),
     ("15.503", "Added 16 original anime-inspired jutsu: four each for Ninjutsu, Taijutsu, Genjutsu and Bukijutsu at levels 25/50/75/100. Each has damage, status effects, cooldowns, individual help and shortcuts; existing level/login unlocks, first practice, elemental/weapon checks and cross-class scrolls apply."),
     ("15.504", "AutoBalance is now automatically enabled for new staff-created weapon, armor and tool prototypes through OSET/OCREATE, WEAPONTYPE and OCOPY. Existing prototypes remain unchanged and explicit builder stat overrides still apply."),
+    ("15.505", "Expanded jewelry equipment: two ring slots, two earrings, two bracelets, necklace, nose piercing and the existing general piercing slot. WEAR and WEAR ALL fill paired slots without replacing jewelry, REMOVE can target exact slots, and OSET WEARLOC accepts jewelry names. Original items keep their slots."),
 ]

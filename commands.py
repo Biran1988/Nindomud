@@ -2982,8 +2982,9 @@ def cmd_inventory(session, args: List[str]) -> None:
 def cmd_equipment(session, args: List[str]) -> None:
     player = session.player
     lines = ["You are using:"]
-    preferred_order = ("head", "neck", "piercing", "body", "back", "hands",
-                       "finger", "waist", "legs", "feet", "chakra aura",
+    preferred_order = ("head", "neck", "ear", "ear2", "nose", "piercing",
+                       "body", "back", "hands", "finger", "finger2",
+                       "wrist", "wrist2", "waist", "legs", "feet", "chakra aura",
                        "wielded", "offhand", "tool")
     slots = [slot for slot in preferred_order if slot in olc.WEAR_LOCATIONS or slot == "offhand"]
     slots.extend(sorted((olc.WEAR_LOCATIONS | player.equipment.keys()) - set(slots)))
@@ -3086,6 +3087,21 @@ def _apply_equipment_stat_bonuses(player, item_name: str, sign: int) -> None:
             player.stamina = max(0, min(player.maximum_stamina, player.stamina + sign * bonus))
 
 
+def _free_wear_slot(wear_loc: str, equipment: dict, *, wear_all=False):
+    """Auto-fill two fingers, ears, or wrists without overwriting old gear.
+
+    Existing prototypes keep wear_loc='finger' as their normal first slot,
+    and now also fit 'finger2'. Explicit second-slot prototypes use that
+    precise key. WEAR ALL never replaces any occupied slot.
+    """
+    possible = olc.JEWELRY_PAIRED_SLOTS.get(wear_loc, (wear_loc,))
+    if len(possible) > 1:
+        return next((slot for slot in possible if not equipment.get(slot)), None)
+    if wear_all and equipment.get(wear_loc):
+        return None
+    return wear_loc
+
+
 def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
     """Equips an item into ITS OWN wear_loc (an item's own prototype
     field, not a slot forced by which command the player typed) --
@@ -3117,9 +3133,16 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
     if wear_loc not in accepted_locs:
         session.send(f"You can't {verb} {match}.")
         return
+    slot = _free_wear_slot(wear_loc, player.equipment)
+    if slot is None:
+        session.send(f"Both {wear_loc} jewelry slots are occupied. Remove one first.")
+        return
+    previous = player.equipment.get(slot)
+    if previous == match:
+        session.send(f"You already have {match} in the {slot} slot.")
+        return
 
     inventory.remove_carried(player, match)
-    previous = player.equipment.get(wear_loc)
     if previous and previous != match:
         ok, reason = inventory.add_item(player.inventory, previous)
         if ok:
@@ -3134,7 +3157,7 @@ def _equip_item(session, args: List[str], accepted_locs, verb: str) -> None:
             session.send(inventory.full_message(reason, previous))
             session.send(f"With nowhere to put it, {rarity_colored_name(previous)} is lost.")
             _apply_equipment_stat_bonuses(player, previous, sign=-1)
-    player.equipment[wear_loc] = match
+    player.equipment[slot] = match
     _apply_equipment_stat_bonuses(player, match, sign=1)
     if wear_loc == "wielded":
         weapon_type = data_weapons.weapon_type_for_item(match)
@@ -3173,10 +3196,11 @@ def _wear_all(session) -> None:
         wear_loc = _item_wear_loc(item)
         if wear_loc not in olc.WEAR_LOCATIONS:
             continue
-        if wear_loc in player.equipment:
+        slot = _free_wear_slot(wear_loc, player.equipment, wear_all=True)
+        if slot is None:
             continue
         inventory.remove_carried(player, item)
-        player.equipment[wear_loc] = item
+        player.equipment[slot] = item
         _apply_equipment_stat_bonuses(player, item, sign=1)
         if wear_loc == "wielded":
             weapon_type = data_weapons.weapon_type_for_item(item)
@@ -3207,10 +3231,15 @@ def cmd_remove(session, args: List[str]) -> None:
 
     # Support removing one of several identically named pieces in different
     # equipment slots without confusing their separate prototype VNUMs.
+    # Explicit slot names let players remove one of two identical rings,
+    # earrings or bracelets. An unqualified item name still resolves normally.
+    slot_name = olc.WEAR_LOC_ALIASES.get(query, query)
+    direct_slot = slot_name if player.equipment.get(slot_name) else None
     selected = find_indexed_item(query, list(player.equipment.values()))
-    match_slot = ("offhand" if query in ("offhand", "off hand") and player.equipment.get("offhand")
-                  else next((slot for slot, item in player.equipment.items()
-                             if item is not None and item == selected), None))
+    match_slot = (direct_slot or
+                  ("offhand" if query in ("offhand", "off hand") and player.equipment.get("offhand")
+                   else next((slot for slot, item in player.equipment.items()
+                              if item is not None and item == selected), None)))
     if not match_slot:
         session.send(f"You aren't wearing or wielding anything like '{query}'.")
         return

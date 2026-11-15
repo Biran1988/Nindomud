@@ -2061,13 +2061,7 @@ DEFAULT_HELP_ENTRIES = [
         "primary_keyword": "equipment",
         "keywords": ["equipment", "eq"],
         "title": "Equipment",
-        "body": (
-            "Syntax: equipment  (alias: eq)\n"
-            "\n"
-            "Description: Shows every wear location, including empty slots, along with what you currently have worn, wielded, and held.\n"
-            "\n"
-            "Date: 2026-08-17"
-        ),
+        "body": "Syntax: equipment (alias: eq)\n\nLists all available wearable slots and currently equipped items, including both fingers, ears and wrists, the necklace, nose and existing piercing slot. Empty slots are shown. Jewelry bonuses apply per equipped piece.\n\nDate: 2026-11-15",
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
@@ -2198,13 +2192,7 @@ DEFAULT_HELP_ENTRIES = [
         "primary_keyword": "wear",
         "keywords": ["wear"],
         "title": "Wear",
-        "body": (
-            "Syntax: wear <item>  |  wear all\n"
-            "\n"
-            "Description: Equips armor or a weapon from your inventory into its own slot. 'wear kunai' wields the kunai, just like 'wield kunai'. Use 'hold' for tools. 'wear all' equips armor, weapons, and tools into their own free slots, skipping any occupied slot.\n"
-            "\n"
-            "Date: 2026-08-17"
-        ),
+        "body": "Syntax: wear <item> | wear all\n\nWEAR equips armor, jewelry, or weapons from inventory. WIELD equips weapons, HOLD equips tools. WEAR ALL fills empty equipment slots without replacing existing gear.\n\nJewelry may occupy two separate ring slots (finger/finger2), two earring slots (ear/ear2), two bracelet slots (wrist/wrist2), one necklace (neck), one nose piercing (nose), and the existing general facial piercing slot. Two identical pieces can be worn together. Rings, earrings and bracelets automatically use the next free slot; a third piece is refused without removing one. Equipment and EQ show each slot.\n\nUse REMOVE <item>, REMOVE 2.<item>, or REMOVE finger2/ear2/wrist2 to take off a specific piece. Staff set item wear locations with OSET <vnum> WEARLOC ring/earring/bracelet/necklace/nose; saved finger, neck and piercing items remain compatible.\n\nDate: 2026-11-15",
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
@@ -2243,13 +2231,7 @@ DEFAULT_HELP_ENTRIES = [
         "primary_keyword": "remove",
         "keywords": ["remove"],
         "title": "Remove",
-        "body": (
-            "Syntax: remove <item>  |  remove all\n"
-            "\n"
-            "Description: Unequips a worn or wielded item back into your inventory. 'remove all' unequips everything at once -- if inventory fills up partway through, whatever's left stays equipped rather than being lost.\n"
-            "\n"
-            "Date: 2026-08-17"
-        ),
+        "body": "Syntax: remove <item> | remove <slot> | remove all\n\nMoves an equipped item back into inventory, including either ring, earring or bracelet. Use REMOVE finger2 / ear2 / wrist2 (or ring2 / earring2 / bracelet2) to select a specific second slot. REMOVE 2.<item> also works for duplicate names. REMOVE ALL unequips everything, leaving any item equipped if inventory fills up.\n\nDate: 2026-11-15",
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,
@@ -3589,48 +3571,7 @@ DEFAULT_HELP_ENTRIES = [
         "primary_keyword": "oset",
         "keywords": ["oset"],
         "title": "Oset (staff)",
-        "body": (
-            "Syntax: oset create <vnum> <name...>  |  oset <vnum> <field> <value...>  |  oset load <vnum>  |  oset list\n"
-            "'oset <vnum> <field> -<value>' removes one entry from a list field instead of adding.\n"
-            "\n"
-            "Description: Creates and edits item prototypes field by field. Shops stocking this item's VNUM use the edited name, price, and combat stats immediately. 'oset load <vnum>' places one instance on the ground in the room you're standing in right now, with no persistence -- see 'help spawnpoint' for a version that survives a server restart.\n"
-            "\n"
-            "&WText fields:&x short, long, description, itemtype, weapontype, scrolljutsu, rarity, wearloc\n"
-            "  itemtype      -- category (weapon/armor/tool/trash/scroll/material/etc.); drives shop pricing and more\n"
-            "  weapontype    -- kunai/sword/shuriken/blunt/polearm/exotic; sets itemtype weapon and wearloc wielded automatically. Use 'none' to clear it before changing itemtype\n"
-            "  wearloc       -- where this item can be equipped (head/body/legs/feet/hands/waist/finger/neck/piercing/back/chakra aura for armor, or wielded/tool). itemtype weapon/tool auto-fills this if left blank\n"
-            "  rarity         -- common/uncommon/rare/epic/legendary; drives display color everywhere the item's name is shown\n"
-            "  scrolljutsu   -- set alongside itemtype scroll to make this item teach a jutsu on 'read'\n"
-            "\n"
-            "&WNumber fields:&x weight, cost, level, condition, setbonuspercent, concap, hitroll, damageroll, damage, heal, healtime, uses\n"
-            "  hitroll/damageroll -- bonuses while wielded; 0 clears the bonus\n"
-            "  damage        -- fixed base damage for this item, overriding the weapontype default (0 or higher)\n"
-            "  heal/healtime -- total restoration per healflag, delivered over this many seconds for a medical item\n"
-            "  uses          -- number of attempts before each copy of a job tool breaks (default 250)\n"
-            "\n"
-            "&WList fields:&x keywords, flags, wear, setvnums, healflags\n"
-            "  healflags      -- add health, chakra, or stamina; prefix - to remove one (e.g. -health)\n"
-            "  flags          -- item flags such as 'nosac' or 'notake'; see 'help flags'\n"
-            "  wear           -- item's wear permissions (e.g. take); wearloc chooses the actual slot\n"
-            "  setvnums       -- the OTHER object vnums that must also be worn to complete this item's armor set\n"
-            "  Older underscore field names still work. Type 'oset fields' for the short reference.\n"
-            "\n"
-            "&WStat perks:&x 'oset <vnum> statbonus <stat> <n>' remains available for other bonuses such as armor_class; direct 'oset <vnum> hitroll <n>' and 'oset <vnum> damageroll <n>' set the same weapon bonuses. Positive armor_class is beneficial (lower is better). 'ostat' shows Hitroll/Damageroll/Damage for wielded items.\n"
-            "&WArmor:&x 'oset <vnum> resist sword 25' reduces sword weapon damage by 25% while worn. Use any weapontype; 0 clears a resistance. Multiple worn pieces stack. AC still determines hit chance.\n"
-            "&WMedicine:&x set itemtype medical, heal 100, healtime 20, and healflags health (or chakra/stamina). Each flagged resource recovers 100 over 20 seconds, including in combat.\n"
-            "\n"
-            "&WValue slots:&x 'oset <vnum> value <index 0-3> <number>' -- 4 raw numeric slots for anything not covered by a named field above.\n"
-            "\n"
-            "&WItem programs:&x\n"
-            "  addprogram <vnum> <trigger> <action> <args...>\n"
-            "  removeprogram <vnum> <index>  -- index shown by 'ostat'\n"
-            "\n"
-            "Use 'ostat <vnum>' to view the full stat block.\n"
-            "\n"
-            "&D(Staff only.)&x\n"
-            "\n"
-            "Date: 2026-08-17"
-        ),
+        "body": "Syntax: oset create <vnum> <name...>  |  oset <vnum> <field> <value...>  |  oset load <vnum>  |  oset list\n'oset <vnum> <field> -<value>' removes one entry from a list field instead of adding.\n\nDescription: Creates and edits item prototypes field by field. Shops stocking this item's VNUM use the edited name, price, and combat stats immediately. 'oset load <vnum>' places one instance on the ground in the room you're standing in right now, with no persistence -- see 'help spawnpoint' for a version that survives a server restart.\n\n&WText fields:&x short, long, description, itemtype, weapontype, scrolljutsu, rarity, wearloc\n  itemtype      -- category (weapon/armor/tool/trash/scroll/material/etc.); new staff-made gear receives AutoBalance\n  weapontype    -- kunai/sword/shuriken/blunt/polearm/exotic; sets itemtype weapon and wearloc wielded automatically. Use 'none' to clear it before changing itemtype\n  wearloc       -- where the item is equipped; weapon/tool automatically fills this when blank\n  Jewelry: ring/finger (two slots), earring/ear (two), bracelet/wrist (two), necklace/neck, nose, and existing piercing.\n  Optional explicit second locations: finger2, ear2, wrist2; first slots automatically advance to second when worn.\n  Other armor: head/body/legs/feet/hands/waist/back/chakra aura; weapons wielded; tools tool.\n  rarity         -- common/uncommon/rare/epic/legendary; drives display color everywhere the item's name is shown\n  scrolljutsu   -- set alongside itemtype scroll to make this item teach a jutsu on 'read'\n\n&WNumber fields:&x weight, cost, level, condition, setbonuspercent, concap, hitroll, damageroll, damage, heal, healtime, uses\n  hitroll/damageroll -- bonuses while wielded; 0 clears the bonus\n  damage        -- fixed base damage for this item, overriding the weapontype default (0 or higher)\n  heal/healtime -- total restoration per healflag, delivered over this many seconds for a medical item\n  uses          -- number of attempts before each copy of a job tool breaks (default 250)\n\n&WList fields:&x keywords, flags, wear, setvnums, healflags\n  healflags      -- add health, chakra, or stamina; prefix - to remove one (e.g. -health)\n  flags          -- item flags such as 'nosac' or 'notake'; see 'help flags'\n  wear           -- item's wear permissions (e.g. take); wearloc chooses the actual slot\n  setvnums       -- the OTHER object vnums that must also be worn to complete this item's armor set\n  Older underscore field names still work. Type 'oset fields' for the short reference.\n\n&WStat perks:&x 'oset <vnum> statbonus <stat> <n>' remains available for other bonuses such as armor_class; direct 'oset <vnum> hitroll <n>' and 'oset <vnum> damageroll <n>' set the same weapon bonuses. Positive armor_class is beneficial (lower is better). 'ostat' shows Hitroll/Damageroll/Damage for wielded items.\n&WArmor:&x 'oset <vnum> resist sword 25' reduces sword weapon damage by 25% while worn. Use any weapontype; 0 clears a resistance. Multiple worn pieces stack. AC still determines hit chance.\n&WMedicine:&x set itemtype medical, heal 100, healtime 20, and healflags health (or chakra/stamina). Each flagged resource recovers 100 over 20 seconds, including in combat.\n\n&WValue slots:&x 'oset <vnum> value <index 0-3> <number>' -- 4 raw numeric slots for anything not covered by a named field above.\n\n&WItem programs:&x\n  addprogram <vnum> <trigger> <action> <args...>\n  removeprogram <vnum> <index>  -- index shown by 'ostat'\n\nUse 'ostat <vnum>' to view the full stat block.\n\n&D(Staff only.)&x\n\nDate: 2026-08-17",
         "created_by": "System",
         "updated_by": "System",
         "updated_at": 0.0,

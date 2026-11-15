@@ -4,8 +4,8 @@
     "remove"
   ],
   "title": "Remove",
-  "body": "Syntax: remove <item>  |  remove all\n\nDescription: Unequips a worn or wielded item back into your inventory. 'remove all' unequips everything at once -- if inventory fills up partway through, whatever's left stays equipped rather than being lost.\n\nDate: 2026-08-17",
+  "body": "Syntax: remove <item> | remove <slot> | remove all\n\nMoves an equipped item back into inventory, including either ring, earring or bracelet. Use REMOVE finger2 / ear2 / wrist2 (or ring2 / earring2 / bracelet2) to select a specific second slot. REMOVE 2.<item> also works for duplicate names. REMOVE ALL unequips everything, leaving any item equipped if inventory fills up.\n\nDate: 2026-11-15",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
