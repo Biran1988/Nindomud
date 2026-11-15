@@ -6094,15 +6094,16 @@ def cmd_list(session, args: List[str]) -> None:
         lines = [f"&W{shopkeeper.name.capitalize()} offers for sale:&x"]
         stock = playershops.stock_for_display(shopkeeper)
         priced_any = False
-        for entry in stock:
-            if entry["price"] is None:
-                continue
+        for number, entry in enumerate(
+                (row for row in stock if row["price"] is not None), start=1):
             priced_any = True
             proto = playershops.stock_prototype(entry)
             level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
-            lines.append(f"  {rarity_colored_name(entry['item_name'])} - {entry['price']:,} ryo{level_text}")
+            lines.append(f"  [{number}] {rarity_colored_name(entry['item_name'])} - {entry['price']:,} ryo{level_text}")
         if not priced_any:
             lines.append("  (nothing in stock right now)")
+        else:
+            lines.append("&D(Type BUY <number> to choose a listed item.)&x")
         session.send("\n".join(lines))
         return
 
@@ -6111,24 +6112,28 @@ def cmd_list(session, args: List[str]) -> None:
         if pawnshops.is_pawnshop(shopkeeper):
             pawned = pawnshops.stock(shopkeeper, player.room_vnum)
             lines = [f"&W{shopkeeper.name.capitalize()} Pawnshop — for sale:&x"]
-            lines += [f"  {rarity_colored_name(row['item_name'])} - {row['price']:,} ryo"
-                      for row in pawned]
+            lines += [f"  [{number}] {rarity_colored_name(row['item_name'])} - {row['price']:,} ryo"
+                      for number, row in enumerate(pawned, start=1)]
             if not pawned:
                 lines.append("  (nothing has been pawned here yet)")
+            else:
+                lines.append("&D(Type BUY <number> to choose a listed item.)&x")
             lines.append("&D(Buys any eligible item with a value; resells each pawned copy at a markup.)&x")
             session.send("\n".join(lines))
             return
         shop_items = combat.mob_shop_items(shopkeeper)
         buys_categories = combat.mob_shop_buys_categories(shopkeeper)
         lines = [f"&W{shopkeeper.name.capitalize()} offers for sale:&x"]
-        for obj_vnum in shop_items:
-            obj = olc.OBJECT_TEMPLATES.get(obj_vnum)
-            if obj:
-                level_text = f" (level {obj['level']})" if obj.get("level", 0) > 0 else ""
-                import item_balance
-                lines.append(f"  {rarity_colored_name(obj['short_desc'])} - {item_balance.effective_cost(obj)} ryo{level_text}")
-        if not shop_items:
+        listed_items = [olc.OBJECT_TEMPLATES[vnum] for vnum in shop_items
+                        if vnum in olc.OBJECT_TEMPLATES]
+        for number, obj in enumerate(listed_items, start=1):
+            level_text = f" (level {obj['level']})" if obj.get("level", 0) > 0 else ""
+            import item_balance
+            lines.append(f"  [{number}] {rarity_colored_name(obj['short_desc'])} - {item_balance.effective_cost(obj)} ryo{level_text}")
+        if not listed_items:
             lines.append("  (nothing in stock right now)")
+        else:
+            lines.append("&D(Type BUY <number> to choose a listed item.)&x")
         template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
         import shop_flags
         specialty = shop_flags.specialty_from_flags(template)
@@ -6153,10 +6158,12 @@ def cmd_list(session, args: List[str]) -> None:
         return
     shop_info = data_shops.SHOP_TYPES[shop["type"]]
     lines = [f"&W{shop_info['display_name']} -- for sale:&x"]
-    for item in shop["items"]:
+    for number, item in enumerate(shop["items"], start=1):
         proto = _find_object_prototype_by_name(item["name"])
         level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
-        lines.append(f"  {rarity_colored_name(item['name'])} - {item['price']} ryo{level_text}")
+        lines.append(f"  [{number}] {rarity_colored_name(item['name'])} - {item['price']} ryo{level_text}")
+    if shop["items"]:
+        lines.append("&D(Type BUY <number> to choose a listed item.)&x")
     if shop["type"] == "general":
         lines.append("&D(Buys any item, but at a lower price than a specialty shop.)&x")
     else:
@@ -6301,12 +6308,13 @@ def cmd_buy(session, args: List[str]) -> None:
         )
         return
 
-    # Bulk purchases require an explicit item query. Property purchases,
-    # mission-point rewards and perks remain one-at-a-time commands.
+    # BUY 2 selects displayed item #2. BUY 2 sardine still buys two
+    # sardines: a number is an item index ONLY when it is the sole arg.
     if args and (args[0].lower() == "all" or
                  (args[0].isdigit() and len(args) >= 2)):
         _buy_multiple(session, args)
         return
+    listing_index = int(args[0]) if len(args) == 1 and args[0].isdigit() else None
 
     if _own_kage_chamber(player):
         if not args:
@@ -6384,7 +6392,8 @@ def cmd_buy(session, args: List[str]) -> None:
         if not args:
             session.send("Buy what?")
             return
-        ok, result, price = playershops.buy_from_shop(shopkeeper, player, " ".join(args).lower())
+        ok, result, price = playershops.buy_from_shop(
+            shopkeeper, player, " ".join(args).lower(), listing_index=listing_index)
         if not ok:
             session.send(result)
             return
@@ -6398,7 +6407,9 @@ def cmd_buy(session, args: List[str]) -> None:
             return
         import pawnshops
         if pawnshops.is_pawnshop(shopkeeper):
-            ok, result, price = pawnshops.buy(shopkeeper, player, " ".join(args).lower(), session=session)
+            ok, result, price = pawnshops.buy(
+                shopkeeper, player, " ".join(args).lower(),
+                session=session, listing_index=listing_index)
             if not ok:
                 session.send(result)
                 return
@@ -6406,13 +6417,21 @@ def cmd_buy(session, args: List[str]) -> None:
             _fire_item_trigger(session, result, "get")
             return
         query = " ".join(args).lower()
-        obj_vnum = next(
-            (v for v in combat.mob_shop_items(shopkeeper)
-             if v in olc.OBJECT_TEMPLATES and query in olc.OBJECT_TEMPLATES[v]["short_desc"].lower()),
-            None,
-        )
+        # Match the 1-based, visible LIST order; omit invalid prototypes
+        # from both the displayed numbers and the selectable stock.
+        sale_vnums = [v for v in combat.mob_shop_items(shopkeeper)
+                      if v in olc.OBJECT_TEMPLATES]
+        if listing_index is not None:
+            obj_vnum = (sale_vnums[listing_index - 1]
+                        if 1 <= listing_index <= len(sale_vnums) else None)
+        else:
+            obj_vnum = next(
+                (v for v in sale_vnums
+                 if query in olc.OBJECT_TEMPLATES[v]["short_desc"].lower()), None)
         if obj_vnum is None:
-            session.send(f"{shopkeeper.name.capitalize()} doesn't sell that.")
+            session.send("That item number is not on the shop list. Type LIST."
+                         if listing_index is not None
+                         else f"{shopkeeper.name.capitalize()} doesn't sell that.")
             return
         obj = olc.OBJECT_TEMPLATES[obj_vnum]
         level_error = playershops.purchase_level_error(player, obj, obj["short_desc"])
@@ -6448,9 +6467,14 @@ def cmd_buy(session, args: List[str]) -> None:
         session.send("Buy what?")
         return
     query = " ".join(args).lower()
-    match = next((item for item in shop["items"] if query in item["name"].lower()), None)
+    if listing_index is not None:
+        match = (shop["items"][listing_index - 1]
+                 if 1 <= listing_index <= len(shop["items"]) else None)
+    else:
+        match = next((item for item in shop["items"] if query in item["name"].lower()), None)
     if not match:
-        session.send("They don't sell that here.")
+        session.send("That item number is not on the shop list. Type LIST."
+                     if listing_index is not None else "They don't sell that here.")
         return
     level_error = playershops.purchase_level_error(
         player, _find_object_prototype_by_name(match["name"]), match["name"])
@@ -8402,9 +8426,15 @@ def cmd_shop(session, args: List[str]) -> None:
             session.send("Your shop's stock is empty.")
             return
         lines = ["&WYour shop's stock:&x"]
+        sale_number = 0
         for entry in player.shop_stock:
             price_str = f"{entry['price']:,} ryo" if entry["price"] is not None else "no price set"
-            lines.append(f"  {rarity_colored_name(playershops.stock_item_name(entry))} - {price_str}")
+            if entry["price"] is not None:
+                sale_number += 1
+                marker = f"[{sale_number}]"
+            else:
+                marker = "[unlisted]"
+            lines.append(f"  {marker} {rarity_colored_name(playershops.stock_item_name(entry))} - {price_str}")
         session.send("\n".join(lines))
         return
 
