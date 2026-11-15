@@ -11,6 +11,9 @@ import math
 LEVEL_RATE = {1: .12, 2: .24, 3: .42, 4: .64, 5: .85}
 POOL_RATE = {1: .06, 2: .095, 3: .14, 4: .19, 5: .245}
 POWER = {1: 1.55, 2: 1.85, 3: 2.20, 4: 2.65, 5: 3.15}
+# Modest level-based offensive compensation for scaling cast costs:
+# +0% at level 1, up to +8% at level 250 (no changes to base jutsu damage).
+LEVEL_DAMAGE_BONUS_AT_250 = 0.08
 DURATION = {1: 1.45, 2: 1.75, 3: 2.15, 4: 2.55, 5: 3.0}
 
 # Individual attacks are not all equal within one unlock tier.
@@ -93,6 +96,11 @@ def boosted_damage(actor, jutsu, damage):
     # without turning the lowest-level starter move into a capstone attack.
     gained = max(0, int(getattr(actor, "level", 1)) - int(jutsu.get("level_requirement", 1)))
     multiplier *= 1 + min(.35, gained / 500.0)
+    # Jutsu get slightly stronger as the level/pool cost surcharge rises.
+    # This is multiplicative, independent of the technique's unlock tier,
+    # and never boosts a level-1 character's initial damage.
+    level = max(1, int(getattr(actor, "level", 1)))
+    multiplier *= 1 + LEVEL_DAMAGE_BONUS_AT_250 * min(249, level - 1) / 249
     result = max(1, int(round(damage * multiplier)))
     import general_skills
     return general_skills.elemental_jutsu_damage(actor, jutsu, result)
