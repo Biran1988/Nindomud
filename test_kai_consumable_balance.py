@@ -50,7 +50,7 @@ class KaiAndHealingBalanceTests(unittest.TestCase):
                                          source="nehan shouja",genjutsu=True)
             status_effects.apply_effect(self.player.active_status_effects,"confused",
                                          source="phantom floor maze",genjutsu=True)
-            status_effects.apply_effect(self.player.active_status_effects,"stunned",
+            status_effects.apply_effect(self.player.active_status_effects,"bleeding",
                                          source="physical attack")
             status_effects.apply_effect(self.player.active_status_effects,"poisoned",
                                          source="poison")
@@ -60,8 +60,8 @@ class KaiAndHealingBalanceTests(unittest.TestCase):
             self.player.illusion_walk_steps_taken=2
             with patch.object(commands,"cmd_look"):
                 commands.cmd_use_jutsu(self.session,"kai",[])
-        self.assertFalse(self.player.active_status_effects["stunned"].get("genjutsu",False))
-        self.assertEqual(set(self.player.active_status_effects),{"stunned","poisoned"})
+        self.assertFalse(self.player.active_status_effects["bleeding"].get("genjutsu",False))
+        self.assertEqual(set(self.player.active_status_effects),{"bleeding","poisoned"})
         self.assertIsNone(self.player.illusion_walk_caster)
         self.assertIsNone(self.player.illusion_walk_real_room_vnum)
         self.assertEqual(self.player.illusion_walk_range,0)
