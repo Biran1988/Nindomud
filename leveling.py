@@ -158,16 +158,16 @@ def mob_base_experience(mob_level: int) -> int:
 def mob_kill_experience(player_level: int, mob_level: int) -> int:
     """Level-scaled XP for one player killing one mob.
 
-    Easier enemies lose ten percent per level and reach zero at ten levels
-    below the player. Harder enemies gain three percent per level, capped at
-    130 percent. Group callers apply this independently for every member.
+    Easier enemies lose ten percent per level but a valid kill always gives
+    at least 1 XP, regardless of the level gap. Harder enemies gain three
+    percent per level, capped at 130 percent. Group XP is split separately.
     """
     difference = int(mob_level) - int(player_level)
     if difference < 0:
         multiplier = max(0.0, 1.0 + difference * EASIER_MOB_PENALTY_PER_LEVEL)
     else:
         multiplier = min(HARDER_MOB_REWARD_CAP, 1.0 + difference * HARDER_MOB_BONUS_PER_LEVEL)
-    return max(0, round(mob_base_experience(mob_level) * multiplier))
+    return max(1, round(mob_base_experience(mob_level) * multiplier))
 
 
 def migrate_experience_curve(player: Player) -> bool:
