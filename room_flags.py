@@ -7,8 +7,6 @@ def canonical(typed):
     name = str(typed).strip().casefold().replace("-", "_").replace(" ", "_")
     if name in {"playershop", "shoproom", "shop_room", "player_shop_room"}:
         return "player_shop"
-    if name in {"biome_none", "none"}:
-        return "biome_none"
     if name in biomes.BIOME_TYPES and name != "none":
         return "biome_" + name
     if name.startswith("biome") and name[5:] in biomes.BIOME_TYPES:
@@ -48,13 +46,9 @@ def toggle(room, name):
     # Preserve the official spelling of non-special flags (CapturePoint,
     # etc.). Builder validation already canonicalizes these names.
     normalized = canonical(name)
-    name = normalized if normalized in SPECIAL or normalized == 'biome_none' else name
+    name = normalized if normalized in SPECIAL else name
     synchronize(room)
     flags = room.flags
-    if name == "biome_none":
-        room.flags = [x for x in flags if x not in BIOMES]
-        synchronize(room)
-        return name, True
     if name in BIOMES:
         is_active = name in flags
         room.flags = [x for x in flags if x not in BIOMES]
