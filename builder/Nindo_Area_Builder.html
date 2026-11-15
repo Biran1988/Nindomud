@@ -87,9 +87,8 @@ input,select,textarea{background:#172437;color:#fff;border:1px solid #48617f;bor
 <label>Room VNUM<input id="roomVnum" type="number" disabled></label>
 <label>Name<input id="roomName" maxlength="120"></label>
 <label>Description<textarea id="roomDesc" maxlength="5000"></textarea></label>
-<div class="row"><label>Sector<input id="roomSector" maxlength="40"></label><label>Biome<select id="roomBiome"><option>none</option><option>ocean</option><option>river</option><option>lake</option><option>forest</option><option>mountain</option><option>desert</option><option>swamp</option><option>plains</option></select></label></div>
-<div class="checkboxline"><input id="roomSafe" type="checkbox"><label for="roomSafe">PvP safe</label></div>
-<label>Room flags<select id="roomFlagChoice"><option value="">Choose a flag...</option><option value="CapturePoint">CapturePoint — territory control</option><option value="accelerated_healing">accelerated_healing — faster recovery</option><option value="no_wander">no_wander — blocks roaming mobs from entering</option></select><div id="selectedFlags" class="hint"></div></label>
+<label>Sector<input id="roomSector" maxlength="40"></label>
+<label>Room flags (housing, shops, safety and biome are all flags)<select id="roomFlagChoice"><option value="">Choose a flag...</option><option value="apartment">apartment — purchasable apartment</option><option value="player_shop">player_shop — player shop room</option><option value="safe">safe — PvP protection</option><option value="CapturePoint">CapturePoint — territory control</option><option value="accelerated_healing">accelerated_healing — faster recovery</option><option value="no_wander">no_wander — blocks roaming mobs</option><option value="furnace">furnace — smelting facility</option><option value="biome_ocean">biome_ocean</option><option value="biome_river">biome_river</option><option value="biome_lake">biome_lake</option><option value="biome_forest">biome_forest</option><option value="biome_mountain">biome_mountain</option><option value="biome_desert">biome_desert</option><option value="biome_swamp">biome_swamp</option><option value="biome_plains">biome_plains</option><option value="biome_none">biome_none — remove biome</option></select><div id="selectedFlags" class="hint"></div></label>
 <label>Room reset message<input id="roomReset" maxlength="500"></label>
 <h3>Exits</h3><div id="exitList" class="hint"></div>
 <details><summary>Room builder settings and programs</summary>
@@ -235,7 +234,29 @@ function save(){try{recordDraft()}catch(e){report('Browser storage is unavailabl
 function room(){return project.rooms.find(r=>r.vnum===selected)}
 function nextId(collection,start){let id=start;while(collection.some(x=>x.vnum===id))id++;return id}
 function validInt(x,min,max){return Number.isInteger(Number(x))&&Number(x)>=min&&Number(x)<=max}
-function select(v){selected=v;let r=room();$('roomFields').classList.toggle('hidden',!r);$('selectedTitle').textContent=r?`Room ${v}`:'Select a room';if(r){$('roomVnum').value=r.vnum;$('roomName').value=r.name;$('roomDesc').value=r.description;$('roomSector').value=r.sector||'inside';$('roomBiome').value=r.biome||'none';$('roomSafe').checked=!!r.safe;renderFlags();$('roomReset').value=r.reset_message||'';refreshContents();renderRoomAdvanced()}else{$('entityPanel').classList.add('hidden')}renderMap()}
+// Old area exports may contain standalone biome/safety/housing settings.
+// Convert once to the same flags the in-game RSET editor now uses.
+function mirrorRoomFlags(r){
+  const flags=Array.isArray(r.flags)?r.flags:[];
+  r.safe=flags.includes('safe');
+  r.apartment=flags.includes('apartment');
+  r.player_shop=flags.includes('player_shop');
+  r.biome=(flags.find(name=>name.startsWith('biome_'))||'biome_none').slice(6);
+  if(r.builder){delete r.builder.apartment;delete r.builder.player_shop;}
+}
+function normalizeRoomFlags(r){
+  r.flags=Array.isArray(r.flags)?[...new Set(r.flags)]:[];
+  if(r.safe&&!r.flags.includes('safe'))r.flags.push('safe');
+  if((r.apartment||r.builder?.apartment)&&!r.flags.includes('apartment'))r.flags.push('apartment');
+  if((r.player_shop||r.builder?.player_shop)&&!r.flags.includes('player_shop'))r.flags.push('player_shop');
+  if(r.biome&&r.biome!=='none'&&!r.flags.some(x=>x.startsWith('biome_')))
+    r.flags.push('biome_'+r.biome);
+  let seen=false;
+  r.flags=r.flags.filter(x=>{if(!x.startsWith('biome_'))return true;if(seen)return false;seen=true;return true});
+  mirrorRoomFlags(r);
+}
+function normalizeProjectRoomFlags(){for(const r of project.rooms||[])normalizeRoomFlags(r)}
+function select(v){selected=v;let r=room();$('roomFields').classList.toggle('hidden',!r);$('selectedTitle').textContent=r?`Room ${v}`:'Select a room';if(r){$('roomVnum').value=r.vnum;$('roomName').value=r.name;$('roomDesc').value=r.description;$('roomSector').value=r.sector||'inside';normalizeRoomFlags(r);renderFlags();$('roomReset').value=r.reset_message||'';refreshContents();renderRoomAdvanced()}else{$('entityPanel').classList.add('hidden')}renderMap()}
 function refreshContents(){let r=room();if(!r)return;$('exitList').textContent=Object.entries(r.exits||{}).map(([d,v])=>`${d} → ${v}`).join('  •  ')||'No exits yet';
 for(let [kind,element] of [['mobs','mobList'],['items','itemList']]){let list=$(element);list.replaceChildren();project[kind].filter(x=>x.room_vnum===selected).forEach(x=>{let div=document.createElement('div');div.className='entry';let text=document.createElement('span');text.textContent=`${x.vnum}: ${x.name}`;let edit=document.createElement('button');edit.textContent='Edit';edit.className='small-button';edit.onclick=()=>editPrototype(kind,x.vnum);div.append(text,edit);
 let button=document.createElement('button');button.textContent='Remove';button.className='danger small-button';button.onclick=()=>{if(project.source?.baseline?.[kind]?.[x.vnum]){report('Remove existing prototypes in game, then export the area again.',true);return}project[kind]=project[kind].filter(y=>y!==x);save();refreshContents()};div.append(button);list.append(div)})}}
@@ -247,7 +268,7 @@ function renderFlags(){
     const entry=document.createElement('div');entry.className='entry';
     const name=document.createElement('span');name.textContent=flag;
     const remove=document.createElement('button');remove.textContent='Remove';
-    remove.onclick=()=>{r.flags=r.flags.filter(value=>value!==flag);save();renderFlags()};
+    remove.onclick=()=>{r.flags=r.flags.filter(value=>value!==flag);mirrorRoomFlags(r);save();renderFlags()};
     entry.append(name,remove);list.append(entry);
   }
 }
@@ -318,10 +339,26 @@ function clicked(v){
 }
 function updateArea(){project.area.name=$('areaName').value;project.area.vnum_start=Number($('start').value);project.area.vnum_end=Number($('end').value);project.area.reset_message=$('areaReset').value;project.area.income=$('areaIncome').value===''?undefined:Number($('areaIncome').value);save()}
 function check(){updateArea();let a=project.area;if(!a.name.trim()||!validInt(a.vnum_start,1,999999)||!validInt(a.vnum_end,a.vnum_start,999999)||(project.source?.mode!=='update'&&a.vnum_end-a.vnum_start>=1000))throw Error('Set an area name and an ascending VNUM range (at most 1,000 for a new area).');if(!project.rooms.length)throw Error('Add at least one room.');let ids=new Set();for(let r of project.rooms){if(!validInt(r.vnum,a.vnum_start,a.vnum_end)||ids.has(r.vnum)||!r.name.trim())throw Error('Room VNUMs must be unique, named, and inside the area range.');ids.add(r.vnum)}for(let r of project.rooms)for(let target of Object.values(r.exits||{}))if(!ids.has(target)&&project.source?.mode!=='update')throw Error(`Room ${r.vnum} has an exit to a missing room.`);for(let kind of ['mobs','items']){let seen=new Set();for(let row of project[kind]){if(seen.has(row.vnum)||!ids.has(row.room_vnum))throw Error(`A ${kind} VNUM repeats or refers to a missing room.`);seen.add(row.vnum)}}return true}
-function download(){try{check();let name=project.area.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'area';let blob=new Blob([JSON.stringify(project,null,2)+'\n'],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=`${name}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);report(`Exported ${a.download}: ${project.rooms.length} rooms, ${project.mobs.length} mobs, ${project.items.length} items.`)}catch(e){report(e.message,true)}}
+function download(){try{normalizeProjectRoomFlags();check();let name=project.area.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'area';let blob=new Blob([JSON.stringify(project,null,2)+'\n'],{type:'application/json'});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=`${name}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);report(`Exported ${a.download}: ${project.rooms.length} rooms, ${project.mobs.length} mobs, ${project.items.length} items.`)}catch(e){report(e.message,true)}}
 for(let [id,prop] of [['areaName','name'],['start','vnum_start'],['end','vnum_end'],['areaReset','reset_message'],['areaIncome','income']])$(id).addEventListener('input',updateArea);
-for(let [id,prop] of [['roomName','name'],['roomDesc','description'],['roomSector','sector'],['roomBiome','biome'],['roomSafe','safe'],['roomReset','reset_message']])$(id).addEventListener('input',()=>{let r=room();if(!r)return;r[prop]=id==='roomSafe'?$(id).checked:$(id).value;save();if(id==='roomName')renderMap()});
-$('roomFlagChoice').addEventListener('change',()=>{let r=room(),flag=$('roomFlagChoice').value;if(r&&flag&&!r.flags.includes(flag)){r.flags.push(flag);save();renderFlags()}$('roomFlagChoice').value=''});
+for(let [id,prop] of [['roomName','name'],['roomDesc','description'],['roomSector','sector'],['roomReset','reset_message']])$(id).addEventListener('input',()=>{let r=room();if(!r)return;r[prop]=$(id).value;save();if(id==='roomName')renderMap()});
+$('roomFlagChoice').addEventListener('change',()=>{
+  const r=room(),flag=$('roomFlagChoice').value;
+  if(r&&flag){
+    normalizeRoomFlags(r);
+    if(flag==='biome_none')r.flags=r.flags.filter(x=>!x.startsWith('biome_'));
+    else if(flag.startsWith('biome_')){
+      r.flags=r.flags.filter(x=>!x.startsWith('biome_'));
+      r.flags.push(flag);
+    }else if(!r.flags.includes(flag)){
+      if(flag==='apartment'&&r.flags.includes('player_shop'))report('Remove player_shop before adding apartment.',true);
+      else if(flag==='player_shop'&&r.flags.includes('apartment'))report('Remove apartment before adding player_shop.',true);
+      else r.flags.push(flag);
+    }
+    mirrorRoomFlags(r);save();renderFlags();
+  }
+  $('roomFlagChoice').value='';
+});
 $('addRoom').onclick=()=>{updateArea();let id=nextId(project.rooms,Number(project.area.vnum_start));if(!validInt(id,project.area.vnum_start,project.area.vnum_end)){report('The area VNUM range is full.',true);return}let location=null;for(let y=0;y<=maxY&&!location;y+=GRID)for(let x=0;x<=maxX;x+=GRID){if(!project.rooms.some(r=>r.x===x&&r.y===y)){location={x,y};break}}if(!location){report('The map grid is full.',true);return}project.rooms.push({vnum:id,name:'New Room',description:'',sector:'inside',biome:'none',safe:false,flags:[],reset_message:'',exits:{},x:location.x,y:location.y});save();select(id);report(`Added room ${id}.`)};
 $('connect').onclick=()=>{if(!room()){report('Select a source room first.',true);return}connecting=!connecting;$('connect').classList.toggle('active',connecting);report(connecting?'Click the destination room.':'Connection canceled.')};
 $('unlink').onclick=()=>{let r=room();if(!r)return;let dir=$('direction').value,target=project.rooms.find(x=>x.vnum===r.exits[dir]);if(!target){report(`Room ${selected} has no ${dir} exit.`,true);return}const prevR={...r.exits},prevTarget={...target.exits};
@@ -502,7 +539,7 @@ function programBuilder(holder,key,triggers,list,controls){
 function renderRoomAdvanced(){
   const r=room();if(!r)return;
   const settings=stagedEditorObject(r,'builder');
-  builderFieldGroup(settings,{enabled:'bool',apartment:'bool',player_shop:'bool'},$('roomAdvanced'));
+  builderFieldGroup(settings,{enabled:'bool'},$('roomAdvanced'));
   const directions=Object.keys(r.exits||{}),sel=$('exitEditorDirection');
   const previous=sel.value;sel.replaceChildren();
   for(const direction of directions){const option=nodeEl('option',direction+' → '+r.exits[direction]);option.value=direction;sel.append(option)}
@@ -612,7 +649,7 @@ function editPrototype(kind,vnum){
 function resetEditorProject(next,id){
   if(!validProject(next))throw Error('Not a valid Nindo area project.');
   project=JSON.parse(JSON.stringify(next));projectId=id||newDraftId();
-  normalizePositions();connecting=false;selected=null;
+  normalizePositions();normalizeProjectRoomFlags();connecting=false;selected=null;
   $('connect').classList.remove('active');fill();select(null);setZoom(1);save();
 }
 function downloadJson(data,filename){
@@ -656,9 +693,9 @@ $('backupFile').onchange=async e=>{
   }catch(err){report(err.message,true)}e.target.value='';
 };
 
-$('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;projectId=newDraftId();normalizePositions();save();fill();select(null);report(`Opened ${file.name} as a new saved project.`)}catch(err){report(err.message,true)}e.target.value=''};
+$('export').onclick=download;$('open').onclick=()=>$('file').click();$('file').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let parsed=JSON.parse(await file.text());if(parsed.format!=='nindo-area-v1'||!Array.isArray(parsed.rooms)||!Array.isArray(parsed.mobs)||!Array.isArray(parsed.items))throw Error('This is not a Nindo area package.');project=parsed;projectId=newDraftId();normalizePositions();normalizeProjectRoomFlags();save();fill();select(null);report(`Opened ${file.name} as a new saved project.`)}catch(err){report(err.message,true)}e.target.value=''};
 function fill(){$('areaName').value=project.area.name;$('start').value=project.area.vnum_start;$('end').value=project.area.vnum_end;$('areaReset').value=project.area.reset_message||'';$('areaIncome').value=project.area.income??'';$('mobVnum').value=nextId(project.mobs,30000);$('itemVnum').value=nextId(project.items,40000);$('mobDamage').value='1-4'}
-try{normalizePositions()}catch(e){report(e.message,true)}
+try{normalizePositions();normalizeProjectRoomFlags()}catch(e){report(e.message,true)}
 fill();select(null);setZoom(1);refreshDraftList();save();
 $('zoomIn').onclick=()=>setZoom(zoom*1.25);
 $('zoomOut').onclick=()=>setZoom(zoom/1.25);

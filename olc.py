@@ -1793,6 +1793,7 @@ def cmd_rset(session, args: List[str]) -> None:
             )
             return
         name = room_flags.canonical(" ".join(rest))
+        name = _canonical_flag(name, VALID_ROOM_FLAGS) or name
         if name not in VALID_ROOM_FLAGS and name != "biome_none":
             session.send("Unknown room flag. Type RSET FLAGS for valid options.")
             return

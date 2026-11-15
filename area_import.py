@@ -537,6 +537,10 @@ def validate(package: dict) -> dict:
                         _fingerprint(_room_builder(old)) != details[str(vnum)]):
                 raise ValueError(f"Room {vnum} advanced fields changed since export. Export again.")
             _validated_room_builder(row["builder"], room, f"Room {vnum}")
+        # Legacy package biome/safe/housing fields remain importable while
+        # a current FLAGS selection drives the same gameplay properties.
+        import room_flags
+        room_flags.synchronize(room, legacy=True)
         rooms[vnum] = room
     for room in rooms.values():
         for target in room.exits.values():
