@@ -41,7 +41,7 @@ class FlagOnlyShopTests(unittest.TestCase):
                 self.assertFalse(combat.is_shopkeeper(SimpleNamespace(template_vnum=self.vnum)))
         self.edit('flags', 'ShopPawnshop')
         self.assertTrue(combat.is_shopkeeper(SimpleNamespace(template_vnum=self.vnum)))
-        self.assertEqual(shop_flags.shop_type(self.mob), 'pawnshop')
+        self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'pawnshop')
         self.assertNotIn('shop_type', self.mob)
         self.assertNotIn('shopkeeper', self.mob)
 
@@ -49,7 +49,7 @@ class FlagOnlyShopTests(unittest.TestCase):
         self.edit('flags', 'ShopMining')
         self.mob.update(shop_type='pawnshop', shopkeeper=False,
                         shop_buys_categories=['food'])
-        self.assertEqual(shop_flags.shop_type(self.mob), 'mining')
+        self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'mining')
         instance=SimpleNamespace(template_vnum=self.vnum)
         self.assertTrue(combat.is_shopkeeper(instance))
         self.assertEqual(combat.mob_shop_buys_categories(instance), ['ore'])
@@ -71,7 +71,7 @@ class FlagOnlyShopTests(unittest.TestCase):
              patch('door_links.reconcile_all'):
             world_persistence.apply_saved_world()
         template=combat.MOB_TEMPLATES[self.vnum]
-        self.assertEqual(shop_flags.shop_type(template), 'pawnshop')
+        self.assertEqual(shop_flags.specialty_from_flags(template), 'pawnshop')
         self.assertTrue(shop_flags.is_shopkeeper_template(template))
         self.assertEqual(template['shop_items'], [99901, 99902])
         self.assertNotIn('shop_type',template)
@@ -85,10 +85,10 @@ class FlagOnlyShopTests(unittest.TestCase):
         with patch('storage.load_custom_templates', return_value={
              'mobs':{str(self.vnum):legacy}, 'items':{}}):
             spawn_points.restore_custom_templates()
-        self.assertEqual(shop_flags.shop_type(combat.MOB_TEMPLATES[self.vnum]), 'farming')
+        self.assertEqual(shop_flags.specialty_from_flags(combat.MOB_TEMPLATES[self.vnum]), 'farming')
         self.assertEqual(combat.MOB_TEMPLATES[self.vnum]['shop_items'], [321])
         shop_flags.set_type(combat.MOB_TEMPLATES[self.vnum], 'gemcutter')
-        self.assertEqual(shop_flags.shop_type(combat.MOB_TEMPLATES[self.vnum]), 'gemcutter')
+        self.assertEqual(shop_flags.specialty_from_flags(combat.MOB_TEMPLATES[self.vnum]), 'gemcutter')
 
     def test_simple_shopkeeper_preserves_manual_category_flexibility(self):
         shop_flags.enable_shopkeeper(self.mob)
