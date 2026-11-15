@@ -4,8 +4,8 @@
     "third attack",
     "third extra attack"
   ],
-  "title": "Third Attack - Scroll-Learned Passive Attack",
-  "body": "Syntax: READ A SCROLL OF THIRD ATTACK | PRAC THIRD ATTACK\n\nLevel required: 50 for Bukijutsu only.\nHow learned: SCROLL ONLY (object VNUM 31741, Scroll Jutsu area 31501-32000). Not granted on level-up or login. Characters who learned it in previous releases keep their mastery.\nEffect: A third melee swing, attempted after Second Attack succeeds. It activates during normal melee combat without a command or Chakra charge. This attack uses its own proficiency as its activation chance; a failed attack roll stops all later numbered attacks that round.\nAfter learning, use PRAC THIRD ATTACK with a teacher, then improve proficiency through successful combat use. New readers start at 0% mastery. A successful READ consumes the scroll; failed, underlevel, class-ineligible or already-known reads do not consume it.",
+  "title": "Third Attack - Automatic Level 75, All Classes",
+  "body": "Syntax: PRAC THIRD ATTACK | PRACTICE THIRD ATTACK\n\nThird Attack automatically unlocks at level 75 for Ninjutsu, Taijutsu, Genjutsu and Bukijutsu. NO SCROLL is needed. A returning level-75+ player who missed the unlock receives it upon login. A legacy Third Attack scroll may still exist at VNUM 31741, but READ no longer consumes or teaches it.\n\nEffect: A third melee strike is attempted only when Second Attack succeeds in the same combat round, then the Third Attack proficiency check succeeds. It activates automatically in combat, without casting or Chakra cost. Practice it with a teacher after unlocking; subsequent combat use can improve proficiency. Existing mastery is preserved.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
