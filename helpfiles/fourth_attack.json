@@ -5,8 +5,8 @@
     "fourth extra attack",
     "fourth swing"
   ],
-  "title": "Fourth Attack - Bukijutsu Numbered Attack",
-  "body": "Syntax: PRAC FOURTH ATTACK | PRACTICE FOURTH ATTACK\n\nBukijutsu learns Fourth Attack automatically at level 75. Any class teacher can teach its first practice lesson. Successful melee attacks improve it after normal practice; only Bukijutsu can acquire the skill.",
+  "title": "Fourth Attack - Scroll-Learned Passive Attack",
+  "body": "Syntax: READ A SCROLL OF FOURTH ATTACK | PRAC FOURTH ATTACK\n\nLevel required: 75 for Bukijutsu only.\nHow learned: SCROLL ONLY. The item is registered at object VNUM 31742 in the 31501-32000 Scroll Jutsu area. It is not gained on level-up or login. Existing players who already learned it retain their mastery.\nEffect: A fourth melee strike, checked only after Second and Third Attack succeed. It activates automatically during normal combat once learned; no separate cast command or Chakra charge is needed.\nEach numbered attack rolls its own skill proficiency for activation. A failed roll stops the remaining attack chain for that combat round. New readers start at 0% proficiency and must practice with a teacher to begin reliable extra attacks. Subsequent successful combat use improves mastery.\nThe scroll is consumed only on successful learning. The level and class requirements cannot be bypassed by using the scroll.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
