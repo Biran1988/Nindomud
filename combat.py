@@ -468,8 +468,8 @@ def mob_shop_buys_categories(mob: Mob) -> List[str]:
     explicit = list(t.get("shop_buys_categories", []))
     if explicit and shop_flags.explicit_specialty(t) is None:
         return explicit
-    shop_type = shop_flags.shop_type(t)
-    spec = data_shops.SHOP_TYPES.get(shop_type, data_shops.SHOP_TYPES["general"])
+    specialty = shop_flags.specialty_from_flags(t)
+    spec = data_shops.SHOP_TYPES.get(specialty, data_shops.SHOP_TYPES["general"])
     allowed = spec["allowed_sell_categories"]
     return sorted(allowed) if allowed is not None else []
 
