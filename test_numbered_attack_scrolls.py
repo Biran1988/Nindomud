@@ -1,4 +1,4 @@
-"""Scroll-only numbered attacks, migration-safe unlocks and saved mastery."""
+"""Automatic universal extra attacks, retired legacy scrolls and preserved mastery."""
 import unittest
 from types import SimpleNamespace as NS
 from unittest.mock import patch
@@ -35,19 +35,25 @@ class NumberedAttackScrollTests(unittest.TestCase):
         commands.cmd_read(session, scroll.split())
         return scroll
 
-    def test_new_and_returning_players_need_scrolls(self):
+    def test_every_class_receives_second_at_25_and_third_at_75_on_login(self):
         for ninja_class in ("bukijutsu", "ninjutsu", "taijutsu", "genjutsu"):
-            with self.subTest(ninja_class=ninja_class):
-                p, _, _ = self.player_and_session(ninja_class)
-                with patch.object(leveling.shinobi_notices, "announce_level"):
+            for level, expected in (
+                    (24, set()), (25, {"Second Attack"}),
+                    (74, {"Second Attack"}),
+                    (75, {"Second Attack", "Third Attack"}),
+                    (250, {"Second Attack", "Third Attack"})):
+                with self.subTest(ninja_class=ninja_class, level=level):
+                    p, _, _ = self.player_and_session(ninja_class, level)
                     leveling.sync_universal_skills(p)
-                self.assertFalse(set(p.learned_skills) & {
-                    "Second Attack", "Third Attack", "Fourth Attack", "Fifth Attack"})
-                self.assertIn("Handsigns", p.learned_skills)
+                    attacks = set(p.learned_skills) & {
+                        "Second Attack", "Third Attack", "Fourth Attack", "Fifth Attack"}
+                    self.assertEqual(attacks, expected)
+                    if level >= 20:
+                        self.assertIn("Handsigns", p.learned_skills)
 
-    def test_scrolls_have_stable_vnums_and_level_class_restrictions(self):
+    def test_legacy_scrolls_keep_vnums_but_do_not_teach_or_consume(self):
         expected = {"second attack": (31740, 25, "general"),
-                    "third attack": (31741, 50, "bukijutsu"),
+                    "third attack": (31741, 75, "general"),
                     "fourth attack": (31742, 75, "bukijutsu"),
                     "fifth attack": (31743, 90, "bukijutsu")}
         for name, (vnum, level, klass) in expected.items():
@@ -55,48 +61,54 @@ class NumberedAttackScrollTests(unittest.TestCase):
             self.assertEqual(data_jutsu.MULTI_ATTACK_SCROLLS[name]["level_requirement"], level)
             self.assertEqual(data_jutsu.MULTI_ATTACK_SCROLLS[name]["class_requirement"], klass)
             self.assertEqual(olc.OBJECT_TEMPLATES[vnum]["scroll_jutsu"], name)
-
-    def test_eligible_bukijutsu_reads_all_four_skills(self):
-        p, session, messages = self.player_and_session()
-        for name in ("second attack", "third attack", "fourth attack", "fifth attack"):
-            with self.subTest(name=name):
-                scroll = self.read(session, name)
-                self.assertNotIn(scroll, p.inventory)
-                self.assertIn(name.title(), p.learned_skills)
-                self.assertEqual(p.skill_proficiencies[name.title()], 0)
-                self.assertIn("learned", messages[-1])
-        with patch.object(combat.random, "randint", return_value=1):
-            self.assertEqual(combat._roll_extra_attacks(p), 0)
-
-    def test_below_level_and_wrong_class_do_not_consume_scroll(self):
-        for name, level in (("second attack", 24), ("third attack", 49),
-                            ("fourth attack", 74), ("fifth attack", 89)):
-            p, session, _ = self.player_and_session(level=level)
-            scroll = self.read(session, name)
+        p, session, messages = self.player_and_session("genjutsu", 1)
+        for key in ("second attack", "third attack"):
+            scroll = self.read(session, key)
             self.assertIn(scroll, p.inventory)
-            self.assertNotIn(name.title(), p.learned_skills)
-        p, session, _ = self.player_and_session("ninjutsu", level=99)
-        scroll = self.read(session, "second attack")
-        self.assertIn(scroll, p.inventory)
-        p.level = 100
-        commands.cmd_read(session, scroll.split())
-        self.assertNotIn(scroll, p.inventory)
-        self.assertIn("Second Attack", p.learned_skills)
-        scroll = self.read(session, "third attack")
-        self.assertIn(scroll, p.inventory)
-        self.assertNotIn("Third Attack", p.learned_skills)
+            self.assertNotIn(key.title(), p.learned_skills)
+            self.assertIn("automatically", messages[-1])
+        self.assertEqual(p.skill_proficiencies.get("Second Attack"), None)
 
-    def test_duplicate_read_and_old_mastery_are_preserved(self):
+    def test_fourth_and_fifth_are_still_bukijutsu_scroll_only(self):
         p, session, messages = self.player_and_session()
-        p.learned_skills = ["Second Attack", "Third Attack"]
-        p.skill_proficiencies = {"Second Attack": 82, "Third Attack": 41}
-        scroll = self.read(session, "second attack")
-        self.assertIn(scroll, p.inventory)
-        self.assertIn("already know", messages[-1])
         leveling.sync_universal_skills(p)
+        for key in ("fourth attack", "fifth attack"):
+            self.assertNotIn(key.title(), p.learned_skills)
+            scroll = self.read(session, key)
+            self.assertNotIn(scroll, p.inventory)
+            self.assertIn(key.title(), p.learned_skills)
+            self.assertEqual(p.skill_proficiencies[key.title()], 0)
+            self.assertIn("learned", messages[-1])
+        outsider, outsider_session, _ = self.player_and_session("taijutsu")
+        scroll = self.read(outsider_session, "fourth attack")
+        self.assertIn(scroll, outsider.inventory)
+        self.assertNotIn("Fourth Attack", outsider.learned_skills)
+
+    def test_below_level_restricted_scrolls_are_not_consumed(self):
+        for key, level in (("fourth attack", 74), ("fifth attack", 89)):
+            p, session, _ = self.player_and_session(level=level)
+            scroll = self.read(session, key)
+            self.assertIn(scroll, p.inventory)
+            self.assertNotIn(key.title(), p.learned_skills)
+
+    def test_old_mastery_is_preserved_when_login_backfills_skills(self):
+        p, session, messages = self.player_and_session()
+        p.learned_skills = ["Second Attack", "Fourth Attack"]
+        p.skill_proficiencies = {"Second Attack": 82,
+                                 "Third Attack": 41, "Fourth Attack": 33}
+        leveling.sync_universal_skills(p)
+        self.assertEqual(p.learned_skills.count("Second Attack"), 1)
+        self.assertEqual(p.learned_skills.count("Third Attack"), 1)
         self.assertEqual(p.skill_proficiencies["Second Attack"], 82)
         self.assertEqual(p.skill_proficiencies["Third Attack"], 41)
-        self.assertNotIn("Fourth Attack", p.learned_skills)
+        self.assertEqual(p.skill_proficiencies["Fourth Attack"], 33)
+        self.assertNotIn("Fifth Attack", p.learned_skills)
+        old_scroll = self.read(session, "second attack")
+        self.assertIn(old_scroll, p.inventory)
+        self.assertIn("no longer required", messages[-1])
+        duplicate = self.read(session, "fourth attack")
+        self.assertIn(duplicate, p.inventory)
+        self.assertIn("already know", messages[-1])
 
     def test_renamed_skill_backfill_preserves_progress_and_training(self):
         p, _, _ = self.player_and_session("taijutsu", level=20)
@@ -111,14 +123,30 @@ class NumberedAttackScrollTests(unittest.TestCase):
         self.assertIn("Examine", p.practiced_skills)
         self.assertEqual(p.signature_move, "Examine")
 
-    def test_level_up_does_not_award_numbered_attack(self):
-        p, _, _ = self.player_and_session(level=49)
-        p.village_rank = "jounin"
-        p.experience = leveling.cumulative_xp_for_level(49)
-        with patch.object(leveling.shinobi_notices, "announce_level"):
-            leveling.grant_experience(p, leveling.xp_band_for_level(49))
-        self.assertEqual(p.level, 50)
-        self.assertNotIn("Third Attack", p.learned_skills)
+    def test_level_up_unlocks_at_25_and_75_without_scrolls(self):
+        for ninja_class in ("bukijutsu", "ninjutsu", "taijutsu", "genjutsu"):
+            for before, skill in ((24, "Second Attack"), (74, "Third Attack")):
+                with self.subTest(ninja_class=ninja_class, level=before):
+                    p, _, _ = self.player_and_session(ninja_class, before)
+                    p.village_rank = "jounin"
+                    p.experience = leveling.cumulative_xp_for_level(before)
+                    with patch.object(leveling.shinobi_notices, "announce_level"):
+                        leveling.grant_experience(p, leveling.xp_band_for_level(before))
+                    self.assertEqual(p.level, before + 1)
+                    self.assertIn(skill, p.learned_skills)
+                    self.assertEqual(p.skill_proficiencies[skill], 0)
+
+    def test_combat_checks_new_level_gates_and_cascading_attacks(self):
+        p, _, _ = self.player_and_session("genjutsu", level=24)
+        p.learned_skills = ["Second Attack", "Third Attack"]
+        p.skill_proficiencies = {"Second Attack": 100, "Third Attack": 100}
+        self.assertEqual(combat._roll_extra_attacks(p), 0)
+        p.level = 25
+        self.assertEqual(combat._roll_extra_attacks(p), 1)
+        p.level = 74
+        self.assertEqual(combat._roll_extra_attacks(p), 1)
+        p.level = 75
+        self.assertEqual(combat._roll_extra_attacks(p), 2)
 
 
 if __name__ == "__main__":
