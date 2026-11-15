@@ -56,6 +56,17 @@ def grant_immortal_jutsu(player: Player) -> bool:
         if player.skill_proficiencies.get(name, 0) < 100:
             player.skill_proficiencies[name] = 100
             changed = True
+    # Numbered attacks are now scroll-only for ordinary players. Authenticated
+    # immortals retain their usual full mastery of applicable test skills.
+    for name, _level, requirement in data_jutsu.MULTI_ATTACK_SKILLS:
+        if requirement and player.primary_class != requirement:
+            continue
+        if name not in player.learned_skills:
+            player.learned_skills.append(name)
+            changed = True
+        if player.skill_proficiencies.get(name, 0) < 100:
+            player.skill_proficiencies[name] = 100
+            changed = True
     return changed
 
 
