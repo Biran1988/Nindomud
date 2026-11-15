@@ -447,4 +447,4 @@ PAGES.append(page(
     "\n"
     "See HELP PRAC, HELP SAMURAI SABRE, HELP TRACK, and individual skill help pages for more details.\n"
     "Date: 2026-11-14",
-    "passives", "passive", "combat passives", "extra attacks", "multi attacks", "multiple attacks", "passive skill list"))
+    "passives", "passive", "combat passives", "extra attacks", "multi attacks", "multiple attacks", "auto attacks", "automatic attacks", "passive skill list"))
