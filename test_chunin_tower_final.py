@@ -1,4 +1,4 @@
-"""Regression checks: Forest of Death central tower, scrolls, and Chunin 1v1."""
+"""Regression checks: Forest of Death central tower, scrolls, and Chuunin 1v1."""
 import os
 import tempfile
 import unittest
@@ -108,7 +108,7 @@ class ChuninTowerFinalTests(unittest.TestCase):
         with patch("session.ACTIVE_SESSIONS", [playing, disconnected]):
             kage.announce_rank_up(self.player.name, "chunin")
         playing.send.assert_called_once_with(
-            f"&Y{self.player.name} has been promoted to Chunin!&x")
+            f"&Y{self.player.name} has been promoted to Chuunin!&x")
         playing.send_prompt.assert_called_once()
         disconnected.send.assert_not_called()
 

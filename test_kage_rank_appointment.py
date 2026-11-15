@@ -27,7 +27,7 @@ class KageAppointmentTests(unittest.TestCase):
             self.assertTrue(self.target.is_kage)
             self.assertEqual(self.target.village_rank, "chunin")
             self.assertEqual(leveling.rank_level_cap(self.target), 65)
-            self.assertEqual(kage.display_rank(self.target), "Chunin (Kage)")
+            self.assertEqual(kage.display_rank(self.target), "Chuunin (Kage)")
             olc.cmd_setkage(self.actor, ["Target", "remove"])
             self.assertFalse(self.target.is_kage)
             self.assertEqual(self.target.village_rank, "chunin")
@@ -62,7 +62,7 @@ class KageAppointmentTests(unittest.TestCase):
              patch("commands._apply_equipment_stat_bonuses"), \
              patch.object(kage, "announce_rank_up"):
             message = kage.handle_promotion_request(p)
-        self.assertIn("promoted to Special Jonin", message)
+        self.assertIn("promoted to Special Jounin", message)
         self.assertTrue(p.is_kage)
         self.assertEqual(p.village_rank, "special jonin")
         self.assertEqual(p.equipment["head"], "A Konoha Kage's Headband")

@@ -71,7 +71,7 @@ class RankGrandfatheringTests(unittest.TestCase):
         self.assertEqual(kage.grandfather_legacy_rank(p), ("student", "chunin"))
         self.assertEqual(p.mission_points, 54)
         self.assertEqual(p.mission_points_earned_total, 59)
-        self.assertEqual(p.equipment["head"], "A Konoha Chunin Headband")
+        self.assertEqual(p.equipment["head"], "A Konoha Chuunin Headband")
         self.assertIsNone(kage.grandfather_legacy_rank(p))
         self.assertEqual(p.mission_points, 54)
 
