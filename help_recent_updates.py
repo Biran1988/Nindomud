@@ -407,3 +407,45 @@ PAGES.append(page(
     "are not player Second/Third/Fourth Attack skills and require no PRAC. "
     "Builders can inspect with MSTAT and adjust with MSET ATTACKS.",
     "mob attacks", "npc extra attacks"))
+
+
+# Consolidated passive reference. Keep aligned with helpfiles/passive_skills.json.
+PAGES.append(page(
+    "passive skills", "Passive Skills - Levels, Effects, Auto vs Scroll",
+    "Syntax: HELP PASSIVE SKILLS | HELP SECOND ATTACK | HELP EXTRA ATTACKS\n"
+    "\n"
+    "AUTO means the skill is granted at the listed level (including login catch-up). No teaching scroll is required. SCROLL means READ the specified scroll; leveling alone does not grant it. Passive effects trigger when their conditions are met; an automatic unlock is NOT automatic 100% mastery.\n"
+    "\n"
+    "NUMBERED MELEE ATTACKS - all AUTO, no scroll:\n"
+    "  Second Attack  | Bukijutsu 25; Ninjutsu/Taijutsu/Genjutsu 100. Rolls an extra normal melee strike each combat round.\n"
+    "  Third Attack   | Bukijutsu 50. Rolls a third strike only if Second Attack succeeded that round.\n"
+    "  Fourth Attack  | Bukijutsu 75. Rolls a fourth strike only if Third Attack succeeded.\n"
+    "  Fifth Attack   | Bukijutsu 90. Rolls a fifth strike only if Fourth Attack succeeded.\n"
+    "Each attack uses its own proficiency as its proc chance (0% = no bonus attack); the chain ends on the first failed roll. Unlocking is automatic, but use PRAC <attack name> with a teacher to train it, then improve it through melee fighting. Other classes cannot learn Third/Fourth/Fifth Attack.\n"
+    "\n"
+    "OTHER COMBAT PASSIVES:\n"
+    "  Strong Fist Style | All classes, level 1, AUTO. Starting passive; melee damage bonus scales to +10% at 100% mastery.\n"
+    "  Soto Uke          | Taijutsu 19, AUTO. Chance to block an ordinary physical hit; successful blocks cost 10 Stamina.\n"
+    "  Counter Kunai     | Bukijutsu 25, AUTO. Automatically blocks an incoming thrown jutsu when carrying a kunai; normally consumes that kunai.\n"
+    "  Weapon Expert     | Bukijutsu 36, AUTO. Mastery-based proc grants +50% damage to an armed ordinary attack.\n"
+    "  Dual Wield        | Bukijutsu 70, AUTO. Equip an off-hand weapon for a mastery-based extra off-hand strike (5 Stamina on proc).\n"
+    "  Silent Genjutsu   | Genjutsu 75, AUTO. Cast known genjutsu by bare name without hand signs; instant casting. At 100% mastery, hides the technique name from the PvP target.\n"
+    "\n"
+    "SAMURAI SABRE PASSIVE TIERS - Bukijutsu, AUTO, no scroll or PRAC:\n"
+    "  Samurai Sabre 2 | Level 85: +5% sword strike damage (10% total).\n"
+    "  Samurai Sabre 3 | Level 140: another +5% (15% total).\n"
+    "  Samurai Sabre 4 | Level 195: another +5% (20% total).\n"
+    "  Samurai Sabre 5 | Level 250: another +5% (25% total).\n"
+    "These tiers take effect ONLY when the level-35 Samurai Sabre skill is toggled on with a sword wielded. They do nothing when it is off.\n"
+    "\n"
+    "TRACKING AND CASTING PASSIVES:\n"
+    "  Handsigns        | All classes 20, AUTO. Improves casting speed for jutsu that use hand signs; initial teacher practice is capped at 1%, further mastery grows with use.\n"
+    "  Advanced Tracking| All classes 20, SCROLL. READ its scroll to extend a learned Track jutsu beyond its original area; this is a passive upgrade to Track, not an automatic grant.\n"
+    "  Hidden Tracking  | All classes 50, AUTO. An already-learned Track can follow hidden exits; closed doors still block passage.\n"
+    "\n"
+    "SPECIAL SCROLL-ONLY PASSIVE:\n"
+    "  Iron Resolve | Earn the Scroll of Iron Resolve by defeating the Iron Kage at the end of the level-250 Iron Ascension tower, then READ it. Once per fight, an attack taking you to 20% Health or less activates 25% incoming mob damage reduction for 20 seconds. Leveling alone does not teach it.\n"
+    "\n"
+    "See HELP PRAC, HELP SAMURAI SABRE, HELP TRACK, and individual skill help pages for more details.\n"
+    "Date: 2026-11-14\n",
+    "passives", "passive", "combat passives", "extra attacks", "multi attacks", "multiple attacks", "second attack", "third attack", "fourth attack", "fifth attack", "passive skill list"))
