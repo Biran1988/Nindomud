@@ -9280,10 +9280,34 @@ def cmd_read(session, args: List[str]) -> None:
     import technique_names
     if jutsu_key == technique_names.OLD_KEY:
         jutsu_key = technique_names.NEW_KEY
+    # Numbered attacks are passive skills rather than castable JUTSU.
+    # Reuse normal scroll inventory, class/level checks and persistence.
+    if jutsu_key in data_jutsu.MULTI_ATTACK_SCROLLS:
+        spec = data_jutsu.MULTI_ATTACK_SCROLLS[jutsu_key]
+        display = spec["display_name"]
+        required_class = spec["class_requirement"]
+        needed = data_jutsu.multi_attack_required_level(
+            player, display, spec["level_requirement"])
+        if required_class != "general" and player.primary_class != required_class:
+            session.send(f"{display} can only be learned by {required_class.title()} shinobi.")
+            return
+        if player.level < needed:
+            session.send(f"You must reach level {needed} to read the {display} scroll.")
+            return
+        if display in player.learned_skills:
+            session.send(f"You already know {display}.")
+            return
+        player.learned_skills.append(display)
+        player.skill_proficiencies.setdefault(display, leveling.initial_proficiency(player))
+        inventory.remove_carried(player, match)
+        storage.save_player(player)
+        session.send(f"You study {match} carefully... you have learned &Y{display}&x! "
+                     f"Practice it with a teacher to improve its chance to trigger.")
+        return
+
     if not jutsu_key or jutsu_key not in data_jutsu.JUTSU:
         session.send(f"{match} hasn't been inscribed with a technique yet.")
         return
-
 
     jutsu = data_jutsu.JUTSU[jutsu_key]
     display = jutsu["display_name"]
