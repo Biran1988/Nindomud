@@ -71,7 +71,7 @@ class PromptAndColorHelpTests(unittest.TestCase):
         self.assertIn('&[196]Bright xterm red&x',body)
         colored=colors.render(body,True)
         self.assertIn('&r',colored) # labeled code remains readable
-        self.assertIn('\x1b[1;31mBright red\x1b[0m',colored)
+        self.assertIn('\x1b[22;91mBright red\x1b[0m',colored)
         self.assertIn('\x1b[38;5;196mBright xterm red\x1b[0m',colored)
         uncolored=colors.render(body,False)
         self.assertIn('&r',uncolored)

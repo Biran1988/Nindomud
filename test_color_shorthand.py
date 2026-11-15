@@ -10,7 +10,7 @@ class NumericColorTests(unittest.TestCase):
         self.assertEqual(colors.render("&0Black", True), "\x1b[38;5;0mBlack")
 
     def test_bracketed_and_legacy_still_work(self):
-        self.assertEqual(colors.render("&[223]Sand &RRed&x", True), "\x1b[38;5;223mSand \x1b[31mRed\x1b[0m")
+        self.assertEqual(colors.render("&[223]Sand &RRed&x", True), "\x1b[38;5;223mSand \x1b[22;31mRed\x1b[0m")
 
     def test_color_off_and_literal_ampersand(self):
         self.assertEqual(colors.render("&208Ember &[223]Sand &RRed", False), "Ember Sand Red")
