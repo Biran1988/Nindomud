@@ -2741,7 +2741,8 @@ def test_npc_death_message():
     raw = "".join(out)
     out.clear()
 
-    assert "\x1b[1;31m" in raw, "expected bright/bold red for the death message"
+    import colors
+    assert colors.ANSI_CODES["&R"] in raw, "expected bright red for the death message"
     assert "A rival ninja is DEAD!" in raw
     assert "You have defeated a rival ninja!" in raw  # the original message is still there too
 
