@@ -12,7 +12,8 @@ placed in a shop, on a mob or at a spawn point automatically.
 | Genjutsu | 31686–31715 | 30 |
 | Bukijutsu | 31716–31735 | 20 |
 | Later released defense scrolls | 31736–31739 | 4 |
-| Passive numbered-attack scrolls | 31740–31743 | 4 |
+| Legacy retired Second/Third scroll IDs | 31740–31741 | 2 |
+| Bukijutsu-only Fourth/Fifth scrolls | 31742–31743 | 2 |
 | Unassigned | 31744–32000 | 257 |
 
 The original 235 registered techniques that can be represented by a teaching scroll
@@ -38,20 +39,21 @@ when its new VNUM is unused or automatically seeded. Saved spawn point IDs and
 NPC shop stock references are migrated; collisions never overwrite an
 unrelated builder object.
 
-## New passive numbered-attack scrolls (no automatic skill unlocks)
+## Numbered attacks: universal automatic unlocks and restricted scrolls
 
-| Item VNUM | Scroll | Minimum level | Class |
+| Item VNUM | Ability | Current requirement | Scroll needed? |
 |---|---|---|---|
-| 31740 | Second Attack | 25 Bukijutsu / 100 others | Any |
-| 31741 | Third Attack | 50 | Bukijutsu |
-| 31742 | Fourth Attack | 75 | Bukijutsu |
-| 31743 | Fifth Attack | 90 | Bukijutsu |
+| 31740 (legacy) | Second Attack | ALL classes: level 25 | No; automatic |
+| 31741 (legacy) | Third Attack | ALL classes: level 75 | No; automatic |
+| 31742 | Fourth Attack | Bukijutsu: level 75 | Yes |
+| 31743 | Fifth Attack | Bukijutsu: level 90 | Yes |
 
-READ teaches the corresponding automatic melee passive. The numbered
-attacks no longer unlock at level-up or login. Existing players who
-already learned them keep their proficiency. Teacher PRAC remains useful;
-additional attacks use the normal cascading hit rolls. No scroll is
-spawned or stocked without builder action.
+Second and Third Attack are now automatically granted on leveling or login
+catch-up. Older scroll objects at 31740/31741 remain registered so live
+builder prototypes, spawn points and carried copies retain their identities;
+they no longer teach, grant or consume an attack on READ. No new items are
+spawned or stocked automatically. Fourth and Fifth Attack still require
+their Bukijutsu-only scrolls and the normal PRAC/combat mastery progression.
 
 ## Builder commands
 
