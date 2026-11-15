@@ -74,8 +74,8 @@ class NumberedShopBuyTests(unittest.TestCase):
         self.active_shopkeeper = NS(name="fish seller", player_shop_owner=None,
                                     template_vnum=97944)
         self.stock[97943]["level"] = 10
-        with patch.object(combat, "mob_shop_items", return_value=[99999, 97942, 97943]), \\
-             patch.object(combat, "mob_shop_buys_categories", return_value=[]), \\
+        with patch.object(combat, "mob_shop_items", return_value=[99999, 97942, 97943]), \
+             patch.object(combat, "mob_shop_buys_categories", return_value=[]), \
              patch.object(combat, "MOB_TEMPLATES", {97944: {}}):
             listing = self.shown()
             self.assertIn("[1] a sardine", listing)
@@ -94,6 +94,7 @@ class NumberedShopBuyTests(unittest.TestCase):
 
     def test_player_shop_indices_skip_unpriced_and_select_exact_copy(self):
         owner = Player("Seller", "Seller", room_vnum=self.room)
+        owner.ryo = 0
         owner.shop_stock = [
             {"item_name": "a sardine", "price": None},
             {"item_name": "a sardine", "price": 11},
@@ -125,9 +126,9 @@ class NumberedShopBuyTests(unittest.TestCase):
             {"item_name": "a sardine", "price": 11},
             {"item_name": "a sardine", "price": 29},
         ]}
-        with patch.object(pawnshops, "is_pawnshop", return_value=True), \\
-             patch.object(pawnshops, "_load", return_value=state), \\
-             patch.object(pawnshops, "_save"), \\
+        with patch.object(pawnshops, "is_pawnshop", return_value=True), \
+             patch.object(pawnshops, "_load", return_value=state), \
+             patch.object(pawnshops, "_save"), \
              patch.object(storage, "save_player"):
             listing = self.shown()
             self.assertIn("[1] a sardine - 11 ryo", listing)
