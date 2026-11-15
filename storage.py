@@ -531,6 +531,8 @@ def save_player(player: Player) -> None:
 # one-time migration applied on load, not a live import of prompt.py
 # (which would create storage -> prompt -> leveling -> storage cycle).
 _LEGACY_PROMPT_MIGRATIONS = {
+    "&w|&R%h&w/&196%H&w|&M%c&w/&m%C&w|&c%s&w/&C%S&w|&x": "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
+    "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&x": "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
     "<HP:%h/%H CH:%c/%C ST:%s/%S XP:%x/%X Ryo:%r>":
         "&RHP:%h/%H &BCH:%c/%C &GST:%s/%S &CXP:%x/%X &YRyo:%r&x",
     "<HP:%h/%H CH:%c/%C ST:%s/%S>":
@@ -611,7 +613,8 @@ def load_player(name: str) -> Optional[Player]:
             for family, ready_at in player.sage_training_ready_at.items()
         }
         player.sage_training_interval_version = 2
-    if player.prompt_string in _LEGACY_PROMPT_MIGRATIONS:
+    prompt_migrated = player.prompt_string in _LEGACY_PROMPT_MIGRATIONS
+    if prompt_migrated:
         player.prompt_string = _LEGACY_PROMPT_MIGRATIONS[player.prompt_string]
     for skill, value in list(player.skill_proficiencies.items()):
         if isinstance(value, str):
@@ -646,7 +649,7 @@ def load_player(name: str) -> Optional[Player]:
     if (chisei_orphaned or renamed_technique or vital_surge_migrated or summon_contracts_migrated or sage_training_migrated
             or experience_migrated or removed_bloodline_migrated
             or elemental_release_migrated or hyuga_migrated or legacy_first_practice
-            or legacy_rank_migrated or obsolete_rank_migrated or legacy_kage_migrated):
+            or legacy_rank_migrated or obsolete_rank_migrated or legacy_kage_migrated or prompt_migrated):
         save_player(player)
     import reaper_seal
     if reaper_seal.reconcile_player(player):

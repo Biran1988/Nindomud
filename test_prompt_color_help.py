@@ -100,7 +100,7 @@ class PromptAndColorHelpTests(unittest.TestCase):
         self.assertIn('%%',body)
 
     def test_biran_preset_uses_exact_format_and_expands_resources(self):
-        expected = "&w|&R%h&w/&196%H&w|&M%c&w/&m%C&w|&c%s&w/&C%S&w|&x"
+        expected = "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x"
         self.assertEqual(prompt.PRESETS['biran'], expected)
         player = Player('PresetReader', 'PresetReader')
         player.health = 40
@@ -109,17 +109,25 @@ class PromptAndColorHelpTests(unittest.TestCase):
         player.maximum_chakra = 100
         player.stamina = 60
         player.maximum_stamina = 120
+        player.ryo = 25000
         output = []
         session = SimpleNamespace(player=player, send=output.append)
         commands.cmd_prompt(session, ['biran'])
         self.assertEqual(player.prompt_string, expected)
         self.assertIn("'biran'", output[-1])
         rendered = prompt.render_prompt(player)
-        self.assertEqual(rendered, '&w|&R40&w/&19690&w|&M50&w/&m100&w|&c60&w/&C120&w|&x')
+        self.assertEqual(rendered, '&W|&r40&W/&R90&W|&m50&W/&M100&W|&c60&W/&C120&W|&y25000&W|&x')
         ansi = colors.render(rendered, True)
-        self.assertIn('\x1b[38;5;196m90', ansi)
-        self.assertIn(colors.ANSI_CODES['&R'] + '40', ansi)
-        self.assertEqual(colors.render(rendered, False), '|40/90|50/100|60/120|')
+        self.assertIn(colors.ANSI_CODES['&r'] + '40', ansi)
+        self.assertIn(colors.ANSI_CODES['&R'] + '90', ansi)
+        self.assertIn(colors.ANSI_CODES['&m'] + '50', ansi)
+        self.assertIn(colors.ANSI_CODES['&M'] + '100', ansi)
+        self.assertIn(colors.ANSI_CODES['&c'] + '60', ansi)
+        self.assertIn(colors.ANSI_CODES['&C'] + '120', ansi)
+        self.assertIn(colors.ANSI_CODES['&y'] + '25000', ansi)
+        self.assertEqual(ansi.count(colors.ANSI_CODES['&W'] + '|'), 5)
+        self.assertEqual(ansi.count(colors.ANSI_CODES['&W'] + '/'), 3)
+        self.assertEqual(colors.render(rendered, False), '|40/90|50/100|60/120|25000|')
 
 if __name__=='__main__':
     unittest.main()

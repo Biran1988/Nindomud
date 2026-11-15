@@ -104,6 +104,20 @@ class ConfigPersistenceTests(unittest.TestCase):
         self.assertFalse(reloaded.auto_loot_ryo)
         self.assertFalse(reloaded.staff_show_vnums)
 
+    def test_biran_prompt_auto_migrates_exact_old_preset_only(self):
+        import prompt
+        old = "&w|&R%h&w/&196%H&w|&M%c&w/&m%C&w|&c%s&w/&C%S&w|&x"
+        self.player.prompt_string = old
+        storage.save_player(self.player)
+        reloaded = storage.load_player(self.player.name)
+        self.assertEqual(reloaded.prompt_string, prompt.PRESETS['biran'])
+        self.assertEqual(storage.load_player(self.player.name).prompt_string,
+                         prompt.PRESETS['biran'])
+        custom = '&W|&r%h&W/&R%H&W|CUSTOM&W|&x'
+        reloaded.prompt_string = custom
+        storage.save_player(reloaded)
+        self.assertEqual(storage.load_player(self.player.name).prompt_string, custom)
+
 
 if __name__ == '__main__':
     unittest.main()
