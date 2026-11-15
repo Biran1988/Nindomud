@@ -1,48 +1,35 @@
-"""
-ROM-style ANSI color codes (Section 30), extended two ways beyond the
-original 8-color set:
+"""SMAUGFUSS/SWR-compatible ampersand colors, plus xterm-256.
 
-1. Lowercase bright codes use explicit bright ANSI foregrounds instead
-   of relying on bold. Uppercase uses normal/darker shades. Every named
-   color switch clears bold intensity so prior brightness cannot bleed
-   into a following normal code.
-2. Full 256-color xterm palette via &N or &[N] (N = 0-255), e.g. &208 for
-   an orange not otherwise reachable with named codes. This is the
-   standard 8-bit ANSI color extension (\\x1b[38;5;Nm) -- far more
-   broadly supported by real terminals/MUD clients than 24-bit true
-   color, which is why it's the one implemented here; true color
-   (&[R,G,B] style) would be a natural next step if ever needed.
-
-Text is authored with these codes (e.g. "&RHP&x", "&208a stick of
-dango&x") and rendered to real ANSI escapes at send-time, or stripped
-entirely if the session has color disabled. Keeping this as a pure
-text transform (not baked into every string at creation time) means
-'color off' is a single render-time switch.
+Lowercase named codes select dark foregrounds; uppercase codes are bright.
+&w is gray, &W bright white; &m dark purple, &M bright magenta.
+&x resets, && prints a literal ampersand. Numeric &N or &[N] selects
+any xterm-256 foreground (0-255). Switching shades clears bold intensity.
 """
 
 import re
 
 ANSI_CODES = {
-    "&R": "\x1b[22;31m",          # Red
-    "&G": "\x1b[22;32m",          # Green
-    "&Y": "\x1b[22;33m",          # Yellow
-    "&B": "\x1b[22;34m",          # Blue
-    "&C": "\x1b[22;36m",          # Cyan
-    "&M": "\x1b[22;35m",          # Magenta
-    "&W": "\x1b[22;37m",          # White
-    "&D": "\x1b[22;90m",          # Dark gray
-    # Explicit bright ANSI foregrounds; gray: &D dark, &d light.
-    # SGR 22 cancels lingering bold intensity before each new shade.
-    "&r": "\x1b[22;91m",          # Bright red
-    "&g": "\x1b[22;92m",          # Bright green
-    "&y": "\x1b[22;93m",          # Bright yellow
-    "&b": "\x1b[22;94m",          # Bright blue
-    "&c": "\x1b[22;96m",          # Bright cyan
-    "&m": "\x1b[22;95m",          # Bright magenta
-    "&w": "\x1b[22;97m",          # Bright white
-    "&d": "\x1b[22;37m",          # Light gray
-    "&O": "\x1b[38;5;208m",  # Orange -- a convenience alias built on the 256-color palette
-    "&x": "\x1b[0m",    # Reset
+    "&r": "\x1b[22;31m",  # Dark red
+    "&R": "\x1b[22;91m",  # Bright red
+    "&g": "\x1b[22;32m",  # Dark green
+    "&G": "\x1b[22;92m",  # Bright green
+    "&y": "\x1b[22;33m",  # Dark yellow
+    "&Y": "\x1b[22;93m",  # Bright yellow
+    "&b": "\x1b[22;34m",  # Dark blue
+    "&B": "\x1b[22;94m",  # Bright blue
+    "&c": "\x1b[22;36m",  # Dark cyan
+    "&C": "\x1b[22;96m",  # Bright cyan
+    "&m": "\x1b[22;35m",  # Dark purple
+    "&M": "\x1b[22;95m",  # Bright magenta
+    "&w": "\x1b[22;37m",  # Gray
+    "&W": "\x1b[22;97m",  # Bright white
+    "&d": "\x1b[22;90m",  # Dark gray
+    "&D": "\x1b[22;37m",  # Light gray
+    "&z": "\x1b[22;30m",  # Black
+    "&Z": "\x1b[22;90m",  # Charcoal
+    "&o": "\x1b[22;38;5;130m",  # Dark orange
+    "&O": "\x1b[22;38;5;208m",  # Bright orange
+    "&x": "\x1b[0m",  # Reset
 }
 
 _CODE_RE = re.compile("|".join(re.escape(c) for c in ANSI_CODES))

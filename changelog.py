@@ -657,4 +657,5 @@ CHANGELOG = [
     ("15.498", "Fixed normal/bright ANSI color shade selection and bright-to-dark switching; updated HELP COLORS and added regression tests."),
     ("15.499", "Added PROMPT BIRAN, a built-in compact colored HP, Chakra, and Stamina display, with HELP PROMPT documentation and tests."),
     ("15.500", "Standardized all player-facing ninja rank labels to Chuunin and Jounin on WHO, SCORE, promotions, exam messages, headbands, automatic rank help and prompts. Legacy saved rank IDs and old headband inventory names remain compatible."),
+    ("15.501", "Standardized all named ampersand colors to SWR/SMAUGFUSS lowercase-dark and uppercase-bright shades, including gray/white and purple/magenta. Preserved 256-color support and reset behavior."),
 ]
