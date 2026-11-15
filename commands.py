@@ -6614,7 +6614,7 @@ def _buy_multiple(session, args: List[str]) -> None:
 
 
 def _npc_shop_accepts(shopkeeper, item_name: str, category: str) -> bool:
-    """Check explicit builder buying settings before specialty material rules."""
+    """Specialty flags control accepted items; plain Shopkeeper may use custom categories."""
     import data_shops
     template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
     explicitly_allowed = template.get("shop_buys_categories", [])
@@ -6624,14 +6624,14 @@ def _npc_shop_accepts(shopkeeper, item_name: str, category: str) -> bool:
     import shop_flags
     if explicitly_allowed and shop_flags.explicit_specialty(template) is None:
         return True
-    return data_shops.can_buy_item(shop_flags.shop_type(template), item_name, category)
+    return data_shops.can_buy_item(shop_flags.specialty_from_flags(template), item_name, category)
 
 
 def _npc_shop_sale_multiplier(shopkeeper) -> float:
     import data_shops
     template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
     import shop_flags
-    kind = shop_flags.shop_type(template)
+    kind = shop_flags.specialty_from_flags(template)
     if (template.get("shop_buys_categories")
             and shop_flags.explicit_specialty(template) is None):
         return 1.0
