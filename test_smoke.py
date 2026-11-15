@@ -1402,7 +1402,7 @@ def test_kage_promotions_enabled():
     text_genin = "".join(out)
     out.clear()
     assert s.player.village_rank == "genin"
-    assert "chunin exam" in text_genin.lower()
+    assert "chuunin exam" in text_genin.lower()
     assert "level 10" not in text_genin.lower()
 
     # Skip straight to Chunin (bypassing the exam itself, which has
@@ -1419,8 +1419,8 @@ def test_kage_promotions_enabled():
 
     # Every remaining promotion in the ladder, each with its own headband upgrade.
     ladder = [
-        (65, 50, "special jonin", "A Konoha Special Jonin Headband"),
-        (200, 100, "jonin", "A Konoha Jonin Headband"),
+        (65, 50, "special jonin", "A Konoha Special Jounin Headband"),
+        (200, 100, "jonin", "A Konoha Jounin Headband"),
     ]
 
     # Unqualified for the first ladder step: refused, exact requirements shown, rank unchanged.
@@ -1437,7 +1437,7 @@ def test_kage_promotions_enabled():
         s.handle_line("ask kage about promotion")
         text = "".join(out)
         out.clear()
-        assert f"promote you to {expected_rank}" in text.lower(), (level, missions, s.player.village_rank, text)
+        assert f"promote you to {kage.rank_label(expected_rank).lower()}" in text.lower(), (level, missions, s.player.village_rank, text)
         assert s.player.village_rank == expected_rank
         assert s.player.equipment.get("head") == expected_headband
 
