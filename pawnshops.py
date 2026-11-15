@@ -23,7 +23,7 @@ def is_pawnshop(mob) -> bool:
     template = combat.MOB_TEMPLATES.get(getattr(mob, "template_vnum", None), {})
     import shop_flags
     return bool(shop_flags.is_shopkeeper_template(template)
-                and shop_flags.shop_type(template) == "pawnshop"
+                and shop_flags.specialty_from_flags(template) == "pawnshop"
                 and not getattr(mob, "player_shop_owner", None))
 
 
