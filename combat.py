@@ -3788,9 +3788,10 @@ def handle_mob_defeat(session, mob: Mob) -> None:
     for member_session in qualifying:
         member_player = member_session.player
         member_base_xp = _experience_reward(member_player, mob)
-        share = member_base_xp // len(qualifying) if qualifying else 0
+        # Never round a valid kill down to 0 XP for an eligible member.
+        share = max(1, member_base_xp // len(qualifying)) if qualifying else 0
         member_multiplier = village_perks.xp_multiplier(member_player.village)
-        member_xp = int(share * member_multiplier)
+        member_xp = max(1, int(share * member_multiplier)) if share else 0
         if member_player.holiday_xp_boost_until > time.time():
             member_xp = int(member_xp * 1.10)
         team_bonus_applied = member_player.team_name and any(
