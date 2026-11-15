@@ -267,13 +267,14 @@ def populate(entries, commands):
         COVERED.add(key)
 
     for shop, info in data_shops.SHOP_TYPES.items():
-        key = f"shop type {shop}"
+        key = f"shop specialty {shop}"
         if key in by_key:
             continue
         allowed = info.get("allowed_sell_categories")
         accepts = ("all inventory categories" if allowed is None
                    else ", ".join(sorted(allowed)))
         entry = _entry(key, info.get("display_name", shop.title()),
+                       f"Use MSET <mob vnum> FLAGS Shop{shop.capitalize()} to select this specialty. "
                        f"This shop buys {accepts}. "
                        f"Resale multiplier {info.get('sell_multiplier', 1.0):g} "
                        "against the standard item selling value. "
