@@ -1553,10 +1553,9 @@ def test_builder_made_shopkeeper():
     print("BUILDER-MADE SHOPKEEPER TEST PASSED")
 
 
-def test_shopkeeper_multiple_categories():
-    """A shopkeeper can hold more than one shop_buys_categories entry at
-    once (e.g. both 'weapon' and 'armor'), acting as a combined
-    weapon/blacksmith keeper -- not restricted to exactly one category."""
+def test_shopkeeper_flag_driven_general_store():
+    """The general-shop mob flag, rather than retired category settings,
+    permits selling both weapons and armor to the same shopkeeper."""
     import combat
 
     out = []
@@ -1573,17 +1572,20 @@ def test_shopkeeper_multiple_categories():
         feed_local(cmd)
 
     s.account.staff_level = "implementor"
-    feed_local("mset 6002 shop_buys_categories armor")
-    assert combat.MOB_TEMPLATES[6002]["shop_buys_categories"] == ["weapon", "armor"]
+    feed_local("mset 6002 flags ShopGeneral")
+    import shop_flags
+    template = combat.MOB_TEMPLATES[6002]
+    assert shop_flags.specialty_from_flags(template) == "general"
+    assert shop_flags.has_shop_flag(template)
 
     s.account.staff_level = "player"
-    feed_local("northeast")  # Konoha Weapons Shop, now buys weapon AND armor
+    feed_local("northeast")  # Konoha shop now accepts both weapon and armor
     feed_local("remove shirt")
     before = s.player.ryo
     feed_local("sell shirt")
     assert s.player.ryo > before, "combined shopkeeper should now accept armor too"
 
-    print("SHOPKEEPER MULTIPLE CATEGORIES TEST PASSED")
+    print("FLAG-DRIVEN GENERAL STORE TEST PASSED")
 
 
 def test_gambler_chouhan():
@@ -18344,7 +18346,7 @@ if __name__ == "__main__":
     test_kage_promotions_enabled()
     test_bukijutsu_class()
     test_builder_made_shopkeeper()
-    test_shopkeeper_multiple_categories()
+    test_shopkeeper_flag_driven_general_store()
     test_gambler_chouhan()
     test_help_and_commands_overhaul()
     test_partial_jutsu_names()
