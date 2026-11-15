@@ -136,12 +136,18 @@ class Room:
     hidden_mist_toggled: bool = False
     hidden_mist_next_upkeep_at: float = 0.0
 
+    def __post_init__(self):
+        import room_flags
+        room_flags.synchronize(self, legacy=True)
+
 
 class World:
     def __init__(self):
         self.rooms: Dict[int, Room] = {}
 
     def add_room(self, room: Room):
+        import room_flags
+        room_flags.synchronize(room, legacy=True)
         self.rooms[room.vnum] = room
 
     def link(self, a_vnum: int, direction: str, b_vnum: int, bidirectional=True):

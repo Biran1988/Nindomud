@@ -935,7 +935,7 @@ def cmd_rstat(session, args: List[str]) -> None:
         _rule(),
         f"&WVnum:&x {vnum}   &WSector:&x {room.sector}",
         f"&WExits:&x " + (", ".join(f"{d}->{v}" for d, v in room.exits.items()) or "None"),
-        f"&WFlags:&x {_fmt_list(room.flags + (['apartment'] if room.apartment and 'apartment' not in room.flags else []))}",
+        f"&WFlags:&x {_fmt_list(room.flags)}",
         f"&WEnabled:&x {'&Gyes&x' if room.enabled else '&Rno&x'}",
     ]
     if room.apartment:
@@ -967,7 +967,10 @@ VALID_ROOM_FLAGS = {
     "no_wander",            # prevent ambient Wander mobs and roaming tailed beasts entering via exits
     "furnace",              # cmd_smelt: built-in smelter, no carried log needed
     "safe",                 # PvP safety; synchronized with legacy room.safe for compatibility
-    "apartment",            # room.apartment -- marks a purchasable apartment shell
+    "apartment",            # purchasable apartment
+    "player_shop",          # purchasable player-owned shop room
+    "biome_ocean", "biome_river", "biome_lake", "biome_forest",
+    "biome_mountain", "biome_desert", "biome_swamp", "biome_plains",
 }
 VALID_ITEM_EXTRA_FLAGS = {
     "invis",  # commands.py -- hidden from room look and directional scan
@@ -1462,13 +1465,12 @@ def cmd_rset(session, args: List[str]) -> None:
         return
     if not args:
         session.send(
-            "Usage: rset create|goto|name|desc|sector|exit|bexit|bunlink|flags|apartment|biome|resetmsg|exitflag|show ...\n"
+            "Usage: rset create|goto|name|desc|sector|exit|bexit|bunlink|flags|resetmsg|exitflag|show ...\n"
             "rset always acts on the room you're standing in. 'create'/'goto' teleport you to the target room first, so every other subcommand naturally follows.\n"
             "'rset name' or 'rset desc' with no text opens an interactive editor.\n"
-            "'rset flags apartment' toggles a purchasable apartment shell, or use "
-            "'rset apartment on|off' to set it explicitly.\n"
-
-            f"'rset biome <type>' tags this room for elemental jutsu affinity. Valid: {', '.join(biomes.BIOME_TYPES)}.\n"
+            "'rset flags apartment' toggles housing; 'rset flags playershop' toggles shops.\n"
+            "'rset flags forest' chooses forest; 'rset flags biome_none' clears biome.\n"
+            "'rset flags' lists all flags and biome choices.\n"
             "'rset resetmsg <text|off>' sets this room's own atmospheric flavor line, shown periodically -- overrides its area's own reset message (see 'area set <name> resetmsg') if that area has one too.\n"
             "'rset flags safe' toggles PvP safety in this room (blocks attacking other players here).\n"
             f"'rset exitflag <direction> <flag> [value]' -- flags: {', '.join(EXIT_FLAG_NAMES)}. "
@@ -1764,17 +1766,6 @@ def cmd_rset(session, args: List[str]) -> None:
         session.send(f"Exit {direction}: {flag} requirement set to '{value}'.")
         return
 
-    if sub == "biome":
-        if not rest or rest[0].lower() not in biomes.BIOME_TYPES:
-            session.send(
-                f"Usage: rset biome <type>\nValid: {', '.join(biomes.BIOME_TYPES)}"
-            )
-            return
-        room.biome = rest[0].lower()
-        _log(session.player.name, "room", room.vnum, f"biome set to {room.biome}")
-        session.send(f"Room {room.vnum}'s biome is now {room.biome}.")
-        return
-
     if sub == "resetmsg":
         if not rest:
             session.send("Usage: rset resetmsg <text|off>")
@@ -1790,63 +1781,36 @@ def cmd_rset(session, args: List[str]) -> None:
         session.send(f"Room {room.vnum}'s reset message override set: {message_text}")
         return
 
-    if sub == "apartment":
-        if not rest or rest[0].lower() not in ("on", "off"):
-            session.send("Usage: rset apartment on|off  (or 'redit flags apartment' to toggle)")
-            return
-        enable = rest[0].lower() == "on"
-        if not enable and room.owner:
-            session.send("This apartment is owned. Its owner must sell it before you remove the apartment flag.")
-            return
-        room.apartment = enable
-        room.flags = [flag for flag in room.flags if flag != "apartment"]
-        if enable:
-            room.flags.append("apartment")
-        _log(session.player.name, "room", room.vnum, f"apartment set to {room.apartment}")
-        session.send(f"Room {room.vnum} apartment flag is now {'on' if room.apartment else 'off'}.")
-        return
-
     if sub == "flags":
+        import room_flags
         if not rest:
-            session.send(f"Usage: rset flags <flagname>  (toggles the flag on this room)\nValid: {', '.join(sorted(f.replace('_', '') for f in VALID_ROOM_FLAGS))}")
+            session.send(
+                _field_list("General room flags", VALID_ROOM_FLAGS - set(room_flags.BIOMES))
+                + "\n" + _field_list("Biome flags (choose exactly one)", set(room_flags.BIOMES))
+                + "\n&WCurrent:&x " + (", ".join(room.flags) or "(none)")
+                + "\nUsage: rset flags <flag> | rset flags biome_none"
+                + "\nBiome short names work: forest, mountain, ocean, etc."
+            )
             return
-        typed = rest[0]
-        canonical = _canonical_flag(typed, VALID_ROOM_FLAGS)
-        if canonical is None:
-            session.send(f"'{typed}' isn't a recognized room flag. Valid: {', '.join(sorted(f.replace('_', '') for f in VALID_ROOM_FLAGS))}")
+        name = room_flags.canonical(" ".join(rest))
+        if name not in VALID_ROOM_FLAGS and name != "biome_none":
+            session.send("Unknown room flag. Type RSET FLAGS for valid options.")
             return
-        if canonical == "safe":
-            # Existing rooms may already have safe=True without the flag
-            # because older builds stored PvP safety as a standalone bool.
-            room.safe = not room.safe
-            if room.safe:
-                if "safe" not in room.flags:
-                    room.flags.append("safe")
-                action = "added to"
-            else:
-                room.flags = [flag for flag in room.flags if flag != "safe"]
-                action = "removed from"
-        elif canonical == "apartment":
-            # Older rooms may have apartment=True without the text flag.
-            # Toggle the REAL housing property and keep the saved flag in sync.
-            if room.apartment and room.owner:
-                session.send("This apartment is owned. Its owner must sell it before you remove the apartment flag.")
+        if name in {"apartment", "player_shop"}:
+            if name in room.flags and room.owner:
+                session.send("This room is owned. Its owner must sell it before you remove the flag.")
                 return
-            room.apartment = not room.apartment
-            room.flags = [flag for flag in room.flags if flag != "apartment"]
-            if room.apartment:
-                room.flags.append("apartment")
-                action = "added to"
-            else:
-                action = "removed from"
-        elif canonical in room.flags:
-            room.flags.remove(canonical)
-            action = "removed from"
-        else:
-            room.flags.append(canonical)
-            action = "added to"
-        _log(session.player.name, "room", room.vnum, f"flag '{canonical}' {action} room")
-        session.send(f"Flag '{canonical}' {action} room {room.vnum}.")
+            if name == "apartment" and room.player_shop and name not in room.flags:
+                session.send("Remove the player_shop flag before setting apartment.")
+                return
+            if name == "player_shop" and room.apartment and name not in room.flags:
+                session.send("Remove the apartment flag before setting player_shop.")
+                return
+        canonical, enabled = room_flags.toggle(room, name)
+        _log(session.player.name, "room", room.vnum,
+             f"flag '{canonical}' {'enabled' if enabled else 'disabled'}")
+        session.send(f"Room {room.vnum}: {canonical} {'enabled' if enabled else 'disabled'}."
+                     f" Biome: {room.biome}.")
         return
 
     if sub == "show":
@@ -2420,6 +2384,10 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
     if field in MOB_LIST_FIELDS:
         current = t.get(field, [])
         current_text = ", ".join(current) if current else "(empty)"
+        if field == "act_flags":
+            return (_field_list("Valid mob flags", VALID_MOB_ACT_FLAGS)
+                    + f"\n&WCurrent:&x {current_text}"
+                    + f"\nUsage: mset <vnum> flags <flag> (prefix - to remove)")
         return (
             f"'{display}' is a list -- add one value at a time. Current: {current_text}\n"
             f"Usage: mset <vnum> {display} <value>   (or -<value> to remove one)"
@@ -3484,7 +3452,9 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
                 "Other armor: head/body/legs/feet/hands/waist/back/chakra aura.\\n"
                 f"Usage: oset <vnum> {display} <slot> (or finger2/ear2/wrist2).")
     if field == "extra_flags":
-        return f"'{display}' accepts: {', '.join(sorted(f.replace('_', '') for f in VALID_ITEM_EXTRA_FLAGS))}. Current: {', '.join(o.get('extra_flags', [])) or '(empty)'}\nUsage: oset <vnum> {display} <flag>   (or -<flag> to remove)"
+        return (_field_list("Valid item flags", VALID_ITEM_EXTRA_FLAGS)
+                + f"\n&WCurrent:&x {', '.join(o.get('extra_flags', [])) or '(empty)'}"
+                + f"\nUsage: oset <vnum> flags <flag> (prefix - to remove)")
     if field == "set_vnums":
         current = o.get("set_vnums", [])
         return f"'{display}' lists the OTHER object vnums that must also be worn to complete this item's armor set. Current: {', '.join(str(v) for v in current) if current else '(empty)'}\nUsage: oset <vnum> {display} <other vnum>   (or -<vnum> to remove)"

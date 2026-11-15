@@ -70,6 +70,10 @@ def snapshot_world() -> dict:
     import seasonal_events
     import halloween_event
 
+    import room_flags
+    for room in world.WORLD.rooms.values():
+        room_flags.synchronize(room, legacy=True)
+
     return {
         "rooms": {
             str(vnum): {key: value for key, value in dataclasses.asdict(room).items()
