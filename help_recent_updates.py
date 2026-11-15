@@ -384,18 +384,17 @@ for _school, _spec in _individual_sword_styles.STYLES.items():
     )
     PAGES.append(page(_school.casefold(), _school + " - Bukijutsu Sword Style", _body))
 
-PAGES.append(page(
-    "fourth attack", "Fourth Attack - Bukijutsu Numbered Attack",
-    "Syntax: PRAC FOURTH ATTACK | PRACTICE FOURTH ATTACK\n\n"
-    "Bukijutsu learns Fourth Attack automatically at level 75. "
-    "It starts at 0% proficiency and needs one teacher lesson before "
-    "passive combat use can improve it. Any class teacher can teach this "
-    "initial melee drill. PRAC FOURTH ATTACK spends one practice point "
-    "and raises proficiency according to Intelligence, up to the regular "
-    "practice cap. Beyond that, successful attacks improve its chance to "
-    "activate in combat. It remains Bukijutsu-only. "
-    "HELP PRAC explains the teacher and progression rules.",
-    "fourth extra attack", "fourth swing"))
+PAGES.append(page("second attack", "Second Attack - Scroll-Learned Passive Attack",
+    "Syntax: READ A SCROLL OF SECOND ATTACK | PRAC SECOND ATTACK\n\nLevel required: 25 for Bukijutsu, 100 for Ninjutsu/Taijutsu/Genjutsu.\nHow learned: SCROLL ONLY. The item is registered at object VNUM 31740 in the 31501-32000 Scroll Jutsu area. It is not gained on level-up or login. Existing players who already learned it retain their mastery.\nEffect: One proficiency-based additional melee strike per round. It activates automatically during normal combat once learned; no separate cast command or Chakra charge is needed.\nEach numbered attack rolls its own skill proficiency for activation. A failed roll stops the remaining attack chain for that combat round. New readers start at 0% proficiency and must practice with a teacher to begin reliable extra attacks. Subsequent successful combat use improves mastery.\nThe scroll is consumed only on successful learning. The level and class requirements cannot be bypassed by using the scroll."))
+
+PAGES.append(page("third attack", "Third Attack - Scroll-Learned Passive Attack",
+    "Syntax: READ A SCROLL OF THIRD ATTACK | PRAC THIRD ATTACK\n\nLevel required: 50 for Bukijutsu only.\nHow learned: SCROLL ONLY. The item is registered at object VNUM 31741 in the 31501-32000 Scroll Jutsu area. It is not gained on level-up or login. Existing players who already learned it retain their mastery.\nEffect: A third melee strike, checked only after Second Attack succeeds. It activates automatically during normal combat once learned; no separate cast command or Chakra charge is needed.\nEach numbered attack rolls its own skill proficiency for activation. A failed roll stops the remaining attack chain for that combat round. New readers start at 0% proficiency and must practice with a teacher to begin reliable extra attacks. Subsequent successful combat use improves mastery.\nThe scroll is consumed only on successful learning. The level and class requirements cannot be bypassed by using the scroll."))
+
+PAGES.append(page("fourth attack", "Fourth Attack - Scroll-Learned Passive Attack",
+    "Syntax: READ A SCROLL OF FOURTH ATTACK | PRAC FOURTH ATTACK\n\nLevel required: 75 for Bukijutsu only.\nHow learned: SCROLL ONLY. The item is registered at object VNUM 31742 in the 31501-32000 Scroll Jutsu area. It is not gained on level-up or login. Existing players who already learned it retain their mastery.\nEffect: A fourth melee strike, checked only after Second and Third Attack succeed. It activates automatically during normal combat once learned; no separate cast command or Chakra charge is needed.\nEach numbered attack rolls its own skill proficiency for activation. A failed roll stops the remaining attack chain for that combat round. New readers start at 0% proficiency and must practice with a teacher to begin reliable extra attacks. Subsequent successful combat use improves mastery.\nThe scroll is consumed only on successful learning. The level and class requirements cannot be bypassed by using the scroll.", "fourth extra attack", "fourth swing"))
+
+PAGES.append(page("fifth attack", "Fifth Attack - Scroll-Learned Passive Attack",
+    "Syntax: READ A SCROLL OF FIFTH ATTACK | PRAC FIFTH ATTACK\n\nLevel required: 90 for Bukijutsu only.\nHow learned: SCROLL ONLY. The item is registered at object VNUM 31743 in the 31501-32000 Scroll Jutsu area. It is not gained on level-up or login. Existing players who already learned it retain their mastery.\nEffect: A fifth melee strike, checked only after Second, Third and Fourth Attack succeed. It activates automatically during normal combat once learned; no separate cast command or Chakra charge is needed.\nEach numbered attack rolls its own skill proficiency for activation. A failed roll stops the remaining attack chain for that combat round. New readers start at 0% proficiency and must practice with a teacher to begin reliable extra attacks. Subsequent successful combat use improves mastery.\nThe scroll is consumed only on successful learning. The level and class requirements cannot be bypassed by using the scroll."))
 
 PAGES.append(page(
     "mob multi attacks", "NPC Level-Based Multi Attacks",
@@ -412,16 +411,16 @@ PAGES.append(page(
 # Consolidated passive reference. Keep aligned with helpfiles/passive_skills.json.
 PAGES.append(page(
     "passive skills", "Passive Skills - Levels, Effects, Auto vs Scroll",
-    "Syntax: HELP PASSIVE SKILLS | HELP SECOND ATTACK | HELP EXTRA ATTACKS\n"
+    "Syntax: HELP PASSIVE SKILLS | HELP EXTRA ATTACKS | HELP SECOND ATTACK\n"
     "\n"
     "AUTO means the skill is granted at the listed level (including login catch-up). No teaching scroll is required. SCROLL means READ the specified scroll; leveling alone does not grant it. Passive effects trigger when their conditions are met; an automatic unlock is NOT automatic 100% mastery.\n"
     "\n"
-    "NUMBERED MELEE ATTACKS - all AUTO, no scroll:\n"
+    "NUMBERED MELEE ATTACKS - all SCROLL ONLY (31740-31743):\n"
     "  Second Attack  | Bukijutsu 25; Ninjutsu/Taijutsu/Genjutsu 100. Rolls an extra normal melee strike each combat round.\n"
     "  Third Attack   | Bukijutsu 50. Rolls a third strike only if Second Attack succeeded that round.\n"
     "  Fourth Attack  | Bukijutsu 75. Rolls a fourth strike only if Third Attack succeeded.\n"
     "  Fifth Attack   | Bukijutsu 90. Rolls a fifth strike only if Fourth Attack succeeded.\n"
-    "Each attack uses its own proficiency as its proc chance (0% = no bonus attack); the chain ends on the first failed roll. Unlocking is automatic, but use PRAC <attack name> with a teacher to train it, then improve it through melee fighting. Other classes cannot learn Third/Fourth/Fifth Attack.\n"
+    "Each attack uses its own proficiency as its proc chance (0% = no bonus attack); the chain ends on the first failed roll. READ the appropriate scroll once you reach the listed level, then use PRAC <attack name> with a teacher and train further through combat. Previous owners keep their skills and mastery. Other classes cannot learn Third/Fourth/Fifth Attack.\n"
     "\n"
     "OTHER COMBAT PASSIVES:\n"
     "  Strong Fist Style | All classes, level 1, AUTO. Starting passive; melee damage bonus scales to +10% at 100% mastery.\n"
@@ -447,5 +446,5 @@ PAGES.append(page(
     "  Iron Resolve | Earn the Scroll of Iron Resolve by defeating the Iron Kage at the end of the level-250 Iron Ascension tower, then READ it. Once per fight, an attack taking you to 20% Health or less activates 25% incoming mob damage reduction for 20 seconds. Leveling alone does not teach it.\n"
     "\n"
     "See HELP PRAC, HELP SAMURAI SABRE, HELP TRACK, and individual skill help pages for more details.\n"
-    "Date: 2026-11-14\n",
-    "passives", "passive", "combat passives", "extra attacks", "multi attacks", "multiple attacks", "second attack", "third attack", "fourth attack", "fifth attack", "passive skill list"))
+    "Date: 2026-11-14",
+    "passives", "passive", "combat passives", "extra attacks", "multi attacks", "multiple attacks", "passive skill list"))
