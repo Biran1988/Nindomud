@@ -121,6 +121,25 @@ class JutsuBalanceTests(unittest.TestCase):
         self.assertLessEqual(jutsu_balance.boosted_duration(
             p, jutsu, 12, effect="paralyzed", is_pvp=True), 6)
 
+    def test_level_damage_compensation_is_small_and_keeps_cost_unchanged(self):
+        art = data_jutsu.JUTSU["rasengan"]
+        p = Player("Ninja", "Ninja", level=1, maximum_chakra=500)
+        # Baseline uses the technique's existing individual power profile.
+        at_one = jutsu_balance.boosted_damage(p, art, 100)
+        self.assertEqual(at_one, round(100 * jutsu_balance.ATTACK_POWER["rasengan"]))
+        self.assertEqual(jutsu_balance.boosted_damage(p, art, 0), 0)
+        p.level = 100
+        at_hundred = jutsu_balance.boosted_damage(p, art, 100)
+        self.assertGreater(at_hundred, at_one)
+        p.level = 250
+        at_max = jutsu_balance.boosted_damage(p, art, 100)
+        # Compare against the old high-level formula without the added 8%.
+        gained = max(0, p.level - art["level_requirement"])
+        old_formula = round(100 * jutsu_balance.ATTACK_POWER["rasengan"]
+                            * (1 + min(.35, gained / 500.0)))
+        self.assertAlmostEqual(at_max / old_formula, 1.08, delta=.01)
+        self.assertEqual(jutsu_balance.LEVEL_DAMAGE_BONUS_AT_250, .08)
+
 
 class ForgingAndExamineTests(unittest.TestCase):
     def test_equipment_ingots_only_and_clean_enchantment_display(self):
