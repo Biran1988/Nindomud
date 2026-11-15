@@ -2716,7 +2716,7 @@ def test_program_system():
 
 
 def test_npc_death_message():
-    """Defeating an NPC shows a dedicated 'X is DEAD!' message in bright
+    """Defeating an NPC shows a dedicated 'X is DEAD!' message in dark
     red, separate from the existing 'You have defeated X!' message."""
     import combat
 
@@ -2742,7 +2742,7 @@ def test_npc_death_message():
     out.clear()
 
     import colors
-    assert colors.ANSI_CODES["&R"] in raw, "expected bright red for the death message"
+    assert colors.ANSI_CODES["&r"] in raw, "expected dark red for the death message"
     assert "A rival ninja is DEAD!" in raw
     assert "You have defeated a rival ninja!" in raw  # the original message is still there too
 
