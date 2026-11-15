@@ -5,5 +5,5 @@
     "pawn broker"
   ],
   "title": "NPC Pawnshops",
-  "body": "Builder: MSET <mob vnum> FLAGS ShopPawnshop. No other toggles or specialty fields are needed.\nSELL <item> or SELL ALL <item> pawns transferable valued items at normal general-store prices; the pawnshop holds each item. LIST shows real stock. BUY <item> or BUY ALL <item> purchases that same item at 150% of the original payout; anyone can buy it back. Stock survives restarts. Worthless items, mission cargo, soulbound rewards and filled backpacks are refused. The four materials specialists use ShopMining, ShopFarming, ShopLumberjack, or ShopGemcutter flags."
+  "body": "Builder: MSET <mob vnum> FLAGS ShopPawnshop. No other toggles or specialty fields are needed.\nSELL <item> or SELL ALL <item> pawns transferable valued items at normal general-store prices; the pawnshop holds each item. LIST shows real stock. BUY <item> or BUY ALL <item> purchases that same item at 150% of the original payout; anyone can buy it back. Stock survives restarts. Worthless items, mission cargo, soulbound rewards and filled backpacks are refused. The four materials specialists use ShopMining, ShopFarming, ShopLumberjack, or ShopGemcutter flags.\n\nUse LIST to see numbered stock and BUY <number> to purchase one item from that exact line. BUY <quantity> <item> still purchases multiple items by name."
 }
