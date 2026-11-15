@@ -377,6 +377,8 @@ def sync_universal_skills(player: Player) -> List[str]:
     freshly-created character already has everything, so this is a
     harmless no-op for them."""
     lines = []
+    changed = "Sharingan Genjutsu" in player.skill_proficiencies or any(
+        skill.lower() == "sharingan genjutsu" for skill in player.learned_skills)
     player.learned_skills = [skill for skill in player.learned_skills
                              if skill.lower() != "sharingan genjutsu"]
     player.skill_proficiencies.pop("Sharingan Genjutsu", None)
@@ -386,6 +388,8 @@ def sync_universal_skills(player: Player) -> List[str]:
     if player.primary_class != "bukijutsu":
         buki_attacks = {name for name, _level, requirement in data_jutsu.MULTI_ATTACK_SKILLS
                         if requirement == "bukijutsu"}
+        if any(name in buki_attacks for name in player.learned_skills):
+            changed = True
         player.learned_skills = [name for name in player.learned_skills
                                  if name not in buki_attacks]
 
@@ -400,15 +404,18 @@ def sync_universal_skills(player: Player) -> List[str]:
                 player.learned_skills[idx] = new_name
             lines.append(f"&Y(Your existing {old_name} skill is now named {new_name}.)&x")
         if old_name in player.skill_proficiencies:
+            changed = True
             previous = player.skill_proficiencies.pop(old_name)
             player.skill_proficiencies[new_name] = max(
                 previous, player.skill_proficiencies.get(new_name, 0))
         for attribute in ("practiced_skills", "practice_exempt_skills"):
             skills = getattr(player, attribute, None)
             if skills is not None and old_name in skills:
+                changed = True
                 skills[:] = list(dict.fromkeys(
                     new_name if skill == old_name else skill for skill in skills))
         if getattr(player, "signature_move", None) == old_name:
+            changed = True
             player.signature_move = new_name
 
     for skill in data_jutsu.UNIVERSAL_STARTING_SKILLS:
@@ -515,7 +522,7 @@ def sync_universal_skills(player: Player) -> List[str]:
     lines.extend(six_paths.sync_skills(player))
     import tailed_beasts
     bomb_changed = tailed_beasts.sync_tailed_beast_bomb(player)
-    if lines or ice_changed or bomb_changed:
+    if lines or ice_changed or bomb_changed or changed:
         storage.save_player(player)
 
     return lines
