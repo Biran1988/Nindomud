@@ -1,0 +1,12 @@
+{
+  "primary_keyword": "fifth attack",
+  "keywords": [
+    "fifth attack",
+    "fifth extra attack"
+  ],
+  "title": "Fifth Attack - Scroll-Learned Passive Attack",
+  "body": "Syntax: READ A SCROLL OF FIFTH ATTACK | PRAC FIFTH ATTACK\n\nLevel required: 90 for Bukijutsu only.\nHow learned: SCROLL ONLY (object VNUM 31743, Scroll Jutsu area 31501-32000). Not granted on level-up or login. Characters who learned it in previous releases keep their mastery.\nEffect: A fifth melee swing, attempted only after Second, Third and Fourth Attack succeed. It activates during normal melee combat without a command or Chakra charge. This attack uses its own proficiency as its activation chance; a failed attack roll stops all later numbered attacks that round.\nAfter learning, use PRAC FIFTH ATTACK with a teacher, then improve proficiency through successful combat use. New readers start at 0% mastery. A successful READ consumes the scroll; failed, underlevel, class-ineligible or already-known reads do not consume it.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
