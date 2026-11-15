@@ -81,13 +81,13 @@ class ImmortalMobProtectionTests(unittest.TestCase):
 
 
 class NumberedAttackRulesTests(unittest.TestCase):
-    def test_non_bukijutsu_unlock_is_level_100(self):
-        for cls in ("ninjutsu", "taijutsu", "genjutsu"):
+    def test_every_class_uses_level_25_and_75_for_second_third(self):
+        for cls in ("ninjutsu", "taijutsu", "genjutsu", "bukijutsu"):
             player = Player("Tester", "Tester", primary_class=cls)
             self.assertEqual(data_jutsu.multi_attack_required_level(
-                player, "Second Attack", 25), 100)
-        buki = Player("Smith", "Smith", primary_class="bukijutsu")
-        self.assertEqual(data_jutsu.multi_attack_required_level(buki, "Second Attack", 25), 25)
+                player, "Second Attack", 25), 25)
+            self.assertEqual(data_jutsu.multi_attack_required_level(
+                player, "Third Attack", 75), 75)
 
     def test_maximum_mastery_reliably_produces_numbered_attacks(self):
         player = Player("Blade", "Blade", primary_class="bukijutsu", level=100)
@@ -100,16 +100,22 @@ class NumberedAttackRulesTests(unittest.TestCase):
         with patch.object(combat.random, "randint", return_value=100):
             self.assertEqual(combat._roll_extra_attacks(player), 4)  # five total
 
-    def test_legacy_early_unlock_cannot_bypass_level_requirement(self):
-        player = Player("OldPlayer", "OldPlayer", primary_class="genjutsu", level=99)
+    def test_early_learned_attacks_require_the_new_level_gates(self):
+        player = Player("OldPlayer", "OldPlayer", primary_class="genjutsu", level=24)
         player.learned_skills = ["Second Attack", "Third Attack"]
         player.skill_proficiencies = {"Second Attack": 100, "Third Attack": 100}
         self.assertEqual(combat._roll_extra_attacks(player), 0)
-        player.level = 100
-        self.assertEqual(combat._roll_extra_attacks(player), 1)  # Third belongs to Bukijutsu only
+        player.level = 25
+        self.assertEqual(combat._roll_extra_attacks(player), 1)
+        player.level = 74
+        self.assertEqual(combat._roll_extra_attacks(player), 1)
+        player.level = 75
+        self.assertEqual(combat._roll_extra_attacks(player), 2)
 
-    def test_third_fourth_fifth_attacks_are_bukijutsu_only(self):
-        for name, level, requirement in data_jutsu.MULTI_ATTACK_SKILLS[1:]:
+    def test_only_fourth_and_fifth_attacks_are_bukijutsu_only(self):
+        self.assertIn(("Third Attack", 75), commands._skill_catalog_for_category("General Skills"))
+        self.assertEqual(commands._category_for_skill("Third Attack"), "General Skills")
+        for name, level, requirement in data_jutsu.MULTI_ATTACK_SKILLS[2:]:
             self.assertEqual(requirement, "bukijutsu", name)
             self.assertIn((name, level), commands._skill_catalog_for_category("Bukijutsu"))
             self.assertNotIn(name, dict(commands._skill_catalog_for_category("General Skills")))
@@ -119,15 +125,17 @@ class NumberedAttackRulesTests(unittest.TestCase):
             player = Player("Tester", "Tester", level=250, primary_class=cls)
             player.learned_skills = [name for name, _, _ in data_jutsu.MULTI_ATTACK_SKILLS]
             player.skill_proficiencies = {name: 100 for name in player.learned_skills}
-            self.assertEqual(combat._roll_extra_attacks(player), 1)
+            self.assertEqual(combat._roll_extra_attacks(player), 2)
             import leveling
             leveling.sync_universal_skills(player)
             self.assertEqual(player.learned_skills.count("Second Attack"), 1)
-            self.assertFalse(set(player.learned_skills) & {"Third Attack", "Fourth Attack", "Fifth Attack"})
+            self.assertEqual(player.learned_skills.count("Third Attack"), 1)
+            self.assertFalse(set(player.learned_skills) & {"Fourth Attack", "Fifth Attack"})
             self.assertEqual(player.skill_proficiencies["Third Attack"], 100)
 
     def test_bukijutsu_attack_requires_bukijutsu_teacher(self):
-        self.assertEqual(commands._categorize_underlying_class("Third Attack"), "Bukijutsu")
+        self.assertEqual(commands._categorize_underlying_class("Fourth Attack"), "Bukijutsu")
+        self.assertEqual(commands._categorize_underlying_class("Third Attack"), "General Skills")
 
 
 class SwordSchoolTests(unittest.TestCase):
