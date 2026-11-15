@@ -43,25 +43,37 @@ def eligible_for_catalog(key, jutsu):
 # Later new techniques are appended, never inserted into the old slots.
 BASE_SCROLL_KEYS = ('1000 years of death', 'advanced shadow clone jutsu', 'advanced tracking', 'barrier', 'binding formula seal', 'black flame suppression seal', 'byakugan', 'camouflage', 'celestial byakugan', 'celestial eight trigrams judgment', 'chakra lock seal', 'chakra siphon seal', 'chakra suppression seal', 'eight trigrams mountain crusher', 'eight trigrams one hundred twenty-eight palms', 'eight trigrams palms revolving heaven', 'eight trigrams sixteen palms', 'eight trigrams sixty-four palms', 'eight trigrams thirty-two palms', 'eight trigrams three hundred sixty-one palms', 'eight trigrams twin lions crumbling attack', 'eight trigrams vacuum palm', 'eight trigrams vacuum wall palm', 'fate sight', 'flowing barrier seal', 'focused mind', 'gentle fist: chakra point strike', 'gentle fist: one blow body', 'gentle fist: tenketsu needle', 'gentle step twin lion fists', 'golden wheel reincarnation explosion', 'hand sign suppression seal', 'imbued barrier seal', 'mind suppression seal', 'multi exit barrier', 'protecting eight trigrams sixty-four palms', 'reaper death seal', 'release jutsu', 'reverse reaper seal', 'seal release', 'sealing jutsu', 'sensory detect', 'silent movement', 'silver wheel reincarnation explosion', 'summoning contract break', 'summoning contract seal', 'teleportation anchor seal', 'tenseigan chakra mode', 'timed barrier seal', 'track', 'almighty push', 'atomic dissolution', 'blast cascade', 'blast clay shot', 'blazing pulse', 'burning horizon', 'chakra ball', 'chidori', 'chishin', 'corrosive steam wave', 'deep forest bloom', 'deido bunshin', 'demonic mirroring ice crystals', 'detonation field', 'dual chidori', 'earth rasengan', 'earth wall crusher', 'fire rasengan', 'fireball jutsu', 'flash spark', 'flashfire storm', 'full body chidori', 'gale spark', 'guiding lightning', 'heat needle', 'hidden mist jutsu', 'ice prison', 'ice senbon', 'iron sand maelstrom', 'iron sand volley', 'juuha shou', 'kamui intangibility', 'kamui limb removal', 'kamui pocket dimension', 'karyuu endan', 'laser current', 'lava snare', 'lightning rasengan', 'lightning strike jutsu', 'magma torrent', 'magnetic bind', 'maximum chidori', 'mizu bunshin', 'molten pebbles', 'nanairo no rasengan', 'oodama rasengan', 'particle cage', 'particle spear', 'raikiri', 'raiton kage bunshin', 'rasengan', 'retsudotensho', 'scalding spray', 'scorching mirage', 'shadow clone jutsu', 'shadow shuriken technique', 'six paths rinnegan', 'six paths sage mode', 'six paths vital surge', 'storm dragon torrent', 'suigadan', 'suna bunshin', 'tempest lance', 'thunderhead bind', 'truth-seeking orb barrage', 'universal pull', 'ushiro shishou', 'vapor cloak burst', 'water dragon jutsu', 'water rasengan', 'water release: glue technique', 'wind blade jutsu', 'wind rasengan', 'wood binding roots', 'wood splinter barrage', 'atomic lotus strike', 'blast knuckle', 'blazing flash kick', 'choku zuki', 'cinder heel', 'daytime tiger', 'detonation rising knee', 'disintegration heel', 'dynamic entry', 'empi', 'evening elephant', 'explosive lotus barrage', 'flash ember jab', 'forest pulse palm', 'front lotus', 'frost knuckle', 'gale spark step', 'gate of death', 'gate of healing', 'gate of life', 'gate of limit', 'gate of opening', 'gate of pain', 'gate of view', 'gate of wonder', 'glacier heel', 'guiding thunder knee', 'heat mirage roundhouse', 'iron sand knuckle', 'kihon dachi', 'kumade', 'mae geri', 'magma hammer fist', 'magnetic cyclone kick', 'mirrored lotus rush', 'morning peacock', 'neko ashi dachi', 'nidan kyten geri', 'night guy', 'nova impact palm', 'oi zuki', 'particle palm', 'polar lock grip', 'pressure burst fist', 'reverse lotus', 'rootbreaker sweep', 'sanchin dachi', 'scalding palm', 'searing elbow', 'sokuto', 'solar flare fist', 'soto uke', 'storm current jab', 'stormbreaker rush', 'tamashiwara', 'tempest spiral rush', 'thornwood jab', 'thunderwind heel', 'vapor rising knee', 'volcanic axe kick', 'amaterasu', 'chisei', 'chokkan', 'demonic illusion hell viewing technique', 'devils taunt', 'distortion flame', 'greater henge', 'henge', 'illusion walk', 'insect eyes', 'izanami', 'jigaku gouka', 'jubaku satsu', 'kanashibari', 'kasumi juusha', 'kekkei no me', 'kokohi arazu', 'kokuangyou', 'kori shinchu', 'narakumi', 'nehan shouja', 'niju kokohi arazu', 'oboro bunshin', 'phantom soldiers', 'silent genjutsu', 'snakes embrace', 'soundless sound', 'suzu senbon', 'tsukuyomi', 'ultimate henge', 'counter kunai', 'demon wind shuriken', 'disenchantment', 'dual wield', 'exploding clay', 'exploding note', 'explosive tag kunai', 'fan techniques', 'flying swallow', 'multi-kunai throw', 'multi-shuriken throw', 'poison gas bomb', 'samurai sabre', 'smoke bomb', 'throw kunai', 'throw shuriken', 'toxin binding', 'trap disabling', 'weapon enchantment', 'weapon expert')
 
-def entries():
-    """Preserve the original class-ordered 235 VNUMs; append new jutsu.
+# These four follow the first released 235 and already occupy 31736-31739.
+# Freeze their positions before inserting the new attack scrolls.
+RELEASED_APPEND_KEYS = ("elemental shield", "fortress barrier",
+                        "reinforced barrier", "sanctuary")
+ATTACK_SCROLL_KEYS = ("second attack", "third attack",
+                      "fourth attack", "fifth attack")
 
-    Appending is essential: inserting into the general section would shift
-    the IDs of existing builder scrolls and overwrite saved configurations.
+
+def entries():
+    """Keep all released IDs stable; reserve 31740-31743 for extra attacks.
+
+    Later additions to JUTSU go AFTER these four passive scrolls rather
+    than shifting an existing builder-customized object or spawn.
     """
     available = {key for key, jutsu in data_jutsu.JUTSU.items()
                  if eligible_for_catalog(key, jutsu)}
-    # The original 235 VNUMs already exist in live saved /data and may be
-    # customized or spawned by builders. Never shift those identifiers.
-    keys = [key for key in BASE_SCROLL_KEYS if key in available]
-    additions = sorted(available.difference(BASE_SCROLL_KEYS),
-                       key=lambda key: (CLASS_ORDER.index(data_jutsu.JUTSU[key]["class_requirement"]),
-                                        data_jutsu.JUTSU[key]["display_name"].casefold(), key))
-    keys.extend(additions)
-    if len(keys) > END_VNUM - START_VNUM + 1:
+    released = [key for key in (*BASE_SCROLL_KEYS, *RELEASED_APPEND_KEYS)
+                if key in available]
+    if len(released) != 239:
+        raise RuntimeError("Previously released Scroll Jutsu keys have changed")
+    rows = [(key, data_jutsu.JUTSU[key]) for key in released]
+    rows.extend((key, data_jutsu.MULTI_ATTACK_SCROLLS[key])
+                for key in ATTACK_SCROLL_KEYS)
+    future = sorted(available.difference(released),
+                    key=lambda key: (CLASS_ORDER.index(data_jutsu.JUTSU[key]["class_requirement"]),
+                                     data_jutsu.JUTSU[key]["display_name"].casefold(), key))
+    rows.extend((key, data_jutsu.JUTSU[key]) for key in future)
+    if len(rows) > END_VNUM - START_VNUM + 1:
         raise RuntimeError("Scroll Jutsu area 31501-32000 cannot fit the current catalog")
-    return tuple((START_VNUM + index, key, data_jutsu.JUTSU[key])
-                 for index, key in enumerate(keys))
+    return tuple((START_VNUM + index, key, info)
+                 for index, (key, info) in enumerate(rows))
 
 
 def vnum_for(key):
@@ -75,7 +87,8 @@ def legacy_vnums():
 def name_for(key):
     if key in _LEGACY_SCROLLS:
         return _LEGACY_SCROLLS[key][1]
-    return f"A Scroll of {data_jutsu.JUTSU[key]['display_name']}"
+    info = data_jutsu.MULTI_ATTACK_SCROLLS.get(key) or data_jutsu.JUTSU[key]
+    return f"A Scroll of {info['display_name']}"
 
 
 def _matches(proto, key):
@@ -90,11 +103,16 @@ def _scroll_template(vnum, key, data):
     cost = (15000 if key == "advanced shadow clone jutsu" else
             0 if key in ("1000 years of death", _EXISTING_RESTRICTED_SCROLL,
                          "shadow shuriken technique") else 500)
-    description = ("An advanced shadow-clone technique for delegating gathering "
-                   "and training at a local work site. READ to learn it at level 75."
-                   if key == "advanced shadow clone jutsu" else
-                   "A teaching scroll inscribed with a technique. READ it to study "
-                   "its jutsu; existing class, bloodline, clan and element rules still apply.")
+    description = (
+        "READ to learn a passive numbered attack. Bukijutsu unlocks this scroll "
+        "at its listed level; Second Attack requires level 100 for other classes. "
+        "Practice the learned skill to raise its chance to activate."
+        if key in data_jutsu.MULTI_ATTACK_SCROLLS else
+        "An advanced shadow-clone technique for delegating gathering "
+        "and training at a local work site. READ to learn it at level 75."
+        if key == "advanced shadow clone jutsu" else
+        "A teaching scroll inscribed with a technique. READ it to study "
+        "its jutsu; existing class, bloodline, clan and element rules still apply.")
     obj.update(item_type="scroll", scroll_jutsu=key,
                level=int(data.get("level_requirement", 1)),
                cost=cost, description=description)
