@@ -163,8 +163,10 @@ class DefensiveJutsuTests(unittest.TestCase):
         self.assertEqual(jutsu_scroll_catalog.legacy_vnums(),old)
         self.assertEqual(len(jutsu_scroll_catalog.entries()),243)
         self.assertEqual(len(jutsu_scroll_catalog.BASE_SCROLL_KEYS),235)
-        self.assertEqual({key for _,key,_ in jutsu_scroll_catalog.entries()[235:]},
+        self.assertEqual({key for _,key,_ in jutsu_scroll_catalog.entries()[235:239]},
                          {'reinforced barrier','fortress barrier','sanctuary','elemental shield'})
+        self.assertEqual([key for _, key, _ in jutsu_scroll_catalog.entries()[239:243]],
+                         ['second attack', 'third attack', 'fourth attack', 'fifth attack'])
         for key in ('reinforced barrier','fortress barrier','sanctuary','elemental shield'):
             self.assertTrue(31736 <= jutsu_scroll_catalog.vnum_for(key) <=31739)
 
