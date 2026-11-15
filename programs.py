@@ -193,7 +193,7 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
             return False
         player.village_rank = new_rank
         data_headbands.apply_rank_headband(player, "kage" if player.is_kage else new_rank)
-        session.send(f"&Y{speaker_name} promotes you to {new_rank.title()}!&x")
+        session.send(f"&Y{speaker_name} promotes you to {kage.rank_label(new_rank)}!&x")
         kage.announce_rank_up(player.name, new_rank)
         kage.award_genin_mission_points_if_applicable(session, player, new_rank)
     elif action == "take":

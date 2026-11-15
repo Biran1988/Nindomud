@@ -163,9 +163,9 @@ MOB_SPAWNS = (
     (10, MOB_BASE + 6, 44, "a cursed academy instructor", 700, "1d23+21", 420, 150),
     (11, MOB_BASE + 7, 48, "a skeletal merchant", 775, "1d23+24", 475, 170),
     (12, MOB_BASE + 8, 50, "a vengeful shinobi spirit", 890, "1d26+26", 620, 190),
-    (13, MOB_BASE + 9, 50, "a ghostly chunin examiner", 1080, "1d30+27", 750, 230),
+    (13, MOB_BASE + 9, 50, "a ghostly chuunin examiner", 1080, "1d30+27", 750, 230),
     (15, MOB_BASE + 10, 50, "a possessed straw guardian", 1400, "1d33+31", 850, 275),
-    (16, MOB_BASE + 11, 50, "a swamp-drowned jonin", 1800, "1d36+35", 1150, 325),
+    (16, MOB_BASE + 11, 50, "a swamp-drowned jounin", 1800, "1d36+35", 1150, 325),
     (17, MOB_BASE + 12, 50, "an ancient pumpkin revenant", 2200, "1d40+40", 1450, 400),
     (18, MOB_BASE + 13, 50, "an undead royal shinobi", 2800, "1d43+43", 1850, 550),
     (19, BOSS_VNUM, 50, "The Pumpkin King", 9500, "2d35+65", 8000, 2500),
@@ -401,7 +401,7 @@ def command_teleport(session, args):
         return
     player = session.player
     if player.in_chunin_exam:
-        session.send("&RThe Forest of Death's proctor denies this teleport. Leaving forfeits the entire Chunin Exam; use 'leave confirm'.&x")
+        session.send("&RThe Forest of Death's proctor denies this teleport. Leaving forfeits the entire Chuunin Exam; use 'leave confirm'.&x")
         return
     if session.combat_target or session.pvp_target or getattr(player, "jailed_until", 0) > time.time():
         session.send("You cannot teleport during combat or while jailed.")

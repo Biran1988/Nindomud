@@ -23,7 +23,7 @@ KAGE_NAMES = {
     "sand": "the Kazekage",
 }
 
-# Normal ranks end at Jonin. Chunin requires the Chunin Exam, not a Kage
+# Normal ranks end at Jounin. Chuunin requires the Chuunin Exam, not a Kage
 # promotion. Kage is a separate Implementor-only appointment.
 # Ordinary rank promotions require reaching the current rank cap plus missions.
 STUDENT_LEVEL_CAP = 10
@@ -43,16 +43,29 @@ PROMOTION_LADDER: List[Tuple[int, int, str]] = [
 
 RANK_ORDER = ["student", "genin", "chunin", "special jonin", "jonin"]
 
+
+def rank_label(rank: str) -> str:
+    """Player-facing rank spelling; saved and scripting rank IDs stay compatible."""
+    if not rank:
+        return "Student"
+    key = str(rank).strip().lower()
+    return {
+        "chunin": "Chuunin", "chuunin": "Chuunin",
+        "special jonin": "Special Jounin", "special jounin": "Special Jounin",
+        "jonin": "Jounin", "jounin": "Jounin",
+        "elite jonin": "Elite Jounin", "elite jounin": "Elite Jounin",
+    }.get(key, str(rank).title())
+
 # Kage and Village Elder are titles, not earned progression ranks.
 # Kage appointment never changes earned rank or its level cap.
 
 
 def display_rank(player: Player) -> str:
     """Display the earned rank and appointment without conflating them."""
-    earned = (player.village_rank or "student").title()
+    earned = rank_label(player.village_rank)
     return f"{earned} (Kage)" if getattr(player, "is_kage", False) else earned
 
-# Standard promotions stop at Jonin; the Chunin transition uses its exam.
+# Standard promotions stop at Jounin; the Chuunin transition uses its exam.
 PROMOTIONS_ENABLED = True
 
 
@@ -72,7 +85,7 @@ def announce_rank_up(player_name: str, new_rank: str) -> None:
     rank changes, per direct request/confirmation ("i want an
     announcmenet for when i player gains a rank that is global" ->
     confirmed: every rank-change path in the game (Kage promotions,
-    the Chunin Exam, and the new mob-driven set_rank program action)
+    the Chuunin Exam, and the new mob-driven set_rank program action)
     triggers this same announcement, confirmed exact wording).
 
     A standalone function, not a Session method, since some
@@ -84,7 +97,7 @@ def announce_rank_up(player_name: str, new_rank: str) -> None:
     requiring every caller to have (or fake) a session reference."""
     import session as session_module
 
-    message = f"&Y{player_name} has been promoted to {new_rank.title()}!&x"
+    message = f"&Y{player_name} has been promoted to {rank_label(new_rank)}!&x"
     for s in session_module.ACTIVE_SESSIONS:
         if s.state.name == "PLAYING":
             s.send(message)
@@ -165,7 +178,7 @@ def handle_promotion_request(player: Player) -> str:
     if player.village_rank == "genin":
         return (
             f"{kage_title(player.village)} says, \"I don't hand out that promotion myself -- "
-            f"the Chunin Exam decides who's ready. Take the exam ('exam') once you're qualified.\""
+            f"the Chuunin Exam decides who's ready. Take the exam ('exam') once you're qualified.\""
         )
 
     for min_level, min_missions, next_rank in PROMOTION_LADDER:
@@ -176,14 +189,14 @@ def handle_promotion_request(player: Player) -> str:
             return (
                 f"{kage_title(player.village)} says, \"Not yet. You need at least level "
                 f"{min_level} and {min_missions} completed mission(s) for promotion to "
-                f"{next_rank.title()}.\""
+                f"{rank_label(next_rank)}.\""
             )
         player.village_rank = next_rank
         data_headbands.apply_rank_headband(player, next_rank)
         announce_rank_up(player.name, next_rank)
         return (
             f"{kage_title(player.village)} says, \"Well done. I hereby promote you to "
-            f"{next_rank.title()}.\"\n&YYou are promoted to {next_rank.title()}!&x"
+            f"{rank_label(next_rank)}.\"\n&YYou are promoted to {rank_label(next_rank)}!&x"
         )
 
     return f"{kage_title(player.village)} says, \"There is no further promotion available for you right now.\""

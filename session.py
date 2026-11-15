@@ -1269,9 +1269,9 @@ class Session:
             if player.village_rank == granted_rank:
                 import kage
                 self.send(
-                    f"&GYour existing level qualifies you for {granted_rank.title()}! "
+                    f"&GYour existing level qualifies you for {kage.rank_label(granted_rank)}! "
                     f"You have been automatically promoted from "
-                    f"{former_rank.title()} without repeating earlier exams.&x"
+                    f"{kage.rank_label(former_rank)} without repeating earlier exams.&x"
                 )
                 if former_rank == "student":
                     self.send("&GYou also received 50 Genin graduation mission points.&x")

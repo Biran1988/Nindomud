@@ -24,7 +24,7 @@ def command(session, args):
         return
     index = kage.RANK_ORDER.index(current)
     if current == "jonin":
-        session.send(f"{target.name} is already Jonin, the highest normal rank. An Implementor may use SETKAGE separately.")
+        session.send(f"{target.name} is already Jounin, the highest normal rank. An Implementor may use SETKAGE separately.")
         return
     new_rank = kage.RANK_ORDER[index + 1]
 
@@ -37,9 +37,9 @@ def command(session, args):
     storage.save_player(target)
     kage.announce_rank_up(target.name, new_rank)
     if online:
-        online.send(f"&YYou have been promoted from {current.title()} to {new_rank.title()}!&x")
+        online.send(f"&YYou have been promoted from {kage.rank_label(current)} to {kage.rank_label(new_rank)}!&x")
         if item:
             online.send(f"&YYour new headband: {item}.&x")
-    session.send(f"&GPromoted {target.name}: {current.title()} -> {new_rank.title()} (saved).&x")
+    session.send(f"&GPromoted {target.name}: {kage.rank_label(current)} -> {kage.rank_label(new_rank)} (saved).&x")
     olc._log(session.player.name, "player", 0,
              f"promoted {target.name} from {current} to {new_rank}")

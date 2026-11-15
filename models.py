@@ -613,7 +613,7 @@ class Player:
     # it can't drift if the source jutsu's own cost changes later.
     copied_jutsu_key: Optional[str] = None
     copied_jutsu_cost: int = 0
-    # Chunin Exam (Forest of Death) -- true while a genin is actively
+    # Chuunin Exam (Forest of Death) -- true while a genin is actively
     # inside the exam zone. Gates the PvP scroll-theft mechanic
     # (combat.handle_pvp_defeat) to only apply there, not to every
     # fight in the game.
@@ -695,4 +695,25 @@ class Player:
             data["village_rank"] = prior if prior in ordinary else "jonin"
             data["is_kage"] = True
             data["rank_before_kage"] = ""
+        # Old save files contain item-name strings. Convert only legacy rank
+        # headbands so equipped, packed and stored gear still resolves to
+        # the renamed prototypes without touching the actual rank IDs.
+        import data_headbands
+        normalize = data_headbands.normalize_legacy_headband
+        for field_name in ("inventory", "storage_room_items"):
+            values = data.get(field_name)
+            if isinstance(values, list):
+                data[field_name] = [normalize(item) for item in values]
+        if isinstance(data.get("equipment"), dict):
+            data["equipment"] = {slot: normalize(item)
+                                 for slot, item in data["equipment"].items()}
+        if isinstance(data.get("backpack_contents"), dict):
+            data["backpack_contents"] = {
+                key: [normalize(item) for item in values] if isinstance(values, list) else values
+                for key, values in data["backpack_contents"].items()
+            }
+        if isinstance(data.get("shop_stock"), list):
+            for entry in data["shop_stock"]:
+                if isinstance(entry, dict) and "item_name" in entry:
+                    entry["item_name"] = normalize(entry["item_name"])
         return Player(**data)

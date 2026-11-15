@@ -656,4 +656,5 @@ CHANGELOG = [
     ("15.497", "Shop LIST now numbers each purchasable item; BUY <number> purchases the matching one-based line from NPC, player-owned, pawnshop or legacy stock. Identically named player/pawn items retain their individual prices; BUY <quantity> <item> and name-based buying remain unchanged. Updated BUY/LIST help."),
     ("15.498", "Fixed normal/bright ANSI color shade selection and bright-to-dark switching; updated HELP COLORS and added regression tests."),
     ("15.499", "Added PROMPT BIRAN, a built-in compact colored HP, Chakra, and Stamina display, with HELP PROMPT documentation and tests."),
+    ("15.500", "Standardized all player-facing ninja rank labels to Chuunin and Jounin on WHO, SCORE, promotions, exam messages, headbands, automatic rank help and prompts. Legacy saved rank IDs and old headband inventory names remain compatible."),
 ]

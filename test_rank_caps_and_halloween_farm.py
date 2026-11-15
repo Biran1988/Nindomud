@@ -40,7 +40,7 @@ class RankCapTests(unittest.TestCase):
              patch.object(kage, "announce_rank_up"):
             message = kage.handle_promotion_request(player)
         self.assertEqual(player.village_rank, "jonin")
-        self.assertIn("promoted to Jonin", message)
+        self.assertIn("promoted to Jounin", message)
 
     def test_student_is_first_rank_at_creation(self):
         self.assertEqual(kage.RANK_ORDER[0], "student")

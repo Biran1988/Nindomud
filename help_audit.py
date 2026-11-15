@@ -307,8 +307,8 @@ def populate(entries, commands):
             continue
         gate = ("Staff-appointed only." if rank == "kage"
                 else "Earn the normal required exam, promotion or rank requirements.")
-        entry = _entry(key, rank.title() + " Ninja Rank",
-                       f"Rank: {rank.title()}. Maximum ninja level {cap}. "
+        entry = _entry(key, kage.rank_label(rank) + " Ninja Rank",
+                       f"Rank: {kage.rank_label(rank)}. Maximum ninja level {cap}. "
                        "Rank caps prevent earning new ninja experience past "
                        "your current rank's ceiling. " + gate)
         entries.append(entry)

@@ -44,11 +44,25 @@ RANK_HEADBAND_RARITY = {
 RANK_HEADBAND_TITLE = {
     "student": "",
     "genin": "Genin Headband",
-    "chunin": "Chunin Headband",
-    "special jonin": "Special Jonin Headband",
-    "jonin": "Jonin Headband",
+    "chunin": "Chuunin Headband",
+    "special jonin": "Special Jounin Headband",
+    "jonin": "Jounin Headband",
     "kage": "Kage's Headband",
 }
+
+
+def normalize_legacy_headband(item_name: str) -> str:
+    """Rename saved old headbands without changing their slot or AC bonus."""
+    if not isinstance(item_name, str):
+        return item_name
+    for old, new in (
+        ("Special Jonin Headband", "Special Jounin Headband"),
+        ("Chunin Headband", "Chuunin Headband"),
+        ("Jonin Headband", "Jounin Headband"),
+    ):
+        if old in item_name:
+            return item_name.replace(old, new)
+    return item_name
 
 
 def headband_base_name(village_short_name: str, rank: str) -> str:

@@ -46,6 +46,13 @@ class CompactScoreTests(unittest.TestCase):
         self.assertNotIn("Equipped:", score)
         self.assertTrue(all(len(line) <= 78 for line in score.splitlines()))
 
+    def test_score_uses_chuunin_and_jounin_rank_spelling(self):
+        self.assertIn("Rank: Chuunin", plaintext(commands.build_score_lines(self.player, "Nobody")))
+        self.player.village_rank = "special jonin"
+        self.assertIn("Special Jounin", plaintext(commands.build_score_lines(self.player, "Nobody")))
+        self.player.village_rank = "jonin"
+        self.assertIn("Rank: Jounin", plaintext(commands.build_score_lines(self.player, "Nobody")))
+
     def test_resource_bars_show_actual_values_and_handle_zero_maximum(self):
         self.player.health = 50
         self.player.maximum_health = 100

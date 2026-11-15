@@ -25,7 +25,7 @@ QUESTIONS_PER_EXAM = 10
 START_PHRASE = "start genin exam"
 
 QUESTION_BANK = (
-    ("Who is the jonin leader of Naruto, Sasuke, and Sakura's original Team 7?",
+    ("Who is the jounin leader of Naruto, Sasuke, and Sakura's original Team 7?",
      "Kakashi Hatake", "Might Guy", "Asuma Sarutobi", "Kurenai Yuhi"),
     ("What is the name of the Nine-Tailed Fox sealed inside Naruto?",
      "Kurama", "Shukaku", "Gyuki", "Matatabi"),
@@ -55,7 +55,7 @@ QUESTION_BANK = (
      "Mount Myoboku", "Ryuchi Cave", "Shikkotsu Forest", "Valley of the End"),
     ("What ninja discipline does Rock Lee specialize in?",
      "Taijutsu", "Medical ninjutsu", "Sealing techniques", "Puppetry"),
-    ("Who is Team 10's original jonin instructor?",
+    ("Who is Team 10's original jounin instructor?",
      "Asuma Sarutobi", "Kakashi Hatake", "Might Guy", "Ebisu"),
     ("Which Akatsuki member is paired with Kisame?",
      "Itachi Uchiha", "Deidara", "Hidan", "Sasori"),

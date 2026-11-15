@@ -15,7 +15,7 @@ out, has no rank requirement, no size limit beyond MAX_GROUP_SIZE (6),
 and no cost to leave. A team is the opposite in every one of those
 respects: it's a persistent, named roster (up to 4, leader included)
 that exists in teams.json whether or not any member is even online,
-gated behind the leader holding at least Chunin rank, and leaving one
+gated behind the leader holding at least Chuunin rank, and leaving one
 carries a real 24-hour cooldown before joining (or creating) another.
 
 The actual XP bonus (TEAM_XP_BONUS_PCT, +10%) requires BOTH systems
@@ -70,7 +70,7 @@ def _save() -> None:
 
 
 def can_lead_team(player) -> bool:
-    """Whether player's CURRENT village_rank is at least Chunin --
+    """Whether player's CURRENT village_rank is at least Chuunin --
     confirmed design ("Only chuunin or higher rank can lead a team").
     Uses kage.RANK_ORDER's own established index-based comparison,
     the same mechanism the rank-promotion system itself already

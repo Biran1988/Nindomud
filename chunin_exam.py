@@ -1,29 +1,29 @@
 """
-Chunin Exam -- the Forest of Death scroll mechanic.
+Chuunin Exam -- the Forest of Death scroll mechanic.
 
 Per explicit design discussion: the simple "ask the Kage, meet a
-level/mission threshold" Genin -> Chunin promotion is replaced by a
+level/mission threshold" Genin -> Chuunin promotion is replaced by a
 real trial, modeled on canon's Forest of Death -- a genin enters with
 one of two scroll types (Heaven or Earth, with legacy Hell accepted) and must obtain the other to
 pass, either by defeating one of two dangerous "scroll guardian" mobs
 deep in the forest, or by defeating ANOTHER player who's also in the
 exam and taking theirs. At the central tower a protected proctor accepts both scrolls and sends
-the candidate to a single-room VNUM 670 final 1v1. Victory earns Chunin rank.
+the candidate to a single-room VNUM 670 final 1v1. Victory earns Chuunin rank.
 
-The entry gate itself is UNCHANGED from the old Genin -> Chunin
+The entry gate itself is UNCHANGED from the old Genin -> Chuunin
 requirement (level 35, 25 completed missions) -- this doesn't add a
 new, separate gate, it changes what happens once you're qualified.
 Genin are capped at 35 while awaiting promotion; older characters
 who were already above that cap can still take the exam.
 
-Other normal promotions (Special Jonin through Jonin) are handled
+Other normal promotions (Special Jounin through Jounin) are handled
 by kage.handle_promotion_request; Kage is Implementor-appointed. Only
-the Genin -> Chunin step moved out of that ladder and into this
+the Genin -> Chuunin step moved out of that ladder and into this
 module. See kage.py's own PROMOTION_LADDER, which no longer has a
-Chunin entry, and its handle_promotion_request, which now redirects a
+Chuunin entry, and its handle_promotion_request, which now redirects a
 Genin asking about promotion to come here instead.
 
-One shared zone (not per-village) -- canon's Chunin Exams are
+One shared zone (not per-village) -- canon's Chuunin Exams are
 explicitly an inter-village event, and a shared space is what makes
 the "steal another candidate's scroll" mechanic mean anything at all
 (nothing to steal if every village's genin do this in isolation).
@@ -46,11 +46,11 @@ SCROLL_ALIASES = {HEAVEN_SCROLL: (HEAVEN_SCROLL,), EARTH_SCROLL: (EARTH_SCROLL, 
 HEAVEN_GUARDIAN_VNUM = 6900
 EARTH_GUARDIAN_VNUM = 6901
 
-# The exact same gate the old Genin -> Chunin ladder entry used
+# The exact same gate the old Genin -> Chuunin ladder entry used
 # (level, min_completed_missions) -- kept here as the single source of
-# truth now that kage.py's own ladder no longer has a Chunin entry, so
+# truth now that kage.py's own ladder no longer has a Chuunin entry, so
 # a future balance change only has to touch one place.
-MIN_LEVEL = 35  # Genin cap: reach it before attempting the Chunin exam.
+MIN_LEVEL = 35  # Genin cap: reach it before attempting the Chuunin exam.
 MIN_COMPLETED_MISSIONS = 25
 
 
@@ -125,13 +125,13 @@ def ensure_proctor() -> None:
     """Guarantee one protected, non-wandering exam proctor in room 357."""
     import combat
     if EXAM_PROCTOR_VNUM not in combat.MOB_TEMPLATES:
-        combat.register_template(EXAM_PROCTOR_VNUM, "the Chunin Exam proctor",
+        combat.register_template(EXAM_PROCTOR_VNUM, "the Chuunin Exam proctor",
                                  level=80, max_health=10000,
                                  min_damage=0, max_damage=0,
                                  experience_reward=0, ryo_reward=0)
     template = combat.MOB_TEMPLATES[EXAM_PROCTOR_VNUM]
-    template["short_desc"] = "the Chunin Exam proctor"
-    template["long_desc"] = "The Chunin Exam proctor waits to inspect your scrolls."
+    template["short_desc"] = "the Chuunin Exam proctor"
+    template["long_desc"] = "The Chuunin Exam proctor waits to inspect your scrolls."
     template["description"] = (
         "The proctor guards the gate to the final trial. "
         "ASK PROCTOR EXAM or SUBMIT SCROLLS when you hold Heaven and Earth scrolls."
@@ -175,7 +175,7 @@ def start_final_trial(session) -> bool:
         session.send("The final-trial proctor is at the central tower (VNUM 357).")
         return False
     if not player.in_chunin_exam or player.village_rank != "genin":
-        session.send("Only Genin actively taking the Chunin Exam can enter the final trial.")
+        session.send("Only Genin actively taking the Chuunin Exam can enter the final trial.")
         return False
     if not any(m.template_vnum == EXAM_PROCTOR_VNUM
                for m in combat.mobs_in_room(TOWER_VNUM)):
@@ -220,7 +220,7 @@ def show_hokage_speech(session) -> None:
         'A shinobi must understand both: dreams without action are empty, '
         'and strength without purpose has no direction.\n'
         'You brought Heaven and Earth together. Now you must face a reflection '
-        'of your own strength and prove that your judgment is worthy of a Chunin."&x\n'
+        'of your own strength and prove that your judgment is worthy of a Chuunin."&x\n'
         '&YThe Third Hokage asks: "Are you ready for your one-on-one final trial? '
         '(yes/no)"&x'
     )
@@ -258,7 +258,7 @@ def handle_final_trial_answer(session, line: str) -> bool:
 
 # Final stage: consenting spawns a stronger copy with a DIFFERENT ninja
 # class. Combat begins only when the player chooses to attack or cast.
-# Passing the scrolls alone never grants Chunin rank.
+# Passing the scrolls alone never grants Chuunin rank.
 def final_opponent(session):
     import combat
     p = session.player
@@ -312,7 +312,7 @@ def begin_final_match(session):
         f"&RThe Hokage steps back as {name}, a stronger version of yourself, "
         "materializes before you. The shadow is waiting for your first move. "
         "Use ATTACK SHADOW or target it with a jutsu to begin. "
-        "Defeat this opponent to become Chunin!&x"
+        "Defeat this opponent to become Chuunin!&x"
     )
     return mob
 
@@ -352,5 +352,5 @@ def finish_final_match(session, mob):
     player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
     kage.announce_rank_up(player.name, "chunin")
     storage.save_player(player)
-    session.send("&GYou defeat your stronger shadow in the final 1v1! The proctor names you a Chunin.&x")
+    session.send("&GYou defeat your stronger shadow in the final 1v1! The proctor names you a Chuunin.&x")
     return True

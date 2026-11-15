@@ -434,7 +434,7 @@ def cmd_move(session, direction: str) -> None:
     destination_vnum = room.exits[direction]
     if (player.in_chunin_exam
             and destination_vnum not in (chunin_exam.ENTRANCE_VNUM, *chunin_exam.FOREST_VNUMS, chunin_exam.TOWER_VNUM, chunin_exam.FINAL_ARENA_VNUM)):
-        session.send("&RThe exam proctor bars this exit. Leaving means failing and repeating the entire Chunin Exam. Use 'leave confirm' to forfeit.&x")
+        session.send("&RThe exam proctor bars this exit. Leaving means failing and repeating the entire Chuunin Exam. Use 'leave confirm' to forfeit.&x")
         return
     if not olc._require_assigned_vnum(session, destination_vnum):
         return
@@ -759,7 +759,7 @@ def cmd_flee(session, args: List[str]) -> None:
         session.send("You aren't fighting anyone.")
         return
     if player.in_chunin_exam and chunin_exam.final_opponent(session):
-        session.send("&RThe final Chunin 1v1 has sealed the exits! Leaving would forfeit your exam; use 'leave confirm' to surrender.&x")
+        session.send("&RThe final Chuunin 1v1 has sealed the exits! Leaving would forfeit your exam; use 'leave confirm' to surrender.&x")
         return
     if player.summon_flee_locked:
         session.send("&RYou're bound tight and can't get away!&x")
@@ -1838,8 +1838,8 @@ CLASS_WHO_COLOR = {
     "bukijutsu": "&Y",  # yellow -- weapons/steel
 }
 RANK_WHO_LABEL = {
-    "academy student": "Student", "genin": "Genin", "chunin": "Chunin",
-    "special jonin": "Sp.Jonin", "jonin": "Jonin", "elite jonin": "El.Jonin",
+    "academy student": "Student", "genin": "Genin", "chunin": "Chuunin",
+    "special jonin": "Sp.Jounin", "jonin": "Jounin", "elite jonin": "El.Jounin",
     "village elder": "V.Elder",
 }
 # Colored low-to-high, so rank is visible at a glance without reading the text.
@@ -1855,7 +1855,7 @@ RANK_WHO_COLOR = {
 KAGE_WHO_COLOR = "&O"  # orange -- above every other rank color
 WHO_LEADER_STAFF_LEVELS = {"helper", "builder", "area leader", "administrator", "implementor"}  # all immortals
 WHO_NAME_COLORS = ["&G", "&C", "&B", "&Y", "&O", "&M"]  # cycled per shinobi line for visual variety
-WHO_RANK_WIDTH = 8
+WHO_RANK_WIDTH = 10
 WHO_CLASS_WIDTH = 3
 WHO_LEVEL_COLOR = "&C"  # confirmed directly: a new "Lv 42" field, right after Village and before Rank
 WHO_VILLAGE_WIDTH = max(len(v["village_name"]) for v in VILLAGES.values())
@@ -1958,7 +1958,7 @@ def cmd_who(session, args: List[str]) -> None:
             # Staff shown here too now (Section 139: no more separate
             # section), using their real rank badge, not a false Kage
             # title.
-            rank_text = RANK_WHO_LABEL.get(p.village_rank, p.village_rank.title()).ljust(WHO_RANK_WIDTH)
+            rank_text = RANK_WHO_LABEL.get(p.village_rank, kage.rank_label(p.village_rank)).ljust(WHO_RANK_WIDTH)
             rank_color = RANK_WHO_COLOR.get(p.village_rank, "&W")
             rank_label = f"{rank_color}{rank_text}&W"
             name_text = ooc_titles.player_display(p)
@@ -2771,7 +2771,7 @@ def cmd_recall(session, args: List[str]) -> None:
         session.send("&RYou cannot recall out of a Kamui pocket dimension. Only the caster can release you.&x")
         return
     if player.in_chunin_exam:
-        session.send("&RRecall is denied during the Chunin Exam. Leaving means failing and restarting; 'leave confirm' forfeits your attempt.&x")
+        session.send("&RRecall is denied during the Chuunin Exam. Leaving means failing and restarting; 'leave confirm' forfeits your attempt.&x")
         return
     import whirlpool_fuinjutsu
     if whirlpool_fuinjutsu.blocks_teleport(player):
@@ -2820,7 +2820,7 @@ def cmd_anki(session, args: List[str]) -> None:
         session.send("&RAnki cannot escape a Kamui pocket dimension. Only the caster can release you.&x")
         return
     if player.in_chunin_exam:
-        session.send("&RAnki cannot remove you from the Chunin Exam. Leaving means failure and a full restart. Use 'leave confirm' to forfeit.&x")
+        session.send("&RAnki cannot remove you from the Chuunin Exam. Leaving means failure and a full restart. Use 'leave confirm' to forfeit.&x")
         return
     import whirlpool_fuinjutsu
     if whirlpool_fuinjutsu.blocks_teleport(player):
@@ -4507,7 +4507,7 @@ def cmd_team(session, args: List[str]) -> None:
     """The new, persistent Teams system (teams.py) -- genuinely
     separate from 'group' above (see teams.py's own module docstring
     for the full distinction). 'team' alone shows the roster; 'team
-    create <name>' (Chunin+ only, not on disband cooldown) forms a
+    create <name>' (Chuunin+ only, not on disband cooldown) forms a
     new team with the creator as leader; 'team invite <player>'
     (leader only, target can be offline) + 'team accept' joins;
     'team leave'/'team disband' (leader only) break it apart, always
@@ -4545,7 +4545,7 @@ def cmd_team(session, args: List[str]) -> None:
             session.send(f"You must wait {hours}h {minutes}m after leaving a team before joining or creating another.")
             return
         if not teams.can_lead_team(player):
-            session.send(f"Only {teams.MIN_LEADER_RANK.title()} rank or higher can lead a team.")
+            session.send(f"Only {kage.rank_label(teams.MIN_LEADER_RANK)} rank or higher can lead a team.")
             return
         team_name = " ".join(args[1:])
         error = teams.create_team(player, team_name)
@@ -4908,7 +4908,7 @@ def cmd_duel(session, args: List[str]) -> None:
 
 
 def cmd_chunin_exam(session, args: List[str]) -> None:
-    """Enters (or re-enters) the Chunin Exam -- see chunin_exam.py's
+    """Enters (or re-enters) the Chuunin Exam -- see chunin_exam.py's
     own docstring for the full design. Grants one random scroll type
     on first entry only; re-entering after leaving (e.g. via a
     hospital respawn from a PvP loss) does NOT re-roll or top up a
@@ -4917,11 +4917,11 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
     retried for free."""
     player = session.player
     if player.village_rank != "genin":
-        session.send("The Chunin Exam is only open to Genin.")
+        session.send("The Chuunin Exam is only open to Genin.")
         return
     if not chunin_exam.qualifies_for_exam(player):
         session.send(
-            f"You aren't ready yet. The Chunin Exam requires at least level "
+            f"You aren't ready yet. The Chuunin Exam requires at least level "
             f"{chunin_exam.MIN_LEVEL} and {chunin_exam.MIN_COMPLETED_MISSIONS} completed mission(s)."
         )
         return
@@ -4929,7 +4929,7 @@ def cmd_chunin_exam(session, args: List[str]) -> None:
     if player.in_chunin_exam:
         if player.room_vnum == chunin_exam.FINAL_ARENA_VNUM:
             if player.chunin_final_ready:
-                session.send("&RYour final Chunin opponent is waiting. Attack your shadow to begin!&x")
+                session.send("&RYour final Chuunin opponent is waiting. Attack your shadow to begin!&x")
             else:
                 chunin_exam.show_hokage_speech(session)
             return
@@ -4953,11 +4953,11 @@ def cmd_leave_exam(session, args: List[str]) -> None:
     """No free exam exit: explicit confirmation forfeits every scroll."""
     player = session.player
     if not player.in_chunin_exam:
-        session.send("You aren't currently taking the Chunin Exam.")
+        session.send("You aren't currently taking the Chuunin Exam.")
         return
     if not args or args[0].lower() not in {"confirm", "forfeit"}:
         session.send(
-            "&RLeaving the Forest of Death means FAILING the Chunin Exam. "
+            "&RLeaving the Forest of Death means FAILING the Chuunin Exam. "
             "You must repeat it from the beginning. To surrender, type 'leave confirm'.&x"
         )
         return
@@ -4965,7 +4965,7 @@ def cmd_leave_exam(session, args: List[str]) -> None:
     session.combat_target = None
     player.room_vnum = VILLAGES[player.village]["starting_room_vnum"]
     storage.save_player(player)
-    session.send("&RYou forfeit the Chunin Exam, surrender both scrolls and return to your village. Your next attempt starts fresh.&x")
+    session.send("&RYou forfeit the Chuunin Exam, surrender both scrolls and return to your village. Your next attempt starts fresh.&x")
 
 
 def cmd_submit_scrolls(session, args: List[str]) -> None:
