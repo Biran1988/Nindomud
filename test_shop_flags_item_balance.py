@@ -143,6 +143,64 @@ class ShopAndItemScaleTests(unittest.TestCase):
         self.mset('flags', '-Sentinel')
         self.assertNotIn('Sentinel', self.mob['act_flags'])
 
+
+    def test_staff_created_gear_auto_balance_by_item_type(self):
+        cases = (
+            ('weapon', 'sword'), ('armor', ''), ('tool', ''),
+        )
+        for index, (kind, weapon_type) in enumerate(cases, start=1):
+            with self.subTest(kind=kind):
+                vnum = self.item_id + 50 + index
+                olc.cmd_ocreate(self.admin, [str(vnum), 'New', kind])
+                created = olc.OBJECT_TEMPLATES[vnum]
+                self.assertFalse(item_balance.active(created))
+                self.assertNotIn('AutoBalance', created['extra_flags'])
+                olc.cmd_oset(self.admin, [str(vnum), 'itemtype', kind])
+                if weapon_type:
+                    olc.cmd_oset(self.admin, [str(vnum), 'weapontype', weapon_type])
+                olc.cmd_oset(self.admin, [str(vnum), 'level', '100'])
+                self.assertTrue(item_balance.active(created))
+                self.assertEqual(created['extra_flags'].count('AutoBalance'), 1)
+                if kind == 'weapon':
+                    self.assertEqual(data_weapons.item_base_damage(created),
+                                     item_balance.scaled(100, 'damage'))
+                elif kind == 'armor':
+                    self.assertEqual(item_balance.effective_armor_bonus(created),
+                                     item_balance.scaled(100, 'armor'))
+                self.assertEqual(item_balance.effective_cost(created),
+                                 item_balance.scaled(100, 'value'))
+
+    def test_weapontype_automatically_enables_gear_balance(self):
+        vnum = self.item_id + 60
+        olc.cmd_oset(self.admin, ['create', str(vnum), 'Practice', 'sword'])
+        obj = olc.OBJECT_TEMPLATES[vnum]
+        olc.cmd_oset(self.admin, [str(vnum), 'weapontype', 'sword'])
+        olc.cmd_oset(self.admin, [str(vnum), 'level', '75'])
+        self.assertEqual(obj['item_type'], 'weapon')
+        self.assertTrue(item_balance.active(obj))
+
+    def test_copy_new_armor_balances_without_mutating_source(self):
+        vnum = self.item_id + 70
+        original = self.item
+        original['item_type'] = 'armor'
+        original['extra_flags'] = []
+        olc.cmd_ocopy(self.admin, [str(self.item_id), str(vnum)])
+        cloned = olc.OBJECT_TEMPLATES[vnum]
+        self.assertTrue(item_balance.active(cloned))
+        self.assertFalse(item_balance.active(original))
+        self.assertNotIn('AutoBalance', original['extra_flags'])
+
+    def test_unrelated_system_and_new_scrolls_are_not_auto_balanced(self):
+        # System-created prototypes stay explicit, not silently migrated.
+        standalone = olc.default_object(self.item_id + 80, 'Quest scroll')
+        standalone.update(item_type='scroll', level=55)
+        self.assertFalse(item_balance.active(standalone))
+        vnum = self.item_id + 81
+        olc.cmd_ocreate(self.admin, [str(vnum), 'Quest', 'scroll'])
+        olc.cmd_oset(self.admin, [str(vnum), 'itemtype', 'scroll'])
+        olc.cmd_oset(self.admin, [str(vnum), 'level', '55'])
+        self.assertFalse(item_balance.active(olc.OBJECT_TEMPLATES[vnum]))
+
     def test_item_flag_is_opt_in_and_weapon_damage_changes_live(self):
         old = data_weapons.item_base_damage(self.item)
         self.assertFalse(item_balance.active(self.item))

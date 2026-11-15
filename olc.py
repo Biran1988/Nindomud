@@ -180,6 +180,18 @@ def default_object(vnum: int, name: str = "an unfinished object") -> dict:
     return o
 
 
+
+# New staff-built gear always starts with level-based AutoBalance enabled.
+# Do not put this in default_object(): programmatically seeded scrolls,
+# event objects and saved legacy prototypes must keep their original flags.
+def _auto_balance_new_equipment(obj: dict) -> None:
+    if obj.get("item_type") not in {"weapon", "armor", "tool"}:
+        return
+    flags = obj.setdefault("extra_flags", [])
+    if not any(str(flag).casefold() == "autobalance" for flag in flags):
+        flags.append("AutoBalance")
+
+
 def _log(staff_name: str, entity_type: str, entity_id, description: str) -> None:
     # Successful room/mob/item edits (including programs and links) all
     # audit here, after mutation. Queue a silent background snapshot.
@@ -649,6 +661,7 @@ def cmd_ocopy(session, args: List[str]) -> None:
         session.send(f"Object prototype {target} already exists. Choose a free vnum.")
         return
     OBJECT_TEMPLATES[target] = copy.deepcopy(OBJECT_TEMPLATES[source])
+    _auto_balance_new_equipment(OBJECT_TEMPLATES[target])
     _log(session.player.name, "object", target, f"copied prototype from {source}")
     session.send(f"Copied object {source} to {target} ({OBJECT_TEMPLATES[target]['short_desc']}). Edit with 'oset {target} <field> <value>'.")
 
@@ -3507,7 +3520,7 @@ def cmd_oset(session, args: List[str]) -> None:
             "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
             "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
             "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
-            "&DItem balance: oset <vnum> level 100 | oset <vnum> flags AutoBalance.&x",
+            "&DItem balance: new weapon/armor/tool objects receive AutoBalance automatically; set level 1-250.&x",
         "&DAdmins: itemscale preview 100 | itemscale damage 125 | itemscale armor +10.&x",
         "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
             "&DOlder underscore spellings still work.&x",
@@ -3534,7 +3547,7 @@ def cmd_oset(session, args: List[str]) -> None:
         name = " ".join(args[2:])
         OBJECT_TEMPLATES[vnum] = default_object(vnum, name)
         _log(session.player.name, "object", vnum, f"prototype created: {name}")
-        session.send(f"Object prototype {vnum} ({name}) created. Use 'oset {vnum} <field> <value>' to customize it.")
+        session.send(f"Object prototype {vnum} ({name}) created. Set ITEMTYPE weapon/armor/tool and LEVEL 1-250 for automatic balance; use 'oset {vnum} <field> <value>' to customize it.")
         return
 
     if sub == "delete":
@@ -3764,6 +3777,10 @@ def cmd_oset(session, args: List[str]) -> None:
                 o["wear_loc"] = "wielded"
             elif value_text == "tool":
                 o["wear_loc"] = "tool"
+        # ITEMTYPE and WEAPONTYPE both create new gear. Enable scaling
+        # automatically without touching old prototypes on login/startup.
+        if field in {"item_type", "weapon_type"}:
+            _auto_balance_new_equipment(o)
         _log(session.player.name, "object", vnum, f"{field} set to '{value_text}'")
         session.send(f"{shown} set.")
         return

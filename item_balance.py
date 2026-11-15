@@ -1,6 +1,8 @@
 """Opt-in level-based object balancing, adjustable live by administrators.
 
-Ordinary builder objects only scale if they have the AutoBalance item flag.
+New staff-built weapons, armor and tools automatically receive the AutoBalance
+item flag when categorized or copied in OLC. Other existing prototypes still
+scale only if they have the flag.
 All calculated stats are derived, never written back into the template or
 player saves. Explicit builder damage, AC, cost and nondefault tool uses win.
 """
@@ -122,7 +124,7 @@ def cmd_itemscale(session, args):
         session.send("Opt-in item balance (AutoBalance item flag; affects live use, not saved templates): "
                      + ", ".join(f"{k} {values[v]}%" for k,v in names.items())
                      + ".\nUsage: itemscale preview <level 1-250> | itemscale <damage|armor|value|uses> <25-400|+/-delta> | itemscale reset <field|all>.\n"
-                     "Build: oset <vnum> level <1-250>; oset <vnum> flags AutoBalance.")
+                     "Build: new weapon/armor/tool ITEMTYPE automatically adds AutoBalance; set LEVEL 1-250. Existing items can opt in with FLAGS AutoBalance.")
         return
     verb = args[0].lower()
     if verb == "preview":
