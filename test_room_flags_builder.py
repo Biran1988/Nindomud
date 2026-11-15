@@ -59,9 +59,10 @@ class RoomFlagBuilderTests(unittest.TestCase):
         self.assertNotIn("biome_forest", self.room.flags)
         self.assertIn("biome_mountain", self.room.flags)
         self.assertEqual(self.room.biome, "mountain")
-        self.rset("flags", "biome_none")
+        self.rset("flags", "mountain")
         self.assertEqual(self.room.biome, "none")
         self.assertFalse([x for x in self.room.flags if x.startswith("biome_")])
+        self.assertIn("Unknown room flag", self.rset("flags", "biome_none"))
         self.rset("biome", "forest")
         self.assertEqual(self.room.biome, "none")
 
