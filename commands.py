@@ -6131,13 +6131,13 @@ def cmd_list(session, args: List[str]) -> None:
             lines.append("  (nothing in stock right now)")
         template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
         import shop_flags
-        shoptype = shop_flags.shop_type(template)
+        specialty = shop_flags.specialty_from_flags(template)
         special_note = {
             "farming": "Only buys raw crops and medicinal herbs; premium payouts.",
             "mining": "Only buys ores and ingots; premium payouts.",
             "lumberjack": "Only buys harvested lumber; premium payouts.",
             "gemcutter": "Only buys rough and cut gems; premium payouts.",
-        }.get(shoptype)
+        }.get(specialty)
         if special_note:
             lines.append(f"&D({special_note})&x")
         elif buys_categories:
