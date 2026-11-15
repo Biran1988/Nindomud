@@ -45,7 +45,10 @@ def synchronize(room, legacy=False):
     return room
 
 def toggle(room, name):
-    name = canonical(name)
+    # Preserve the official spelling of non-special flags (CapturePoint,
+    # etc.). Builder validation already canonicalizes these names.
+    normalized = canonical(name)
+    name = normalized if normalized in SPECIAL or normalized == 'biome_none' else name
     synchronize(room)
     flags = room.flags
     if name == "biome_none":
