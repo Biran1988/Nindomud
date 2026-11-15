@@ -12,6 +12,7 @@ from models import Player
 PRESETS = {
     "default": "&RHP:%h/%H &BCH:%c/%C &GST:%s/%S &CXP:%x/%X &YRyo:%r&x",
     "basic": "&RHP:%h/%H &BCH:%c/%C &GST:%s/%S&x",
+    "biran": "&w|&R%h&w/&196%H&w|&M%c&w/&m%C&w|&c%s&w/&C%S&w|&x",
     "combat": "&RHP:%h/%H &BCH:%c/%C &GST:%s/%S &WEnemy:%e%%&x",
     "detailed": "&C[%v %k Lvl:%l]&x &RHP:%h/%H &BCH:%c/%C &GST:%s/%S &CXP:%x/%X &YRyo:%r &MMP:%m&x",
     "minimal": "&R%hH &B%cC &G%sS&x",

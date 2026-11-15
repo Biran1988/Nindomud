@@ -655,4 +655,5 @@ CHANGELOG = [
     ("15.496", "Second Attack now automatically unlocks for every class at level 25, and Third Attack for every class at level 75, with login catch-up preserving prior proficiency; neither needs a scroll. Fourth and Fifth remain Bukijutsu-only scroll skills. Retained legacy item VNUMs 31740/31741 without consuming them on READ, and updated skill help and tests."),
     ("15.497", "Shop LIST now numbers each purchasable item; BUY <number> purchases the matching one-based line from NPC, player-owned, pawnshop or legacy stock. Identically named player/pawn items retain their individual prices; BUY <quantity> <item> and name-based buying remain unchanged. Updated BUY/LIST help."),
     ("15.498", "Fixed normal/bright ANSI color shade selection and bright-to-dark switching; updated HELP COLORS and added regression tests."),
+    ("15.499", "Added PROMPT BIRAN, a built-in compact colored HP, Chakra, and Stamina display, with HELP PROMPT documentation and tests."),
 ]
