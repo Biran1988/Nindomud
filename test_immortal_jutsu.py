@@ -25,7 +25,9 @@ class ImmortalJutsuTests(unittest.TestCase):
         self.assertIn("1000 Years of Death", player.learned_skills)  # scroll-only
         self.assertIn("Second Attack", player.learned_skills)
         self.assertEqual(player.skill_proficiencies["Second Attack"], 100)
-        self.assertNotIn("Third Attack", player.learned_skills)  # Bukijutsu restriction
+        self.assertIn("Third Attack", player.learned_skills)
+        self.assertEqual(player.skill_proficiencies["Third Attack"], 100)
+        self.assertNotIn("Fourth Attack", player.learned_skills)  # Bukijutsu restriction
         blade = Player("Blade", "Blade", level=250, primary_class="bukijutsu")
         blade._immortal_skill_mastery = True
         self.assertTrue(leveling.grant_immortal_jutsu(blade))
