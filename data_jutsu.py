@@ -843,23 +843,25 @@ APPRAISAL_LEVEL_REQUIREMENT = 20
 
 # Multiple attacks per round, per explicit request. Each entry is
 # (display_name, level_requirement, required_primary_class_or_None).
-# Second Attack unlocks at level 25 for Bukijutsu, level 100 for
-# Ninjutsu/Taijutsu/Genjutsu. Third, Fourth, and Fifth Attack are
-# Bukijutsu-specific; only Bukijutsu can progress beyond two attacks.
-# The four numbered attacks are scroll-only for new learners.
-# Existing characters who already know them keep their skills/mastery.
-# Level-up and login sync do not grant these scroll skills.
-# PRAC can train them after learning; each attack's proficiency controls
-# its chance to trigger, and a failed numbered attack ends the chain.
+# Second Attack automatically unlocks for EVERY class at level 25;
+# Third Attack automatically unlocks for EVERY class at level 75.
+# Neither needs or uses a teaching scroll. Fourth/Fifth Attack remain
+# Bukijutsu-only and require their existing teaching scrolls.
+# Login sync backfills missed automatic skills; already learned mastery
+# is retained. PRAC trains skill proficiency and attacks cascade in combat.
 MULTI_ATTACK_SKILLS = [
     ("Second Attack", 25, None),
-    ("Third Attack", 50, "bukijutsu"),
+    ("Third Attack", 75, None),
     ("Fourth Attack", 75, "bukijutsu"),
     ("Fifth Attack", 90, "bukijutsu"),
 ]
 
-# Stable scroll keys are distinct from ordinary castable JUTSU. These
-# teach passive numbered melee skills using the existing READ mechanism.
+# Only Fourth/Fifth need scrolls. Second/Third's original item IDs remain
+# reserved for compatibility with builder-saved items and older inventories.
+AUTO_MULTI_ATTACK_SKILLS = frozenset(("Second Attack", "Third Attack"))
+
+# Stable scroll keys are distinct from ordinary castable JUTSU. The first
+# two entries are retained as retired legacy items, no longer teach skills.
 MULTI_ATTACK_SCROLLS = {
     name.casefold(): {
         "display_name": name,
@@ -873,9 +875,7 @@ MULTI_ATTACK_SCROLLS = {
 
 
 def multi_attack_required_level(player, skill_name: str, default_level: int) -> int:
-    """Second Attack is delayed to level 100 for non-Bukijutsu classes."""
-    if skill_name == "Second Attack" and player.primary_class != "bukijutsu":
-        return 100
+    """Minimum combat level for every class; scrolls cannot bypass this."""
     return default_level
 
 # Renames of an existing skill's display name (old -> new). Empty for
