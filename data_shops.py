@@ -1,8 +1,9 @@
 """
-Shop types (Section 21's future shop system).
+NPC merchant specialty rules.
 
-Each shop room has a `shop_type`. `allowed_sell_categories` restricts
-what item_types.classify_item() categories that shop will buy FROM a
+A ShopX mob flag determines which rule-set applies to an NPC merchant.
+`allowed_sell_categories` restricts what item_types.classify_item()
+categories that shop will buy FROM a
 player with `sell`; `None` means it buys anything. `sell_multiplier`
 scales item_types.BASE_SELL_PRICE -- specialty shops (weapons,
 blacksmith) pay full value for the category they specialize in, while
