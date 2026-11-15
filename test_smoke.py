@@ -1959,7 +1959,7 @@ def test_who_list_redesign():
 
     # Column order confirmed directly: Village, Rank, Level, Clan, then Name.
     assert re.search(r"\[Konohagakure\s*\]\[Genin\s*\]\[\s*20\]", text)
-    assert re.search(r"\[Kumogakure\s*\]\[Chunin\s*\]\[\s*30\]", text)
+    assert re.search(r"\[Kumogakure\s*\]\[Chuunin\s*\]\[\s*30\]", text)
 
     # Konohagakure's letters actually alternate between its two assigned
     # xterm-256 colors (34 and 118).
@@ -1967,7 +1967,7 @@ def test_who_list_redesign():
     assert "\x1b[38;5;118m" in raw
 
     # Rank abbreviation keeps columns aligned even for a long real rank.
-    assert "special jonin" not in text.lower()  # should show as 'Sp.Jonin', not the raw long name
+    assert "special jonin" not in text.lower()  # should show as 'Sp.Jounin', not the raw long name
 
     # afk toggle
     before = s3.player.afk
