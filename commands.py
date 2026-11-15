@@ -6125,11 +6125,13 @@ def cmd_list(session, args: List[str]) -> None:
             obj = olc.OBJECT_TEMPLATES.get(obj_vnum)
             if obj:
                 level_text = f" (level {obj['level']})" if obj.get("level", 0) > 0 else ""
-                lines.append(f"  {rarity_colored_name(obj['short_desc'])} - {obj['cost']} ryo{level_text}")
+                import item_balance
+                lines.append(f"  {rarity_colored_name(obj['short_desc'])} - {item_balance.effective_cost(obj)} ryo{level_text}")
         if not shop_items:
             lines.append("  (nothing in stock right now)")
         template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
-        shoptype = template.get("shop_type", "general")
+        import shop_flags
+        shoptype = shop_flags.shop_type(template)
         special_note = {
             "farming": "Only buys raw crops and medicinal herbs; premium payouts.",
             "mining": "Only buys ores and ingots; premium payouts.",
@@ -6417,7 +6419,9 @@ def cmd_buy(session, args: List[str]) -> None:
         if level_error:
             session.send(level_error)
             return
-        if player.ryo < obj["cost"]:
+        import item_balance
+        item_price = item_balance.effective_cost(obj)
+        if player.ryo < item_price:
             session.send("You can't afford that.")
             return
         import crafted_provenance
@@ -6431,8 +6435,8 @@ def cmd_buy(session, args: List[str]) -> None:
         if not ok:
             session.send(inventory.full_message(reason, obj["short_desc"]))
             return
-        player.ryo -= obj["cost"]
-        session.send(f"You buy {rarity_colored_name(obj['short_desc'])} for {obj['cost']} ryo.")
+        player.ryo -= item_price
+        session.send(f"You buy {rarity_colored_name(obj['short_desc'])} for {item_price} ryo.")
         _fire_item_trigger(session, obj["short_desc"], "get")
         return
 
@@ -6555,7 +6559,8 @@ def _buy_multiple(session, args: List[str]) -> None:
                 session.send(f"{shopkeeper.name.capitalize()} doesn't sell that.")
                 return
             obj = olc.OBJECT_TEMPLATES[obj_vnum]
-            name, cost, proto = obj["short_desc"], obj["cost"], obj
+            import item_balance
+            name, cost, proto = obj["short_desc"], item_balance.effective_cost(obj), obj
         else:
             entry = next((
                 item for item in shop["items"]
@@ -6618,15 +6623,18 @@ def _npc_shop_accepts(shopkeeper, item_name: str, category: str) -> bool:
         return False
     if explicitly_allowed:
         return True
-    return data_shops.can_buy_item(template.get("shop_type", "general"), item_name, category)
+    import shop_flags
+    return data_shops.can_buy_item(shop_flags.shop_type(template), item_name, category)
 
 
 def _npc_shop_sale_multiplier(shopkeeper) -> float:
     import data_shops
     template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
-    if template.get("shop_buys_categories") and template.get("shop_type", "general") == "general":
+    import shop_flags
+    kind = shop_flags.shop_type(template)
+    if template.get("shop_buys_categories") and kind == "general":
         return 1.0
-    return data_shops.sell_multiplier(template.get("shop_type", "general"))
+    return data_shops.sell_multiplier(kind)
 
 
 def cmd_sell(session, args: List[str]) -> None:
@@ -9012,7 +9020,8 @@ def equipped_armor_class_bonus(player) -> int:  # player: Player or combat.Mob
             continue
         proto = _find_object_prototype_by_name(item_name)
         prototype_bonus = proto.get("stat_bonuses", {}).get("armor_class", 0) if proto else 0
-        total += abs(prototype_bonus) + parse_crafted_bonus(item_name, "armor_class")
+        import item_balance
+        total += abs(prototype_bonus) + (item_balance.effective_armor_bonus(proto) if proto else 0) + parse_crafted_bonus(item_name, "armor_class")
     return total
 
 
@@ -10982,6 +10991,7 @@ COMMANDS = {
     "astat": olc.cmd_astat,
     "mset": olc.cmd_mset,
     "mobscale": __import__("mob_balance").cmd_mobscale,
+    "itemscale": __import__("item_balance").cmd_itemscale,
     "mpedit": olc.cmd_mpedit,
     "mpstat": olc.cmd_mpstat,
     "mpset": olc.cmd_mpset,

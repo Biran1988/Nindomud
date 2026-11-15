@@ -21,7 +21,9 @@ RESALE_MULTIPLIER = 1.5
 def is_pawnshop(mob) -> bool:
     import combat
     template = combat.MOB_TEMPLATES.get(getattr(mob, "template_vnum", None), {})
-    return bool(template.get("shopkeeper") and template.get("shop_type") == "pawnshop"
+    import shop_flags
+    return bool(shop_flags.is_shopkeeper_template(template)
+                and shop_flags.shop_type(template) == "pawnshop"
                 and not getattr(mob, "player_shop_owner", None))
 
 
@@ -70,7 +72,8 @@ def purchase_offer(item_name: str) -> int:
     base = ninja_arts.base_item(item_name).casefold()
     prototypes = [proto for proto in olc.OBJECT_TEMPLATES.values()
                   if proto.get("short_desc", "").casefold() == base]
-    if len(prototypes) == 1 and prototypes[0].get("cost", 0) <= 0:
+    import item_balance
+    if len(prototypes) == 1 and item_balance.effective_cost(prototypes[0]) <= 0:
         return 0
     dish = cooking.price_for_dish(item_name)
     normal = dish if dish is not None else item_types.base_sell_price(item_name)

@@ -454,7 +454,8 @@ def is_shopkeeper(mob: Mob) -> bool:
     if is_training_dummy(mob):
         return False
     t = MOB_TEMPLATES.get(mob.template_vnum)
-    return bool(t and t.get("shopkeeper", False))
+    import shop_flags
+    return shop_flags.is_shopkeeper_template(t)
 
 
 def mob_shop_items(mob: Mob) -> List[int]:
@@ -471,7 +472,8 @@ def mob_shop_buys_categories(mob: Mob) -> List[str]:
     if explicit:
         return explicit
     import data_shops
-    shop_type = t.get("shop_type", "general")
+    import shop_flags
+    shop_type = shop_flags.shop_type(t)
     spec = data_shops.SHOP_TYPES.get(shop_type, data_shops.SHOP_TYPES["general"])
     allowed = spec["allowed_sell_categories"]
     return sorted(allowed) if allowed is not None else []

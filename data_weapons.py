@@ -98,7 +98,9 @@ def weapon_damage_bonus(weapon_type: str) -> int:
 def item_base_damage(proto: dict) -> int:
     """An explicit item damage value replaces its weapon type's default."""
     damage = proto.get("damage")
-    return damage if damage is not None else weapon_damage_bonus(proto.get("weapon_type", ""))
+    import item_balance
+    fallback = damage if damage is not None else weapon_damage_bonus(proto.get("weapon_type", ""))
+    return item_balance.effective_damage(proto, fallback)
 
 
 # Substring-matched against an item's (lowercased) name. First match wins,

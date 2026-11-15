@@ -5652,3 +5652,21 @@ for _defense_entry in _DEFENSE_HELP_PAGES:
             break
     else:
         DEFAULT_HELP_ENTRIES.append(_defense_entry)
+
+
+# Builder quality-of-life shop flags and opt-in object scaling.
+DEFAULT_HELP_ENTRIES.append({'primary_keyword': 'shop flags', 'keywords': ['shop flags', 'shoptypes', 'shop builder', 'merchant flags'], 'title': 'NPC Shop Specialty Flags (staff)', 'body': 'Builder shorthand: MSET <mob vnum> FLAGS ShopGeneral / ShopWeapons / ShopBlacksmith / ShopFood / ShopMining / ShopFarming / ShopLumberjack / ShopGemcutter / ShopPawnshop. A specialty flag automatically enables the Shopkeeper role; choosing a new specialty replaces the old one (only one specialty per NPC). Remove with MSET <vnum> FLAGS -ShopMining; remove all shop flags with MSET <vnum> FLAGS -Shopkeeper. Existing MSET SHOPTYPE and MSET SHOPKEEPER ON/OFF still work and synchronize flags. Use MSET ADDITEM <mob vnum> <item vnum> to stock ordinary shops. Custom shop buying categories, operating hours, and pawnshop per-item persistent stock work as before.', 'created_by': 'System', 'updated_by': 'System', 'updated_at': 0.0})
+DEFAULT_HELP_ENTRIES.append({'primary_keyword': 'itemscale', 'keywords': ['itemscale', 'item balance', 'item scaling', 'auto balance items'], 'title': 'Item Auto-Balance (staff)', 'body': 'Syntax: itemscale | itemscale preview <level> | itemscale <damage|armor|value|uses> <25-400|+/-delta> | itemscale reset <field|all>\n\nItem AutoBalance is opt-in; old player gear, crafted items, and custom objects remain unchanged.\n\nBuilder: OSET <vnum> ITEMTYPE weapon|armor|tool; OSET <vnum> LEVEL <1-250>; OSET <vnum> FLAGS AutoBalance. Remove with OSET <vnum> FLAGS -AutoBalance. Use OSTAT <vnum> to preview effective fields.\n\nAdministrator: ITEMSCALE to see current percentages, ITEMSCALE PREVIEW <level>, ITEMSCALE DAMAGE <25-400>, ITEMSCALE ARMOR <25-400>, ITEMSCALE VALUE <25-400>, ITEMSCALE USES <25-400>, ITEMSCALE ARMOR +10 or ITEMSCALE DAMAGE -10 to shift a current percentage, ITEMSCALE RESET DAMAGE or ITEMSCALE RESET ALL.\n\nOnly flagged level 1-250 items are affected. Weapon base damage, armor AC protection, shop value, and tool maximum uses are calculated from item level and saved global settings. Explicit item DAMAGE, armor STATBONUS ARMOR_CLASS, COST and custom USES override their corresponding automatic values. The item name, VNUM, forged stats, gems and manual builder settings are never overwritten. Settings save to data/item_balance.json; runtime values update immediately (previously used tool durability is preserved).', 'created_by': 'System', 'updated_by': 'System', 'updated_at': 0.0})
+for _page in DEFAULT_HELP_ENTRIES:
+    if _page.get("primary_keyword") == "mset":
+        _page["body"] += '\n\nBuilder shorthand: MSET <mob vnum> FLAGS ShopGeneral / ShopWeapons / ShopBlacksmith / ShopFood / ShopMining / ShopFarming / ShopLumberjack / ShopGemcutter / ShopPawnshop. A specialty flag automatically enables the Shopkeeper role; choosing a new specialty replaces the old one (only one specialty per NPC). Remove with MSET <vnum> FLAGS -ShopMining; remove all shop flags with MSET <vnum> FLAGS -Shopkeeper. Existing MSET SHOPTYPE and MSET SHOPKEEPER ON/OFF still work and synchronize flags. Use MSET ADDITEM <mob vnum> <item vnum> to stock ordinary shops. Custom shop buying categories, operating hours, and pawnshop per-item persistent stock work as before.'
+    elif _page.get("primary_keyword") == "pawnshop":
+        _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopPawnshop.'
+    elif _page.get("primary_keyword") == 'shop type mining':
+        _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopMining'
+    elif _page.get("primary_keyword") == 'shop type farming':
+        _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopFarming'
+    elif _page.get("primary_keyword") == 'shop type lumberjack':
+        _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopLumberjack'
+    elif _page.get("primary_keyword") == 'shop type gemcutter':
+        _page["body"] += '\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopGemcutter'

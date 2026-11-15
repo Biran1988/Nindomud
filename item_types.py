@@ -116,21 +116,22 @@ def _prototype_sell_price(item_name: str) -> Optional[int]:
     price."""
     import olc
     import crafted_identity
+    import item_balance
     if crafted_identity.marked(item_name):
         linked = crafted_identity.resolve(item_name)
-        return (max(1, int(linked[1].get("cost", 0) * PROTOTYPE_SELL_FRACTION))
+        return (max(1, int(item_balance.effective_cost(linked[1]) * PROTOTYPE_SELL_FRACTION))
                 if linked else None)
     legacy = crafted_identity.legacy_match(item_name)
     if legacy:
-        return max(1, int(legacy[1].get("cost", 0) * PROTOTYPE_SELL_FRACTION))
+        return max(1, int(item_balance.effective_cost(legacy[1]) * PROTOTYPE_SELL_FRACTION))
     query = item_name.lower()
     for proto in olc.OBJECT_TEMPLATES.values():
         if proto["short_desc"].lower() == query:
-            return max(1, int(proto["cost"] * PROTOTYPE_SELL_FRACTION))
+            return max(1, int(item_balance.effective_cost(proto) * PROTOTYPE_SELL_FRACTION))
     for proto in olc.OBJECT_TEMPLATES.values():
         short_desc = proto["short_desc"].lower()
         if query in short_desc or short_desc in query:
-            return max(1, int(proto["cost"] * PROTOTYPE_SELL_FRACTION))
+            return max(1, int(item_balance.effective_cost(proto) * PROTOTYPE_SELL_FRACTION))
     return None
 
 

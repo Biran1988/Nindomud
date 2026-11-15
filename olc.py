@@ -41,6 +41,8 @@ import biomes
 import programs
 import data_weapons
 import item_types
+import shop_flags
+import item_balance
 import dice
 import leveling
 import status_effects
@@ -455,10 +457,10 @@ def cmd_mstat(session, args: List[str]) -> None:
         f"&WMob Programs:&x {_fmt_programs(t['mob_programs'])}",
         f"&WEnabled:&x {'&Gyes&x' if t.get('enabled', True) else '&Rno&x'}",
     ]
-    if t.get("shopkeeper", False):
+    if shop_flags.is_shopkeeper_template(t):
         stock_names = [OBJECT_TEMPLATES[v]["short_desc"] for v in t.get("shop_items", []) if v in OBJECT_TEMPLATES]
         import data_shops
-        specialty = t.get("shop_type", "general")
+        specialty = shop_flags.shop_type(t)
         allowed = t.get("shop_buys_categories", []) or data_shops.SHOP_TYPES.get(
             specialty, data_shops.SHOP_TYPES["general"])["allowed_sell_categories"]
         buys = ", ".join(sorted(allowed)) if allowed else "anything"
@@ -525,8 +527,12 @@ def cmd_ostat(session, args: List[str]) -> None:
         f"&WDescription:&x {o['description'] or '(none set)'}",
         _rule(),
         f"&WVnum:&x {vnum}   &WItem Type:&x {o['item_type'].title()}   &WLevel:&x {o['level']}",
-        f"&WWeight:&x {o['weight']}   &WCost:&x {o['cost']}   &WCondition:&x {o['condition']}%",
-        f"&WTool Uses:&x {o.get('max_uses', 250)}" if o.get("item_type") == "tool" else None,
+        f"&WWeight:&x {o['weight']}   &WCost:&x {item_balance.effective_cost(o)}   &WCondition:&x {o['condition']}%",
+        f"&WAutoBalance:&x {'ON' if item_balance.active(o) else 'OFF'} "
+        f"(set flags AutoBalance; effective only at levels 1-250)",
+        f"&WScaled Armor Bonus:&x +{item_balance.effective_armor_bonus(o)} AC"
+        if item_balance.active(o) and o.get("item_type") == "armor" else None,
+        f"&WTool Uses:&x {item_balance.effective_uses(o)}" if o.get("item_type") == "tool" else None,
         (
             f"&WWeapon Type:&x {data_weapons.display_name(o['weapon_type'])}   "
             f"&WSkill:&x {data_weapons.WEAPON_TYPES.get(o['weapon_type'], {}).get('skill', 'None')}"
@@ -925,6 +931,7 @@ VALID_ITEM_EXTRA_FLAGS = {
     "invis",  # commands.py -- hidden from room look and directional scan
     "no_sac",  # commands.py -- protects this item from 'sacrifice'
     "no_take", # commands.py -- protects this item from 'get' -- for cosmetic room decoration (furniture, signs, plants) that's meant to stay put, placed via 'oset load'/spawn points and never picked up
+    "AutoBalance",  # itemscale -- opt-in level-based weapon/armor/value/tool scaling
 }
 VALID_MOB_ACT_FLAGS = {
     "aggressive_village",  # attacks members of configured aggro_village
@@ -937,7 +944,8 @@ VALID_MOB_ACT_FLAGS = {
     "BountyOffice", # commands.py -- lets a player claim a bounty in person at this mob
     "Npc",          # content.py -- base flag every non-player mob carries; no mechanical check yet
     "Sentinel",     # content.py + combat.is_wandering -- a hard override blocking wander behavior, even if Wander is also set
-    "Shopkeeper",   # content.py -- the real shop mechanism is a separate `shopkeeper` field (see combat.is_shopkeeper); this flag alone has no mechanical check
+    "Shopkeeper",   # on/off NPC merchant role; specialty flags imply this
+    *shop_flags.SHOP_FLAGS.values(),  # ShopMining, ShopPawnshop, etc.
     "Garrison",     # content.py -- war/territory defender designation; no mechanical check yet
     "Trap",         # content.py -- war/territory trap designation; no mechanical check yet
     "Wander",       # combat.is_wandering/process_wander -- moves through a random available exit on its own independent timer (2-4 min, randomized per mob); replaces the old travel_mode field entirely
@@ -1966,7 +1974,8 @@ def _mset_field_reference(player: bool = False) -> str:
         "&DExample: mset 9001 class ninjutsu  |  mset 9001 flags Wander&x",
         "&DUse 'mset <vnum> <field>' for its current value and valid options.&x",
         "&DShop stock: mset additem <mob vnum> <object vnum>. XP comes from mob level.&x",
-        "&DFood buyer: mset <vnum> shopkeeper on | mset <vnum> shoptype food.&x",
+        "&DShops: mset <vnum> flags ShopFood | ShopMining | ShopPawnshop, etc.&x",
+        "&DOne shop specialty flag also enables Shopkeeper. Remove with flags -ShopFood.&x",
         "&DShops: mset <vnum> shopopen 8 | shopclose 20 (off = 24/7).&x",
         "&DGates: mset <vnum> gate <room vnum> <direction> | gate off.&x",
         "&DThen mset <vnum> gateopen 6 | gateclose 18.&x",
@@ -2347,11 +2356,12 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
                 f"Usage: mset <vnum> {display} <toad|snake|slug|ninken|monkey|off>")
     if field == "shop_type":
         import data_shops
-        return (f"Shop specialty (current: {t.get('shop_type', 'general')}). "
+        return (f"Shop specialty (current: {shop_flags.shop_type(t)}). "
                 f"Options: {', '.join(data_shops.SHOP_TYPES)}.\n"
-                f"Usage: mset <vnum> shoptype <type>. Setting it clears custom buys categories.")
+                "Preferred: mset <vnum> flags ShopMining (or ShopPawnshop, ShopFood...). "
+                "Legacy mset shoptype remains supported.")
     if field in MOB_BOOL_FIELDS:
-        current = t.get(field, False)
+        current = shop_flags.is_shopkeeper_template(t) if field == "shopkeeper" else t.get(field, False)
         return f"'{display}' is on/off. Current: {'on' if current else 'off'}.\nUsage: mset <vnum> {display} on|off"
     if field in MOB_ATTR_FIELDS:
         return f"'{display}' is a number (attribute). Current: {t['attributes'].get(field, 0)}.\nUsage: mset <vnum> {display} <number>"
@@ -2698,8 +2708,8 @@ def cmd_mset(session, args: List[str]) -> None:
             session.send(f"No object prototype {obj_vnum} exists. Use 'oset create <vnum> <name>' first.")
             return
         t = combat.MOB_TEMPLATES[mob_vnum]
-        if not t.get("shopkeeper", False):
-            session.send(f"Mobile {mob_vnum} isn't flagged as a shopkeeper yet -- use 'mset {mob_vnum} shopkeeper on' first.")
+        if not shop_flags.is_shopkeeper_template(t):
+            session.send(f"Mobile {mob_vnum} isn't flagged as a shopkeeper -- use 'mset {mob_vnum} flags Shopkeeper' or 'flags ShopMining' first.")
             return
         if obj_vnum not in t["shop_items"]:
             t["shop_items"].append(obj_vnum)
@@ -2898,7 +2908,7 @@ def cmd_mset(session, args: List[str]) -> None:
             value_text = kind
             # The requested specialty is definitive. Older custom buys
             # settings may otherwise override the newly selected type.
-            t["shop_buys_categories"] = []
+            shop_flags.set_type(t, kind)
         if field == "teacher":
             teacher_value = value_text.strip().lower()
             if teacher_value in ("off", "none", ""):
@@ -2939,7 +2949,13 @@ def cmd_mset(session, args: List[str]) -> None:
         if value_text.lower() not in ("on", "off", "true", "false"):
             session.send(f"{field} must be on/off.")
             return
-        t[field] = value_text.lower() in ("on", "true")
+        if field == "shopkeeper":
+            if value_text.lower() in ("on", "true"):
+                shop_flags.enable_shopkeeper(t)
+            else:
+                shop_flags.disable_shopkeeper(t)
+        else:
+            t[field] = value_text.lower() in ("on", "true")
         _log(session.player.name, "mobile", vnum, f"{field} set to {t[field]}")
         session.send(f"{field} is now {'on' if t[field] else 'off'}.")
         return
@@ -2971,15 +2987,30 @@ def cmd_mset(session, args: List[str]) -> None:
                 )
                 return
         if field == "act_flags" and not value_text.startswith("-"):
-            canonical = _canonical_flag(value_text, VALID_MOB_ACT_FLAGS)
+            canonical = shop_flags.canonical_flag(value_text) or _canonical_flag(value_text, VALID_MOB_ACT_FLAGS)
             if canonical is None:
                 session.send(f"'{value_text}' isn't a recognized mob flag. Valid: {', '.join(sorted(VALID_MOB_ACT_FLAGS))}")
                 return
             value_text = canonical
-        if value_text.startswith("-"):
+        if field == "act_flags" and value_text.startswith("-"):
+            removed = value_text[1:].strip()
+            canonical = shop_flags.canonical_flag(removed) or _canonical_flag(removed, VALID_MOB_ACT_FLAGS)
+            kind = shop_flags.specialty_for_flag(canonical or removed)
+            if kind == "shopkeeper":
+                shop_flags.disable_shopkeeper(t)
+            elif kind in shop_flags.SHOP_FLAGS:
+                shop_flags.remove_specialty(t, kind)
+            else:
+                t[field] = [v for v in t[field] if v.casefold() != (canonical or removed).casefold()]
+            session.send(f"'{canonical or removed}' removed from {shown}.")
+        elif field == "act_flags" and shop_flags.specialty_for_flag(value_text) in shop_flags.SHOP_FLAGS:
+            shop_flags.set_type(t, shop_flags.specialty_for_flag(value_text))
+            session.send(f"'{value_text}' selected as the shop type (Shopkeeper enabled).")
+        elif field == "act_flags" and value_text.casefold() == "shopkeeper":
+            shop_flags.enable_shopkeeper(t)
+            session.send("Shopkeeper enabled by flag.")
+        elif value_text.startswith("-"):
             removed = value_text[1:].strip().lower()
-            if field == "act_flags":
-                removed = (_canonical_flag(removed, VALID_MOB_ACT_FLAGS) or removed).lower()
             t[field] = [v for v in t[field] if v.lower() != removed]
             session.send(f"'{removed}' removed from {shown}.")
         else:
@@ -3490,7 +3521,9 @@ def cmd_oset(session, args: List[str]) -> None:
             "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
             "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
             "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
-            "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
+            "&DItem balance: oset <vnum> level 100 | oset <vnum> flags AutoBalance.&x",
+        "&DAdmins: itemscale preview 100 | itemscale damage 125 | itemscale armor +10.&x",
+        "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
             "&DOlder underscore spellings still work.&x",
         ]))
         return

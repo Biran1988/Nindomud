@@ -33,7 +33,8 @@ def uses_left(item_name: str) -> tuple:
     if proto is None:
         proto = next((p for p in olc.OBJECT_TEMPLATES.values()
                       if p.get("item_type") == "tool" and p.get("short_desc", "").lower() in base), None)
-    total = proto.get("max_uses", DEFAULT_USES) if proto else DEFAULT_USES
+    import item_balance
+    total = item_balance.effective_uses(proto) if proto else DEFAULT_USES
     total = max(1, total)
     return total, total
 

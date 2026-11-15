@@ -409,6 +409,9 @@ def _make_shopkeeper(vnum: int, name: str, room_vnum: int, item_keys, buys_categ
     t["shopkeeper"] = True
     t["shop_items"] = [_ITEM_VNUMS[key] for key in item_keys]
     t["shop_buys_categories"] = list(buys_categories)
+    if buys_categories in (["weapon"], ["armor"]):
+        import shop_flags
+        shop_flags.set_type(t, "weapons" if buys_categories == ["weapon"] else "blacksmith")
     combat.MOB_TEMPLATES[vnum] = t
     # Per direct request/confirmation (Section 138): no longer auto-spawned --
     # content.py's own hardcoded startup call was unconditionally re-registering
