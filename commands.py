@@ -5881,8 +5881,8 @@ def _skill_catalog_for_category(category: str) -> list:
         entries.append(("Handsigns", data_handsigns.HANDSIGNS_MIN_LEVEL))
         entries.append(("Anki", 1))  # confirmed directly: no real level requirement at all, shown as level 1 like every other level-1-effectively skill (matches how UNIVERSAL_STARTING_SKILLS is handled elsewhere)
         entries.append(("Chakra Charge", data_jutsu.CHAKRA_CHARGE_LEVEL))
-        # Second Attack is universal (level 25 Bukijutsu; level 100
-        # all other classes). Every later attack is Bukijutsu-only.
+        # Second/Third Attack are universal automatic skills (25/75).
+        # Fourth/Fifth Attack remain Bukijutsu-only scroll skills.
         for skill_name, level_req, required_class in data_jutsu.MULTI_ATTACK_SKILLS:
             if required_class is None:
                 entries.append((skill_name, level_req))
@@ -9285,6 +9285,11 @@ def cmd_read(session, args: List[str]) -> None:
     if jutsu_key in data_jutsu.MULTI_ATTACK_SCROLLS:
         spec = data_jutsu.MULTI_ATTACK_SCROLLS[jutsu_key]
         display = spec["display_name"]
+        if display in data_jutsu.AUTO_MULTI_ATTACK_SKILLS:
+            session.send(f"{display} is learned automatically at level "
+                         f"{spec['level_requirement']} by every class. "
+                         "This legacy scroll is no longer required or consumed.")
+            return
         required_class = spec["class_requirement"]
         needed = data_jutsu.multi_attack_required_level(
             player, display, spec["level_requirement"])
