@@ -59,14 +59,14 @@ class ShopAndItemScaleTests(unittest.TestCase):
             with self.subTest(kind=kind):
                 self.mset('flags', flag)
                 self.assertTrue(combat.is_shopkeeper(self.instance))
-                self.assertEqual(shop_flags.shop_type(self.mob), kind)
+                self.assertEqual(shop_flags.specialty_from_flags(self.mob), kind)
                 self.assertIn('Shopkeeper', self.mob['act_flags'])
                 self.assertEqual(len([f for f in self.mob['act_flags']
                                       if shop_flags.specialty_for_flag(f) in shop_flags.SHOP_FLAGS]), 1)
                 self.assertEqual(combat.mob_shop_buys_categories(self.instance),
                                  sorted(data_shops.SHOP_TYPES[kind]['allowed_sell_categories'] or []))
         self.mset('flags', '-ShopPawnshop')
-        self.assertEqual(shop_flags.shop_type(self.mob), 'general')
+        self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'general')
         self.assertTrue(combat.is_shopkeeper(self.instance))
         self.mset('flags', '-Shopkeeper')
         self.assertFalse(combat.is_shopkeeper(self.instance))
@@ -76,7 +76,7 @@ class ShopAndItemScaleTests(unittest.TestCase):
         self.mob['shop_type'] = 'pawnshop'
         self.mob['act_flags'] = ['Npc', 'ShopMining']
         self.assertTrue(combat.is_shopkeeper(self.instance))
-        self.assertEqual(shop_flags.shop_type(self.mob), 'mining')
+        self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'mining')
         self.mset('shoptype', 'pawnshop')
         self.assertNotIn('ShopPawnshop', self.mob['act_flags'])
         self.assertIn('FLAGS', self.admin.send.call_args.args[0])
@@ -90,14 +90,14 @@ class ShopAndItemScaleTests(unittest.TestCase):
         self.mset('flags', '-Shopkeeper')
         self.assertFalse(combat.is_shopkeeper(self.instance))
         self.mset('flags', 'FoodShop')
-        self.assertEqual(shop_flags.shop_type(self.mob), 'food')
+        self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'food')
 
     def test_legacy_templates_upgrade_once_without_reactivating(self):
         legacy = {'act_flags': ['Npc'], 'shopkeeper': True,
                   'shop_type': 'pawnshop', 'shop_items': [777]}
         self.assertTrue(shop_flags.upgrade_legacy(legacy))
         self.assertTrue(shop_flags.is_shopkeeper_template(legacy))
-        self.assertEqual(shop_flags.shop_type(legacy), 'pawnshop')
+        self.assertEqual(shop_flags.specialty_from_flags(legacy), 'pawnshop')
         self.assertEqual(legacy['shop_items'], [777])
         self.assertNotIn('shop_type', legacy)
         shop_flags.disable_shopkeeper(legacy)
@@ -106,9 +106,22 @@ class ShopAndItemScaleTests(unittest.TestCase):
         stale = {'act_flags': ['Npc', 'ShopMining'],
                  'shopkeeper': True, 'shop_type': 'pawnshop'}
         shop_flags.upgrade_legacy(stale)
-        self.assertEqual(shop_flags.shop_type(stale), 'mining')
+        self.assertEqual(shop_flags.specialty_from_flags(stale), 'mining')
         self.assertNotIn('shop_type', stale)
         self.assertNotIn('shopkeeper', stale)
+
+    def test_specialty_flag_overrides_stale_categories_and_mstat(self):
+        self.mset('flags', 'ShopFood')
+        # An imported stale category must never override the live flag.
+        self.mob['shop_buys_categories'] = ['weapon']
+        self.assertEqual(combat.mob_shop_buys_categories(self.instance), ['food'])
+        self.assertTrue(commands._npc_shop_accepts(self.instance, 'A Carrot', 'food'))
+        self.assertFalse(commands._npc_shop_accepts(self.instance, 'A Steel Sword', 'weapon'))
+        olc.cmd_mstat(self.admin, [str(self.mob_id)])
+        display = self.admin.send.call_args.args[0]
+        self.assertIn('Merchant flag:', display)
+        self.assertIn('ShopFood', display)
+        self.assertIn('Buys:&x food', display)
 
     def test_pawnshop_buy_and_sale_rules_see_flag_immediately(self):
         self.mset('flags', 'ShopPawnshop')
@@ -126,7 +139,7 @@ class ShopAndItemScaleTests(unittest.TestCase):
         self.assertIn('Sentinel', self.mob['act_flags'])
         self.mset('flags', '-ShopLumberjack')
         self.assertIn('Sentinel', self.mob['act_flags'])
-        self.assertEqual(shop_flags.shop_type(self.mob), 'general')
+        self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'general')
         self.mset('flags', '-Sentinel')
         self.assertNotIn('Sentinel', self.mob['act_flags'])
 
