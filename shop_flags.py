@@ -3,7 +3,7 @@
 Builder API: ``mset <vnum> flags ShopPawnshop`` (one specialty at a time),
 ``mset <vnum> flags Shopkeeper`` (custom/general merchant), or
 ``mset <vnum> flags -Shopkeeper`` (removes the merchant role entirely).
-Neither an independent SHOPTYPE nor a shopkeeper ON/OFF field is used.
+Merchant identity and specialty come only from flags. Legacy saved fields are migration-only.
 """
 SHOP_FLAGS = {
     "general": "ShopGeneral",
@@ -60,8 +60,8 @@ def is_shopkeeper_template(template):
     return has_shop_flag(template)
 
 
-def shop_type(template):
-    """Internal pricing lookup. Merchant selection is exclusively flag-based."""
+def specialty_from_flags(template):
+    """Return the effective merchant specialty exclusively from current flags."""
     return explicit_specialty(template) or "general"
 
 
