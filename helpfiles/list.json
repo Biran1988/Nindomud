@@ -4,8 +4,8 @@
     "list"
   ],
   "title": "List",
-  "body": "Syntax: list\n\nDescription: Shows what a shopkeeper in the room has for sale, with prices.\n\nDate: 2026-08-17\n\nPawnshops list actual one-copy items previously sold by players, with a markup. Ordinary NPC and player shops continue using their usual lists.",
+  "body": "Syntax: list\n\nDescription: Shows a shopkeeper's for-sale items with prices and a [1], [2], [3] number on each purchasable item. Type BUY 2 to buy the second listed item, or BUY <item name> as before. BUY 2 <item> continues to mean a quantity of two. Player shops number only items with prices; pawnshops number each actual pawned copy. Numbers update as stock changes.\n\nDate: 2026-08-17\n\nPawnshops list actual one-copy items previously sold by players, with a markup. Ordinary NPC and player shops continue using their usual lists.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
