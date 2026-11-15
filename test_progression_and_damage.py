@@ -69,7 +69,10 @@ class ProgressiveExperienceTests(unittest.TestCase):
     def test_mob_reward_slides_by_each_players_level(self):
         base = leveling.mob_base_experience(20)
         self.assertEqual(leveling.mob_kill_experience(20, 20), base)
-        self.assertEqual(leveling.mob_kill_experience(30, 20), 0)
+        self.assertEqual(leveling.mob_kill_experience(30, 20), 1)
+        self.assertEqual(leveling.mob_kill_experience(250, 1), 1)
+        self.assertEqual(leveling.mob_kill_experience(60, 20), 1)
+        self.assertEqual(leveling.mob_kill_experience(29, 20), max(1, round(base * 0.1)))
         self.assertEqual(leveling.mob_kill_experience(10, 20), round(base * 1.30))
         self.assertGreater(leveling.mob_kill_experience(19, 20), base)
         self.assertLess(leveling.mob_kill_experience(21, 20), base)
