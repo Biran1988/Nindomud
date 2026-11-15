@@ -162,7 +162,7 @@ def _match_entries(entries, query):
     return candidates, term_no
 
 
-def buy(mob, player, query: str, *, session=None):
+def buy(mob, player, query: str, *, session=None, listing_index=None):
     """Buy exactly one stocked copy. Returns (ok, message_or_name, cost)."""
     import inventory
     import playershops
@@ -172,10 +172,18 @@ def buy(mob, player, query: str, *, session=None):
         data = _load()
         shop_key = key(mob, player.room_vnum)
         entries = data.get(shop_key, [])
-        matches, nth = _match_entries(entries, query)
-        if nth > len(matches):
-            return False, "The pawnshop doesn't have that item in stock.", None
-        index, entry = matches[nth - 1]
+        if listing_index is not None:
+            # Index is the exact row shown by LIST, including duplicate
+            # item names with different wear, provenance or prices.
+            if not 1 <= listing_index <= len(entries):
+                return False, "That item number is not on the shop list. Type LIST.", None
+            index = listing_index - 1
+            entry = entries[index]
+        else:
+            matches, nth = _match_entries(entries, query)
+            if nth > len(matches):
+                return False, "The pawnshop doesn't have that item in stock.", None
+            index, entry = matches[nth - 1]
         name, price = entry["item_name"], entry["price"]
         proto = playershops.stock_prototype({"item_name": name, "item_vnum": None})
         level_error = playershops.purchase_level_error(player, proto, name)
