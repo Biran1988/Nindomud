@@ -1785,8 +1785,10 @@ def cmd_rset(session, args: List[str]) -> None:
         import room_flags
         if not rest:
             session.send(
-                _field_list("General room flags", VALID_ROOM_FLAGS - set(room_flags.BIOMES))
-                + "\n" + _field_list("Biome flags (choose exactly one)", set(room_flags.BIOMES))
+                _field_list("General room flags", VALID_ROOM_FLAGS - set(room_flags.BIOMES),
+                              {flag: flag for flag in VALID_ROOM_FLAGS})
+                + "\n" + _field_list("Biome flags (choose exactly one)", set(room_flags.BIOMES),
+                                     {flag: flag for flag in room_flags.BIOMES})
                 + "\n&WCurrent:&x " + (", ".join(room.flags) or "(none)")
                 + "\nUsage: rset flags <flag> | rset flags biome_none"
                 + "\nBiome short names work: forest, mountain, ocean, etc."
@@ -2386,7 +2388,8 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
         current = t.get(field, [])
         current_text = ", ".join(current) if current else "(empty)"
         if field == "act_flags":
-            return (_field_list("Valid mob flags", VALID_MOB_ACT_FLAGS)
+            return (_field_list("Valid mob flags", VALID_MOB_ACT_FLAGS,
+                                {flag: flag for flag in VALID_MOB_ACT_FLAGS})
                     + f"\n&WCurrent:&x {current_text}"
                     + f"\nUsage: mset <vnum> flags <flag> (prefix - to remove)")
         return (
@@ -3453,7 +3456,8 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
                 "Other armor: head/body/legs/feet/hands/waist/back/chakra aura.\\n"
                 f"Usage: oset <vnum> {display} <slot> (or finger2/ear2/wrist2).")
     if field == "extra_flags":
-        return (_field_list("Valid item flags", VALID_ITEM_EXTRA_FLAGS)
+        return (_field_list("Valid item flags", VALID_ITEM_EXTRA_FLAGS,
+                                    {flag: flag for flag in VALID_ITEM_EXTRA_FLAGS})
                 + f"\n&WCurrent:&x {', '.join(o.get('extra_flags', [])) or '(empty)'}"
                 + f"\nUsage: oset <vnum> flags <flag> (prefix - to remove)")
     if field == "set_vnums":
