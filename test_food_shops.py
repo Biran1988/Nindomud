@@ -14,7 +14,7 @@ from models import Player
 class FoodShopTests(unittest.TestCase):
     def setUp(self):
         self.shopkeeper = combat.default_template(9002, "food merchant")
-        self.shopkeeper["shopkeeper"] = True
+        self.shopkeeper["act_flags"].append("Shopkeeper")
         self.mob = NS(name="food merchant", template_vnum=9002, player_shop_owner=None)
         raw = olc.default_object(9100, "A Swordfish")
         raw.update(item_type="misc", cost=300)
@@ -59,17 +59,18 @@ class FoodShopTests(unittest.TestCase):
         self.assertEqual(item_types.classify_item("A Steel Sword"), "weapon")
 
     def test_builder_can_configure_food_only_shop(self):
-        olc.cmd_mset(self.session, ["9002", "shopkeeper", "on"])
-        olc.cmd_mset(self.session, ["9002", "shoptype", "food"])
-        self.assertEqual(self.shopkeeper["shop_type"], "food")
+        olc.cmd_mset(self.session, ["9002", "flags", "ShopFood"])
+        self.assertIn("ShopFood", self.shopkeeper["act_flags"])
+        self.assertNotIn("shop_type", self.shopkeeper)
         self.assertEqual(combat.mob_shop_buys_categories(self.mob), ["food"])
         commands.cmd_list(self.session, [])
         self.assertIn("Only buys food", self.session.send.call_args.args[0])
         olc.cmd_mset(self.session, ["9002", "shoptype"])
-        self.assertIn("food", self.session.send.call_args.args[0])
+        self.assertIn("FLAGS", self.session.send.call_args.args[0])
 
     def test_food_shop_pays_full_specialty_price_and_rejects_weapons(self):
-        self.shopkeeper["shop_type"] = "food"
+        import shop_flags
+        shop_flags.set_type(self.shopkeeper, "food")
         self.player.inventory = ["A Swordfish", "A Cooked Salmon", "A Watermelon",
                                  "A Steel Sword"]
         commands.cmd_sell(self.session, ["swordfish"])
@@ -92,12 +93,12 @@ class FoodShopTests(unittest.TestCase):
     def test_existing_manual_specialty_and_switching_type(self):
         self.shopkeeper["shop_buys_categories"] = ["weapon"]
         self.assertEqual(combat.mob_shop_buys_categories(self.mob), ["weapon"])
-        olc.cmd_mset(self.session, ["9002", "shoptype", "food"])
+        olc.cmd_mset(self.session, ["9002", "flags", "ShopFood"])
         self.assertEqual(self.shopkeeper["shop_buys_categories"], [])
         self.assertEqual(combat.mob_shop_buys_categories(self.mob), ["food"])
         olc.cmd_mset(self.session, ["9002", "shoptype", "nonsense"])
-        self.assertEqual(self.shopkeeper["shop_type"], "food")
-        self.assertIn("Shop types:", self.session.send.call_args.args[0])
+        self.assertIn("ShopFood", self.shopkeeper["act_flags"])
+        self.assertIn("FLAGS", self.session.send.call_args.args[0])
 
 
 if __name__ == "__main__":

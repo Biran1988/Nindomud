@@ -71,22 +71,44 @@ class ShopAndItemScaleTests(unittest.TestCase):
         self.mset('flags', '-Shopkeeper')
         self.assertFalse(combat.is_shopkeeper(self.instance))
 
-    def test_flag_only_merchant_and_legacy_shoptype_are_compatible(self):
+    def test_flags_only_and_legacy_editor_commands_are_rejected(self):
         self.mob['shopkeeper'] = False
+        self.mob['shop_type'] = 'pawnshop'
         self.mob['act_flags'] = ['Npc', 'ShopMining']
         self.assertTrue(combat.is_shopkeeper(self.instance))
         self.assertEqual(shop_flags.shop_type(self.mob), 'mining')
         self.mset('shoptype', 'pawnshop')
-        self.assertIn('ShopPawnshop', self.mob['act_flags'])
-        self.assertTrue(pawnshops.is_pawnshop(self.instance))
+        self.assertNotIn('ShopPawnshop', self.mob['act_flags'])
+        self.assertIn('FLAGS', self.admin.send.call_args.args[0])
         self.mset('shopkeeper', 'off')
-        self.assertFalse(pawnshops.is_pawnshop(self.instance))
-        self.assertEqual(shop_flags.shop_type(self.mob), 'general')
-        self.mset('shopkeeper', 'on')
         self.assertTrue(combat.is_shopkeeper(self.instance))
-        self.assertIn('Shopkeeper', self.mob['act_flags'])
+        self.assertIn('FLAGS', self.admin.send.call_args.args[0])
+        self.mset('flags', 'ShopPawnshop')
+        self.assertTrue(pawnshops.is_pawnshop(self.instance))
+        self.assertNotIn('shop_type', self.mob)
+        self.assertNotIn('shopkeeper', self.mob)
+        self.mset('flags', '-Shopkeeper')
+        self.assertFalse(combat.is_shopkeeper(self.instance))
         self.mset('flags', 'FoodShop')
         self.assertEqual(shop_flags.shop_type(self.mob), 'food')
+
+    def test_legacy_templates_upgrade_once_without_reactivating(self):
+        legacy = {'act_flags': ['Npc'], 'shopkeeper': True,
+                  'shop_type': 'pawnshop', 'shop_items': [777]}
+        self.assertTrue(shop_flags.upgrade_legacy(legacy))
+        self.assertTrue(shop_flags.is_shopkeeper_template(legacy))
+        self.assertEqual(shop_flags.shop_type(legacy), 'pawnshop')
+        self.assertEqual(legacy['shop_items'], [777])
+        self.assertNotIn('shop_type', legacy)
+        shop_flags.disable_shopkeeper(legacy)
+        self.assertFalse(shop_flags.is_shopkeeper_template(legacy))
+        self.assertFalse(shop_flags.upgrade_legacy(legacy))
+        stale = {'act_flags': ['Npc', 'ShopMining'],
+                 'shopkeeper': True, 'shop_type': 'pawnshop'}
+        shop_flags.upgrade_legacy(stale)
+        self.assertEqual(shop_flags.shop_type(stale), 'mining')
+        self.assertNotIn('shop_type', stale)
+        self.assertNotIn('shopkeeper', stale)
 
     def test_pawnshop_buy_and_sale_rules_see_flag_immediately(self):
         self.mset('flags', 'ShopPawnshop')

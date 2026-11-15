@@ -254,8 +254,9 @@ def _register_mob(vnum, name, level, hp, damage, xp, ryo, *, shop=None, stock=No
               "act_flags": ["Npc", "Sentinel"] + (["aggressive_everyone"] if hostile else []),
               "description": f"{name.capitalize()} stirs in the cursed streets of Halloween Town."})
     if shop:
-        t.update({"shopkeeper": True, "shop_items": list(stock or ()),
-                  "shop_type": shop, "shop_buys_categories": []})
+        import shop_flags
+        shop_flags.set_type(t, shop)
+        t["shop_items"] = list(stock or ())
     if vnum == TRICK_NPC:
         t.update({"act_flags": ["Npc", "Sentinel", "Immortal"],
                   "description": "The pumpkin-headed Mayor invites you to type 'trickortreat' once each day."})

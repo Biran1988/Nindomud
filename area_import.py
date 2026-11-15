@@ -591,7 +591,22 @@ def validate(package: dict) -> dict:
             if old and (str(vnum) not in details or
                         _fingerprint(_template_builder(old, MOB_BUILDER_KEYS)) != details[str(vnum)]):
                 raise ValueError(f"Mob {vnum} advanced fields changed since export. Export again.")
-            template.update(_validated_settings(row["settings"], combat.DEFAULT_MOB_FIELDS,
+            settings = copy.deepcopy(row["settings"])
+            # Accept historical area exports, but keep SHOPTYPE and the
+            # shopkeeper boolean out of all newly validated/exported data.
+            if isinstance(settings, dict) and (
+                    "shopkeeper" in settings or "shop_type" in settings):
+                import shop_flags
+                old_bool = settings.pop("shopkeeper", None)
+                old_kind = settings.pop("shop_type", None)
+                if ((old_bool is not None and type(old_bool) is not bool)
+                        or (old_kind is not None and old_kind not in shop_flags.SHOP_FLAGS)):
+                    raise ValueError(f"Mob {vnum} has invalid legacy shop settings.")
+                legacy = {"act_flags": list(settings.get("act_flags", template["act_flags"])),
+                          "shopkeeper": old_bool, "shop_type": old_kind}
+                shop_flags.upgrade_legacy(legacy)
+                settings["act_flags"] = legacy["act_flags"]
+            template.update(_validated_settings(settings, combat.DEFAULT_MOB_FIELDS,
                                                 MOB_BUILDER_KEYS, f"Mob {vnum}",
                                                 "mob_programs", programs.MOB_TRIGGERS))
         mobs[vnum] = template
@@ -721,6 +736,12 @@ def import_package(staged: dict, creator: str) -> dict:
         if "total_cap" in point:
             stored["total_cap"] = point["total_cap"]
             stored["per_period_cap"] = point["per_period_cap"]
+
+    # Older exported areas may still use shopkeeper/shop_type fields.
+    # Convert them once, before publishing either disk or live prototypes.
+    import shop_flags
+    for template in staged["mobs"].values():
+        shop_flags.upgrade_legacy(template)
 
     # All collisions and references have been checked before these writes.
     # Keep existing world content in the snapshot rather than replacing it

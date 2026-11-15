@@ -6621,9 +6621,9 @@ def _npc_shop_accepts(shopkeeper, item_name: str, category: str) -> bool:
     categories = combat.mob_shop_buys_categories(shopkeeper)
     if categories and category not in categories:
         return False
-    if explicitly_allowed:
-        return True
     import shop_flags
+    if explicitly_allowed and shop_flags.explicit_specialty(template) is None:
+        return True
     return data_shops.can_buy_item(shop_flags.shop_type(template), item_name, category)
 
 
@@ -6632,7 +6632,8 @@ def _npc_shop_sale_multiplier(shopkeeper) -> float:
     template = combat.MOB_TEMPLATES.get(getattr(shopkeeper, "template_vnum", None), {})
     import shop_flags
     kind = shop_flags.shop_type(template)
-    if template.get("shop_buys_categories") and kind == "general":
+    if (template.get("shop_buys_categories")
+            and shop_flags.explicit_specialty(template) is None):
         return 1.0
     return data_shops.sell_multiplier(kind)
 

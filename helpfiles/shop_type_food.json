@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "shop type food",
+  "keywords": [
+    "shop type food"
+  ],
+  "title": "Food Shop",
+  "body": "This shop buys food. Resale multiplier 1 against the standard item selling value. Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.\n\nBuilder: MSET <mob vnum> FLAGS ShopFood. No SHOPTYPE setting is needed.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

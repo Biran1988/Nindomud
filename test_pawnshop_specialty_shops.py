@@ -13,6 +13,7 @@ import inventory
 import item_types
 import olc
 import pawnshops
+import shop_flags
 import storage
 from models import Player
 
@@ -23,7 +24,7 @@ class PawnshopTests(unittest.TestCase):
         self.addCleanup(tmp.cleanup)
         self.room = 98321
         self.template = combat.default_template(98322, "pawn broker")
-        self.template.update(shopkeeper=True, shop_type="pawnshop")
+        shop_flags.set_type(self.template, "pawnshop")
         self.mob = NS(template_vnum=98322, room_vnum=self.room,
                       name="pawn broker", player_shop_owner=None)
         self.protos = {
@@ -124,7 +125,7 @@ class PawnshopTests(unittest.TestCase):
 class SpecialtyShopTests(unittest.TestCase):
     def setUp(self):
         self.t = combat.default_template(99100, "material merchant")
-        self.t["shopkeeper"] = True
+        shop_flags.enable_shopkeeper(self.t)
         self.mob = NS(template_vnum=99100, room_vnum=99099,
                       name="material merchant", player_shop_owner=None)
         self.p = Player("MaterialSeller", "MaterialSeller", room_vnum=99099)
@@ -157,13 +158,13 @@ class SpecialtyShopTests(unittest.TestCase):
                  ("gemcutter", "A Rough Quartz"), ("farming", "A Carrot"))
         for kind, item in cases:
             with self.subTest(kind=kind):
-                self.t["shop_type"] = kind
+                shop_flags.set_type(self.t, kind)
                 self.p.inventory = [item]
                 self.p.ryo = 0
                 commands.cmd_sell(self.session, [item.split()[-1]])
                 self.assertEqual(self.p.ryo, 30)  # proto cost 200 -> base 20 * 1.5
                 self.assertEqual(self.p.inventory, [])
-        self.t["shop_type"] = "farming"
+        shop_flags.set_type(self.t, "farming")
         self.p.inventory = ["A Minnow", "A Carrot"]
         commands.cmd_sell(self.session, ["minnow"])
         self.assertIn("doesn't buy", self.session.send.call_args.args[0])

@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "shop type blacksmith",
+  "keywords": [
+    "shop type blacksmith"
+  ],
+  "title": "Blacksmith",
+  "body": "This shop buys armor. Resale multiplier 1 against the standard item selling value. Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.\n\nBuilder: MSET <mob vnum> FLAGS ShopBlacksmith. No SHOPTYPE setting is needed.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

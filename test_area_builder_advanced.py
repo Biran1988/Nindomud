@@ -31,7 +31,7 @@ class AdvancedAreaEditorTests(unittest.TestCase):
                           "args": "The forest watches you."}],
         }
         data["mobs"][0]["settings"] = {
-            "shopkeeper": True, "shop_items": [40000], "act_flags": ["Npc", "Sentinel"],
+            "shop_items": [40000], "act_flags": ["Npc", "Sentinel", "Shopkeeper"],
             "attributes": {"str": 17, "int": 12, "wis": 10, "dex": 19,
                            "con": 12, "cha": 10, "luck": 12},
             "mob_programs": [{"trigger": "death", "action": "give_ryo", "args": "50"}],
@@ -51,14 +51,14 @@ class AdvancedAreaEditorTests(unittest.TestCase):
         self.assertFalse(room.exit_door_open["east"])
         self.assertEqual(room.programs[0]["trigger"], "enter")
         self.assertEqual(combat.MOB_TEMPLATES[30000]["damage_dice"], "2d6+2")
-        self.assertTrue(combat.MOB_TEMPLATES[30000]["shopkeeper"])
+        self.assertIn("Shopkeeper", combat.MOB_TEMPLATES[30000]["act_flags"])
         self.assertEqual(combat.MOB_TEMPLATES[30000]["shop_items"], [40000])
         self.assertEqual(olc.OBJECT_TEMPLATES[40000]["damage"], 15)
         self.assertEqual(spawn_points.get_spawn_caps("mob", 30000, 20000), (5, 2))
         self.assertEqual(areas.find_area("Test Forest").income, 120)
         _, exported = area_import.export_area("Test Forest")
         self.assertEqual(exported["rooms"][0]["builder"]["exit_flags"]["east"], ["door", "locked"])
-        self.assertTrue(exported["mobs"][0]["settings"]["shopkeeper"])
+        self.assertIn("Shopkeeper", exported["mobs"][0]["settings"]["act_flags"])
         self.assertEqual(exported["items"][0]["settings"]["rarity"], "rare")
         self.assertIn("details", exported["source"]["baseline"])
 
@@ -66,17 +66,17 @@ class AdvancedAreaEditorTests(unittest.TestCase):
         area_import.import_package(area_import.validate(package()), "Biran")
         world.WORLD.rooms[20000].programs = [
             {"trigger": "enter", "action": "say", "args": "Welcome."}]
-        combat.MOB_TEMPLATES[30000]["shopkeeper"] = True
+        combat.MOB_TEMPLATES[30000]["act_flags"].append("Shopkeeper")
         olc.OBJECT_TEMPLATES[40000]["rarity"] = "rare"
         _, exported = area_import.export_area("Test Forest")
         exported["rooms"][0]["description"] = "Now a winding trail."
-        exported["mobs"][0]["settings"]["shopkeeper"] = False
+        exported["mobs"][0]["settings"]["act_flags"] = ["Npc"]
         exported["items"][0]["settings"]["rarity"] = "uncommon"
         exported["area"]["income"] = 10
         area_import.import_package(area_import.validate(exported), "Biran")
         self.assertEqual(world.WORLD.rooms[20000].description, "Now a winding trail.")
         self.assertEqual(world.WORLD.rooms[20000].programs[0]["args"], "Welcome.")
-        self.assertFalse(combat.MOB_TEMPLATES[30000]["shopkeeper"])
+        self.assertNotIn("Shopkeeper", combat.MOB_TEMPLATES[30000]["act_flags"])
         self.assertEqual(olc.OBJECT_TEMPLATES[40000]["rarity"], "uncommon")
         self.assertEqual(areas.find_area("Test Forest").income, 10)
 
@@ -174,7 +174,7 @@ class AdvancedAreaEditorTests(unittest.TestCase):
     def test_stale_advanced_changes_refuse_import(self):
         area_import.import_package(area_import.validate(package()), "Biran")
         _, exported = area_import.export_area("Test Forest")
-        combat.MOB_TEMPLATES[30000]["shopkeeper"] = True
+        combat.MOB_TEMPLATES[30000]["act_flags"].append("Shopkeeper")
         with self.assertRaisesRegex(ValueError, "advanced fields changed"):
             area_import.validate(exported)
         self.assertEqual(world.WORLD.rooms[20000].name, "Trail")

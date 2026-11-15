@@ -103,7 +103,7 @@ class BuilderPersistenceTests(unittest.TestCase):
 
     def test_save_world_refreshes_shop_and_item_spawn_templates(self):
         combat.MOB_TEMPLATES[9100] = combat.default_template(9100, "shopkeeper")
-        combat.MOB_TEMPLATES[9100]["shopkeeper"] = True
+        combat.MOB_TEMPLATES[9100]["act_flags"].append("Shopkeeper")
         olc.OBJECT_TEMPLATES[9200] = olc.default_object(9200, "training kunai")
         self.assertEqual(spawn_points.add_spawn_point("mob", 9100, 9000), "")
         self.assertEqual(spawn_points.add_spawn_point("item", 9200, 9000), "")
@@ -120,7 +120,7 @@ class BuilderPersistenceTests(unittest.TestCase):
 
     def test_shopkeeper_uses_current_item_vnum_for_list_and_purchase(self):
         template = combat.default_template(9100, "shopkeeper")
-        template.update(shopkeeper=True, shop_items=[9200])
+        template.update(act_flags=["Npc", "Shopkeeper"], shop_items=[9200])
         combat.MOB_TEMPLATES[9100] = template
         olc.OBJECT_TEMPLATES[9200] = olc.default_object(9200, "old kunai")
         shopkeeper = combat.spawn_mob(9100, 9000)
@@ -237,7 +237,7 @@ class BuilderPersistenceTests(unittest.TestCase):
         builder = SimpleNamespace(account=SimpleNamespace(staff_level="implementor"),
                                   player=SimpleNamespace(name="Builder", room_vnum=9000), send=Mock())
         combat.MOB_TEMPLATES[9101] = combat.default_template(9101, "academy shopkeeper")
-        combat.MOB_TEMPLATES[9101]["shopkeeper"] = True
+        combat.MOB_TEMPLATES[9101]["act_flags"].append("Shopkeeper")
         combat.MOB_TEMPLATES[9101]["shop_items"] = [9201]
         combat.MOB_TEMPLATES[9101]["attributes"]["str"] = 25
         combat.MOB_TEMPLATES[9101]["mob_programs"].append(

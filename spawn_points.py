@@ -137,7 +137,9 @@ def restore_custom_templates() -> None:
     import storage
 
     state = storage.load_custom_templates()
+    import shop_flags
     for vnum_str, template in state.get("mobs", {}).items():
+        shop_flags.upgrade_legacy(template)
         combat.MOB_TEMPLATES[int(vnum_str)] = template
     for vnum_str, template in state.get("items", {}).items():
         olc.OBJECT_TEMPLATES[int(vnum_str)] = template

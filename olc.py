@@ -1909,7 +1909,7 @@ def _do_bunlink(session, room, rest: List[str]) -> None:
 MOB_STRING_FIELDS = {"short_desc", "long_desc", "description", "sex",
                       "position", "default_position", "hit_dice", "damage_dice", "special_function",
                       "teacher", "primary_class", "summon_family", "aggro_village", "aggro_clan",
-                      "shop_type"}
+                      }
 MOB_INT_FIELDS = {"level", "alignment", "mana", "move", "armor_class", "hit_roll",
                    "damage_roll", "attacks", "gold", "ryo_reward",
                    "shop_open_hour", "shop_close_hour", "gate_open_hour", "gate_close_hour"}
@@ -1917,7 +1917,7 @@ MOB_LIST_FIELDS = {"keywords", "act_flags", "affected_by", "attack_verbs", "defe
                     "resistant", "immune", "susceptible", "body_parts", "speaks",
                     "speaking", "loot_items", "shop_buys_categories"}
 MOB_ATTR_FIELDS = {"str", "int", "wis", "dex", "con", "cha", "luck"}
-MOB_BOOL_FIELDS = {"shopkeeper", "gambler", "respawns", "enabled", "auto_balance"}
+MOB_BOOL_FIELDS = {"gambler", "respawns", "enabled", "auto_balance"}
 
 # Builder input uses short, readable names. The stored prototype keys stay
 # unchanged so existing saves and programs continue to load unchanged.
@@ -2354,14 +2354,8 @@ def _mob_field_hint(field: str, t: dict, display: Optional[str] = None) -> Optio
     if field == "summon_family":
         return (f"'{display}' chooses which family this SummonElder teaches. Current: {t.get(field) or 'none'}.\n"
                 f"Usage: mset <vnum> {display} <toad|snake|slug|ninken|monkey|off>")
-    if field == "shop_type":
-        import data_shops
-        return (f"Shop specialty (current: {shop_flags.shop_type(t)}). "
-                f"Options: {', '.join(data_shops.SHOP_TYPES)}.\n"
-                "Preferred: mset <vnum> flags ShopMining (or ShopPawnshop, ShopFood...). "
-                "Legacy mset shoptype remains supported.")
     if field in MOB_BOOL_FIELDS:
-        current = shop_flags.is_shopkeeper_template(t) if field == "shopkeeper" else t.get(field, False)
+        current = t.get(field, False)
         return f"'{display}' is on/off. Current: {'on' if current else 'off'}.\nUsage: mset <vnum> {display} on|off"
     if field in MOB_ATTR_FIELDS:
         return f"'{display}' is a number (attribute). Current: {t['attributes'].get(field, 0)}.\nUsage: mset <vnum> {display} <number>"
@@ -2841,6 +2835,11 @@ def cmd_mset(session, args: List[str]) -> None:
         session.send(f"Guard assigned to room {room_vnum}'s {direction} gate.")
         return
     field_display_name = args[1].lower()
+    if field_display_name.replace("_", "") in ("shoptype", "shopkeeper"):
+        session.send("Merchants are configured only with mob flags. "
+                     "Use MSET <vnum> FLAGS ShopPawnshop, ShopMining, "
+                     "ShopGeneral, or Shopkeeper; use FLAGS -Shopkeeper to remove all shop flags.")
+        return
     field_name = _builder_field(field_display_name, MOB_STRING_FIELDS | MOB_INT_FIELDS |
                                 MOB_LIST_FIELDS | MOB_ATTR_FIELDS | MOB_BOOL_FIELDS,
                                 MOB_FIELD_NAMES, {"act": "act_flags",
@@ -2899,16 +2898,6 @@ def cmd_mset(session, args: List[str]) -> None:
                 session.send("Unknown clan. Use a configured Naruto clan identifier, or off.")
                 return
             value_text = "" if val in ("none", "off") else val
-        if field == "shop_type":
-            import data_shops
-            kind = value_text.strip().lower()
-            if kind not in data_shops.SHOP_TYPES:
-                session.send("Shop types: " + ", ".join(data_shops.SHOP_TYPES))
-                return
-            value_text = kind
-            # The requested specialty is definitive. Older custom buys
-            # settings may otherwise override the newly selected type.
-            shop_flags.set_type(t, kind)
         if field == "teacher":
             teacher_value = value_text.strip().lower()
             if teacher_value in ("off", "none", ""):
@@ -2949,13 +2938,7 @@ def cmd_mset(session, args: List[str]) -> None:
         if value_text.lower() not in ("on", "off", "true", "false"):
             session.send(f"{field} must be on/off.")
             return
-        if field == "shopkeeper":
-            if value_text.lower() in ("on", "true"):
-                shop_flags.enable_shopkeeper(t)
-            else:
-                shop_flags.disable_shopkeeper(t)
-        else:
-            t[field] = value_text.lower() in ("on", "true")
+        t[field] = value_text.lower() in ("on", "true")
         _log(session.player.name, "mobile", vnum, f"{field} set to {t[field]}")
         session.send(f"{field} is now {'on' if t[field] else 'off'}.")
         return
@@ -3005,7 +2988,7 @@ def cmd_mset(session, args: List[str]) -> None:
             session.send(f"'{canonical or removed}' removed from {shown}.")
         elif field == "act_flags" and shop_flags.specialty_for_flag(value_text) in shop_flags.SHOP_FLAGS:
             shop_flags.set_type(t, shop_flags.specialty_for_flag(value_text))
-            session.send(f"'{value_text}' selected as the shop type (Shopkeeper enabled).")
+            session.send(f"'{value_text}' selected as the merchant flag (Shopkeeper enabled).")
         elif field == "act_flags" and value_text.casefold() == "shopkeeper":
             shop_flags.enable_shopkeeper(t)
             session.send("Shopkeeper enabled by flag.")

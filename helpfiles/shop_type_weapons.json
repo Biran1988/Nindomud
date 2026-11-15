@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "shop type weapons",
+  "keywords": [
+    "shop type weapons"
+  ],
+  "title": "Weapons Shop",
+  "body": "This shop buys weapon. Resale multiplier 1 against the standard item selling value. Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.\n\nBuilder: MSET <mob vnum> FLAGS ShopWeapons. No SHOPTYPE setting is needed.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

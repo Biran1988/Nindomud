@@ -105,16 +105,10 @@ DEFAULT_MOB_FIELDS = {
     "experience_reward": 0, "ryo_reward": 0, "loot_items": [], "respawns": True,
     "enabled": True,  # immortal-only toggle -- disabled prototypes refuse to spawn
     "auto_balance": True,  # shared HP/damage standard; disable per mob for scripted bosses
-    # Shopkeeper fields -- a builder places a shopkeeper anywhere by
-    # setting "shopkeeper" true; players can't attack them, and they sell
-    # whatever object prototypes are added to "shop_items" at that
-    # object's own oset-set "cost". "shop_buys_categories" optionally
-    # restricts what item_types categories they'll buy FROM a player (empty
-    # = buys anything, at half value; non-empty = only those categories,
-    # full value -- a shopkeeper can hold more than one, e.g. both
-    # "weapon" and "armor", to act as a combined weapon/blacksmith keeper).
-    "shopkeeper": False, "shop_items": [], "shop_buys_categories": [],
-    "shop_type": "general",  # optional named specialty; custom buys list overrides
+    # Merchants are flagged with Shopkeeper or a single ShopX specialty.
+    # These are the only authoritative switches; shop_items and optional
+    # custom categories are settings for those already flagged as merchants.
+    "shop_items": [], "shop_buys_categories": [],
     "shop_open_hour": -1, "shop_close_hour": -1,  # -1 = always open (legacy)
     "gate_room_vnum": None, "gate_direction": "",  # explicit guarded door
     "gate_open_hour": 6, "gate_close_hour": 18,
@@ -467,12 +461,13 @@ def mob_shop_buys_categories(mob: Mob) -> List[str]:
     t = MOB_TEMPLATES.get(mob.template_vnum)
     if not t:
         return []
-    # Preserve preexisting manually configured specialty categories.
-    explicit = list(t.get("shop_buys_categories", []))
-    if explicit:
-        return explicit
     import data_shops
     import shop_flags
+    # A named shop flag is authoritative. Custom categories only apply to
+    # generic Shopkeeper mobs without a specialty flag.
+    explicit = list(t.get("shop_buys_categories", []))
+    if explicit and shop_flags.explicit_specialty(t) is None:
+        return explicit
     shop_type = shop_flags.shop_type(t)
     spec = data_shops.SHOP_TYPES.get(shop_type, data_shops.SHOP_TYPES["general"])
     allowed = spec["allowed_sell_categories"]

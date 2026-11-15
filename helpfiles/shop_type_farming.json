@@ -3,9 +3,9 @@
   "keywords": [
     "shop type farming"
   ],
-  "title": "Farming Buyer",
-  "body": "Builder: MSET <mob vnum> SHOPKEEPER ON, then MSET <mob vnum> SHOPTYPE farming.\nBuys raw farming crops and Medicinal Herbs, not fish or cooked dishes. Pays 1.5 times the standard item sale price, compared with 0.5 at general stores. Use SELL <name>, SELL ALL <name>, BUY and LIST.\n\nQuick builder setup: MSET <mob vnum> FLAGS ShopFarming. The Shopkeeper role is implied.",
+  "title": "Farm Produce Buyer",
+  "body": "This shop buys food, misc. Resale multiplier 1.5 against the standard item selling value. Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.\n\nQuick builder setup: MSET <mob vnum> FLAGS ShopFarming. The Shopkeeper role is implied; SHOPTYPE is no longer a builder field.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0
+  "updated_at": 0.0
 }

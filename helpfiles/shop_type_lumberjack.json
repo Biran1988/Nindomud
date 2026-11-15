@@ -3,9 +3,9 @@
   "keywords": [
     "shop type lumberjack"
   ],
-  "title": "Lumberjack Buyer",
-  "body": "Builder: MSET <mob vnum> SHOPKEEPER ON, then MSET <mob vnum> SHOPTYPE lumberjack.\nBuys harvested wood: Kindling, Birch, and Oak/Ironwood/Heartwood/Yew logs. Pays 1.5 times the standard item sale price, compared with 0.5 at general stores. Use SELL <name>, SELL ALL <name>, BUY and LIST.\n\nQuick builder setup: MSET <mob vnum> FLAGS ShopLumberjack. The Shopkeeper role is implied.",
+  "title": "Lumber Merchant",
+  "body": "This shop buys wood. Resale multiplier 1.5 against the standard item selling value. Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.\n\nQuick builder setup: MSET <mob vnum> FLAGS ShopLumberjack. The Shopkeeper role is implied; SHOPTYPE is no longer a builder field.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0
+  "updated_at": 0.0
 }

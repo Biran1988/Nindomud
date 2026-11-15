@@ -9,7 +9,7 @@ are importable.
 Shops are real shopkeeper MOBS (per the "shopkeeper flag" system --
 see olc.py's mset additem/removeitem and combat.py's is_shopkeeper()),
 not a hardcoded room-based dict. A builder can place a shopkeeper
-anywhere the same way these are built: `mset <vnum> shopkeeper on`,
+anywhere the same way these are built: `mset <vnum> flags Shopkeeper`,
 then `mset additem <vnum> <object vnum>` for each item they should
 carry, priced at that object's own oset-set `cost`. The item prototypes
 registered below (kunai, sword, shuriken, consumables, armor pieces)
@@ -406,7 +406,6 @@ def _make_shopkeeper(vnum: int, name: str, room_vnum: int, item_keys, buys_categ
     t["level"] = 1
     t["hit_dice"] = "1d1+9999"  # irrelevant -- shopkeepers can't be attacked
     t["act_flags"] = ["Npc", "Sentinel", "Shopkeeper"]
-    t["shopkeeper"] = True
     t["shop_items"] = [_ITEM_VNUMS[key] for key in item_keys]
     t["shop_buys_categories"] = list(buys_categories)
     if buys_categories in (["weapon"], ["armor"]):
@@ -516,7 +515,6 @@ def populate() -> None:
             shopkeeper_template["level"] = 1
             shopkeeper_template["hit_dice"] = "1d1+9999"  # irrelevant -- can't be attacked, same as other shopkeepers
             shopkeeper_template["act_flags"] = ["Npc", "Sentinel", "Shopkeeper"]
-            shopkeeper_template["shopkeeper"] = True
             shopkeeper_template["shop_items"] = []
             shopkeeper_template["shop_buys_categories"] = []
             combat.MOB_TEMPLATES[playershops.SHOPKEEPER_TEMPLATE_VNUM] = shopkeeper_template

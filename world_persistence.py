@@ -159,10 +159,12 @@ def apply_saved_world() -> int:
         world.WORLD.rooms[vnum] = world.Room(**filtered)
         restored += 1
 
+    import shop_flags
     for vnum_str, mob_data in state.get("mobs", {}).items():
         vnum = int(vnum_str)
         if vnum in spawn_point_mob_vnums:
             continue
+        shop_flags.upgrade_legacy(mob_data)
         combat.MOB_TEMPLATES[vnum] = mob_data
         restored += 1
 

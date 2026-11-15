@@ -1,0 +1,11 @@
+{
+  "primary_keyword": "shop type general",
+  "keywords": [
+    "shop type general"
+  ],
+  "title": "General Store",
+  "body": "This shop buys all inventory categories. Resale multiplier 0.5 against the standard item selling value. Use LIST, BUY <item>, and SELL <item> with a matching shopkeeper.\n\nBuilder: MSET <mob vnum> FLAGS ShopGeneral. No SHOPTYPE setting is needed.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0.0
+}

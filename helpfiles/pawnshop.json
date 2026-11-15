@@ -1,14 +1,9 @@
 {
   "primary_keyword": "pawnshop",
   "keywords": [
-    "pawnshop",
-    "pawn broker",
     "pawn",
-    "shop type pawnshop"
+    "pawn broker"
   ],
-  "title": "NPC Pawnshop",
-  "body": "Builder: MSET <mob vnum> SHOPKEEPER ON then MSET <mob vnum> SHOPTYPE PAWNSHOP.\n\nSELL <item> or SELL ALL <item> pawns any valuable, transferable item for the general-store selling price. The pawnshop actually keeps each individual copy, including worn tool durability. LIST displays its saved stock. BUY <item> or BUY ALL <item> purchases listed copies at 150% of the amount the pawnshop paid; a seller can buy back the same item, and other players can buy it too. Inventory persists through reboots, per shopkeeper and room.\n\nSoulbound/mission/glued items, items declared worthless by a builder, and backpacks holding contents are not accepted. The anti-alt forged-item transfer protection, level limits, inventory capacity and shop hours continue to apply. Ordinary NPC store stock is not affected.\n\nBuilder shortcut: MSET <mob vnum> FLAGS ShopPawnshop (SHOPTYPE not required).",
-  "created_by": "System",
-  "updated_by": "System",
-  "updated_at": 0
+  "title": "NPC Pawnshops",
+  "body": "Builder: MSET <mob vnum> FLAGS ShopPawnshop. No other toggles or specialty fields are needed.\nSELL <item> or SELL ALL <item> pawns transferable valued items at normal general-store prices; the pawnshop holds each item. LIST shows real stock. BUY <item> or BUY ALL <item> purchases that same item at 150% of the original payout; anyone can buy it back. Stock survives restarts. Worthless items, mission cargo, soulbound rewards and filled backpacks are refused. The four materials specialists use ShopMining, ShopFarming, ShopLumberjack, or ShopGemcutter flags."
 }

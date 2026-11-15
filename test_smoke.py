@@ -1525,7 +1525,7 @@ def test_builder_made_shopkeeper():
     feed_local("oset create 9800 a stick of dango")
     feed_local("oset 9800 cost 7")
     feed_local("mset create 9800 a dango vendor")
-    feed_local("mset 9800 shopkeeper on")
+    feed_local("mset 9800 flags Shopkeeper")
     feed_local("mset additem 9800 9800")
     feed_local("mset spawn 9800 9800")
 
@@ -2654,7 +2654,7 @@ def test_program_system():
     feed_local("oset addprogram 9980 wear emote hums quietly on your finger.")
     feed_local("rset create 9984")
     feed_local("mset create 9981 a shopkeep")
-    feed_local("mset 9981 shopkeeper on")
+    feed_local("mset 9981 flags Shopkeeper")
     feed_local("mset additem 9981 9980")
     feed_local("mset spawn 9981 9984")  # a blank test room -- no shopkeeper/Kage-chamber conflicts
 
@@ -17009,7 +17009,7 @@ def test_mset_rset_oset_delete():
     out.clear()
     s.handle_line("mset create 71001 a delete perm test shopkeeper")
     out.clear()
-    s.handle_line("mset 71001 shopkeeper on")
+    s.handle_line("mset 71001 flags Shopkeeper")
     out.clear()
     s.handle_line("mset additem 71001 71000")
     out.clear()
