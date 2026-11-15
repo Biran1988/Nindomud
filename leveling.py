@@ -337,8 +337,15 @@ def grant_experience(player: Player, amount: int) -> List[str]:
             player.skill_proficiencies["Handsigns"] = initial_proficiency(player)
             lines.append("You have unlocked:\n  Handsigns")
 
-        # Numbered attacks are now learned from scrolls, not level-up.
-        # Existing learned attacks and their proficiency are preserved.
+        # Every class automatically gains Second/Third Attack at 25/75.
+        # Fourth/Fifth Attack remain Bukijutsu-only, scroll learned.
+        for skill_name, required_level, _required_class in data_jutsu.MULTI_ATTACK_SKILLS:
+            if skill_name not in data_jutsu.AUTO_MULTI_ATTACK_SKILLS:
+                continue
+            if player.level >= required_level and skill_name not in player.learned_skills:
+                player.learned_skills.append(skill_name)
+                player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
+                lines.append(f"You have unlocked:\n  {skill_name}")
 
         for passive in samurai_sabre_progression.sync_passives(player):
             lines.append(f"You have unlocked:\n  {passive} (passive +5% Samurai Sabre damage)")
@@ -473,9 +480,18 @@ def sync_universal_skills(player: Player) -> List[str]:
         player.skill_proficiencies.setdefault("Handsigns", initial_proficiency(player))
         lines.append("&Y(New since your last login: you have learned Handsigns!)&x")
 
-    # Scroll-taught extra attacks must never be backfilled on login.
-    # Old learned skills/mastery persist, and the combat level checks still
-    # block early Second Attack for non-Bukijutsu until level 100.
+    # Catch up all returning characters who missed universal extra attacks.
+    # Preserve existing proficiency, including on characters who previously
+    # learned them under the older scroll-only release.
+    for skill_name, required_level, _required_class in data_jutsu.MULTI_ATTACK_SKILLS:
+        if skill_name not in data_jutsu.AUTO_MULTI_ATTACK_SKILLS:
+            continue
+        if player.level >= required_level and skill_name not in player.learned_skills:
+            player.learned_skills.append(skill_name)
+            player.skill_proficiencies.setdefault(skill_name, initial_proficiency(player))
+            lines.append(f"&Y(New since your last login: you have learned {skill_name}!)&x")
+
+    # Fourth/Fifth Attack are still scroll-only, never login backfilled.
 
     for passive in samurai_sabre_progression.sync_passives(player):
         lines.append(f"&Y(New since your last login: you have learned {passive}!)&x")
