@@ -224,6 +224,21 @@ def break_genjutsu_effects(effects: Dict[str, dict], player) -> list:
     return broken
 
 
+def dispel_genjutsu_effects(effects: Dict[str, dict]) -> list:
+    """Remove every ordinary Genjutsu-tagged status, regardless of its name.
+
+    Source tags are written by the Genjutsu status engine on real victims.
+    Do not strip the same stunned, asleep, silenced or poisoned statuses
+    when they came from another source; Mangekyo states are separate.
+    """
+    removed = []
+    for name, state in list(effects.items()):
+        if isinstance(state, dict) and state.get("genjutsu"):
+            effects.pop(name, None)
+            removed.append(name)
+    return removed
+
+
 def apply_effect(effects: Dict[str, dict], name: str, source: str = "",
                  duration_override: int = None, *, genjutsu: bool = False) -> None:
     defn = EFFECT_DEFS[name]

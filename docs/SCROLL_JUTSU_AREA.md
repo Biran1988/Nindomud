@@ -15,7 +15,8 @@ placed in a shop, on a mob or at a spawn point automatically.
 | Legacy retired Second/Third scroll IDs | 31740–31741 | 2 |
 | Bukijutsu-only Fourth/Fifth scrolls | 31742–31743 | 2 |
 | Anime-inspired class technique scrolls | 31744–31759 | 16 |
-| Unassigned | 31760–32000 | 241 |
+| Kai (Genjutsu Release) | 31760 | 1 |
+| Unassigned | 31761–32000 | 240 |
 
 The original 235 registered techniques that can be represented by a teaching scroll
 have a stable, distinct object VNUM, grouped by class and alphabetized by
@@ -62,7 +63,7 @@ existing cross-class teaching scroll rules; no new scrolls auto-spawn.
 
 ## Builder commands
 
-Use `olist 31501 31759` or `ostat <vnum>` to browse prototypes within the
+Use `olist 31501 31760` or `ostat <vnum>` to browse prototypes within the
 area. `oset load <vnum>` loads a specific scroll into the current room; use
 `spawnpoint add item <vnum>` to create a persistent spawn after loading as
 appropriate. Standard `READ <scroll>` consumes it on successful learning.

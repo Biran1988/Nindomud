@@ -1,0 +1,13 @@
+{
+  "primary_keyword": "kai",
+  "keywords": [
+    "kai",
+    "genjutsu release",
+    "release genjutsu"
+  ],
+  "title": "Kai - Genjutsu Release",
+  "body": "Syntax: kai [player] | perform kai [player]\n\nKai (Genjutsu Release) is a universal chakra technique learned at level 15 by all four classes. Practice it with a teacher once before use. It costs 15 base Chakra, plus normal jutsu level scaling, and has a 12-second cooldown.\n\nWithout a target Kai releases ordinary Genjutsu status effects on yourself. With a target it helps a character in the same room. This includes a Genjutsu-induced stun, sleep, paralysis, silence or fear and the ordinary Illusion Walk; you may use Kai to free yourself even when an ordinary illusion prevents you from taking normal actions. Only effects explicitly identified as Genjutsu are removed.\n\nKai does not cure physical stuns, ordinary sleep, poison, bleeding, Fuinjutsu seals, Tsukuyomi, Izanami, or other special Mangekyo effects. Chakra is only spent when there is an ordinary Genjutsu to release. You cannot use Kai while physically immobilized or silenced by a non-Genjutsu source.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}

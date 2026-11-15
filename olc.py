@@ -205,7 +205,7 @@ def default_object(vnum: int, name: str = "an unfinished object") -> dict:
 # Do not put this in default_object(): programmatically seeded scrolls,
 # event objects and saved legacy prototypes must keep their original flags.
 def _auto_balance_new_equipment(obj: dict) -> None:
-    if obj.get("item_type") not in {"weapon", "armor", "tool"}:
+    if obj.get("item_type") not in {"weapon", "armor", "tool", "medical", "food"}:
         return
     flags = obj.setdefault("extra_flags", [])
     if not any(str(flag).casefold() == "autobalance" for flag in flags):
@@ -568,6 +568,12 @@ def cmd_ostat(session, args: List[str]) -> None:
         f"&WScaled Armor Bonus:&x +{item_balance.effective_armor_bonus(o)} AC"
         if item_balance.active(o) and o.get("item_type") == "armor" else None,
         f"&WTool Uses:&x {item_balance.effective_uses(o)}" if o.get("item_type") == "tool" else None,
+        (f"&WMedical Recovery:&x {item_balance.effective_recovery(o, 'healing')} "
+         f"{', '.join(o.get('heal_flags') or ['health'])} over {o.get('heal_duration', 30)}s"
+         if o.get("item_type") == "medical" else None),
+        (f"&WFood Recovery:&x {item_balance.effective_recovery(o, 'food')} "
+         f"{', '.join(o.get('heal_flags') or ['stamina'])} instantly"
+         if o.get("item_type") == "food" else None),
         (
             f"&WWeapon Type:&x {data_weapons.display_name(o['weapon_type'])}   "
             f"&WSkill:&x {data_weapons.WEAPON_TYPES.get(o['weapon_type'], {}).get('skill', 'None')}"
@@ -3461,13 +3467,13 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
     if field == "damage":
         return f"'damage' is this item's fixed base weapon damage. Current: {data_weapons.item_base_damage(o)}.\nUsage: oset <vnum> damage <nonnegative number>   (overrides the weapon type default)"
     if field == "heal_amount":
-        return f"'heal' is the total HP this medical item restores gradually. Current: {o.get('heal_amount', 0)}.\nUsage: oset <vnum> heal <0-100000>"
+        return f"'heal' is an optional manual food/medical recovery override; 0 uses AutoBalance by level. Current: {o.get('heal_amount', 0)}.\nUsage: oset <vnum> heal <0-100000>"
     if field == "heal_duration":
         return f"'healtime' is how many seconds this medical item's healing takes. Current: {o.get('heal_duration', 30)}.\nUsage: oset <vnum> healtime <1-3600>"
     if field == "max_uses":
         return f"'uses' is how many completed job attempts each new copy of this tool survives. Current: {o.get('max_uses', 250)}.\nUsage: oset <vnum> uses <1-100000>"
     if field == "heal_flags":
-        return f"'healflags' selects the resources restored by this medical item. Current: {', '.join(o.get('heal_flags', [])) or 'none'}.\nUsage: oset <vnum> healflags <health|chakra|stamina>   (prefix - to remove)"
+        return f"'healflags' selects the resources restored by food or medicine (default: stamina for food; health for medicine). Current: {', '.join(o.get('heal_flags', [])) or 'none'}.\nUsage: oset <vnum> healflags <health|chakra|stamina>   (prefix - to remove)"
     if field == "rarity":
         import data_rarity
         return f"'rarity' should be one of: {', '.join(data_rarity.RARITY_ORDER)}. Current: '{o.get('rarity', '')}'.\nUsage: oset <vnum> rarity <tier>"
@@ -3544,8 +3550,8 @@ def cmd_oset(session, args: List[str]) -> None:
             "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
             "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
             "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
-            "&DNew weapons/armor/tools: AutoBalance starts ON.&x",
-            "&DSet item level 1-250 to activate item scaling.&x",
+            "&DNew weapon/armor/tool/medical/food: AutoBalance ON.&x",
+            "&DSet level 1-250 for scaled stats/recovery.&x",
         "&DAdmins: itemscale preview 100 | itemscale damage 125 | itemscale armor +10.&x",
         "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
             "&DOlder underscore spellings still work.&x",
@@ -3572,7 +3578,7 @@ def cmd_oset(session, args: List[str]) -> None:
         name = " ".join(args[2:])
         OBJECT_TEMPLATES[vnum] = default_object(vnum, name)
         _log(session.player.name, "object", vnum, f"prototype created: {name}")
-        session.send(f"Object prototype {vnum} ({name}) created. Set ITEMTYPE weapon/armor/tool and LEVEL 1-250 for automatic balance; use 'oset {vnum} <field> <value>' to customize it.")
+        session.send(f"Object prototype {vnum} ({name}) created. Set ITEMTYPE weapon/armor/tool/medical/food and LEVEL 1-250 for automatic balance; use 'oset {vnum} <field> <value>' to customize it.")
         return
 
     if sub == "delete":
@@ -3804,7 +3810,7 @@ def cmd_oset(session, args: List[str]) -> None:
                 o["wear_loc"] = "wielded"
             elif value_text == "tool":
                 o["wear_loc"] = "tool"
-        # ITEMTYPE and WEAPONTYPE both create new gear. Enable scaling
+        # ITEMTYPE and WEAPONTYPE create staff-made objects. Enable scaling
         # automatically without touching old prototypes on login/startup.
         if field in {"item_type", "weapon_type"}:
             _auto_balance_new_equipment(o)

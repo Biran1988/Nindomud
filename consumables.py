@@ -215,11 +215,16 @@ def consume(session, verb: str, query: str) -> None:
 
     _name, data = find_consumable(match)
     proto = _medical_prototype(match)
-    if proto and proto.get("item_type") == "medical":
+    # A builder-created item is authoritative for its consumable type;
+    # names may coincide with an older food/medicine in CONSUMABLES.
+    if proto and proto.get("item_type") in {"medical", "food"}:
+        category = proto["item_type"]
         if data:
-            data = {**data, "category": "medical"}
+            data = {**data, "category": category}
         else:
-            data = {"category": "medical", "message": "You use {item}. Its effects begin to take hold."}
+            data = {"category": category, "restore": "stamina" if category == "food" else "health",
+                    "message": ("You eat {item} and feel refreshed." if category == "food"
+                                else "You use {item}. Its effects begin to take hold.")}
     if not data:
         session.send(f"You can't {verb} {match}.")
         return
@@ -235,16 +240,20 @@ def consume(session, verb: str, query: str) -> None:
         session.send(f"You can't {verb} that. Try '{right_verb}' instead.")
         return
 
+    import item_balance
     if expected_category == "medical":
-        cure_only = bool(data.get("cures")) and not data.get("resources") and not data.get("restore") and not (proto and proto.get("heal_amount"))
+        scaled_recovery = item_balance.effective_recovery(proto, "healing")
+        cure_only = (bool(data.get("cures")) and not data.get("resources")
+                     and not data.get("restore") and not scaled_recovery)
         if cure_only and not any(effect in player.active_status_effects for effect in data["cures"]):
             session.send("You are not poisoned; save the antidote for when you need it.")
             return
-        amount = proto.get("heal_amount", 0) if proto else 0
+        amount = scaled_recovery
         if cure_only:
             resources, duration = [], 0
         elif amount:
-            resources = list(proto.get("heal_flags", []))
+            resources = list(proto.get("heal_flags") or data.get("resources") or
+                             ([data["restore"]] if data.get("restore") else ["health"]))
             duration = proto.get("heal_duration", 30)
         elif data and (data.get("restore") or data.get("resources")):
             resources = list(data.get("resources") or [data["restore"]])
@@ -263,23 +272,39 @@ def consume(session, verb: str, query: str) -> None:
                 "started_at": time.time(), "applied": 0,
             })
     else:
-        resource = data["restore"]
-        amount = (food_recovery_amount(_name, data["amount"])
-                  if expected_category == "food" else data["amount"])
-        current = getattr(player, resource)
-        maximum = getattr(player, f"maximum_{resource}")
-        actual_gain = min(maximum, current + amount) - current
-        setattr(player, resource, current + actual_gain)
+        scaled_food = item_balance.effective_recovery(proto, "food") if expected_category == "food" else 0
+        if expected_category == "food" and proto and proto.get("item_type") == "food":
+            if not scaled_food and not data.get("amount"):
+                session.send("This food needs a level 1-250 with AutoBalance, or an explicit HEAL value.")
+                return
+            amount = (scaled_food if scaled_food else
+                      food_recovery_amount(_name, data["amount"]))
+            resources = list(proto.get("heal_flags") or [data.get("restore", "stamina")])
+        else:
+            amount = (food_recovery_amount(_name, data["amount"])
+                      if expected_category == "food" else data["amount"])
+            resources = [data["restore"]]
+        actual_gains = {}
+        for resource in dict.fromkeys(resources):
+            if resource not in {"health", "chakra", "stamina"}:
+                continue
+            current = getattr(player, resource)
+            maximum = getattr(player, f"maximum_{resource}")
+            gained = max(0, min(maximum, current + amount) - current)
+            setattr(player, resource, current + gained)
+            actual_gains[resource] = gained
 
     player.inventory.remove(match)
     session.send(data["message"].format(item=match))
     if expected_category == "medical":
         if amount > 0:
             session.send(f"Healing begins: {amount} {', '.join(resources)} over {duration} seconds.")
-    elif actual_gain > 0:
-        session.send(f"You recover {actual_gain} {resource}.")
+    elif any(actual_gains.values()):
+        session.send("You recover " + ", ".join(
+            f"{gained} {resource}" for resource, gained in actual_gains.items()
+            if gained > 0) + ".")
     else:
-        session.send(f"You were already at full {resource}.")
+        session.send("Your affected resources were already full.")
 
     for effect_name in data.get("cures", []):
         if effect_name in player.active_status_effects:

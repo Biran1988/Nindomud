@@ -161,7 +161,7 @@ class DefensiveJutsuTests(unittest.TestCase):
     def test_scroll_vnums_unchanged_and_new_techniques_appended(self):
         old={9810:31501,9812:31502,9771:31550,9750:31606,9821:31537}
         self.assertEqual(jutsu_scroll_catalog.legacy_vnums(),old)
-        self.assertEqual(len(jutsu_scroll_catalog.entries()), 243 + 16)
+        self.assertEqual(len(jutsu_scroll_catalog.entries()), 243 + 17)
         self.assertEqual(len(jutsu_scroll_catalog.BASE_SCROLL_KEYS),235)
         self.assertEqual({key for _,key,_ in jutsu_scroll_catalog.entries()[235:239]},
                          {'reinforced barrier','fortress barrier','sanctuary','elemental shield'})
@@ -172,7 +172,8 @@ class DefensiveJutsuTests(unittest.TestCase):
         # Existing assigned scrolls are never shifted by later technique additions.
         self.assertEqual(jutsu_scroll_catalog.vnum_for('celestial nova sphere'), 31744)
         self.assertEqual(jutsu_scroll_catalog.vnum_for('dragonfire pulse'), 31745)
-        self.assertEqual(len(jutsu_scroll_catalog.entries()[243:]), 16)
+        self.assertEqual(len(jutsu_scroll_catalog.entries()[243:259]), 16)
+        self.assertEqual(jutsu_scroll_catalog.vnum_for('kai'), 31760)
 
     def test_help_matches_real_values(self):
         lookup={x['primary_keyword']:x['body'] for x in help_system.DEFAULT_HELP_ENTRIES}

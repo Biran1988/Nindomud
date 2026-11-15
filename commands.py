@@ -166,8 +166,14 @@ def dispatch_line(session, line: str) -> None:
         session.send("You are frozen inside Tsukuyomi and cannot act.")
         return
     if session.player and "asleep" in session.player.active_status_effects and lower_words[0] not in ("wizinvis", "setallprac", "ip", "look", "l", "help", "who", "uptime", "jinchuriki", "mastery", "jutsu", "quit", "save"):
-        session.send("You are asleep beneath Nehan Shōja and cannot act yet.")
-        return
+        # A consciously controlled Kai release can break Genjutsu-induced
+        # sleep, but not natural, drugged, or physically inflicted sleep.
+        asleep = session.player.active_status_effects["asleep"]
+        invoking_kai = (lower_words[0] == "kai" or
+                        lower_words[:2] == ["perform", "kai"])
+        if not (invoking_kai and asleep.get("genjutsu")):
+            session.send("You are asleep and cannot act yet.")
+            return
 
     # The full phrase is recognized without being published as a jutsu,
     # listed skill, shortcut, or help topic (an intentionally hidden art).
@@ -3497,6 +3503,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
     if jutsu_data.get("jutsu_type") == "general_utility":
         import general_skills
         general_skills.activate(session, jutsu_key, target_words)
+        return
+    if jutsu_data.get("jutsu_type") == "genjutsu_release":
+        import kai
+        kai.cast(session, target_words)
         return
     import skill_training
     if (jutsu_data and skill_training.needs_first_practice(

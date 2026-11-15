@@ -2,6 +2,7 @@
 
 # These are explicit so future jutsu additions never rename an existing shortcut.
 JUTSU_SHORTCUTS = {
+    'kai': 'kai',
     # Anime-inspired class arts (explicit keys prevent shortcut drift).
     'dragonfire pulse': 'dfpulse',
     'spirit cannon': 'spcannon',

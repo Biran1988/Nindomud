@@ -50,6 +50,15 @@ RELEASED_APPEND_KEYS = ("elemental shield", "fortress barrier",
 ATTACK_SCROLL_KEYS = ("second attack", "third attack",
                       "fourth attack", "fifth attack")
 
+# Released 31744-31759 are immutable even when a new General jutsu is
+# introduced. Future scrolls (including Kai) start at 31760.
+RELEASED_ANIME_KEYS = (
+    "celestial nova sphere", "dragonfire pulse", "lightning dragon cascade", "spirit cannon",
+    "breathing rhythm rush", "flashstep palm", "meteor drive combo", "titanbreaker fist",
+    "endless void stage", "mirrored guild hall", "phantom floor maze", "refracted memory prison",
+    "comet blade finale", "ember breathing cut", "moonfang draw", "starstream sword dance",
+)
+
 
 def entries():
     """Keep all released IDs stable; reserve 31740-31743 for extra attacks.
@@ -66,7 +75,10 @@ def entries():
     rows = [(key, data_jutsu.JUTSU[key]) for key in released]
     rows.extend((key, data_jutsu.MULTI_ATTACK_SCROLLS[key])
                 for key in ATTACK_SCROLL_KEYS)
-    future = sorted(available.difference(released),
+    if not set(RELEASED_ANIME_KEYS).issubset(available):
+        raise RuntimeError("Previously released anime technique scrolls have changed")
+    rows.extend((key, data_jutsu.JUTSU[key]) for key in RELEASED_ANIME_KEYS)
+    future = sorted(available.difference(released).difference(RELEASED_ANIME_KEYS),
                     key=lambda key: (CLASS_ORDER.index(data_jutsu.JUTSU[key]["class_requirement"]),
                                      data_jutsu.JUTSU[key]["display_name"].casefold(), key))
     rows.extend((key, data_jutsu.JUTSU[key]) for key in future)

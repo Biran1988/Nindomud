@@ -31,8 +31,8 @@ class ScrollJutsuCatalogTests(unittest.TestCase):
         entries = catalog.entries()
         self.assertEqual(len(entries), len(data_jutsu.JUTSU) - 1 + 4)
         self.assertEqual(entries[0][0], 31501)
-        self.assertEqual(entries[-1][0], 31759)
-        self.assertEqual([n for n, _, _ in entries], list(range(31501, 31760)))
+        self.assertEqual(entries[-1][0], 31760)
+        self.assertEqual([n for n, _, _ in entries], list(range(31501, 31761)))
         original = entries[:235]
         self.assertEqual([d["class_requirement"] for _, _, d in original],
                          sorted([d["class_requirement"] for _, _, d in original],
@@ -47,11 +47,13 @@ class ScrollJutsuCatalogTests(unittest.TestCase):
                          ["elemental shield", "fortress barrier", "reinforced barrier", "sanctuary"])
         self.assertEqual([key for _, key, _ in entries[239:243]],
                          ["second attack", "third attack", "fourth attack", "fifth attack"])
-        self.assertEqual(len(entries[243:]), 16)
+        self.assertEqual(len(entries[243:259]), 16)
+        self.assertEqual(entries[259][1], 'kai')
         # All new technique scrolls are appended, never inserted into released IDs.
         import anime_arts
-        self.assertEqual({key for _, key, _ in entries[243:]},
+        self.assertEqual({key for _, key, _ in entries[243:259]},
                          set(anime_arts.jutsu_entries()))
+        self.assertEqual(catalog.vnum_for('kai'), 31760)
         self.assertEqual({name: catalog.vnum_for(name) for name in
                           ("second attack", "third attack", "fourth attack", "fifth attack")},
                          {"second attack": 31740, "third attack": 31741,
@@ -76,10 +78,10 @@ class ScrollJutsuCatalogTests(unittest.TestCase):
 
     def test_register_all_scrolls_without_rooms_or_autospawns(self):
         outcome = catalog.install(migrate_saved=False)
-        self.assertEqual(outcome["total"], 259)
-        self.assertEqual(outcome["created"], 259)
+        self.assertEqual(outcome["total"], 260)
+        self.assertEqual(outcome["created"], 260)
         self.assertEqual(outcome["conflicts"], ())
-        self.assertEqual(len(olc.OBJECT_TEMPLATES), 259)
+        self.assertEqual(len(olc.OBJECT_TEMPLATES), 260)
         for vnum, key, data in catalog.entries():
             obj = olc.OBJECT_TEMPLATES[vnum]
             self.assertEqual(obj["item_type"], "scroll")
@@ -110,7 +112,7 @@ class ScrollJutsuCatalogTests(unittest.TestCase):
                                      31990: copy.deepcopy(custom)})
         combat.MOB_TEMPLATES[111] = {"shop_items": [old, 9811]}
         result = catalog.install()
-        self.assertEqual(result["total"], 259)
+        self.assertEqual(result["total"], 260)
         self.assertEqual(result["moved"], ((9771, 31550),))
         self.assertNotIn(old, olc.OBJECT_TEMPLATES)
         moved = olc.OBJECT_TEMPLATES[new]

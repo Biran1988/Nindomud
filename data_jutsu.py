@@ -814,6 +814,18 @@ import eight_gates
 JUTSU.update(eight_gates.entries())
 import anime_arts
 JUTSU.update(anime_arts.jutsu_entries())
+# Kai is an ordinary, universal illusion-release technique, not a
+# status cure, a Mangekyo counter, or a replacement for Willpower.
+JUTSU["kai"] = {
+    "jutsu_id": "general_kai",
+    "display_name": "Kai",
+    "class_requirement": "general",
+    "level_requirement": 15,
+    "chakra_cost": 15, "stamina_cost": 0, "cooldown": 12.0,
+    "damage": None, "damage_type": None, "effect": None,
+    "tier": 1, "element": "none", "jutsu_type": "genjutsu_release",
+}
+
 _scale_base_damage_to_level()
 # Close-range Taijutsu applies its 85% base damage balancing during
 # actual combat; the full unlock-level damage ladder remains intact.
