@@ -12,11 +12,11 @@ MAX_TITLE_STORED_LENGTH = 160
 _TITLE_RE = re.compile(r"^[A-Za-z0-9\[][A-Za-z0-9 ',.!?_\-\[\]]*$")
 # Inline ROM/xterm colors may change *within* a title (not the player name).
 # Do not accept terminal escapes, reset codes or other arbitrary & controls.
-_INLINE_COLOR_RE = re.compile(r"&\[(\d{1,3})\]|&([RGBYCMWDOrgybcmwd])")
+_INLINE_COLOR_RE = re.compile(r"&\[(\d{1,3})\]|&(\d{1,3})(?!\d)|&([rRgGyYbBcCmMwWdDzZoO])")
 COLOR_CHOICES = {
-    "red": "&r", "green": "&g", "yellow": "&y", "blue": "&b",
-    "cyan": "&c", "magenta": "&m", "purple": "&m",
-    "white": "&w", "gray": "&D", "grey": "&D",
+    "red": "&R", "green": "&G", "yellow": "&Y", "blue": "&B",
+    "cyan": "&C", "magenta": "&M", "purple": "&m",
+    "white": "&W", "gray": "&w", "grey": "&w",
     "orange": "&O", "pink": "&[213]", "gold": "&[220]",
 }
 DEFAULT_COLOR = "gray"
@@ -37,7 +37,8 @@ def clean_title(text):
     matches = list(_INLINE_COLOR_RE.finditer(value))
     if len(matches) > MAX_TITLE_COLOR_CODES:
         return None
-    if any(match.group(1) is not None and int(match.group(1)) > 255
+    if any((match.group(1) or match.group(2)) is not None
+           and int(match.group(1) or match.group(2)) > 255
            for match in matches):
         return None
     visible = _INLINE_COLOR_RE.sub("", value)

@@ -56,11 +56,13 @@ class PromptAndColorHelpTests(unittest.TestCase):
     def test_color_names_render_live_and_codes_remain_copyable(self):
         body=self.page('colors')['body']
         for code,name in (
-            ('R','Red'),('G','Green'),('Y','Yellow'),('B','Blue'),
-            ('C','Cyan'),('M','Magenta'),('W','White'),('D','Dark gray'),
-            ('r','Bright red'),('g','Bright green'),('y','Bright yellow'),
-            ('b','Bright blue'),('c','Bright cyan'),('m','Bright magenta'),
-            ('w','Bright white'),('d','Bright gray'),('O','Orange'),
+            ('r','Dark red'),('g','Dark green'),('y','Dark yellow'),
+            ('b','Dark blue'),('c','Dark cyan'),('m','Dark purple'),
+            ('w','Gray'),('d','Dark gray'),('z','Black'),('o','Dark orange'),
+            ('R','Bright red'),('G','Bright green'),('Y','Bright yellow'),
+            ('B','Bright blue'),('C','Bright cyan'),('M','Bright magenta'),
+            ('W','Bright white'),('D','Light gray'),('Z','Charcoal'),
+            ('O','Bright orange'),
         ):
             with self.subTest(color=code):
                 self.assertIn('&&'+code,body)  # copyable, literal help code
