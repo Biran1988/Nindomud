@@ -7,7 +7,7 @@ import ooc_titles
 
 
 def visible(text):
-    return re.sub(r"&\\[\\d+\\]|&[A-Za-z]", "", text)
+    return re.sub(r"&\[\d+\]|&[A-Za-z]", "", text)
 
 
 class WhoVisualIdentityTests(unittest.TestCase):
