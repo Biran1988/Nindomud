@@ -1843,28 +1843,50 @@ CLASS_WHO_COLOR = {
     "genjutsu": "&M",   # magenta -- illusion
     "bukijutsu": "&Y",  # yellow -- weapons/steel
 }
+# WHO-only display labels and palettes. Internal village/rank IDs are unchanged.
+WHO_VILLAGE_LABELS = {
+    "leaf": "Konoha",
+    "water": "Mist",
+    "cloud": "Cloud",
+    "sand": "Sand",
+    "stone": "Earth",
+    "whirlpool": "Uzushio",
+}
+WHO_VILLAGE_COLORS = {
+    "leaf": (196, 124),       # bright red / dark red
+    "water": (39, 33),        # sky blue / deep blue
+    "cloud": (250, 69),      # silver / royal blue (Thunderstorm)
+    "sand": (223, 180),      # light sand / desert tan
+    "stone": (94, 114),      # deep brown / forest green (Woodland)
+    "whirlpool": (39, 87),   # blue / cyan
+}
 RANK_WHO_LABEL = {
-    "academy student": "Student", "genin": "Genin", "chunin": "Chuunin",
-    "special jonin": "Sp.Jounin", "jonin": "Jounin", "elite jonin": "El.Jounin",
-    "village elder": "V.Elder",
+    "student": "Student", "academy student": "Student",
+    "genin": "Genin", "chunin": "Chuunin",
+    "special jonin": "Sp.Jounin", "jonin": "Jounin",
+    "elite jonin": "El.Jounin", "village elder": "V.Elder",
 }
-# Colored low-to-high, so rank is visible at a glance without reading the text.
-RANK_WHO_COLOR = {
-    "academy student": "&D",   # dim gray -- lowest
-    "genin": "&G",              # green
-    "chunin": "&C",             # cyan
-    "special jonin": "&B",      # blue
-    "jonin": "&Y",              # yellow
-    "elite jonin": "&M",        # magenta
-    "village elder": "&R",       # red -- top shinobi rank, just below Kage
+RANK_WHO_COLORS = {
+    "student": (244, 250),         # slate gray / silver
+    "academy student": (244, 250),
+    "genin": (34, 121),           # emerald / jade
+    "chunin": (30, 51),           # deep teal / icy cyan
+    "special jonin": (99, 183),  # royal purple / lavender
+    "jonin": (214, 220),         # amber / gold
+    "elite jonin": (214, 220),   # retired saved rank
+    "village elder": (231, 220), # retired saved rank
 }
-KAGE_WHO_COLOR = "&O"  # orange -- above every other rank color
+KAGE_WHO_COLORS = (231, 220)     # white / gold, appointed Kage only
+WHO_BRACKET_COLOR = "&[250]"      # silver-gray structural brackets
+WHO_PLAYER_NAME_COLOR = "&[172]"  # universal muted orange
+# White through seven progressively darker gray shades, rescaled per clan length.
+WHO_CLAN_GRADIENT = (231, 254, 252, 250, 248, 246, 244)
 WHO_LEADER_STAFF_LEVELS = {"helper", "builder", "area leader", "administrator", "implementor"}  # all immortals
 WHO_NAME_COLORS = ["&G", "&C", "&B", "&Y", "&O", "&M"]  # cycled per shinobi line for visual variety
 WHO_RANK_WIDTH = 10
 WHO_CLASS_WIDTH = 3
 WHO_LEVEL_COLOR = "&C"  # confirmed directly: a new "Lv 42" field, right after Village and before Rank
-WHO_VILLAGE_WIDTH = max(len(v["village_name"]) for v in VILLAGES.values())
+WHO_VILLAGE_WIDTH = max(len(name) for name in WHO_VILLAGE_LABELS.values())
 WHO_CLAN_WIDTH = max(len("None"), max((len(k) for k in data_clans.CLANS), default=0))  # confirmed directly (Section 139): sized to the longest real clan name
 NEW_CHARACTER_LEVEL_THRESHOLD = 5  # shown with a [NEW] tag at or below this level
 
@@ -1885,21 +1907,34 @@ def village_name_colored(village: str) -> str:
     return "".join(letters) + "&x"
 
 
+def _who_alternating_text(text: str, colors: tuple[int, int]) -> str:
+    """Apply the selected two-color palette to the actual characters only."""
+    return "".join(f"&[{colors[i % 2]}]{char}" for i, char in enumerate(text))
+
+
 def _who_village_name(village: str) -> str:
-    """Full village name (Konohagakure, not 'Leaf'/'Konoha'), each
-    letter alternating between the village's two assigned xterm-256
-    colors, then padded with plain spaces (after the color reset, so
-    they don't inherit any color) to WHO_VILLAGE_WIDTH -- village full
-    names vary in length, so without this the rank/class columns after
-    it wouldn't line up from one line to the next."""
-    full_name = VILLAGES.get(village, {}).get("village_name", village.title())
-    color_a, color_b = VILLAGE_FULL_NAME_COLORS.get(village, (255, 255))
-    letters = []
-    for i, ch in enumerate(full_name):
-        color = color_a if i % 2 == 0 else color_b
-        letters.append(f"&[{color}]{ch}")
-    padding = " " * (WHO_VILLAGE_WIDTH - len(full_name))
-    return "".join(letters) + "&D" + padding
+    """WHO-only short village labels. Never modify canonical village names."""
+    name = WHO_VILLAGE_LABELS.get(village, VILLAGES.get(village, {}).get("village_short_name", village.title()))
+    colors = WHO_VILLAGE_COLORS.get(village, (250, 250))
+    return _who_alternating_text(name, colors) + "&W" + " " * max(0, WHO_VILLAGE_WIDTH - len(name))
+
+
+def _who_rank_name(rank: str, colors: tuple[int, int], *, centered: bool = False) -> str:
+    """Colored rank with visible-width padding outside the colored letters."""
+    total_padding = max(0, WHO_RANK_WIDTH - len(rank))
+    before = total_padding // 2 if centered else 0
+    return " " * before + _who_alternating_text(rank, colors) + "&W" + " " * (total_padding - before)
+
+
+def _who_clan_name(clan: str) -> str:
+    """Same subtle white-to-gray gradient for every clan, at any name length."""
+    name = clan.title() if clan and clan.casefold() != "none" else "None"
+    last = len(WHO_CLAN_GRADIENT) - 1
+    colored = "".join(
+        f"&[{WHO_CLAN_GRADIENT[round(index * last / max(1, len(name) - 1))]}]{letter}"
+        for index, letter in enumerate(name)
+    )
+    return colored + "&W" + " " * max(0, WHO_CLAN_WIDTH - len(name))
 
 
 def _who_banner(fill_char: str, fill_color: str, label: str, width: int = 68, label_color: str = None) -> str:
@@ -1956,19 +1991,23 @@ def cmd_who(session, args: List[str]) -> None:
         village_display = _who_village_name(p.village)
         level_label = f"{WHO_LEVEL_COLOR}{p.level:>5}&W"
         village_info = VILLAGES.get(p.village)
-        clan_text = (p.clan.title() if p.clan and p.clan != "none" else "None").ljust(WHO_CLAN_WIDTH)
+        clan_text = _who_clan_name(p.clan)
         if p.is_kage and village_info:
-            rank_label = f"{KAGE_WHO_COLOR}{'Kage'.center(WHO_RANK_WIDTH)}&W"
+            rank_label = _who_rank_name("Kage", KAGE_WHO_COLORS, centered=True)
             name_text = f"{ooc_titles.player_display(p)}, the {village_info['kage_title']} of {village_info['village_name']}"
         else:
             # Staff shown here too now (Section 139: no more separate
             # section), using their real rank badge, not a false Kage
             # title.
-            rank_text = RANK_WHO_LABEL.get(p.village_rank, kage.rank_label(p.village_rank)).ljust(WHO_RANK_WIDTH)
-            rank_color = RANK_WHO_COLOR.get(p.village_rank, "&W")
-            rank_label = f"{rank_color}{rank_text}&W"
+            rank_text = RANK_WHO_LABEL.get(p.village_rank, kage.rank_label(p.village_rank))
+            rank_colors = RANK_WHO_COLORS.get(p.village_rank, (250, 250))
+            rank_label = _who_rank_name(rank_text, rank_colors)
             name_text = ooc_titles.player_display(p)
-        lines.append(f"&W[{village_display}&W][{rank_label}][{level_label}]&W[{clan_text}]&Y {name_text}&D{_who_tags(p)}")
+        lines.append(
+            f"{WHO_BRACKET_COLOR}[{village_display}{WHO_BRACKET_COLOR}]"
+            f"[{rank_label}{WHO_BRACKET_COLOR}][{level_label}{WHO_BRACKET_COLOR}]"
+            f"[{clan_text}{WHO_BRACKET_COLOR}] {WHO_PLAYER_NAME_COLOR}{name_text}&D{_who_tags(p)}"
+        )
 
     # Retained characters are listed separately: present in the world,
     # but not connected, attackable, or counted as currently online.
