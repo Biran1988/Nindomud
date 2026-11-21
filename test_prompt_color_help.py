@@ -57,10 +57,10 @@ class PromptAndColorHelpTests(unittest.TestCase):
         body=self.page('colors')['body']
         for code,name in (
             ('r','Dark red'),('g','Dark green'),('y','Dark yellow'),
-            ('b','Dark blue'),('c','Dark cyan'),('m','Dark purple'),
+            ('b','Dark blue'),('c','Dark cyan'),('p','Dark purple'),
             ('w','Gray'),('d','Dark gray'),('z','Black'),('o','Dark orange'),
             ('R','Bright red'),('G','Bright green'),('Y','Bright yellow'),
-            ('B','Bright blue'),('C','Bright cyan'),('M','Bright magenta'),
+            ('B','Bright blue'),('C','Bright cyan'),('P','Bright magenta'),
             ('W','Bright white'),('D','Light gray'),('Z','Charcoal'),
             ('O','Bright orange'),
         ):
@@ -73,7 +73,7 @@ class PromptAndColorHelpTests(unittest.TestCase):
         self.assertIn('&[196]Bright xterm red&x',body)
         colored=colors.render(body,True)
         self.assertIn('&r',colored) # labeled code remains readable
-        self.assertIn('\x1b[22;91mBright red\x1b[0m',colored)
+        self.assertIn('\x1b[1;31mBright red\x1b[0m',colored)
         self.assertIn('\x1b[38;5;196mBright xterm red\x1b[0m',colored)
         uncolored=colors.render(body,False)
         self.assertIn('&r',uncolored)
@@ -100,7 +100,7 @@ class PromptAndColorHelpTests(unittest.TestCase):
         self.assertIn('%%',body)
 
     def test_biran_preset_uses_exact_format_and_expands_resources(self):
-        expected = "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x"
+        expected = "&W|&r%h&W/&R%H&W|&p%c&W/&P%C&W|&c%s&W/&C%S&W|&y%r&W|&x"
         self.assertEqual(prompt.PRESETS['biran'], expected)
         player = Player('PresetReader', 'PresetReader')
         player.health = 40
@@ -116,12 +116,12 @@ class PromptAndColorHelpTests(unittest.TestCase):
         self.assertEqual(player.prompt_string, expected)
         self.assertIn("'biran'", output[-1])
         rendered = prompt.render_prompt(player)
-        self.assertEqual(rendered, '&W|&r40&W/&R90&W|&m50&W/&M100&W|&c60&W/&C120&W|&y25000&W|&x')
+        self.assertEqual(rendered, '&W|&r40&W/&R90&W|&p50&W/&P100&W|&c60&W/&C120&W|&y25000&W|&x')
         ansi = colors.render(rendered, True)
         self.assertIn(colors.ANSI_CODES['&r'] + '40', ansi)
         self.assertIn(colors.ANSI_CODES['&R'] + '90', ansi)
-        self.assertIn(colors.ANSI_CODES['&m'] + '50', ansi)
-        self.assertIn(colors.ANSI_CODES['&M'] + '100', ansi)
+        self.assertIn(colors.ANSI_CODES['&p'] + '50', ansi)
+        self.assertIn(colors.ANSI_CODES['&P'] + '100', ansi)
         self.assertIn(colors.ANSI_CODES['&c'] + '60', ansi)
         self.assertIn(colors.ANSI_CODES['&C'] + '120', ansi)
         self.assertIn(colors.ANSI_CODES['&y'] + '25000', ansi)

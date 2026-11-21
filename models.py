@@ -74,6 +74,7 @@ class Player:
 
     level: int = 1
     experience: int = 0
+    xp_bonus_remainder: int = 0
     # Version 2 is the cumulative cubic progression curve. Existing saves
     # without this field are detected and migrated by storage.load_player.
     experience_curve_version: int = 2

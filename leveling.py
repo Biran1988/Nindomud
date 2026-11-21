@@ -253,6 +253,15 @@ def grant_experience(player: Player, amount: int) -> List[str]:
 
     lines = []
     reached_levels = []
+    # The selected prompt format determines an extra fractional award.
+    # Import here because prompt.py imports leveling.py for token expansion.
+    import prompt
+    base_amount = max(0, int(amount))
+    if base_amount and player.prompt_string == prompt.PRESETS["biran"]:
+        bonus, player.xp_bonus_remainder = divmod(
+            base_amount + player.xp_bonus_remainder, 20
+        )
+        amount = base_amount + bonus
     # Do not bank enough XP to skip levels after promotion.
     player.experience = credited_experience(player, amount, cap)
 

@@ -1,35 +1,36 @@
-"""SMAUGFUSS/SWR-compatible ampersand colors, plus xterm-256.
+"""SMAUGFUSS classic ANSI foregrounds plus Nindo compatibility extensions.
 
-Lowercase named codes select dark foregrounds; uppercase codes are bright.
-&w is gray, &W bright white; &m dark purple, &M bright magenta.
-&x resets, && prints a literal ampersand. Numeric &N or &[N] selects
-any xterm-256 foreground (0-255). Switching shades clears bold intensity.
+Classic dark/bright colors use ANSI intensity 0/1. Canonical purple/pink are
+&p/&P, while &m/&M remain backwards-compatible. The project's &x reset and
+xterm-256 formats remain unchanged to avoid breaking existing game content.
 """
 
 import re
 
 ANSI_CODES = {
-    "&r": "\x1b[22;31m",  # Dark red
-    "&R": "\x1b[22;91m",  # Bright red
-    "&g": "\x1b[22;32m",  # Dark green
-    "&G": "\x1b[22;92m",  # Bright green
-    "&y": "\x1b[22;33m",  # Dark yellow
-    "&Y": "\x1b[22;93m",  # Bright yellow
-    "&b": "\x1b[22;34m",  # Dark blue
-    "&B": "\x1b[22;94m",  # Bright blue
-    "&c": "\x1b[22;36m",  # Dark cyan
-    "&C": "\x1b[22;96m",  # Bright cyan
-    "&m": "\x1b[22;35m",  # Dark purple
-    "&M": "\x1b[22;95m",  # Bright magenta
-    "&w": "\x1b[22;37m",  # Gray
-    "&W": "\x1b[22;97m",  # Bright white
-    "&d": "\x1b[22;90m",  # Dark gray
-    "&D": "\x1b[22;37m",  # Light gray
-    "&z": "\x1b[22;30m",  # Black
-    "&Z": "\x1b[22;90m",  # Charcoal
-    "&o": "\x1b[22;38;5;130m",  # Dark orange
-    "&O": "\x1b[22;38;5;208m",  # Bright orange
-    "&x": "\x1b[0m",  # Reset
+    "&r": "\x1b[0;31m",
+    "&R": "\x1b[1;31m",
+    "&g": "\x1b[0;32m",
+    "&G": "\x1b[1;32m",
+    "&y": "\x1b[0;33m",
+    "&Y": "\x1b[1;33m",
+    "&b": "\x1b[0;34m",
+    "&B": "\x1b[1;34m",
+    "&c": "\x1b[0;36m",
+    "&C": "\x1b[1;36m",
+    "&p": "\x1b[0;35m",
+    "&P": "\x1b[1;35m",
+    "&m": "\x1b[0;35m",
+    "&M": "\x1b[1;35m",
+    "&w": "\x1b[0;37m",
+    "&W": "\x1b[1;37m",
+    "&d": "\x1b[1;30m",
+    "&D": "\x1b[0;37m",
+    "&z": "\x1b[0;30m",
+    "&Z": "\x1b[1;30m",
+    "&o": "\x1b[38;5;130m",
+    "&O": "\x1b[38;5;208m",
+    "&x": "\x1b[0m",  # Nindo reset retained for existing content
 }
 
 _CODE_RE = re.compile("|".join(re.escape(c) for c in ANSI_CODES))

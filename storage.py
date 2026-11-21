@@ -531,8 +531,9 @@ def save_player(player: Player) -> None:
 # one-time migration applied on load, not a live import of prompt.py
 # (which would create storage -> prompt -> leveling -> storage cycle).
 _LEGACY_PROMPT_MIGRATIONS = {
-    "&w|&R%h&w/&196%H&w|&M%c&w/&m%C&w|&c%s&w/&C%S&w|&x": "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
-    "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&x": "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
+    "&w|&R%h&w/&196%H&w|&M%c&w/&m%C&w|&c%s&w/&C%S&w|&x": "&W|&r%h&W/&R%H&W|&p%c&W/&P%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
+    "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&x": "&W|&r%h&W/&R%H&W|&p%c&W/&P%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
+    "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x": "&W|&r%h&W/&R%H&W|&p%c&W/&P%C&W|&c%s&W/&C%S&W|&y%r&W|&x",
     "<HP:%h/%H CH:%c/%C ST:%s/%S XP:%x/%X Ryo:%r>":
         "&RHP:%h/%H &BCH:%c/%C &GST:%s/%S &CXP:%x/%X &YRyo:%r&x",
     "<HP:%h/%H CH:%c/%C ST:%s/%S>":

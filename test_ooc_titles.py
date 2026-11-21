@@ -68,12 +68,12 @@ class OocTitleTests(unittest.TestCase):
         plain = colors.render(result, False)
         self.assertEqual(plain, "Shinobi Flame Ice Storm")
         colored = colors.render(result, True)
-        self.assertIn("\x1b[22;91m", colored)  # red
-        self.assertIn("\x1b[22;96m", colored)    # cyan
+        self.assertIn("\x1b[1;31m", colored)  # red
+        self.assertIn("\x1b[1;36m", colored)    # cyan
         self.assertIn("\x1b[38;5;208m", colored)  # xterm orange
-        self.assertLess(colored.index("\x1b[22;91m"),
-                        colored.index("\x1b[22;96m"))
-        self.assertLess(colored.index("\x1b[22;96m"),
+        self.assertLess(colored.index("\x1b[1;31m"),
+                        colored.index("\x1b[1;36m"))
+        self.assertLess(colored.index("\x1b[1;36m"),
                         colored.index("\x1b[38;5;208m"))
         loaded = storage.load_player("Shinobi")
         self.assertEqual(loaded.ooc_title, "&RFlame &CIce &[208]Storm")
@@ -145,7 +145,7 @@ class OocTitleTests(unittest.TestCase):
         self.assertNotIn("Wolf", self.session.broadcast_all.call_args.args[0])
 
     def test_invalid_title_and_color_cannot_inject_codes(self):
-        for value in ("&QAdministrator", "\x1b[22;91mEvil", "X" * 41,
+        for value in ("&QAdministrator", "\x1b[1;31mEvil", "X" * 41,
                       "&[256]Fake", "&[999]Fake", "&xReset", "&R" * 17 + "Name",
                       "&R" + "X" * 41):
             commands.dispatch(self.session, "title", [value])

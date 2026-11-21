@@ -113,6 +113,10 @@ class ConfigPersistenceTests(unittest.TestCase):
         self.assertEqual(reloaded.prompt_string, prompt.PRESETS['biran'])
         self.assertEqual(storage.load_player(self.player.name).prompt_string,
                          prompt.PRESETS['biran'])
+        reloaded.prompt_string = "&W|&r%h&W/&R%H&W|&m%c&W/&M%C&W|&c%s&W/&C%S&W|&y%r&W|&x"
+        storage.save_player(reloaded)
+        self.assertEqual(storage.load_player(self.player.name).prompt_string,
+                         prompt.PRESETS['biran'])
         custom = '&W|&r%h&W/&R%H&W|CUSTOM&W|&x'
         reloaded.prompt_string = custom
         storage.save_player(reloaded)
