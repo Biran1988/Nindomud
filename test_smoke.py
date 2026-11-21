@@ -1887,7 +1887,7 @@ def test_who_list_redesign():
     even without the separate section). Columns reordered to Village,
     Rank, Level, Clan, Name (per direct confirmation), dropping Class
     entirely; a real header row names each column. Villages use their
-    full name (Konohagakure, not an abbreviation) with alternating
+    approved short labels (Konoha, Mist, Cloud, Sand, Earth, Uzushio) with alternating
     per-letter xterm colors, and [AFK]/[NEW] tags still apply. Rank
     abbreviations keep columns aligned even for a long rank like
     'special jonin'."""
@@ -1947,10 +1947,11 @@ def test_who_list_redesign():
     assert "[NEW]" in text  # Arashixx and Tsunadexx are both above/below threshold differently
     assert re.search(r"\d+ shinobi (is|are) currently online\.", text)
 
-    # Full village names, not abbreviations.
-    assert "Konohagakure" in text
-    assert "Kumogakure" in text
-    assert "Leaf]" not in text and "[Cloud]" not in text
+    # WHO-only compact labels replace the old village names.
+    assert "Konoha" in text
+    assert "Cloud" in text
+    assert "Konohagakure" not in text and "Kumogakure" not in text
+    assert "Leaf]" not in text
 
     # A real header row used to name each of the 4 columns (Section
     # 139) -- removed entirely per direct request (Section 154): "remove
@@ -1958,13 +1959,12 @@ def test_who_list_redesign():
     # leads directly into player rows, with no column labels at all.
 
     # Column order confirmed directly: Village, Rank, Level, Clan, then Name.
-    assert re.search(r"\[Konohagakure\s*\]\[Genin\s*\]\[\s*20\]", text)
-    assert re.search(r"\[Kumogakure\s*\]\[Chuunin\s*\]\[\s*30\]", text)
+    assert re.search(r"\[Konoha\s*\]\[Genin\s*\]\[\s*20\]", text)
+    assert re.search(r"\[Cloud\s*\]\[Chuunin\s*\]\[\s*30\]", text)
 
-    # Konohagakure's letters actually alternate between its two assigned
-    # xterm-256 colors (34 and 118).
-    assert "\x1b[38;5;34m" in raw
-    assert "\x1b[38;5;118m" in raw
+    # Konoha uses the approved bright/dark-red xterm-256 colors.
+    assert "\x1b[38;5;196m" in raw
+    assert "\x1b[38;5;124m" in raw
 
     # Rank abbreviation keeps columns aligned even for a long real rank.
     assert "special jonin" not in text.lower()  # should show as 'Sp.Jounin', not the raw long name
@@ -2030,9 +2030,8 @@ def test_who_list_alignment_and_rank_colors():
         feed_local(village); feed_local(cls); feed_local(clan or __import__("data_clans").CLANS_BY_VILLAGE[village][0]); feed_local("balanced"); feed_local("male"); feed_local("tan"); feed_local("black"); feed_local("brown"); feed_local("athletic"); feed_local("confident"); feed_local("y")
         return s, out
 
-    # Konohagakure (12 letters) and Kumogakure (10 letters) differ in
-    # length -- after padding, the bracket that follows should start at
-    # the same column for both.
+    # Compact WHO village labels differ in length, but padded columns
+    # must still align for Konoha and Cloud.
     s1, out1 = make("Arashiya", "UzumakiClanPass1", "leaf", "ninjutsu")
     s1.player.village_rank = "genin"
     s2, out2 = make("Raidenya", "LightningFistPass1", "cloud", "taijutsu")
@@ -2044,28 +2043,26 @@ def test_who_list_alignment_and_rank_colors():
     text = re.sub(r"\x1b\[[0-9;]*m", "", raw)
     out1.clear()
 
-    konoha_bracket_start = text.index("[Konohagakure")
-    kumo_bracket_start = text.index("[Kumogakure")
-    konoha_rank_bracket = text.index("[", konoha_bracket_start + 1, text.index("[Kumogakure"))
+    konoha_bracket_start = text.index("[Konoha")
+    kumo_bracket_start = text.index("[Cloud")
+    konoha_rank_bracket = text.index("[", konoha_bracket_start + 1, text.index("[Cloud"))
     kumo_rank_bracket = text.index("[", kumo_bracket_start + 1)
     # The rank bracket should start at the same relative offset from
     # each village bracket's own start, since both are padded to the
     # same width.
     assert (konoha_rank_bracket - konoha_bracket_start) == (kumo_rank_bracket - kumo_bracket_start)
 
-    # Rank text is actually colored -- genin (green) and village
-    # elder (red) should use different color codes.
-    assert commands_module.RANK_WHO_COLOR["genin"] == "&G"
-    assert commands_module.RANK_WHO_COLOR["jonin"] == "&Y"
-    assert commands_module.RANK_WHO_COLOR["genin"] != commands_module.RANK_WHO_COLOR["jonin"]
-    assert colors.render("&G", True) in raw  # modern bright-green Genin rank
+    # Every rank uses its approved two-color palette; no old single colors.
+    assert commands_module.RANK_WHO_COLORS["genin"] == (34, 121)
+    assert commands_module.RANK_WHO_COLORS["jonin"] == (214, 220)
+    assert commands_module.RANK_WHO_COLORS["genin"] != commands_module.RANK_WHO_COLORS["jonin"]
+    assert "\x1b[38;5;34m" in raw  # emerald Genin rank
 
     print("WHO LIST ALIGNMENT AND RANK COLORS TEST PASSED")
 
 
 def test_who_list_class_colors():
-    """Class tags ([Nin]/[Tai]/[Gen]/[Buk]) are colored too, each class
-    getting its own distinct color, same treatment as the rank colors."""
+    """Class colors still exist elsewhere, but no class column appears on WHO."""
     import commands as commands_module
 
     def make(name, pw, village, cls):
@@ -2087,11 +2084,13 @@ def test_who_list_class_colors():
     raw = "".join(out1)
     out1.clear()
 
-    ninjutsu_color = commands_module.CLASS_WHO_COLOR["ninjutsu"]
-    import colors
-    assert colors.ANSI_CODES[ninjutsu_color] in raw
+    import re
+    display = re.sub(r"\x1b\[[0-9;]*m", "", raw)
+    for tag in ("[Nin]", "[Tai]", "[Gen]", "[Buk]"):
+        assert tag not in display
+    assert "[Konoha" in display
 
-    print("WHO LIST CLASS COLORS TEST PASSED")
+    print("WHO LIST NO CLASS COLUMN TEST PASSED")
 
 
 def test_mset_rank_alias():
