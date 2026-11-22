@@ -4,8 +4,8 @@
     "trap disabling"
   ],
   "title": "Trap Disabling",
-  "body": "Syntax: trap disabling [target]\n\nDescription: Disarms attached traps on the selected target (or yourself when no target is given). Failure triggers the trap against you. Bukijutsu unlocks at level 25. Costs 15 Chakra and 10 Stamina; 5 second cooldown.\n\nDate: 2026-09-27",
+  "body": "Syntax: trap disabling [target]\n\nDescription: Disarms attached traps on the selected target (or yourself when no target is given). Failure triggers the trap against you. Bukijutsu unlocks at level 25. Costs 15 Chakra and 10 Stamina; 5 second cooldown.\n\nDate: 2026-09-27\\n\\nNEW: When you ENTER a room containing a hostile player-placed Trap Tag, knowing Trap Disabling triggers a FREE automatic disarm attempt before the trap activates. Chance is 25%-90% based on proficiency (90% maximum, so failure is always possible). Failure springs the trap. This does not change manual Trap Disabling against traps attached to a combat target, nor Kage-controlled territory defenses. See HELP TRAP TAG PLACEMENT.",
   "created_by": "System",
   "updated_by": "System",
-  "updated_at": 0.0
+  "updated_at": 0
 }
