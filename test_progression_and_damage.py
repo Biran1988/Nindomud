@@ -142,7 +142,7 @@ class BuilderPersistenceTests(unittest.TestCase):
         self.assertIn(9200, combat.mob_shop_items(shopkeeper))
         commands.cmd_list(session, [])
         shown = colors.render(session.send.call_args.args[0], False)
-        self.assertIn("new kunai - 30 ryo (level 5)", shown)
+        self.assertIn("new kunai - 30 ryo [Lvl 5]", shown)
         self.assertNotIn("old kunai", shown)
         with patch.object(commands, "_fire_item_trigger"):
             commands.cmd_buy(session, ["new", "kunai"])
