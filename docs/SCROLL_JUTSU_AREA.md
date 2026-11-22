@@ -16,7 +16,8 @@ placed in a shop, on a mob or at a spawn point automatically.
 | Bukijutsu-only Fourth/Fifth scrolls | 31742–31743 | 2 |
 | Anime-inspired class technique scrolls | 31744–31759 | 16 |
 | Kai (Genjutsu Release) | 31760 | 1 |
-| Unassigned | 31761–32000 | 240 |
+| Trap Tag Placement (Bukijutsu 10; scroll for others 25) | 31761 | 1 |
+| Unassigned | 31762–32000 | 239 |
 
 The original 235 registered techniques that can be represented by a teaching scroll
 have a stable, distinct object VNUM, grouped by class and alphabetized by
