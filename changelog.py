@@ -672,4 +672,5 @@ CHANGELOG = [
     ("15.513", "Added twelve Chuunin weapons (objects 6-17) to weaponsmith mob 775 and twelve level-scaled armor pieces (objects 18-29) to armorsmith mob 776. Existing saved gear and merchant stock remain intact."),
     ("15.514", "Mob 779 now offers all six iron-tier gathering/crafting tools. Added craftable Iron/Steel/Chakra hoes, cooking pots and chisels using objects 30-38, level-gated job use and updated helpfiles."),
     ("15.515", "Tripled the six iron-tier tools sold by mob 779 from 1,100 to 3,300 ryo each. Existing saved default prices are upgraded without altering custom builder prices or steel/chakra tool tiers."),
+    ("15.516", "Added Special Jounin (levels 70-199) and Jounin (levels 200-250) equipment to weapon mob 784 and armor mob 786: 21 weapons, 20 armor pieces, five elemental weapons, and five elemental Chakra Auras (objects 39-79). Rank-tier gear uses AutoBalance; elementals give a modest weapon strike, jutsu affinity, or counter-resistance effect while equipped. Original /data, builder item edits, and shop stock remain intact."),
 ]
