@@ -1457,19 +1457,18 @@ def cmd_aset(session, args: List[str]) -> None:
 
 
 def _rset_field_reference() -> str:
-    """Show room-editing commands without requiring an extra 'rset fields'."""
+    """Print the actual room settings, exits, and command names."""
     return "\n".join([
-        "&CROOM FIELDS&x  rset <field> <value> (edits your current room)",
-        "&WRoom settings:&x name, desc, sector, flags, resetmsg",
-        "&WExits:&x exit, bexit, bunlink, exitflag",
-        "&WPrograms:&x addprogram, removeprogram",
-        "&WRoom management:&x create, delete, goto, show, fields",
-        "&DUse 'rset flags' for room/biome choices and "
-        "'rset exitflag' for valid exit flags.&x",
+        "&CROOM FIELDS&x  rset <field> <value> (current room)",
+        _field_list("Room settings", {"name", "desc", "sector", "flags", "resetmsg"}),
+        _field_list("Exits", {"exit", "bexit", "bunlink", "exitflag"}),
+        _field_list("Exit flag choices", EXIT_FLAG_NAMES),
+        _field_list("Room programs", {"addprogram", "removeprogram"}),
+        _field_list("Room management", {"create", "delete", "goto", "show", "fields"}),
         "&DExamples: rset name Academy | rset flags forest | "
         "rset bexit north 9002&x",
+        "&DRSET FLAGS shows every valid room and biome flag with current values.&x",
     ])
-
 
 def _rset_flag_reference(room) -> str:
     """Display current room flags and their valid choices on a typo."""
@@ -1493,20 +1492,7 @@ def cmd_rset(session, args: List[str]) -> None:
     elif not _require_builder(session):
         return
     if not args:
-        session.send(
-            "Usage: rset create|goto|name|desc|sector|exit|bexit|bunlink|flags|resetmsg|exitflag|show ...\n"
-            "rset always acts on the room you're standing in. 'create'/'goto' teleport you to the target room first, so every other subcommand naturally follows.\n"
-            "'rset name' or 'rset desc' with no text opens an interactive editor.\n"
-            "'rset flags apartment' toggles housing; 'rset flags playershop' toggles shops.\n"
-            "'rset flags forest' chooses forest; repeat it to clear the biome.\n"
-            "'rset flags' lists all flags and biome choices.\n"
-            "'rset resetmsg <text|off>' sets this room's own atmospheric flavor line, shown periodically -- overrides its area's own reset message (see 'area set <name> resetmsg') if that area has one too.\n"
-            "'rset flags safe' toggles PvP safety in this room (blocks attacking other players here).\n"
-            f"'rset exitflag <direction> <flag> [value]' -- flags: {', '.join(EXIT_FLAG_NAMES)}. "
-            "door/locked/hidden take on|off; keyitem/passcode take the required item name/code "
-            "(or 'off' to clear). A single exit can carry multiple flags at once. "
-            "Hidden works alone on an ordinary passage with no door; it conceals the exit from LOOK."
-        )
+        session.send(_rset_field_reference())
         return
 
     sub, rest = args[0].lower(), args[1:]
@@ -2005,6 +1991,10 @@ def _mset_field_reference(player: bool = False) -> str:
         _field_list("Lists (add a value; prefix with - to remove)", MOB_LIST_FIELDS,
                     MOB_FIELD_NAMES),
         _field_list("Attributes (numbers)", MOB_ATTR_FIELDS),
+        _field_list("Special mob settings", {"gate"}),
+        _field_list("Mob management", {"create", "delete", "spawn", "additem",
+                                       "removeitem", "addprogram", "removeprogram",
+                                       "list", "fields"}),
         "&DExample: mset 9001 class ninjutsu  |  mset 9001 flags Wander&x",
         "&DUse 'mset <vnum> <field>' for its current value and valid options.&x",
         "&DShop stock: mset additem <mob vnum> <object vnum>. XP comes from mob level.&x",
@@ -2283,10 +2273,11 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
         return
     target, live_session = _find_target_player(target_name)
     if not target:
-        session.send(f"No player named '{target_name}' is online or has a saved character.")
+        session.send(f"No player named '{target_name}' is online or has a saved character.\n"
+                     + _mset_field_reference())
         return
     if not field or not value_args:
-        session.send("Usage: mset <player name> <field> <value...>")
+        session.send(_mset_field_reference(player=True))
         return
     value_text = " ".join(value_args)
     field = _builder_field(field, PLAYER_STRING_FIELDS | PLAYER_INT_FIELDS |
@@ -2613,22 +2604,7 @@ def cmd_mset(session, args: List[str]) -> None:
     if not _require_builder(session):
         return
     if not args:
-        session.send(
-            "Usage: mset create <vnum> <name...>\n"
-            "       mset <vnum> <field> <value...>   (mob prototype -- add/set)\n"
-            "       mset <vnum> <field>              (shows that field's valid options)\n"
-            "       mset <vnum> <field> -<value>       (remove one item from a list field)\n"
-            "       mset spawn <vnum> <room_vnum>\n"
-            "       mset additem <mob vnum> <object vnum>   (stock an item for a shopkeeper)\n"
-            "       mset removeitem <mob vnum> <object vnum>\n"
-            "       mset addprogram <vnum> <trigger> <action> <args...>\n"
-            "       mset removeprogram <vnum> <index>\n"
-            "       mset list\n"
-            "       mset fields [mob|player]           (readable field reference)\n"
-            "       mset <player name> <field> <value...>   (edit a live/saved character -- admin+ only)\n"
-            "\n"
-            "Use 'mstat <vnum>' to view a mob's full stat block, or 'mset fields' for the complete field reference."
-        )
+        session.send(_mset_field_reference())
         return
 
     sub = args[0].lower()
@@ -2827,7 +2803,7 @@ def cmd_mset(session, args: List[str]) -> None:
     # mset <vnum> <field> <value...>  OR  mset <player name> <field> <value...>
     if not sub.isdigit():
         if len(args) < 3:
-            session.send("Usage: mset <player name> <field> <value...>")
+            session.send(_mset_field_reference())
             return
         _mset_player(session, args[0], args[1].lower(), args[2:])
         return
@@ -2836,7 +2812,7 @@ def cmd_mset(session, args: List[str]) -> None:
         return
     vnum = int(sub)
     if len(args) < 2:
-        session.send("Usage: mset <vnum> <field> <value...>\nUse 'mset fields' to see every field, or 'mset <vnum> <field>' to see one field's options.")
+        session.send(_mset_field_reference())
         return
     # A gate is attached to a real, existing DOOR exit, never created or
     # linked automatically. This respects assigned builder VNUM ranges.
@@ -3011,7 +2987,8 @@ def cmd_mset(session, args: List[str]) -> None:
         if field == "act_flags" and not value_text.startswith("-"):
             canonical = shop_flags.canonical_flag(value_text) or _canonical_flag(value_text, VALID_MOB_ACT_FLAGS)
             if canonical is None:
-                session.send(f"'{value_text}' isn't a recognized mob flag. Valid: {', '.join(sorted(VALID_MOB_ACT_FLAGS))}")
+                session.send(f"Unknown mob flag '{value_text}'.\n"
+                             + _mob_field_hint("act_flags", t, "flags"))
                 return
             value_text = canonical
         if field == "act_flags" and value_text.startswith("-"):
@@ -3518,6 +3495,10 @@ def _oset_field_reference() -> str:
         _field_list("Numbers", OBJECT_INT_FIELDS, OBJECT_FIELD_NAMES),
         _field_list("Lists (add a value; prefix with - to remove)",
                     OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
+        _field_list("Other object settings", {"statbonus", "resist", "value"}),
+        _field_list("Object management", {"create", "delete", "load",
+                                          "addprogram", "removeprogram", "list",
+                                          "fields"}),
         "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
         "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
         "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
@@ -3535,23 +3516,7 @@ def cmd_oset(session, args: List[str]) -> None:
     if not _require_builder(session):
         return
     if not args:
-        session.send(
-            "Usage: oset create <vnum> <name...>\n"
-            "       oset <vnum> <field> <value...>   (add/set)\n"
-            "       oset <vnum> <field>              (shows that field's valid options)\n"
-            "       oset <vnum> <field> -<value>       (remove one item from a list field)\n"
-            "       oset <vnum> value <index> <number>  (set one of the 4 value slots)\n"
-            f"       oset <vnum> statbonus <stat> <number>  (0 clears it; valid: {', '.join(sorted(STAT_BONUS_KEYS))})\n"
-            "       oset <vnum> resist <weapon type> <0-100>  (0 clears it)\n"
-            "       oset <vnum> heal <amount>  |  healtime <seconds>  |  healflags <health|chakra|stamina>\n"
-            "       oset <vnum> uses <1-100000>  (durability of each new job tool)\n"
-            "       oset addprogram <vnum> <trigger> <action> <args...>\n"
-            "       oset removeprogram <vnum> <index>\n"
-            "       oset list\n"
-            "       oset fields                        (full list of every settable field)\n"
-            "\n"
-            "Use 'ostat <vnum>' to view an item's full stat block, or 'oset fields' for the complete field reference."
-        )
+        session.send(_oset_field_reference())
         return
 
     sub = args[0].lower()
@@ -3677,12 +3642,15 @@ def cmd_oset(session, args: List[str]) -> None:
         session.send(f"Removed program {index} from object {obj_vnum}.")
         return
 
-    if not sub.isdigit() or int(sub) not in OBJECT_TEMPLATES:
+    if not sub.isdigit():
+        session.send(f"Unknown OSET command '{sub}'.\n" + _oset_field_reference())
+        return
+    if int(sub) not in OBJECT_TEMPLATES:
         session.send(f"No object prototype '{sub}' exists. Use 'oset create <vnum> <name>' first.")
         return
     vnum = int(sub)
     if len(args) < 2:
-        session.send("Usage: oset <vnum> <field> <value...>\nUse 'oset fields' to see every field, or 'oset <vnum> <field>' to see one field's options.")
+        session.send(_oset_field_reference())
         return
     display = args[1].lower()
     field = _builder_field(display, OBJECT_STRING_FIELDS | OBJECT_INT_FIELDS |
@@ -3869,7 +3837,8 @@ def cmd_oset(session, args: List[str]) -> None:
         if field == "extra_flags" and not value_text.startswith("-"):
             canonical = _canonical_flag(value_text, VALID_ITEM_EXTRA_FLAGS)
             if canonical is None:
-                session.send(f"'{value_text}' isn't a recognized item flag. Valid: {', '.join(sorted(f.replace('_', '') for f in VALID_ITEM_EXTRA_FLAGS))}")
+                session.send(f"Unknown object flag '{value_text}'.\n"
+                             + _object_field_hint("extra_flags", o, "flags"))
                 return
             value_text = canonical
         if value_text.startswith("-"):
