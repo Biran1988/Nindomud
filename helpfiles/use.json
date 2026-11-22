@@ -4,7 +4,7 @@
     "use"
   ],
   "title": "Use",
-  "body": "Syntax: use <item>\n\nDescription: Uses a medical item. You can also 'eat' medicine for the same effect. Healing arrives over time; cures work immediately. Both verbs consume one item and obey the same requirements.\n\nDate: 2026-08-17",
+  "body": "Syntax: use <item>\n\nDescription: Uses a medical item. You can also 'eat' medicine for the same effect. Healing arrives over time; cures work immediately. Both verbs consume one item and obey the same requirements.\n\nDate: 2026-08-17\n\nRestorative medical items (Healing Salves, Soldier Pills, Medicinal Pills, and other healing medicine) cannot be used or eaten during PvE or PvP combat. Only ONE restorative medical treatment can be active at a time: a second item is not consumed and cannot start another heal until the first finishes, including after reconnecting. Healing already started before combat keeps its normal duration. Cure-only Antidote Pills do not restore resources and can still cure poison during combat or an active treatment.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
