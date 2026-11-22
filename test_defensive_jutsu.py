@@ -17,6 +17,13 @@ from models import Player
 
 
 class DefensiveJutsuTests(unittest.TestCase):
+    def setUp(self):
+        # Defensive technique behavior is tested without elapsed time;
+        # the dedicated global-cooldown suite covers recovery timing.
+        cooldown_fixture = patch("jutsu_global_cooldown.DURATION_SECONDS", 0)
+        cooldown_fixture.start()
+        self.addCleanup(cooldown_fixture.stop)
+
     def make(self, level=160, element="lightning", klass="taijutsu"):
         player = Player("DefenseStudent", "DefenseStudent", primary_class=klass, level=level)
         player.chakra_nature = element
