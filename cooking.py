@@ -2,9 +2,8 @@
 Cooking (Section 67) -- a job on jobs.py's framework. Takes a raw
 fish (Fishing's own catches) or edible Farming produce and makes a cooked dish.
 
-REDESIGNED per explicit request (same "Minecraft-style" crafting
-revamp as the other 4 jobs): ONE tool (a copper cooking pot), no
-quality tiers on the output -- a raw fish always produces the same
+Cooking uses copper, iron, steel and chakra-steel pots, with higher
+tiers reducing burn chance. There are no quality tiers on the output -- a raw fish always produces the same
 cooked dish. The progression axis is now purely that higher-level
 fish (which Fishing's own level gating unlocks) produce more valuable
 dishes, not a quality roll on the same dish.
@@ -21,7 +20,10 @@ BURN_CHANCE_BASE = 25
 BURN_CHANCE_FLOOR = 3
 
 POTS = {
-    "a copper cooking pot": {"required_level": 1},
+    "a copper cooking pot": {"required_level": 1, "tier": 0},
+    "an ironbound oak cooking pot": {"required_level": 15, "tier": 1},
+    "a steel ironwood cooking pot": {"required_level": 35, "tier": 2},
+    "a chakra steel heartwood cooking pot": {"required_level": 75, "tier": 3},
 }
 
 # Maps a raw fish name (from fishing.FIND_TABLE) to its cooked dish
@@ -67,9 +69,14 @@ def pot_required_level(pot_name: str):
     return pot["required_level"] if pot else None
 
 
-def _burn_chance(job_level: int) -> int:
+def _burn_chance(job_level: int, pot_name: str = "a copper cooking pot") -> int:
     import weather
-    return max(BURN_CHANCE_FLOOR, BURN_CHANCE_BASE - job_level // 3 + weather.gathering_fail_chance_modifier())
+    # Iron/Steel/Chakra tools reduce the chance of burning food without
+    # changing the longstanding copper-pot behavior.
+    tier = POTS.get((pot_name or "").casefold(), {}).get("tier", 0)
+    return max(BURN_CHANCE_FLOOR,
+               BURN_CHANCE_BASE - job_level // 3 - (tier * 3)
+               + weather.gathering_fail_chance_modifier())
 
 
 def attempt_cook(job_level: int, ingredient_name: str, pot_name: str) -> dict:
@@ -78,7 +85,7 @@ def attempt_cook(job_level: int, ingredient_name: str, pot_name: str) -> dict:
     ingredient = INGREDIENTS.get(ingredient_name.lower())
     if ingredient is None:
         return {"burned": True}
-    if random.randint(1, 100) <= _burn_chance(job_level):
+    if random.randint(1, 100) <= _burn_chance(job_level, pot_name):
         return {"burned": True}
     xp = COOKING_XP.get(ingredient_name.lower(), 10)
     return {"burned": False, "name": ingredient["dish"], "xp": xp}
