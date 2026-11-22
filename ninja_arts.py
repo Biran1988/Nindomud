@@ -358,6 +358,15 @@ def weapon_hit(attacker, victim, damage, *, session=None, target_session=None):
             _enchantment_feedback(session, messages.get(element, f"{element.title()} chakra strikes {victim.name}!"),
                                   target_session=target_session, target_message=target_messages.get(element))
         return damage
+    # These five fixed Jounin-shop weapons are already infused at the
+    # forge. They grant a modest passive +10% hit bonus to any wielder,
+    # unlike the more powerful player-forged Bukijutsu elemental bindings
+    # that retain their own chakra-nature and Chakra-Steel requirements.
+    import jounin_shops
+    if damage > 0 and jounin_shops.weapon_element(wielded):
+        damage = max(
+            1, damage * (100 + jounin_shops.ELEMENTAL_WEAPON_DAMAGE_PERCENT) // 100
+        )
     if prop is None or damage <= 0:
         return damage
     if prop == "poison" and random.randint(1, 100) <= 30:
