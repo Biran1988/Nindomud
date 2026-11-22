@@ -118,6 +118,37 @@ class BuilderShortcutTests(unittest.TestCase):
         self.assertNotIn("MOB FIELDS", shown)
         self.assertEqual(player.strength, 10)
 
+    def test_bad_or_missing_builder_input_prints_actual_field_names(self):
+        for command, args, names in [
+            (olc.cmd_mset, [], ("level", "flags", "hitdice", "gate", "additem")),
+            (olc.cmd_mset, ["9002"], ("level", "flags", "hitdice", "gate")),
+            (olc.cmd_mset, ["9002", "levle", "15"], ("level", "flags", "gate")),
+            (olc.cmd_oset, [], ("itemtype", "wearloc", "statbonus", "resist", "value")),
+            (olc.cmd_oset, ["9003"], ("itemtype", "wearloc", "statbonus", "resist")),
+            (olc.cmd_oset, ["flgas"], ("itemtype", "wearloc", "statbonus", "value")),
+            (olc.cmd_oset, ["9003", "waerloc", "head"], ("wearloc", "statbonus", "value")),
+            (olc.cmd_rset, [], ("name", "desc", "flags", "resetmsg", "exitflag")),
+            (olc.cmd_rset, ["flgas"], ("name", "flags", "resetmsg", "exitflag")),
+        ]:
+            with self.subTest(command=command.__name__, args=args):
+                self.session.send.reset_mock()
+                command(self.session, args)
+                rendered = colors.render(self.session.send.call_args.args[0], False).lower()
+                for name in names:
+                    self.assertIn(name, rendered)
+                self.assertNotIn("use 'mset fields' to see every", rendered)
+                self.assertNotIn("use 'oset fields' to see every", rendered)
+
+        olc.cmd_mset(self.session, ["9002", "flags", "not_a_real_flag"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Valid mob flags", shown)
+        self.assertIn("Wander", shown)
+        olc.cmd_oset(self.session, ["9003", "flags", "not_a_real_flag"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Valid item flags", shown)
+        self.assertIn("no_sac", shown)
+        self.assertNotIn("not_a_real_flag", self.item["extra_flags"])
+
     def test_weapon_type_sets_item_type_and_wear_slot(self):
         self.assertEqual(self.item["item_type"], "trash")
         olc.cmd_oset(self.session, ["9003", "weapontype", "kunai"])
