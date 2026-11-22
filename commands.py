@@ -291,6 +291,9 @@ def _fire_enter_triggers(session) -> None:
     territory.check_trap_trigger)."""
     player = session.player
     room = WORLD.get(player.room_vnum)
+    # Physical room-trap tags trigger on real room arrival, including follow.
+    import room_trap_tags
+    room_trap_tags.on_enter(session)
     if room and room.programs:
         programs.fire_programs(session, room.programs, "enter", speaker_name=room.name)
     for mob in combat.mobs_in_room(player.room_vnum):
@@ -3560,6 +3563,10 @@ def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
             "mangekyo_kamui_limb_removal", "mangekyo_izanami"}:
         import general_skills
         general_skills.break_camouflage(session)
+    if jutsu_data.get("jutsu_type") == "room_trap":
+        import room_trap_tags
+        room_trap_tags.command(session, target_words)
+        return
     if jutsu_data.get("jutsu_type") == "six_paths_recovery":
         import six_paths
         six_paths.vital_surge(session, target_words)
@@ -9454,6 +9461,14 @@ def cmd_read(session, args: List[str]) -> None:
         session.send(f"You already know {display}.")
         return
 
+    # Bukijutsu learns Trap Tag Placement automatically at level 10.
+    # Other classes must study the teaching scroll at level 25.
+    if jutsu_key == "trap tag placement":
+        required = 10 if player.primary_class == "bukijutsu" else 25
+        if player.level < required:
+            session.send(f"You must reach level {required} to read the Trap Tag Placement scroll.")
+            return
+
     # Technique scrolls may teach ordinary arts from another class, but
     # cannot override bloodline, village, clan, gate or class-passive rules.
     # The player's primary class and normal level-up unlocks do not change.
@@ -10680,6 +10695,10 @@ def cmd_garrison(session, args: List[str]) -> None:
 
 
 def cmd_trap(session, args: List[str]) -> None:
+    if args and args[0].lower() == "place":
+        import room_trap_tags
+        room_trap_tags.command(session, args[1:])
+        return
     """'trap buy <type>' -- places a trap in the room you're standing
     in, funded by your village's shared treasury. Requires being that
     village's Kage (same reasoning as 'garrison buy') and standing
