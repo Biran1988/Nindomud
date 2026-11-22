@@ -1456,6 +1456,35 @@ def cmd_aset(session, args: List[str]) -> None:
     cmd_area(session, ["set"] + list(args))
 
 
+def _rset_field_reference() -> str:
+    """Show room-editing commands without requiring an extra 'rset fields'."""
+    return "\n".join([
+        "&CROOM FIELDS&x  rset <field> <value> (edits your current room)",
+        "&WRoom settings:&x name, desc, sector, flags, resetmsg",
+        "&WExits:&x exit, bexit, bunlink, exitflag",
+        "&WPrograms:&x addprogram, removeprogram",
+        "&WRoom management:&x create, delete, goto, show, fields",
+        "&DUse 'rset flags' for room/biome choices and "
+        "'rset exitflag' for valid exit flags.&x",
+        "&DExamples: rset name Academy | rset flags forest | "
+        "rset bexit north 9002&x",
+    ])
+
+
+def _rset_flag_reference(room) -> str:
+    """Display current room flags and their valid choices on a typo."""
+    import room_flags
+    return (
+        _field_list("General room flags", VALID_ROOM_FLAGS - set(room_flags.BIOMES),
+                    {flag: flag for flag in VALID_ROOM_FLAGS})
+        + "\n" + _field_list("Biome flags (choose exactly one)", set(room_flags.BIOMES),
+                             {flag: flag for flag in room_flags.BIOMES})
+        + "\n&WCurrent:&x " + (", ".join(room.flags) or "(none)")
+        + "\nUsage: rset flags <flag> (repeat to remove)"
+        + "\nBiome short names work: forest, mountain, ocean, etc."
+    )
+
+
 def cmd_rset(session, args: List[str]) -> None:
     if (args and args[0].lower() in ("create", "goto") and session.account
             and session.account.staff_level == "builder"):
@@ -1481,6 +1510,9 @@ def cmd_rset(session, args: List[str]) -> None:
         return
 
     sub, rest = args[0].lower(), args[1:]
+    if sub == "fields":
+        session.send(_rset_field_reference())
+        return
 
     if sub in ("create", "delete", "goto") and rest and rest[0].isdigit():
         if not _require_assigned_vnum(session, int(rest[0])):
@@ -1784,20 +1816,13 @@ def cmd_rset(session, args: List[str]) -> None:
     if sub == "flags":
         import room_flags
         if not rest:
-            session.send(
-                _field_list("General room flags", VALID_ROOM_FLAGS - set(room_flags.BIOMES),
-                              {flag: flag for flag in VALID_ROOM_FLAGS})
-                + "\n" + _field_list("Biome flags (choose exactly one)", set(room_flags.BIOMES),
-                                     {flag: flag for flag in room_flags.BIOMES})
-                + "\n&WCurrent:&x " + (", ".join(room.flags) or "(none)")
-                + "\nUsage: rset flags <flag> (repeat to remove)"
-                + "\nBiome short names work: forest, mountain, ocean, etc."
-            )
+            session.send(_rset_flag_reference(room))
             return
         name = room_flags.canonical(" ".join(rest))
         name = _canonical_flag(name, VALID_ROOM_FLAGS) or name
         if name not in VALID_ROOM_FLAGS:
-            session.send("Unknown room flag. Type RSET FLAGS for valid options.")
+            session.send(f"Unknown room flag '{' '.join(rest)}'.\n"
+                         + _rset_flag_reference(room))
             return
         if name in {"apartment", "player_shop"}:
             if name in room.flags and room.owner:
@@ -1820,7 +1845,7 @@ def cmd_rset(session, args: List[str]) -> None:
         cmd_rstat(session, [str(room.vnum)])
         return
 
-    session.send("Unknown rset subcommand.")
+    session.send(f"Unknown rset field '{args[0]}'.\n" + _rset_field_reference())
 
 
 def _do_bexit(session, room, rest: List[str], force: bool = False) -> None:
@@ -2330,7 +2355,7 @@ def _mset_player(session, target_name: str, field: str, value_args: List[str]) -
         _finish_player_edit(session, target, live_session, field, value_text)
         return
 
-    session.send(f"Unknown player field '{field}'. Use 'mset fields player' for the full list.")
+    session.send(f"Unknown player field '{field}'.\n" + _mset_field_reference(player=True))
 
 
 def _finish_player_edit(session, target, live_session, field: str, value_text) -> None:
@@ -2872,7 +2897,7 @@ def cmd_mset(session, args: List[str]) -> None:
         if hint:
             session.send(hint)
         else:
-            session.send(f"Unknown field '{args[1]}'. Use 'mset fields' to see every valid field.")
+            session.send(f"Unknown mob field '{args[1]}'.\n" + _mset_field_reference())
         return
     field, value_args = field_name, args[2:]
     t = combat.MOB_TEMPLATES[vnum]
@@ -3017,7 +3042,7 @@ def cmd_mset(session, args: List[str]) -> None:
         _log(session.player.name, "mobile", vnum, f"{field} updated")
         return
 
-    session.send(f"Unknown field '{field}'. Use 'mset fields' to see every valid field.")
+    session.send(f"Unknown mob field '{args[1]}'.\n" + _mset_field_reference())
 
 
 # ===========================================================================
@@ -3485,6 +3510,27 @@ def _object_field_hint(field: str, o: dict, display: Optional[str] = None) -> Op
     return None
 
 
+def _oset_field_reference() -> str:
+    """Reuse the same complete item field list on invalid input."""
+    return "\n".join([
+        "&COBJECT FIELDS&x  oset <vnum> <field> <value>",
+        _field_list("Text", OBJECT_STRING_FIELDS, OBJECT_FIELD_NAMES),
+        _field_list("Numbers", OBJECT_INT_FIELDS, OBJECT_FIELD_NAMES),
+        _field_list("Lists (add a value; prefix with - to remove)",
+                    OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
+        "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
+        "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
+        "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
+        "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
+        "&DNew weapon/armor/tool/medical/food: AutoBalance ON.&x",
+        "&DSet level 1-250 for scaled stats/recovery.&x",
+        "&DAdmins: itemscale preview 100 | itemscale damage 125 | "
+        "itemscale armor +10.&x",
+        "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
+        "&DOlder underscore spellings still work.&x",
+    ])
+
+
 def cmd_oset(session, args: List[str]) -> None:
     if not _require_builder(session):
         return
@@ -3515,22 +3561,7 @@ def cmd_oset(session, args: List[str]) -> None:
             return
 
     if sub == "fields":
-        session.send("\n".join([
-            "&COBJECT FIELDS&x  oset <vnum> <field> <value>",
-            _field_list("Text", OBJECT_STRING_FIELDS, OBJECT_FIELD_NAMES),
-            _field_list("Numbers", OBJECT_INT_FIELDS, OBJECT_FIELD_NAMES),
-            _field_list("Lists (add a value; prefix with - to remove)",
-                        OBJECT_LIST_FIELDS, OBJECT_FIELD_NAMES),
-            "&DExamples: oset 9001 wear take  |  oset 9001 wearloc head&x",
-            "&DArmor: oset 9001 resist sword 25  (25% less sword damage)&x",
-            "&DMedicine: oset 9002 itemtype medical  |  oset 9002 healflags health&x",
-            "&D          oset 9002 heal 100  |  oset 9002 healtime 20&x",
-            "&DNew weapon/armor/tool/medical/food: AutoBalance ON.&x",
-            "&DSet level 1-250 for scaled stats/recovery.&x",
-        "&DAdmins: itemscale preview 100 | itemscale damage 125 | itemscale armor +10.&x",
-        "&DUse 'oset <vnum> <field>' for the current value and valid options.&x",
-            "&DOlder underscore spellings still work.&x",
-        ]))
+        session.send(_oset_field_reference())
         return
 
     if sub == "list":
@@ -3662,7 +3693,7 @@ def cmd_oset(session, args: List[str]) -> None:
         if hint:
             session.send(hint)
         else:
-            session.send(f"Unknown field '{args[1]}'. Use 'oset fields' to see every valid field.")
+            session.send(f"Unknown object field '{args[1]}'.\n" + _oset_field_reference())
         return
     value_args = args[2:]
     o = OBJECT_TEMPLATES[vnum]
@@ -3854,7 +3885,7 @@ def cmd_oset(session, args: List[str]) -> None:
         _log(session.player.name, "object", vnum, f"{field} updated")
         return
 
-    session.send(f"Unknown field '{field}'. Use 'oset fields' to see every valid field.")
+    session.send(f"Unknown object field '{args[1]}'.\n" + _oset_field_reference())
 
 
 # ===========================================================================
