@@ -7790,14 +7790,19 @@ def cmd_cook(session, args: List[str]) -> None:
 
 
 def cmd_gemcut(session, args: List[str]) -> None:
-    """Cut any of the ten rare mining gems using a held Copper Chisel."""
+    """Cut mining gems with any held chisel tier."""
     player = session.player
     if session.is_busy():
         session.send("You're already busy with something.")
         return
     held_tool = player.equipment.get("tool", "")
-    if strip_crafted_suffix(held_tool).lower() not in gemcutter.CHISELS:
-        session.send("You need to hold a copper chisel to cut gems.")
+    chisel_name = strip_crafted_suffix(held_tool).lower()
+    if chisel_name not in gemcutter.CHISELS:
+        session.send("You need to hold a copper chisel to cut gems (or an upgraded chisel).")
+        return
+    chisel_level = gemcutter.CHISELS[chisel_name]["required_level"]
+    if jobs.get_job_level(player, "gemcutter") < chisel_level:
+        session.send(f"That chisel requires Gemcutter level {chisel_level} to use.")
         return
     if not args:
         session.send("Usage: gemcut <gem>  (quartz, jade, amber, garnet, amethyst, topaz, sapphire, emerald, ruby, diamond)")
@@ -7866,8 +7871,13 @@ def cmd_inlay(session, args: List[str]) -> None:
         session.send("You're already busy with something.")
         return
     held_tool = player.equipment.get("tool", "")
-    if strip_crafted_suffix(held_tool).casefold() not in gemcutter.CHISELS:
-        session.send("Hold a Copper Chisel to inlay a cut gem.")
+    chisel_name = strip_crafted_suffix(held_tool).casefold()
+    if chisel_name not in gemcutter.CHISELS:
+        session.send("Hold a Copper Chisel (or an upgraded chisel) to inlay a cut gem.")
+        return
+    chisel_level = gemcutter.CHISELS[chisel_name]["required_level"]
+    if jobs.get_job_level(player, "gemcutter") < chisel_level:
+        session.send(f"That chisel requires Gemcutter level {chisel_level} to use.")
         return
     item = find_indexed_item(item_query.casefold(), player.inventory)
     gem_name = gem_inlays.available_cut_gem(player, gem_query)
@@ -7981,7 +7991,7 @@ def reclaim_crafted_item_vnum(vnum: int) -> None:
 def _craft_gathering_tool(session, args: List[str]) -> None:
     """Blacksmith Bukijutsu crafts one job tool from exactly two materials.
 
-    Syntax: craft tool <rod|axe|pickaxe|hoe|pot> <iron|steel|chakra>.
+    Syntax: craft tool <rod|axe|pickaxe|hoe|pot|chisel> <iron|steel|chakra>.
     Materials are only spent after the delayed action succeeds, and a
     failed inventory-add returns both consumed resources to the player.
     """
@@ -7991,7 +8001,7 @@ def _craft_gathering_tool(session, args: List[str]) -> None:
         session.send("Crafted job tools require a Bukijutsu blacksmith of ninja level 25+.")
         return
     if len(args) != 2 or (args[0], args[1]) not in data_crafting.TOOL_NAMES:
-        session.send("Usage: craft tool <rod|axe|pickaxe|hoe|pot> <iron|steel|chakra>")
+        session.send("Usage: craft tool <rod|axe|pickaxe|hoe|pot|chisel> <iron|steel|chakra>")
         return
     kind, tier = args
     recipe = data_crafting.TOOL_RECIPES[tier]
@@ -8123,7 +8133,7 @@ def cmd_craft(session, args: List[str]) -> None:
     if args and args[0].lower() in ("backpack", "bag"):
         _craft_backpack(session, args[1:])
         return
-    if args and args[0].lower() in ("tool", "rod", "axe", "pickaxe", "hoe", "pot"):
+    if args and args[0].lower() in ("tool", "rod", "axe", "pickaxe", "hoe", "pot", "chisel"):
         kind = args[0].lower()
         selection = ([w.lower() for w in args[1:]] if kind == "tool" else
                      [kind] + [w.lower() for w in args[1:]])
@@ -8182,7 +8192,7 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft backpack <iron|steel|chakra> | craft tool <rod|axe|pickaxe|hoe|pot> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
+        session.send("Usage: craft backpack <iron|steel|chakra> | craft tool <rod|axe|pickaxe|hoe|pot|chisel> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()
