@@ -69,6 +69,55 @@ class BuilderShortcutTests(unittest.TestCase):
         self.assertNotIn("wear_flags", shown)
         self.assertTrue(all(len(line) <= 80 for line in shown.splitlines()))
 
+    def test_invalid_builder_fields_show_matching_reference_automatically(self):
+        # Typos should display the options immediately, without another command.
+        for args in (["9002", "levle"], ["9002", "levle", "12"]):
+            self.session.send.reset_mock()
+            olc.cmd_mset(self.session, args)
+            shown = colors.render(self.session.send.call_args.args[0], False)
+            self.assertIn("Unknown mob field 'levle'", shown)
+            self.assertIn("MOB FIELDS", shown)
+            self.assertIn("level", shown)
+            self.assertNotIn("OBJECT FIELDS", shown)
+
+        for args in (["9003", "waerloc"], ["9003", "waerloc", "head"]):
+            self.session.send.reset_mock()
+            olc.cmd_oset(self.session, args)
+            shown = colors.render(self.session.send.call_args.args[0], False)
+            self.assertIn("Unknown object field 'waerloc'", shown)
+            self.assertIn("OBJECT FIELDS", shown)
+            self.assertIn("wearloc", shown)
+            self.assertNotIn("MOB FIELDS", shown)
+
+        olc.cmd_rset(self.session, ["flgas"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Unknown rset field 'flgas'", shown)
+        self.assertIn("ROOM FIELDS", shown)
+        self.assertIn("flags", shown)
+        self.assertNotIn("MOB FIELDS", shown)
+
+        olc.cmd_rset(self.session, ["fields"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("ROOM FIELDS", shown)
+        self.assertIn("exitflag", shown)
+        self.assertTrue(all(len(line) <= 80 for line in shown.splitlines()))
+
+        olc.cmd_rset(self.session, ["flags", "florest"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Unknown room flag 'florest'", shown)
+        self.assertIn("General room flags", shown)
+        self.assertIn("Biome flags", shown)
+
+        player = Player("Student", "Student")
+        with patch.object(olc, "_find_target_player", return_value=(player, None)):
+            olc.cmd_mset(self.session, ["Student", "strenngth", "18"])
+        shown = colors.render(self.session.send.call_args.args[0], False)
+        self.assertIn("Unknown player field 'strenngth'", shown)
+        self.assertIn("PLAYER FIELDS", shown)
+        self.assertIn("strength", shown)
+        self.assertNotIn("MOB FIELDS", shown)
+        self.assertEqual(player.strength, 10)
+
     def test_weapon_type_sets_item_type_and_wear_slot(self):
         self.assertEqual(self.item["item_type"], "trash")
         olc.cmd_oset(self.session, ["9003", "weapontype", "kunai"])
