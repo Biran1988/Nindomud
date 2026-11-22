@@ -1,0 +1,17 @@
+{
+  "primary_keyword": "trap tag placement",
+  "keywords": [
+    "trap tag placement",
+    "room trap",
+    "room traps",
+    "trap place",
+    "trap tags",
+    "wire snare tag",
+    "explosive trap tag"
+  ],
+  "title": "Trap Tag Placement - Room Traps",
+  "body": "Syntax: TRAP PLACE <type>  |  TRAP TAG PLACEMENT <type>\\n\\nBukijutsu automatically learns Trap Tag Placement at ninja level 10. Other classes may READ its teaching scroll at ninja level 25 (object VNUM 31761 in the reserved scroll area 31501-32000). The scroll is not automatically sold; builders may stock it. As with other skills, Bukijutsu users must practice the technique with a teacher at least once; a scroll taught technique gets its usual one-time teacher introduction bypass.\\n\\nSet a trap in your current PvP-enabled room, consuming one matching physical inventory item (the named tag or an existing Exploding Note, Smoke Bomb, Poison Gas Bomb, or Exploding Clay). Use 'trap place' for a usage list. Basic Explosive Trap and Wire Snare tags require level 10; other tags have separate item-level requirements. Each placement spends 15 base Chakra, 10 base Stamina (normal level-based jutsu scaling applies), and has a 10-second cooldown. Limits: three active tags per room, one owned by each player per room, six active tags per player; tags expire after 30 minutes, are single-use, and persist across reboot in a separate /data ledger. No tags may be placed in safe, apartment, or player-shop rooms. Only enemy opt-in PvP organization members trigger traps. The owner, allies in their organization, staff and PvP opt-outs are protected.\\n\\nOn entering the room, players with Trap Disabling already learned AUTOMATICALLY attempt to remove the tag before its effect activates: success chance ranges from 25% at zero proficiency to 90% at 100% mastery; on failure, the tag springs normally. No manual command or extra Chakra is required to attempt this automatic disarm.\\n\\nTag effects: explosive blasts, wire snares entangle, flashbangs blind, paralysis tags paralyze, drain tags remove Chakra and apply Drained, fire tags burn, alarm tags notify their online owner, suppression tags silence, and barrier disruption tags remove normal active barriers. Existing traps can also be placed as room versions using 'note', 'smoke', 'gas', or 'clay'. The old Kage 'trap buy' territory defense remains separate and unchanged.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
