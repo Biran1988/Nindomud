@@ -7981,7 +7981,7 @@ def reclaim_crafted_item_vnum(vnum: int) -> None:
 def _craft_gathering_tool(session, args: List[str]) -> None:
     """Blacksmith Bukijutsu crafts one job tool from exactly two materials.
 
-    Syntax: craft tool <rod|axe|pickaxe> <iron|steel|chakra>.
+    Syntax: craft tool <rod|axe|pickaxe|hoe|pot> <iron|steel|chakra>.
     Materials are only spent after the delayed action succeeds, and a
     failed inventory-add returns both consumed resources to the player.
     """
@@ -7991,7 +7991,7 @@ def _craft_gathering_tool(session, args: List[str]) -> None:
         session.send("Crafted job tools require a Bukijutsu blacksmith of ninja level 25+.")
         return
     if len(args) != 2 or (args[0], args[1]) not in data_crafting.TOOL_NAMES:
-        session.send("Usage: craft tool <rod|axe|pickaxe> <iron|steel|chakra>")
+        session.send("Usage: craft tool <rod|axe|pickaxe|hoe|pot> <iron|steel|chakra>")
         return
     kind, tier = args
     recipe = data_crafting.TOOL_RECIPES[tier]
@@ -8123,7 +8123,7 @@ def cmd_craft(session, args: List[str]) -> None:
     if args and args[0].lower() in ("backpack", "bag"):
         _craft_backpack(session, args[1:])
         return
-    if args and args[0].lower() in ("tool", "rod", "axe", "pickaxe"):
+    if args and args[0].lower() in ("tool", "rod", "axe", "pickaxe", "hoe", "pot"):
         kind = args[0].lower()
         selection = ([w.lower() for w in args[1:]] if kind == "tool" else
                      [kind] + [w.lower() for w in args[1:]])
@@ -8182,7 +8182,7 @@ def cmd_craft(session, args: List[str]) -> None:
         return
 
     if len(args) < 3 or args[0].lower() not in ("weapon", "armor"):
-        session.send("Usage: craft backpack <iron|steel|chakra> | craft tool <rod|axe|pickaxe> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
+        session.send("Usage: craft backpack <iron|steel|chakra> | craft tool <rod|axe|pickaxe|hoe|pot> <iron|steel|chakra> | craft weapon <type> <name> | craft armor <slot|aura|ca> <name> | craft pill <antidote|medicine> <level>")
         return
 
     kind = args[0].lower()
