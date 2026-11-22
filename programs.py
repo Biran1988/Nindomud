@@ -69,10 +69,21 @@ ROOM_TRIGGERS = {"enter", "random"}
 ACTIONS = {
     "say", "emote", "echo", "give", "heal", "teleport", "drop_chance", "give_mission_points", "give_ryo", "set_rank",
     "take", "give_xp", "learn_skill", "require_item", "remember_keyword", "min_level", "max_level",
-    "wear_message", "iruka_graduation_check",
+    "wear_message", "iruka_graduation_check", "min_rank",
 }
 
 RANDOM_TRIGGER_CHANCE_PCT = 15  # per pulse, for any 'random' program
+
+
+def _canonical_gate_rank(rank: str) -> str:
+    """Map one-token builder-friendly rank names to saved internal IDs."""
+    return {
+        "chuunin": "chunin",
+        "jounin": "jonin",
+        "special_jounin": "special jonin",
+        "special_jonin": "special jonin",
+    }.get(rank.strip().lower(), rank.strip().lower())
+
 
 
 def validate_program(trigger: str, action: str, args: str, valid_triggers: set, keyword: str = None):
@@ -102,6 +113,19 @@ def validate_program(trigger: str, action: str, args: str, valid_triggers: set, 
         errors.append("'give_mission_points' needs a positive number as its argument.")
     if action == "give_ryo" and not args.strip().isdigit():
         errors.append("'give_ryo' needs a positive number as its argument.")
+    if action == "min_rank":
+        # Format: move min_rank <exit> <required-rank> [guard speech].
+        # The persisted canonical ranks keep old Jonin/Chunin spellings;
+        # player-facing Jounin/Chuunin aliases are accepted here.
+        import world
+        import kage
+        tokens = args.strip().split(None, 2)
+        if (len(tokens) < 2 or not world.normalize_direction(tokens[0])
+                or _canonical_gate_rank(tokens[1]) not in kage.RANK_ORDER):
+            errors.append("'min_rank' needs '<direction> <rank> [message]', "
+                          "e.g. 'south genin Pass the Genin Exam first.'")
+        if trigger != "move":
+            errors.append("'min_rank' must use a mob 'move' trigger.")
     if action == "set_rank":
         import kage
         rank_arg = args.strip().lower()
@@ -262,7 +286,7 @@ def run_action(session, action: str, args: str, speaker_name: str = "Something",
             names = remembered.setdefault(keyword, [])
             if player.name not in names:
                 names.append(player.name)
-    elif action in ("min_level", "max_level"):
+    elif action in ("min_level", "max_level", "min_rank"):
         # Genuinely a real no-op here (per direct confirmation,
         # Section 142) -- these are checked directly by cmd_move via
         # programs.check_level_gate, on the "move" trigger only,
@@ -340,24 +364,38 @@ def check_level_gate(session, mob_programs: list, direction: str, speaker_name: 
             continue
         action = prog.get("action")
         args = (prog.get("args") or "").strip()
-        if action not in ("min_level", "max_level"):
+        if action not in ("min_level", "max_level", "min_rank"):
             continue
         try:
             prog_direction, rest = args.split(None, 1)
         except ValueError:
             continue
-        # The level number is the first token of `rest`; anything
-        # after it is a real, optional custom message (per direct
-        # confirmation) -- the builder's own line for this specific
-        # gate, replacing the generic default when given.
+        if prog_direction.lower() != direction:
+            continue
+        # Rank gates compare the earned rank, not player level: a
+        # level-10 Academy Student still cannot leave until promotion.
+        if action == "min_rank":
+            import kage
+            rank_parts = rest.split(None, 1)
+            required = _canonical_gate_rank(rank_parts[0])
+            actual = _canonical_gate_rank(getattr(player, "village_rank", "student"))
+            if required not in kage.RANK_ORDER:
+                continue
+            actual_order = (kage.RANK_ORDER.index(actual) if actual in kage.RANK_ORDER
+                            else -1)
+            if actual_order < kage.RANK_ORDER.index(required):
+                message = (rank_parts[1].strip() if len(rank_parts) > 1 else
+                           "Earn your next ninja rank before leaving this way.")
+                session.send(f'{speaker_name} blocks your way. "{message}"')
+                return True
+            continue
+        # Level gates retain their existing behavior and custom messages.
         level_parts = rest.split(None, 1)
         try:
             required_level = int(level_parts[0])
         except ValueError:
             continue
         custom_message = level_parts[1].strip() if len(level_parts) > 1 else None
-        if prog_direction.lower() != direction:
-            continue
         if action == "min_level" and player.level < required_level:
             message = custom_message or "You're not ready for this yet."
             session.send(f'{speaker_name} blocks your way. "{message}"')
