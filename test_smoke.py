@@ -18325,6 +18325,11 @@ def test_loot_all_finds_corpse():
 
 
 if __name__ == "__main__":
+    # This legacy walkthrough drives many casts immediately without
+    # advancing the game clock. Keep it focused on command/effect wiring;
+    # test_jutsu_global_cooldown.py verifies the real 2-second lock.
+    import jutsu_global_cooldown
+    jutsu_global_cooldown.DURATION_SECONDS = 0.0
     main()
     test_corpses_loot_config_chat_autosave()
     test_legacy_prompt_migration()
