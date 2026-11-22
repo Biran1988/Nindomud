@@ -264,7 +264,8 @@ def _trigger(session, trap):
         msg.append(f"{loss} Chakra lost.")
     if effect == "barrier":
         removed = [name for name in (
-            "barrier", "reinforced_barrier", "fortress_barrier")
+            "barrier", "reinforced_barrier", "fortress_barrier",
+            "sanctuary", "elemental_shield")
             if name in player.active_status_effects]
         for name in removed:
             player.active_status_effects.pop(name, None)
