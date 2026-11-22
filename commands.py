@@ -3471,6 +3471,25 @@ def _current_jutsu_opponent(session) -> List[str]:
 
 
 def cmd_use_jutsu(session, jutsu_key: str, target_words: List[str]) -> None:
+    """Apply one shared timer to every active combat cast entry point.
+
+    PERFORM, one-word shortcuts and direct class techniques all call here;
+    unchanged passive/utility/toggle skills bypass the timer. A failed cast
+    does not start a shared cooldown or consume any extra resources.
+    """
+    import jutsu_global_cooldown as shared
+    if not shared.applies(jutsu_key, target_words):
+        _cmd_use_jutsu_unlocked(session, jutsu_key, target_words)
+        return
+    if not shared.ready(session):
+        return
+    before = shared.snapshot(session)
+    _cmd_use_jutsu_unlocked(session, jutsu_key, target_words)
+    if shared.succeeded(session, before):
+        shared.start(session)
+
+
+def _cmd_use_jutsu_unlocked(session, jutsu_key: str, target_words: List[str]) -> None:
     player = session.player
     jutsu_data = data_jutsu.JUTSU.get(jutsu_key, {})
     # Actual resource costs follow ninja level, art tier and maximum pools.
