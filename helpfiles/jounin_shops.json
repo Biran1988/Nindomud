@@ -1,0 +1,15 @@
+{
+  "primary_keyword": "jounin shops",
+  "keywords": [
+    "jounin shops",
+    "special jounin shops",
+    "jounin gear",
+    "jounin weapons",
+    "jounin armor"
+  ],
+  "title": "Jounin and Special Jounin Equipment Shops",
+  "body": "Special Jounin equipment begins at ninja level 70, and Jounin-grade equipment begins at level 200, with the strongest items reaching level 250. Standard rank caps are Chuunin 65, Special Jounin 200, and Jounin 250. These are item requirements, not a substitute for rank promotion.\n\nWEAPONS: Shopkeeper mob VNUM 784 sells 21 weapons (object VNUMs 39-59), including five elemental weapons. Emberfang Katana (Fire), Tidal Crescent Blade (Water), Gale-Edge Naginata (Wind), Thunderclap Kunai (Lightning), and Stonebreaker Hammer (Earth) require ninja level 175. While wielded, these pre-infused shop weapons grant 10% more landed weapon damage. This is separate from Bukijutsu's more powerful, chakra-nature-gated, Chakra Steel player-forged elemental enchantments.\n\nARMOR: Shopkeeper mob VNUM 786 sells 20 armor pieces (object VNUMs 60-79), including five level-160 Chakra Auras: Fire Release, Water Release, Wind Release, Lightning Release, and Earth Release. Wear the Aura in the CHAKRA AURA slot. Each grants +10% damage to jutsu of its matching elemental nature and 10% resistance against the element that counters it (Fire/Water, Water/Earth, Wind/Fire, Lightning/Wind, Earth/Lightning). Bonuses work with existing inlay bonuses under their established 30% caps.\n\nAll catalog armor and weapons opt into item AutoBalance at their stated levels. Buy with LIST and BUY <number> when near the matching shopkeeper. Custom builder changes, existing mob stock, and saved /data take priority over new defaults. Elemental bonuses apply only to the specified real shop item.",
+  "created_by": "System",
+  "updated_by": "System",
+  "updated_at": 0
+}
