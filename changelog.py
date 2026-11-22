@@ -670,4 +670,5 @@ CHANGELOG = [
     ("15.511", "Builder errors now directly print the full MSET, OSET, or RSET field names instead of merely suggesting a FIELDS command. Incomplete commands also show them, including gate, statbonus, resist, value, and valid flag choices."),
     ("15.512", "LIST displays [Lvl N] beside every for-sale item, including NPC shops, player shops, pawnshops and Kage legendary gear. Level 0 indicates an unrestricted item."),
     ("15.513", "Added twelve Chuunin weapons (objects 6-17) to weaponsmith mob 775 and twelve level-scaled armor pieces (objects 18-29) to armorsmith mob 776. Existing saved gear and merchant stock remain intact."),
+    ("15.514", "Mob 779 now offers all six iron-tier gathering/crafting tools. Added craftable Iron/Steel/Chakra hoes, cooking pots and chisels using objects 30-38, level-gated job use and updated helpfiles."),
 ]
