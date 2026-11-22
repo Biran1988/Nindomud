@@ -73,8 +73,8 @@ class StudentVillageGuardTests(unittest.TestCase):
         with patch.object(commands.WORLD, "get", side_effect=self.rooms.get), \
              patch.object(commands.random, "randint", return_value=1), \
              patch.object(commands.olc, "_require_assigned_vnum", return_value=True), \
-             patch.object(commands.general_skills, "before_move"), \
-             patch.object(commands.general_skills, "broadcast_movement"), \
+             patch("general_skills.before_move"), \
+             patch("general_skills.broadcast_movement"), \
              patch.object(commands.combat, "follow_owner_summon"), \
              patch.object(commands, "cmd_look"), \
              patch.object(commands, "_fire_enter_triggers"), \
