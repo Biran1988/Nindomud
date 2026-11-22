@@ -65,7 +65,9 @@ class ShopAndItemScaleTests(unittest.TestCase):
                                       if shop_flags.specialty_for_flag(f) in shop_flags.SHOP_FLAGS]), 1)
                 self.assertEqual(combat.mob_shop_buys_categories(self.instance),
                                  sorted(data_shops.SHOP_TYPES[kind]['allowed_sell_categories'] or []))
-        self.mset('flags', '-ShopPawnshop')
+        # After iterating the dynamically registered specialties, remove
+        # whichever one was last rather than assuming Pawnshop is last.
+        self.mset('flags', '-' + list(shop_flags.SHOP_FLAGS.values())[-1])
         self.assertEqual(shop_flags.specialty_from_flags(self.mob), 'general')
         self.assertTrue(combat.is_shopkeeper(self.instance))
         self.mset('flags', '-Shopkeeper')
