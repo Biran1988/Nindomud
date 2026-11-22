@@ -252,6 +252,23 @@ def consume(session, verb: str, query: str) -> None:
         scaled_recovery = item_balance.effective_recovery(proto, "healing")
         cure_only = (bool(data.get("cures")) and not data.get("resources")
                      and not data.get("restore") and not scaled_recovery)
+        if not cure_only:
+            # Restorative medicine (including medical items made by builders)
+            # cannot be started in PvE or PvP combat, through either USE or EAT.
+            # Cure-only antidotes remain usable; they do not grant healing.
+            if (getattr(session, "combat_target", None) is not None
+                    or getattr(session, "pvp_target", None) is not None):
+                session.send("You cannot use healing items while in combat.")
+                return
+            # Treat the saved treatment duration as the single active course.
+            # A second salve, pill or other restorative medicine cannot overlap,
+            # including when the character reconnects during the course.
+            now = time.time()
+            if any(now < effect["started_at"] + max(1, effect["duration"])
+                   for effect in player.medical_healing):
+                session.send("You are already receiving medical treatment. "
+                             "Wait for it to finish before using another healing item.")
+                return
         if cure_only and not any(effect in player.active_status_effects for effect in data["cures"]):
             session.send("You are not poisoned; save the antidote for when you need it.")
             return
