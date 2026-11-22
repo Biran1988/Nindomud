@@ -740,6 +740,9 @@ def populate() -> None:
     # Rank-tier weapon/armor shops (784/786), including elemental auras.
     import jounin_shops
     jounin_shops.install()
+    # New trap-tag objects are added after saved builder items load.
+    import room_trap_tags
+    room_trap_tags.register_items()
 
     reaper_seal.restore_world()
     import technique_names
