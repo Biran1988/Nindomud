@@ -62,7 +62,7 @@ RELEASED_ANIME_KEYS = (
 
 # Fixed next released VNUM: 31761. Append subsequent releases after this
 # instead of sorting into the already-released range.
-RELEASED_NEXT_KEYS = ("trap tag placement",)
+RELEASED_NEXT_KEYS = ("kai", "trap tag placement")
 
 
 def entries():
