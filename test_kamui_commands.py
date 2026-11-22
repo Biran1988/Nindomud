@@ -14,6 +14,11 @@ from session import Session, State
 
 class KamuiCommandTests(unittest.TestCase):
     def setUp(self):
+        # These tests exercise the underlying jutsu mechanics without
+        # real-time pauses; global cooldown timing has dedicated tests.
+        cooldown_fixture = patch("jutsu_global_cooldown.DURATION_SECONDS", 0)
+        cooldown_fixture.start()
+        self.addCleanup(cooldown_fixture.stop)
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         rooms = {1: world.Room(1, "Starting room", "A room."),
