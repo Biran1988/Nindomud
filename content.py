@@ -728,6 +728,11 @@ def populate() -> None:
     # Enforce area deletions again so these hardcoded rooms stay removed.
     world_persistence.apply_deleted_areas()
 
+    # One rank-gated move program on existing mob VNUM 24 covers all
+    # copies of this village guard without changing saved world data.
+    import student_village_guard
+    student_village_guard.install()
+
     # Add Chuunin shop stock only AFTER all saved builder objects and mob
     # templates have won. Existing /data prototypes are never overwritten;
     # collisions are skipped, and staff-owned shop mobs are not fabricated.
