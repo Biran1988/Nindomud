@@ -72,7 +72,13 @@ def elemental_jutsu_multiplier(actor, element: str) -> float:
     if element not in ELEMENT_GEMS.values():
         return 1.0
     count = sum(ELEMENT_GEMS.get(gem) == element for gem in equipped_gems(actor))
-    boost = min(MAX_ELEMENTAL_BONUS_PERCENT, count * ELEMENTAL_JUTSU_BONUS_PERCENT)
+    # An equipped Jounin-shop Aura grants its own modest, matching-nature
+    # jutsu boost, compatible with (and capped alongside) existing gem inlays.
+    import jounin_shops
+    aura_bonus = (jounin_shops.ELEMENTAL_AURA_JUTSU_PERCENT
+                  if jounin_shops.equipped_aura_element(actor) == element else 0)
+    boost = min(MAX_ELEMENTAL_BONUS_PERCENT,
+                count * ELEMENTAL_JUTSU_BONUS_PERCENT + aura_bonus)
     return 1.0 + boost / 100.0
 
 def reduce_counter_damage(actor, element: str, damage: int) -> int:
@@ -81,7 +87,13 @@ def reduce_counter_damage(actor, element: str, damage: int) -> int:
         return damage
     count = sum(elemental_counters.ELEMENT_COUNTERS.get(ELEMENT_GEMS.get(gem)) == element
                 for gem in equipped_gems(actor))
-    resist = min(MAX_ELEMENTAL_RESIST_PERCENT, count * ELEMENTAL_COUNTER_RESIST_PERCENT)
+    import jounin_shops
+    aura = jounin_shops.equipped_aura_element(actor)
+    aura_resist = (jounin_shops.ELEMENTAL_AURA_COUNTER_RESIST_PERCENT
+                   if aura and elemental_counters.ELEMENT_COUNTERS.get(aura) == element
+                   else 0)
+    resist = min(MAX_ELEMENTAL_RESIST_PERCENT,
+                 count * ELEMENTAL_COUNTER_RESIST_PERCENT + aura_resist)
     return max(1, damage * (100 - resist) // 100) if resist else damage
 
 def forged_prototype(name: str):
