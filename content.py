@@ -745,9 +745,11 @@ def populate() -> None:
     # Rank-tier weapon/armor shops (784/786), including elemental auras.
     import jounin_shops
     jounin_shops.install()
-    # New trap-tag objects are added after saved builder items load.
-    import room_trap_tags
-    room_trap_tags.register_items()
+    # The tactical merchant stocks existing combat supplies plus every
+    # persistent room-trap tag and a poison-only Antidote Pill. Run only
+    # after builder objects/mob templates have been restored.
+    import tactical_shop
+    tactical_shop.install()
 
     reaper_seal.restore_world()
     import technique_names
