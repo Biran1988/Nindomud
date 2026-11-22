@@ -24,6 +24,11 @@ from session import Session, State
 
 class ReaperSealTests(unittest.TestCase):
     def setUp(self):
+        # These tests exercise the underlying jutsu mechanics without
+        # real-time pauses; global cooldown timing has dedicated tests.
+        cooldown_fixture = patch("jutsu_global_cooldown.DURATION_SECONDS", 0)
+        cooldown_fixture.start()
+        self.addCleanup(cooldown_fixture.stop)
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         for item in (patch.object(storage, "DATA_DIR", tmp.name),
