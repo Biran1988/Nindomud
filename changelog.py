@@ -668,4 +668,5 @@ CHANGELOG = [
     ("15.509", "Redesigned WHO with compact village labels and custom alternating village/rank palettes, a white-to-gray clan gradient, muted-orange player names and silver brackets; blue levels and personalized titles stay unchanged."),
     ("15.510", "Unknown MSET, OSET and RSET builder fields now automatically display the matching editable-field reference, including player fields and room flag choices. Added RSET FIELDS for on-demand room command help."),
     ("15.511", "Builder errors now directly print the full MSET, OSET, or RSET field names instead of merely suggesting a FIELDS command. Incomplete commands also show them, including gate, statbonus, resist, value, and valid flag choices."),
+    ("15.512", "LIST displays [Lvl N] beside every for-sale item, including NPC shops, player shops, pawnshops and Kage legendary gear. Level 0 indicates an unrestricted item."),
 ]
