@@ -111,11 +111,18 @@ class PillCraftingTests(unittest.TestCase):
         # Eating medicine does not instantly heal or consume the second pill.
         self.assertEqual((self.player.health, self.player.chakra, self.player.stamina),
                          (25, 25, 25))
+        # Starting a second treatment during the first is refused without
+        # consuming the pill; it becomes usable after 30 seconds.
         with patch.object(consumables.time, "time", return_value=1000):
             commands.cmd_use(self.session, ["medicinal", "pill"])
+        self.assertEqual(self.player.inventory, [used])
+        self.assertEqual(len(self.player.medical_healing), 1)
+        consumables.tick_medical_healing(self.player, now=1030)
+        with patch.object(consumables.time, "time", return_value=1031):
+            commands.cmd_use(self.session, ["medicinal", "pill"])
         self.assertEqual(self.player.inventory, [])
-        self.assertEqual(len(self.player.medical_healing), 2)
-        self.assertEqual([dose["amount"] for dose in self.player.medical_healing], [250, 310])
+        self.assertEqual(len(self.player.medical_healing), 1)
+        self.assertEqual(self.player.medical_healing[0]["amount"], 310)
 
     def test_eat_antidote_does_not_consume_without_poison(self):
         pill = pill_crafting.encode_pill("Antidote", 30)
@@ -136,8 +143,14 @@ class PillCraftingTests(unittest.TestCase):
         with patch.object(consumables.time, "time", return_value=1000):
             commands.cmd_eat(self.session, ["2.pill"])
             commands.cmd_eat(self.session, ["soldier", "pill"])
+        # Different kinds of restorative medicine cannot overlap either.
+        self.assertEqual(self.player.inventory, [first, "A Soldier Pill", "A Rice Ball"])
+        self.assertEqual([dose["amount"] for dose in self.player.medical_healing], [400])
+        consumables.tick_medical_healing(self.player, now=1030)
+        with patch.object(consumables.time, "time", return_value=1031):
+            commands.cmd_eat(self.session, ["soldier", "pill"])
         self.assertEqual(self.player.inventory, [first, "A Rice Ball"])
-        self.assertEqual([dose["amount"] for dose in self.player.medical_healing], [400, 40])
+        self.assertEqual([dose["amount"] for dose in self.player.medical_healing], [40])
         # Food remains eat-only: use must not spend the rice ball.
         commands.cmd_use(self.session, ["rice", "ball"])
         self.assertEqual(self.player.inventory, [first, "A Rice Ball"])
