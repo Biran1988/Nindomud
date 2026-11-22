@@ -5,7 +5,12 @@ The five elemental gems all unlock at level 60 for equal access.
 """
 import gem_inlays
 
-CHISELS = {"a copper chisel": {"required_level": 1}}
+CHISELS = {
+    "a copper chisel": {"required_level": 1},
+    "an ironbound oak chisel": {"required_level": 15},
+    "a steel ironwood chisel": {"required_level": 35},
+    "a chakra steel heartwood chisel": {"required_level": 75},
+}
 BONUS_BY_RARITY = {"common": 1, "uncommon": 2, "rare": 3, "epic": 5, "legendary": 8}
 
 # Input gem -> (cut result, Gemcutter minimum job level, job XP).
