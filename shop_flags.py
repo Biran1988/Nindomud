@@ -15,6 +15,7 @@ SHOP_FLAGS = {
     "lumberjack": "ShopLumberjack",
     "gemcutter": "ShopGemcutter",
     "pawnshop": "ShopPawnshop",
+    "tactical": "ShopTactical",
 }
 _ALIASES = {
     "weaponshop": "weapons", "armorshop": "blacksmith",
