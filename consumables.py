@@ -43,6 +43,13 @@ CONSUMABLES = {
         "cures": ["silenced"],
         "message": "You swallow {item}. A surge of chakra floods through you.",
     },
+    # A plain shop-bought Antidote Pill is a cure-only medical item.
+    # Crafted Bukijutsu pills retain their own encoded per-pill levels and
+    # take precedence in find_consumable() via pill_crafting.pill_data().
+    "antidote pill": {
+        "category": "medical", "cures": ["poisoned"],
+        "message": "You swallow {item}. The poison leaves your body.",
+    },
     # Cooking's own dishes (cooking.py) -- registered under their BASE
     # name (no quality suffix); find_consumable() matches bidirectionally
     # so a suffixed full item name like "A Cooked Sardine (Good)" still
