@@ -57,6 +57,7 @@ class NumberedShopBuyTests(unittest.TestCase):
         listing = self.shown()
         self.assertIn("[1] a sardine", listing)
         self.assertIn("[2] a minnow", listing)
+        self.assertIn("[Lvl", listing)
         self.assertIn("BUY <number>", listing)
         self.buy("2")
         self.assertEqual(self.player.inventory, ["a minnow"])
@@ -73,6 +74,7 @@ class NumberedShopBuyTests(unittest.TestCase):
     def test_npc_shop_skips_missing_prototypes_and_enforces_item_level(self):
         self.active_shopkeeper = NS(name="fish seller", player_shop_owner=None,
                                     template_vnum=97944)
+        self.stock[97942]["level"] = 0
         self.stock[97943]["level"] = 10
         with patch.object(combat, "mob_shop_items", return_value=[99999, 97942, 97943]), \
              patch.object(combat, "mob_shop_buys_categories", return_value=[]), \
@@ -80,6 +82,8 @@ class NumberedShopBuyTests(unittest.TestCase):
             listing = self.shown()
             self.assertIn("[1] a sardine", listing)
             self.assertIn("[2] a minnow", listing)
+            self.assertIn("[Lvl 0]", listing)
+            self.assertIn("[Lvl 10]", listing)
             self.assertNotIn("[3]", listing)
             warning = self.buy("2")
             self.assertIn("must be level", warning)
@@ -106,6 +110,7 @@ class NumberedShopBuyTests(unittest.TestCase):
             listing = self.shown()
             self.assertIn("[1] a sardine - 11 ryo", listing)
             self.assertIn("[2] a sardine - 29 ryo", listing)
+            self.assertIn("[Lvl", listing)
             self.assertNotIn("no price set", listing)
             self.buy("2")
             self.assertEqual(self.player.ryo, 971)
@@ -133,6 +138,7 @@ class NumberedShopBuyTests(unittest.TestCase):
             listing = self.shown()
             self.assertIn("[1] a sardine - 11 ryo", listing)
             self.assertIn("[2] a sardine - 29 ryo", listing)
+            self.assertIn("[Lvl", listing)
             self.buy("2")
             self.assertEqual(self.player.ryo, 971)
             self.assertEqual(self.player.inventory, ["a sardine"])
