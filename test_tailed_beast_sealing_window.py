@@ -19,6 +19,11 @@ import session as session_module
 
 class TailedBeastSealingWindowTests(unittest.TestCase):
     def setUp(self):
+        # These tests exercise the underlying jutsu mechanics without
+        # real-time pauses; global cooldown timing has dedicated tests.
+        cooldown_fixture = patch("jutsu_global_cooldown.DURATION_SECONDS", 0)
+        cooldown_fixture.start()
+        self.addCleanup(cooldown_fixture.stop)
         self.room = world.Room(992850, "Sealing Clearing", "An empty clearing.")
         world.WORLD.rooms[self.room.vnum] = self.room
         self.addCleanup(world.WORLD.rooms.pop, self.room.vnum, None)
