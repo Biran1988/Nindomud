@@ -20,8 +20,8 @@ EXPIRE_SECONDS = 1800
 
 # The first nine unassigned equipment VNUMs after Jounin stock (39-79).
 TAGS = {
-    "explosive": (80, "An Explosive Trap Tag", 25, 1200, "blast"),
-    "snare": (81, "A Wire Snare Tag", 25, 1500, "snare"),
+    "explosive": (80, "An Explosive Trap Tag", 10, 1200, "blast"),
+    "snare": (81, "A Wire Snare Tag", 10, 1500, "snare"),
     "flashbang": (82, "A Flashbang Tag", 25, 2000, "blind"),
     "paralysis": (83, "A Paralysis Tag", 75, 5000, "paralyzed"),
     "drain": (84, "A Chakra Drain Tag", 75, 7500, "drained"),
