@@ -666,4 +666,5 @@ CHANGELOG = [
     ("15.507", "RSET FLAGS now controls apartment, player-shop room, and exclusive biome flags instead of separate apartment on/off or biome categories. Legacy room properties are mirrored for existing gameplay and saves. RSET FLAGS, MSET <vnum> FLAGS and OSET <vnum> FLAGS with no value show the valid options and current flags."),
     ("15.508", "Aligned classic SMAUGFUSS foreground intensities with ANSI 0/1, added canonical &p/&P purple/pink codes, and updated Prompt Biran with migration for earlier saved presets. Extended colors and existing reset behavior remain compatible."),
     ("15.509", "Redesigned WHO with compact village labels and custom alternating village/rank palettes, a white-to-gray clan gradient, muted-orange player names and silver brackets; blue levels and personalized titles stay unchanged."),
+    ("15.510", "Unknown MSET, OSET and RSET builder fields now automatically display the matching editable-field reference, including player fields and room flag choices. Added RSET FIELDS for on-demand room command help."),
 ]
