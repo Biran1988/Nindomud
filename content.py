@@ -737,6 +737,9 @@ def populate() -> None:
     # post-restore, builder-safe installer; mob 779 is never synthesized.
     import iron_tool_shop
     iron_tool_shop.install()
+    # Rank-tier weapon/armor shops (784/786), including elemental auras.
+    import jounin_shops
+    jounin_shops.install()
 
     reaper_seal.restore_world()
     import technique_names
