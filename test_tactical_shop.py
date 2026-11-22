@@ -159,6 +159,11 @@ class TacticalShopTests(unittest.TestCase):
         tactical_shop.install()
         owner, owner_session, _ = self.make_player("TagSetter")
         victim, victim_session, output = self.make_player("Enemy", "root")
+        # Explicitly test trap activation rather than the existing
+        # auto-disarm skill's random success path. Auto-disarm has its own
+        # separate success/failure regression coverage.
+        victim.learned_skills = [name for name in victim.learned_skills
+                                 if name != "Trap Disabling"]
         for key in (*room_trap_tags.TAGS, *room_trap_tags.EXISTING):
             with self.subTest(tag=key):
                 tag_name = room_trap_tags._physical_item(key)[0]
