@@ -826,6 +826,18 @@ JUTSU["kai"] = {
     "tier": 1, "element": "none", "jutsu_type": "genjutsu_release",
 }
 
+# Bukijutsu learns room traps at level 10. Every other class can learn
+# the exact same jutsu from its reserved scroll at level 25.
+JUTSU["trap tag placement"] = {
+    "jutsu_id": "bukijutsu_room_trap_tag_placement",
+    "display_name": "Trap Tag Placement",
+    "class_requirement": "bukijutsu",
+    "level_requirement": 10,
+    "chakra_cost": 15, "stamina_cost": 10, "cooldown": 10.0,
+    "damage": None, "damage_type": None, "effect": None,
+    "tier": 1, "element": "none", "jutsu_type": "room_trap",
+}
+
 _scale_base_damage_to_level()
 # Close-range Taijutsu applies its 85% base damage balancing during
 # actual combat; the full unlock-level damage ladder remains intact.
