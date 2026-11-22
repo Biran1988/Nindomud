@@ -5,7 +5,7 @@
     "antidote"
   ],
   "title": "Antidote Pill",
-  "body": "Syntax: craft pill antidote <level>  |  examine <pill>  |  use <pill>  |  eat <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level (max 250); it is saved in item data and shown by examine, not in the name. It cures poison only and is not consumed when you are not poisoned. Use 'eat 2.pill' or 'use 2.pill' to select the second matching pill.\n\nDate: 2026-09-27",
+  "body": "Syntax: craft pill antidote <level>  |  examine <pill>  |  use <pill>  |  eat <pill>\n\nDescription: Bukijutsu level 25+ crafts one pill from Medicinal Herbs. Choose a level from 1 to your own level (max 250); it is saved in item data and shown by examine, not in the name. It cures poison only and is not consumed when you are not poisoned. Use 'eat 2.pill' or 'use 2.pill' to select the second matching pill.\n\nDate: 2026-09-27\\n\\nA plain Antidote Pill is also sold by the Tactical Supply merchant (mob 785, object VNUM 89, level 25, 750 ryo). The shop version is cure-only, restores no HP/Chakra/Stamina, and is not consumed if you are not poisoned. Crafted Bukijutsu Antidote Pills retain their individually saved levels.",
   "created_by": "System",
   "updated_by": "System",
   "updated_at": 0
