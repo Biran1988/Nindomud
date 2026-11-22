@@ -728,6 +728,12 @@ def populate() -> None:
     # Enforce area deletions again so these hardcoded rooms stay removed.
     world_persistence.apply_deleted_areas()
 
+    # Add Chuunin shop stock only AFTER all saved builder objects and mob
+    # templates have won. Existing /data prototypes are never overwritten;
+    # collisions are skipped, and staff-owned shop mobs are not fabricated.
+    import chuunin_shops
+    chuunin_shops.install()
+
     reaper_seal.restore_world()
     import technique_names
     technique_names.migrate_templates()
