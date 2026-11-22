@@ -1,4 +1,4 @@
-"""Iron-tier gathering tools sold by builder mob 779; new hoes/pots 30-35.
+"""Iron-tier gathering tools sold by builder mob 779; new hoes/pots/chisels 30-38.
 
 Reuses existing iron fishing rod, axe and pickaxe object prototypes rather
 than creating ambiguous duplicate object names.  Install after persisted
@@ -23,12 +23,15 @@ NEW_TOOLS = (
     (33, "pot", "iron"),
     (34, "pot", "steel"),
     (35, "pot", "chakra"),
+    (36, "chisel", "iron"),
+    (37, "chisel", "steel"),
+    (38, "chisel", "chakra"),
 )
 IRON_SHOP_VNUM = 779
 
 
 def install() -> dict:
-    """Preserve builder objects; stock five iron tools if mob 779 exists."""
+    """Preserve builder objects; stock six iron tools if mob 779 exists."""
     import combat
     import data_crafting
     import olc
@@ -36,7 +39,7 @@ def install() -> dict:
 
     created, preserved, collisions = [], [], []
     chosen = {}
-    # New objects use VNUMs 30-35 unless their intended prototype is
+    # New objects use VNUMs 30-38 unless their intended prototype is
     # already present at another VNUM, in which case reuse that prototype.
     for vnum, kind, tier in NEW_TOOLS:
         name = data_crafting.job_tool_name(kind, tier)
@@ -90,7 +93,7 @@ def install() -> dict:
             if (proto is not None and proto.get("item_type") == "tool"
                     and str(proto.get("short_desc", "")).casefold() == name.casefold()):
                 stock_vnums.append(vnum)
-        for kind in ("hoe", "pot"):
+        for kind in ("hoe", "pot", "chisel"):
             vnum = chosen.get((kind, "iron"))
             if vnum is not None:
                 stock_vnums.append(vnum)
