@@ -1,12 +1,12 @@
 """
 Farming (Section 70) -- a gathering job on jobs.py's framework.
 
-REDESIGNED per explicit request (same "Minecraft-style" crafting
-revamp as mining.py/lumberjack.py): ONE tool (a copper hoe), every
-crop is a single, non-tiered item. Progression comes from Farming
-LEVEL directly unlocking access to better crops (FIND_TABLE).
+Farming uses copper, iron, steel and chakra-steel hoes.
+All harvested crops remain single, non-tiered items and continue to
+unlock through Farming job levels. Better hoes improve the odds of more
+valuable crops without removing existing copper-hoe access.
 
-Requires a hoe (bought) and standing in a plains biome.
+Requires a hoe (bought or crafted) and standing in a plains biome.
 
 The actual gather-attempt/fail-chance/tool-lookup logic is shared
 with fishing.py/mining.py/lumberjack.py -- see gathering_job.py,
@@ -27,7 +27,10 @@ import gathering_job
 FARMABLE_BIOMES = {"plains"}
 
 HOES = {
-    "a copper hoe": {"required_level": 1},
+    "a copper hoe": {"required_level": 1, "tier": 0},
+    "an ironbound oak hoe": {"required_level": 15, "tier": 1},
+    "a steel ironwood hoe": {"required_level": 35, "tier": 2},
+    "a chakra steel heartwood hoe": {"required_level": 75, "tier": 3},
 }
 
 FIND_TABLE = [
@@ -73,7 +76,12 @@ def tool_required_level(tool_name: str):
 
 
 def attempt_farm(job_level: int, tool_name: str) -> dict:
+    tool = HOES.get(tool_name.casefold())
+    if tool is None:
+        raise ValueError("Unknown farming hoe")
+    # Keep copper-hoe resource access backward-compatible; upgraded
+    # hoes improve weighted odds for higher-level crops, like other tools.
     return gathering_job.attempt_gather(
         job_level, FAIL_CHANCE_BASE, FAIL_CHANCE_FLOOR, FIND_TABLE,
-        level_divisor=FAIL_CHANCE_LEVEL_DIVISOR,
+        level_divisor=FAIL_CHANCE_LEVEL_DIVISOR, tier=tool["tier"],
     )
