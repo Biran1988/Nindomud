@@ -116,7 +116,7 @@ def combined_stat_value(material_a: str, material_b: str) -> int:
 
 # Standardized Bukijutsu-blacksmith gathering tools. Each tool uses exactly
 # one named lumber material and one smelted metal ingot (no raw ore).
-# The same three recipe tiers apply to fishing rods, axes and pickaxes.
+# The same three recipe tiers apply to fishing rods, axes, pickaxes, hoes and cooking pots.
 TOOL_RECIPES = {
     "iron": {"wood": "A Sturdy Oak Log", "ingot": "An Iron Ingot", "uses": 400,
              "price": 1100},
@@ -125,7 +125,7 @@ TOOL_RECIPES = {
     "chakra": {"wood": "An Ancient Heartwood Log", "ingot": "A Chakra Steel Ingot", "uses": 1000,
                "price": 90000},
 }
-TOOL_KINDS = {"rod": "Fishing Rod", "axe": "Axe", "pickaxe": "Pickaxe"}
+TOOL_KINDS = {"rod": "Fishing Rod", "axe": "Axe", "pickaxe": "Pickaxe", "hoe": "Hoe", "pot": "Cooking Pot"}
 TOOL_NAMES = {
     ("rod", "iron"): "An Ironbound Oak Fishing Rod",
     ("rod", "steel"): "A Steel Ironwood Fishing Rod",
@@ -136,6 +136,12 @@ TOOL_NAMES = {
     ("pickaxe", "iron"): "An Ironbound Oak Pickaxe",
     ("pickaxe", "steel"): "A Steel Ironwood Pickaxe",
     ("pickaxe", "chakra"): "A Chakra Steel Heartwood Pickaxe",
+    ("hoe", "iron"): "An Ironbound Oak Hoe",
+    ("hoe", "steel"): "A Steel Ironwood Hoe",
+    ("hoe", "chakra"): "A Chakra Steel Heartwood Hoe",
+    ("pot", "iron"): "An Ironbound Oak Cooking Pot",
+    ("pot", "steel"): "A Steel Ironwood Cooking Pot",
+    ("pot", "chakra"): "A Chakra Steel Heartwood Cooking Pot",
 }
 
 def job_tool_name(kind: str, tier: str) -> str:
