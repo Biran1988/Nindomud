@@ -67,6 +67,28 @@ class IronToolMerchantTests(unittest.TestCase):
         self.assertEqual(self.mobs[779]["shop_items"],
                          [9700, 20002, 20201, 20101, 30, 33, 36, 442])
 
+    def test_previous_iron_prices_triple_without_overwriting_custom_prices(self):
+        # Simulate an installation saved before the price increase.
+        previous = iron_tool_shop.PREVIOUS_IRON_PRICE
+        self.assertEqual(previous, 1100)
+        self.assertEqual(data_crafting.TOOL_RECIPES["iron"]["price"], 3300)
+        self.assertEqual(data_crafting.TOOL_RECIPES["steel"]["price"], 6500)
+        self.assertEqual(data_crafting.TOOL_RECIPES["chakra"]["price"], 90000)
+        first = iron_tool_shop.install()
+        self.assertEqual(first["repriced"], [])
+        for vnum in (20002, 20201, 20101, 30, 33, 36):
+            self.objects[vnum]["cost"] = previous
+        # Custom builder override must remain completely unchanged.
+        self.objects[20201]["cost"] = 1750
+        self.objects[31]["cost"] = 8888  # Steel stays untouched.
+        migrated = iron_tool_shop.install()
+        self.assertEqual(migrated["repriced"], [20002, 20101, 30, 33, 36])
+        for vnum in (20002, 20101, 30, 33, 36):
+            self.assertEqual(self.objects[vnum]["cost"], 3300)
+        self.assertEqual(self.objects[20201]["cost"], 1750)
+        self.assertEqual(self.objects[31]["cost"], 8888)
+        self.assertEqual(iron_tool_shop.install()["repriced"], [])
+
     def test_conflicting_object_ids_are_not_overwritten(self):
         occupied = olc.default_object(30, "a custom builder item")
         self.objects[30] = occupied
