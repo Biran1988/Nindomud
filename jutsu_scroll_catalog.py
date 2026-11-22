@@ -60,6 +60,11 @@ RELEASED_ANIME_KEYS = (
 )
 
 
+# Fixed next released VNUM: 31761. Append subsequent releases after this
+# instead of sorting into the already-released range.
+RELEASED_NEXT_KEYS = ("trap tag placement",)
+
+
 def entries():
     """Keep all released IDs stable; reserve 31740-31743 for extra attacks.
 
@@ -78,7 +83,9 @@ def entries():
     if not set(RELEASED_ANIME_KEYS).issubset(available):
         raise RuntimeError("Previously released anime technique scrolls have changed")
     rows.extend((key, data_jutsu.JUTSU[key]) for key in RELEASED_ANIME_KEYS)
-    future = sorted(available.difference(released).difference(RELEASED_ANIME_KEYS),
+    rows.extend((key, data_jutsu.JUTSU[key]) for key in RELEASED_NEXT_KEYS)
+    future = sorted(available.difference(released).difference(RELEASED_ANIME_KEYS)
+                    .difference(RELEASED_NEXT_KEYS),
                     key=lambda key: (CLASS_ORDER.index(data_jutsu.JUTSU[key]["class_requirement"]),
                                      data_jutsu.JUTSU[key]["display_name"].casefold(), key))
     rows.extend((key, data_jutsu.JUTSU[key]) for key in future)
@@ -126,10 +133,13 @@ def _scroll_template(vnum, key, data):
         "An advanced shadow-clone technique for delegating gathering "
         "and training at a local work site. READ to learn it at level 75."
         if key == "advanced shadow clone jutsu" else
+        "READ to learn Trap Tag Placement at level 25 (all classes), or "
+        "at level 10 for Bukijutsu. Bukijutsu learns it automatically at level 10."
+        if key == "trap tag placement" else
         "A teaching scroll inscribed with a technique. READ it to study "
         "its jutsu; existing class, bloodline, clan and element rules still apply.")
     obj.update(item_type="scroll", scroll_jutsu=key,
-               level=int(data.get("level_requirement", 1)),
+               level=25 if key == "trap tag placement" else int(data.get("level_requirement", 1)),
                cost=cost, description=description)
     return obj
 
