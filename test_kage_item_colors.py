@@ -83,6 +83,7 @@ class KageLegendaryPaletteTests(unittest.TestCase):
         for item in legendary_items.LEGENDARY_ITEMS.values():
             self.assertIn(legendary_items.styled_name(item["short_desc"]), result)
         self.assertEqual(result.count("500 mission point(s)"), 20)
+        self.assertEqual(result.count("[Lvl "), 20)
 
     def test_inventory_and_equipment_display_colored_without_mutating_saved_names(self):
         item = legendary_items.LEGENDARY_ITEMS["gaara's sand gourd"]
