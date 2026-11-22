@@ -28,6 +28,18 @@ NEW_TOOLS = (
     (38, "chisel", "chakra"),
 )
 IRON_SHOP_VNUM = 779
+PREVIOUS_IRON_PRICE = 1100
+
+
+def _raise_standard_iron_price(proto: dict, expected_name: str, new_price: int) -> bool:
+    """Migrate only our former default price, never a builder's custom price."""
+    if (proto is not None
+            and proto.get("item_type") == "tool"
+            and str(proto.get("short_desc", "")).casefold() == expected_name.casefold()
+            and proto.get("cost") == PREVIOUS_IRON_PRICE):
+        proto["cost"] = new_price
+        return True
+    return False
 
 
 def install() -> dict:
@@ -37,8 +49,14 @@ def install() -> dict:
     import olc
     import shop_flags
 
-    created, preserved, collisions = [], [], []
+    created, preserved, collisions, repriced = [], [], [], []
     chosen = {}
+    iron_price = data_crafting.TOOL_RECIPES["iron"]["price"]
+    # The older three tools already exist under their original VNUMs.
+    # A saved world could still retain their prior 1,100-ryo cost.
+    for vnum, name in EXISTING_IRON_TOOLS:
+        if _raise_standard_iron_price(olc.OBJECT_TEMPLATES.get(vnum), name, iron_price):
+            repriced.append(vnum)
     # New objects use VNUMs 30-38 unless their intended prototype is
     # already present at another VNUM, in which case reuse that prototype.
     for vnum, kind, tier in NEW_TOOLS:
@@ -49,6 +67,8 @@ def install() -> dict:
                     and existing.get("item_type") == "tool"):
                 chosen[(kind, tier)] = vnum
                 preserved.append(vnum)
+                if tier == "iron" and _raise_standard_iron_price(existing, name, iron_price):
+                    repriced.append(vnum)
             else:
                 collisions.append((vnum, name, existing.get("short_desc", "")))
             continue
@@ -59,6 +79,8 @@ def install() -> dict:
         if matches:
             chosen[(kind, tier)] = matches[0][0]
             preserved.append(matches[0][0])
+            if tier == "iron" and _raise_standard_iron_price(matches[0][1], name, iron_price):
+                repriced.append(matches[0][0])
             continue
         recipe = data_crafting.TOOL_RECIPES[tier]
         proto = olc.default_object(vnum, name)
@@ -105,5 +127,5 @@ def install() -> dict:
         print("[Iron tool shop] Protected occupied object VNUMs: "
               + ", ".join(str(vnum) for vnum, _name, _current in collisions))
     return {"created": created, "preserved": preserved,
-            "collisions": collisions, "stock": stock_vnums,
+            "repriced": repriced, "collisions": collisions, "stock": stock_vnums,
             "shop_exists": shop is not None}
