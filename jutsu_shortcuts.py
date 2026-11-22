@@ -175,6 +175,7 @@ JUTSU_SHORTCUTS = {
     'toxin binding': 'tox',
     'track': 'trk',
     'trap disabling': 'td',
+    'trap tag placement': 'ttag',
     'truth-seeking orb barrage': 'tru',
     'tsukuyomi': 'tsu',
     'ultimate henge': 'uhenge',
