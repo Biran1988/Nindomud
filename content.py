@@ -733,6 +733,10 @@ def populate() -> None:
     # collisions are skipped, and staff-owned shop mobs are not fabricated.
     import chuunin_shops
     chuunin_shops.install()
+    # Iron gathering tools and the missing hoe/pot tiers use the same
+    # post-restore, builder-safe installer; mob 779 is never synthesized.
+    import iron_tool_shop
+    iron_tool_shop.install()
 
     reaper_seal.restore_world()
     import technique_names
