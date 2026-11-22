@@ -6140,6 +6140,12 @@ def _find_matching_teacher(room_vnum: int, skill_name: str):
     return None
 
 
+def _shop_list_level_label(proto: Optional[dict]) -> str:
+    """Display every stock item's minimum level, including unrestricted level 0."""
+    level = (proto or {}).get("level") or 0
+    return f" &D[Lvl {level}]&x"
+
+
 def cmd_list(session, args: List[str]) -> None:
     player = session.player
     if _own_kage_chamber(player):
@@ -6158,7 +6164,7 @@ def cmd_list(session, args: List[str]) -> None:
             item_name = proto["short_desc"] if proto else data["short_desc"]
             already_owned = item_name.lower() in owned_names
             status = "&D(already owned)&x" if already_owned else f"{data['cost_mission_points']:,} mission point(s)"
-            level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
+            level_text = _shop_list_level_label(proto)
             lines.append(f"  {rarity_colored_name(item_name)} - {status}{level_text}")
         lines.append("&D('examine' one to see its full stats.)&x")
         session.send("\n".join(lines))
@@ -6176,7 +6182,7 @@ def cmd_list(session, args: List[str]) -> None:
                 (row for row in stock if row["price"] is not None), start=1):
             priced_any = True
             proto = playershops.stock_prototype(entry)
-            level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
+            level_text = _shop_list_level_label(proto)
             lines.append(f"  [{number}] {rarity_colored_name(entry['item_name'])} - {entry['price']:,} ryo{level_text}")
         if not priced_any:
             lines.append("  (nothing in stock right now)")
@@ -6190,8 +6196,10 @@ def cmd_list(session, args: List[str]) -> None:
         if pawnshops.is_pawnshop(shopkeeper):
             pawned = pawnshops.stock(shopkeeper, player.room_vnum)
             lines = [f"&W{shopkeeper.name.capitalize()} Pawnshop — for sale:&x"]
-            lines += [f"  [{number}] {rarity_colored_name(row['item_name'])} - {row['price']:,} ryo"
-                      for number, row in enumerate(pawned, start=1)]
+            for number, row in enumerate(pawned, start=1):
+                proto = playershops.stock_prototype({"item_name": row["item_name"]})
+                level_text = _shop_list_level_label(proto)
+                lines.append(f"  [{number}] {rarity_colored_name(row['item_name'])} - {row['price']:,} ryo{level_text}")
             if not pawned:
                 lines.append("  (nothing has been pawned here yet)")
             else:
@@ -6205,7 +6213,7 @@ def cmd_list(session, args: List[str]) -> None:
         listed_items = [olc.OBJECT_TEMPLATES[vnum] for vnum in shop_items
                         if vnum in olc.OBJECT_TEMPLATES]
         for number, obj in enumerate(listed_items, start=1):
-            level_text = f" (level {obj['level']})" if obj.get("level", 0) > 0 else ""
+            level_text = _shop_list_level_label(obj)
             import item_balance
             lines.append(f"  [{number}] {rarity_colored_name(obj['short_desc'])} - {item_balance.effective_cost(obj)} ryo{level_text}")
         if not listed_items:
@@ -6238,7 +6246,7 @@ def cmd_list(session, args: List[str]) -> None:
     lines = [f"&W{shop_info['display_name']} -- for sale:&x"]
     for number, item in enumerate(shop["items"], start=1):
         proto = _find_object_prototype_by_name(item["name"])
-        level_text = f" (level {proto['level']})" if proto and proto.get("level", 0) > 0 else ""
+        level_text = _shop_list_level_label(proto)
         lines.append(f"  [{number}] {rarity_colored_name(item['name'])} - {item['price']} ryo{level_text}")
     if shop["items"]:
         lines.append("&D(Type BUY <number> to choose a listed item.)&x")
