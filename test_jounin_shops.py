@@ -138,7 +138,8 @@ class JouninShopsTests(unittest.TestCase):
                     gem_inlays.elemental_jutsu_multiplier(wearer, element), 1.10)
                 counter = elemental_counters.ELEMENT_COUNTERS[element]
                 self.assertEqual(gem_inlays.reduce_counter_damage(wearer, counter, 100), 90)
-                another_element = next(e for e in jounin_shops.ELEMENTS if e != counter)
+                another_element = next(
+                    e for e in jounin_shops.ELEMENTS if e not in {counter, element})
                 self.assertEqual(gem_inlays.reduce_counter_damage(wearer, another_element, 100), 100)
                 self.assertAlmostEqual(
                     gem_inlays.elemental_jutsu_multiplier(wearer, another_element), 1.0)
