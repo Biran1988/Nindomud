@@ -119,7 +119,7 @@ def combined_stat_value(material_a: str, material_b: str) -> int:
 # The same three recipe tiers apply to fishing rods, axes, pickaxes, hoes, cooking pots and chisels.
 TOOL_RECIPES = {
     "iron": {"wood": "A Sturdy Oak Log", "ingot": "An Iron Ingot", "uses": 400,
-             "price": 1100},
+             "price": 3300},
     "steel": {"wood": "An Ironwood Log", "ingot": "A Steel Ingot", "uses": 650,
               "price": 6500},
     "chakra": {"wood": "An Ancient Heartwood Log", "ingot": "A Chakra Steel Ingot", "uses": 1000,
