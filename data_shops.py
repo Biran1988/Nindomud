@@ -57,6 +57,11 @@ SHOP_TYPES = {
         "allowed_sell_categories": None,
         "sell_multiplier": 0.5,
     },
+    "tactical": {
+        "display_name": "Tactical Supply Shop",
+        "allowed_sell_categories": {"misc", "medical"},
+        "sell_multiplier": 1.0,
+    },
 }
 
 
