@@ -279,6 +279,27 @@ def _trigger(session, trap):
     session.send(" ".join(msg))
 
 
+
+def staff_room_lines(room_vnum):
+    """Reveal active hidden player-set traps to immortals during LOOK.
+
+    This never exposes the trap ledger to ordinary players, and it reads the
+    live persisted entries so triggered, disarmed and expired tags disappear.
+    """
+    load()
+    now = time.time()
+    lines = []
+    for trap in _records.get(str(room_vnum), ()):
+        details = _physical_item(trap["type"])
+        name = details[0] if details else trap["type"].title() + " trap"
+        minutes = max(1, int((trap["expires"] - now + 59) // 60))
+        lines.append(
+            f"  &Y[IMM TRAP]&x {name} "
+            f"&D[Owner: {trap['owner']} | {minutes}m remaining]&x"
+        )
+    return lines
+
+
 def on_enter(session):
     """Disarm with existing skill automatically, or spring an enemy's tag."""
     import combat
@@ -295,8 +316,10 @@ def on_enter(session):
     here = str(player.room_vnum)
     organization = pvp_organizations.membership(player)
     for trap in list(_records.get(here, ())):
+        # Entering players spring traps unless they placed the tag or share
+        # its organization. Unaffiliated players are not silently skipped.
         if (trap["owner"].casefold() == player.name.casefold()
-                or not organization or trap["org"] == organization):
+                or (organization and trap["org"] == organization)):
             continue
         original = _records.get(here, [])
         if not any(item.get("id") == trap.get("id") for item in original):
