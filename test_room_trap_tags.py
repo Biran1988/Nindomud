@@ -129,18 +129,53 @@ class RoomTrapTagTests(unittest.TestCase):
         self.assertIn("entangled", enemy.active_status_effects)
         self.assertFalse(tags._records.get(str(self.room.vnum)))
 
-    def test_same_org_owner_nonpvp_are_protected(self):
+    def test_same_org_and_owner_are_exempt_while_unaffiliated_players_trigger(self):
         setter, setter_session, _ = self.player()
         setter.inventory.append(tags.TAGS["flashbang"][1])
         tags.command(setter_session, ["flashbang"])
         same, same_session, _ = self.player("Ally", "taijutsu", 25, "anbu")
         tags.on_enter(same_session)
         self.assertTrue(tags._records.get(str(self.room.vnum)))
-        protected, protected_session, _ = self.player("Civilian", "taijutsu", 25, "")
-        tags.on_enter(protected_session)
-        self.assertTrue(tags._records.get(str(self.room.vnum)))
         tags.on_enter(setter_session)
         self.assertTrue(tags._records.get(str(self.room.vnum)))
+        civilian, civilian_session, messages = self.player("Civilian", "taijutsu", 25, "")
+        tags.on_enter(civilian_session)
+        self.assertIn("trigger", " ".join(messages))
+        self.assertFalse(tags._records.get(str(self.room.vnum)))
+
+    def test_real_entry_hook_springs_tag_for_unaffiliated_player(self):
+        import territory
+        setter, setter_session, _ = self.player()
+        setter.inventory.append(tags.TAGS["snare"][1])
+        tags.command(setter_session, ["snare"])
+        outsider, _unused, messages = self.player("Outsider", "taijutsu", 25, "")
+        entry_session = NS(player=outsider, send=messages.append)
+        with patch.object(commands, "WORLD", world.WORLD), \
+             patch.object(territory, "check_trap_trigger", return_value=None):
+            commands._fire_enter_triggers(entry_session)
+        self.assertIn("trigger", " ".join(messages))
+        self.assertIn("entangled", outsider.active_status_effects)
+
+    def test_immortal_look_lists_all_hidden_tags_but_mortal_look_does_not(self):
+        import territory
+        owner, owner_session, _ = self.player()
+        owner.inventory.append(tags.TAGS["fire"][1])
+        tags.command(owner_session, ["fire"])
+        watcher, _session, output = self.player("Watcher", "taijutsu", 25, "")
+        staff = NS(player=watcher, account=NS(staff_level="immortal"),
+                   active_sessions=lambda: [], send=output.append)
+        with patch.object(commands, "WORLD", world.WORLD), \
+             patch.object(territory, "trap_at", return_value=None):
+            commands.cmd_look(staff, [])
+            self.assertIn("[IMM TRAP]", " ".join(output))
+            self.assertIn("Fire Burst Tag", " ".join(output))
+            self.assertIn("Owner: Maker", " ".join(output))
+            output.clear()
+            staff.account.staff_level = "player"
+            commands.cmd_look(staff, [])
+            self.assertNotIn("[IMM TRAP]", " ".join(output))
+        self.assertTrue(tags._records.get(str(self.room.vnum)))
+
 
     def test_all_effect_types_and_existing_consumables(self):
         self.assertEqual(set(range(80, 89)),
