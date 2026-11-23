@@ -1325,6 +1325,19 @@ def cmd_look(session, args: List[str]) -> None:
         lines.append("")
     lines.extend(_format_exits(room, is_staff))
     lines.append("")
+    if is_staff:
+        # Hidden player tags are intentionally visible only to real staff.
+        import room_trap_tags
+        import territory
+        lines.extend(room_trap_tags.staff_room_lines(room.vnum))
+        defense = territory.trap_at(room.vnum)
+        if defense:
+            info = territory.TRAP_TYPES.get(defense.get("trap_type"), {})
+            label = info.get("display_name", defense.get("trap_type", "Trap"))
+            lines.append(
+                f"  &Y[IMM TERRITORY TRAP]&x {label} "
+                f"&D[Village: {defense.get('village', 'Unknown')}]&x"
+            )
     for other in session.active_sessions():
         if other.player and other is not session and other.player.room_vnum == player.room_vnum and not _player_hidden_from(player, other.player):
             afk_tag = " &R[AFK]&x" if other.player.afk else ""
