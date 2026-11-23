@@ -316,10 +316,13 @@ def on_enter(session):
     here = str(player.room_vnum)
     organization = pvp_organizations.membership(player)
     for trap in list(_records.get(here, ())):
-        # Entering players spring traps unless they placed the tag or share
-        # its organization. Unaffiliated players are not silently skipped.
-        if (trap["owner"].casefold() == player.name.casefold()
-                or (organization and trap["org"] == organization)):
+        # Alarm tags are non-combat detectors: a visitor's PvP allegiance
+        # never shields them from the notification. Other tags still spare
+        # the owner and members of the owner's PvP organization.
+        if trap["owner"].casefold() == player.name.casefold():
+            continue
+        if (trap["type"] != "alarm"
+                and organization and trap["org"] == organization):
             continue
         original = _records.get(here, [])
         if not any(item.get("id") == trap.get("id") for item in original):
