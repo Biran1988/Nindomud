@@ -158,7 +158,7 @@ class RoomTrapTagTests(unittest.TestCase):
 
     def test_immortal_look_lists_all_hidden_tags_but_mortal_look_does_not(self):
         import territory
-        owner, owner_session, _ = self.player()
+        owner, owner_session, _ = self.player(level=100)
         owner.inventory.append(tags.TAGS["fire"][1])
         tags.command(owner_session, ["fire"])
         watcher, _session, output = self.player("Watcher", "taijutsu", 25, "")
