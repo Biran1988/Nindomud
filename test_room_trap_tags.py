@@ -143,6 +143,38 @@ class RoomTrapTagTests(unittest.TestCase):
         self.assertIn("trigger", " ".join(messages))
         self.assertFalse(tags._records.get(str(self.room.vnum)))
 
+    def test_alarm_notifies_owner_regardless_of_visitor_pvp(self):
+        owner, owner_session, owner_messages = self.player()
+        with patch.object(tags, "_live_owner", return_value=owner_session):
+            for label, organization in (("Ally", "anbu"),
+                                         ("Outsider", ""),
+                                         ("Rival", "root")):
+                with self.subTest(visitor=label):
+                    owner.cooldowns.clear()
+                    owner.inventory.append(tags.TAGS["alarm"][1])
+                    tags.command(owner_session, ["alarm"])
+                    self.assertTrue(tags._records.get(str(self.room.vnum)))
+                    owner_messages.clear()
+                    entrant, entrant_session, entrant_messages = self.player(
+                        label, "taijutsu", 25, organization)
+                    before = entrant.health
+                    tags.on_enter(entrant_session)
+                    self.assertIn(
+                        f"detected {label} in room {self.room.vnum}",
+                        " ".join(owner_messages))
+                    self.assertIn("trigger", " ".join(entrant_messages))
+                    self.assertEqual(entrant.health, before)
+                    self.assertFalse(tags._records.get(str(self.room.vnum)))
+
+    def test_alarm_does_not_trigger_on_its_owner(self):
+        owner, owner_session, output = self.player()
+        owner.inventory.append(tags.TAGS["alarm"][1])
+        tags.command(owner_session, ["alarm"])
+        output.clear()
+        tags.on_enter(owner_session)
+        self.assertTrue(tags._records.get(str(self.room.vnum)))
+        self.assertFalse(output)
+
     def test_real_entry_hook_springs_tag_for_unaffiliated_player(self):
         import territory
         setter, setter_session, _ = self.player()
