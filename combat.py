@@ -414,7 +414,7 @@ def spawn_mob(template_vnum: int, room_vnum: int) -> Optional[Mob]:
         # Below level 10, preserve the old no-class default; these mobs
         # cannot cast. Combat mobs at 10+ without a builder-assigned class
         # roll one of the four normal ninja classes on spawn.
-        primary_class=(None if template_vnum == TRAINING_DUMMY_VNUM
+        primary_class=(None if template_vnum == TRAINING_DUMMY_VNUM or t.get("country_animal")
                        else t.get("primary_class") if t.get("primary_class") in data_classes.CLASSES
                        else random.choice(tuple(data_classes.CLASSES)) if level >= 10
                        else None),

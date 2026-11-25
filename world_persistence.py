@@ -74,7 +74,9 @@ def snapshot_world() -> dict:
     for room in world.WORLD.rooms.values():
         room_flags.synchronize(room, legacy=True)
 
+    import country_runtime
     return {
+        **country_runtime.snapshot_metadata(),
         "rooms": {
             str(vnum): {key: value for key, value in dataclasses.asdict(room).items()
                         if key != "ground_ryo"}

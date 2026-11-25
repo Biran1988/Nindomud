@@ -80,7 +80,7 @@ def classify_item(item_name: str) -> str:
             or name_lower in gemcutter.RECIPES
             or name_lower in {v[0].casefold() for v in gemcutter.RECIPES.values()}):
         return "gem"
-    if name_lower in RAW_FOOD_NAMES:
+    if name_lower in RAW_FOOD_NAMES or name_lower in {"a raw chicken", "a raw lamb", "a raw beef"}:
         return "food"
     _match_name, data = consumables.find_consumable(item_name)
     if data and data["category"] == "food":

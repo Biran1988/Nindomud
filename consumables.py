@@ -88,6 +88,13 @@ CONSUMABLES = {
     },
 }
 
+from country_runtime import MEALS as _COUNTRY_MEALS
+for _raw, (_dish, _cost, _xp, _stamina) in _COUNTRY_MEALS.items():
+    CONSUMABLES[_dish.casefold()] = {
+        "category": "food", "restore": "stamina", "amount": _stamina,
+        "message": "You eat {item} and feel refreshed.", "country_meal": True,
+    }
+
 # Both harvested and cooked versions use EAT, but cooked crops restore
 # substantially more Stamina. This uses the canonical Farming recipes.
 for _raw, _recipe in farming.EDIBLE_CROPS.items():
@@ -247,6 +254,14 @@ def consume(session, verb: str, query: str) -> None:
         session.send(f"You can't {verb} that. Try '{right_verb}' instead.")
         return
 
+    if data.get("country_meal"):
+        if (getattr(session, "combat_target", None) is not None
+                or getattr(session, "pvp_target", None) is not None):
+            session.send("You cannot eat cooked meat in combat.")
+            return
+        if player.cooldowns.get("country_meal", 0) > time.time():
+            session.send("You need to wait before eating another cooked meat dish.")
+            return
     import item_balance
     if expected_category == "medical":
         scaled_recovery = item_balance.effective_recovery(proto, "healing")
@@ -319,6 +334,8 @@ def consume(session, verb: str, query: str) -> None:
             actual_gains[resource] = gained
 
     player.inventory.remove(match)
+    if data.get("country_meal"):
+        player.cooldowns["country_meal"] = time.time() + 30
     session.send(data["message"].format(item=match))
     if expected_category == "medical":
         if amount > 0:
