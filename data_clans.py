@@ -13,6 +13,14 @@ belongs to their own village (see CLANS_BY_VILLAGE / commands.cmd_clan).
 
 CLANS_BY_VILLAGE = {
     "whirlpool": ["uzumaki"],
+    "grass": ["uzumaki","kusanagi","bamboo"],
+    "rain": ["uzumaki","hanzo","amegumo","shigure"],
+    "waterfall": ["kakuzu","shibuki","takimori"],
+    "sound": ["jugo","kaguya","kinuta","abumi","yakushi"],
+    "frost": ["shimoyuki","yukimori","kogane"],
+    "hotwater": ["hidan","yugami","izumi"],
+    "rock": ["ishimori","iwane","sekkai"],
+    "moon": ["tsukino","mikazuki","hoshino"],
     "leaf": ["uchiha", "hyuga", "nara", "uzumaki",
              "akimichi", "yamanaka", "inuzuka", "aburame", "sarutobi", "senju"],
     "cloud": ["yotsuki", "chinoike", "kinkaku", "jugo",
@@ -27,6 +35,30 @@ CLANS_BY_VILLAGE = {
 
 CLANS = {
     "none": {"display_name": "None", "description": "No clan affiliation."},
+    # Local and character-inspired lineages are game additions, not claims of canon clans.
+    "kusanagi": {"display_name": "Kusanagi", "description": "A lineage inspired by Grass-country swordcraft."},
+    "bamboo": {"display_name": "Bamboo", "description": "A lineage inspired by Grass-country scouts and cultivators."},
+    "hanzo": {"display_name": "Hanzo", "description": "A lineage inspired by The Rain's legendary salamander shinobi."},
+    "amegumo": {"display_name": "Amegumo", "description": "A lineage inspired by Rain-country watchkeepers."},
+    "shigure": {"display_name": "Shigure", "description": "A lineage inspired by Umbrella fighting traditions."},
+    "kakuzu": {"display_name": "Kakuzu", "description": "A lineage inspired by Waterfall's veteran shinobi."},
+    "shibuki": {"display_name": "Shibuki", "description": "A lineage inspired by Waterfall leadership traditions."},
+    "takimori": {"display_name": "Takimori", "description": "A lineage inspired by Waterfall guardians."},
+    "kinuta": {"display_name": "Kinuta", "description": "A lineage inspired by Sound vibration techniques."},
+    "abumi": {"display_name": "Abumi", "description": "A lineage inspired by Sound air-pressure techniques."},
+    "yakushi": {"display_name": "Yakushi", "description": "A lineage inspired by Medical and intelligence training."},
+    "shimoyuki": {"display_name": "Shimoyuki", "description": "A lineage inspired by Frost-country scouts."},
+    "yukimori": {"display_name": "Yukimori", "description": "A lineage inspired by Frozen wilderness survival."},
+    "kogane": {"display_name": "Kogane", "description": "A lineage inspired by Mountain fighting."},
+    "hidan": {"display_name": "Hidan", "description": "A lineage inspired by Hot Water's relentless shinobi."},
+    "yugami": {"display_name": "Yugami", "description": "A lineage inspired by Hot-spring sentries."},
+    "izumi": {"display_name": "Izumi", "description": "A lineage inspired by Spring-water healers."},
+    "ishimori": {"display_name": "Ishimori", "description": "A lineage inspired by Rock-country guardians."},
+    "iwane": {"display_name": "Iwane", "description": "A lineage inspired by Cliff-country fighters."},
+    "sekkai": {"display_name": "Sekkai", "description": "A lineage inspired by Stone artisans."},
+    "tsukino": {"display_name": "Tsukino", "description": "A lineage inspired by Moon leadership traditions."},
+    "mikazuki": {"display_name": "Mikazuki", "description": "A lineage inspired by Night scouts."},
+    "hoshino": {"display_name": "Hoshino", "description": "A lineage inspired by Stargazing sentries."},
 
     # --- Hidden Leaf ---------------------------------------------------
     "uchiha": {"display_name": "Uchiha", "description": "A clan famed for sharp reflexes and tactical brilliance in battle."},

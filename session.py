@@ -174,6 +174,8 @@ class Session:
         self._pending_village: Optional[str] = None
         self._whirlpool_access_granted = False  # Only for this chargen attempt; never saved
         self._whirlpool_access_failures = 0
+        self._hidden_access_target = None
+        self._authorized_hidden_village = None
         self._pending_class: Optional[str] = None
         self._pending_clan: str = ""
         self._pending_loadout: str = "balanced"
@@ -744,9 +746,12 @@ class Session:
         self.send(village_names_display())
 
     def _handle_chargen_village(self, line: str) -> None:
-        village = line.strip().lower()
+        from data_villages import resolve_village_key
+        village = resolve_village_key(line)
         self._pending_village = None
         self._whirlpool_access_granted = False
+        self._hidden_access_target = None
+        self._authorized_hidden_village = None
         if village not in VILLAGES:
             self.send("That is not a valid village. Please choose one of the listed villages.")
             self._prompt_village_selection()
@@ -754,16 +759,18 @@ class Session:
         if VILLAGES[village].get("hidden_at_creation", False):
             import areas
             home = VILLAGES[village]["starting_room_vnum"]
-            area = areas.find_area(village)
-            if not area or not area.vnum_start <= home <= area.vnum_end or world.WORLD.get(home) is None:
+            area = areas.find_area(VILLAGES[village].get("area_key", village))
+            if (not area or area.prototype or not area.vnum_start <= home <= area.vnum_end
+                    or world.WORLD.get(home) is None or not world.WORLD.get(home).enabled):
                 self.send("That is not an available starting village. Please choose a village.")
                 self._prompt_village_selection()
                 return
-        if village == "whirlpool":
+        if VILLAGES[village].get("hidden_at_creation", False):
             if self._whirlpool_access_failures >= 3:
                 self.send("This selection is unavailable for this session.")
                 self._prompt_village_selection()
                 return
+            self._hidden_access_target = village
             self.state = State.CHARGEN_WHIRLPOOL_ACCESS
             self.send("Enter the village access code (or 'cancel' to choose again):")
             return
@@ -773,20 +780,25 @@ class Session:
         # The submitted code is never included in messages, saves, helpfiles,
         # logs, or gameplay spy output (spy ignores non-playing states).
         if line.strip().lower() == "cancel":
+            self._hidden_access_target = None
             self.state = State.CHARGEN_VILLAGE
             self._prompt_village_selection()
             return
-        if not village_access.verify_whirlpool_access_code(line.strip()):
+        target = self._hidden_access_target
+        if not target or not village_access.verify_hidden_village_access_code(target, line.strip()):
             self._whirlpool_access_failures += 1
             if self._whirlpool_access_failures >= 3:
                 self.send("Access denied. Choose a different village.")
+                self._hidden_access_target = None
                 self.state = State.CHARGEN_VILLAGE
                 self._prompt_village_selection()
             else:
                 self.send("Access denied. Enter the access code again or 'cancel':")
             return
-        self._whirlpool_access_granted = True
-        self._advance_chargen_village("whirlpool")
+        self._authorized_hidden_village = target
+        self._whirlpool_access_granted = target == "whirlpool"
+        self._hidden_access_target = None
+        self._advance_chargen_village(target)
 
     def _advance_chargen_village(self, village: str) -> None:
         self._pending_village = village
@@ -974,13 +986,16 @@ class Session:
             self.send("Let's choose again.")
             self._pending_village = None
             self._whirlpool_access_granted = False
+            self._hidden_access_target = None
+            self._authorized_hidden_village = None
             self.state = State.CHARGEN_VILLAGE
             self._prompt_village_selection()
             return
 
         # Guard the final save as well as the selection step: a valid code
         # is required for THIS attempt, never carried over from a prior one.
-        if self._pending_village == "whirlpool" and not self._whirlpool_access_granted:
+        if (VILLAGES.get(self._pending_village, {}).get("hidden_at_creation")
+                and self._authorized_hidden_village != self._pending_village):
             self._pending_village = None
             self.state = State.CHARGEN_VILLAGE
             self.send("Village selection is not authorized.")

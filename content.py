@@ -44,6 +44,10 @@ from world import Room, WORLD
 SHOPS = {}
 
 _VILLAGE_ROOMS = {
+    **{key: dict(square=None, hospital=None, kage=info["starting_room_vnum"],
+                 board=None, outskirts=None, shop=None, weapons_shop=None,
+                 blacksmith=None, apartment_district=None)
+       for key, info in data_villages.VILLAGES.items() if "area_key" in info},
     "whirlpool": dict(square=None, hospital=None, kage=80001, board=None, outskirts=None, shop=None,
                       weapons_shop=None, blacksmith=None, apartment_district=None),
     "leaf": dict(square=None, hospital=None, kage=1, board=None, outskirts=None, shop=None,
@@ -231,12 +235,17 @@ def _register_shared_items() -> None:
     for _village_data in data_villages.VILLAGES.values():
         for _rank in data_headbands.RANK_ORDER[1:]:  # Student headband is already registered above
             _name = data_headbands.headband_base_name(_village_data["village_short_name"], _rank)
-            make(_headband_vnum, _name, "armor", _RANK_COST[_rank],
+            rank_base = _village_data.get("rank_headband_base")
+            rank_vnum = (rank_base + data_headbands.RANK_ORDER.index(_rank) - 1
+                         if rank_base is not None else _headband_vnum)
+            make(rank_vnum, _name, "armor", _RANK_COST[_rank],
                  rarity=data_headbands.RANK_HEADBAND_RARITY[_rank], wear_loc="head")
             _ac_bonus = data_headbands.RANK_HEADBAND_AC_BONUS.get(_rank, 0)
             if _ac_bonus:
-                olc.OBJECT_TEMPLATES[_headband_vnum]["stat_bonuses"]["armor_class"] = _ac_bonus
-            _headband_vnum += 1
+                if olc.OBJECT_TEMPLATES[rank_vnum].get("short_desc") == _name:
+                    olc.OBJECT_TEMPLATES[rank_vnum]["stat_bonuses"]["armor_class"] = _ac_bonus
+            if rank_base is None:
+                _headband_vnum += 1
 
     # Each craftable backpack owns its actual storage limit, NOT an increase
     # to a character's ordinary 20 inventory slots. Existing OLC edits win.
@@ -439,8 +448,8 @@ def populate() -> None:
     for village, rooms in _VILLAGE_ROOMS.items():
         v = VILLAGES[village]
         if v.get("hidden_at_creation", False):
-            area = areas.find_area(village)
-            if not area or not area.vnum_start <= rooms["kage"] <= area.vnum_end:
+            area = areas.find_area(v.get("area_key", village))
+            if not area or area.prototype or not area.vnum_start <= rooms["kage"] <= area.vnum_end:
                 continue  # Do not seed a hidden home inside someone else's reservation.
         short = v["village_short_name"]
 
@@ -460,6 +469,9 @@ def populate() -> None:
         # 'spawnpoint add' at whatever new rooms they build.
         kage_room = Room(rooms["kage"], f"{short} Kage Chamber",
             f"The office of {kage_title(village)}. Try 'say mission' or 'ask kage promotion'.")
+        if "area_key" in v:
+            kage_room.name = f"{short} Village Hall"
+            kage_room.description = f"The quiet village hall of {v['village_name']} serves as a starting refuge."
         if village == "whirlpool":
             kage_room.name = "Uzushio Sealing Hall"
             kage_room.description = (
