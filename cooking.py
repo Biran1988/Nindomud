@@ -63,6 +63,12 @@ COOKING_XP = {
 COOKING_XP.update({raw: recipe["cooking_xp"]
                    for raw, recipe in farming.EDIBLE_CROPS.items()})
 
+# Regional livestock drops use the existing timed Cooking job and fuel rules.
+from country_runtime import MEALS as _COUNTRY_MEALS
+for _raw, (_dish, _cost, _xp, _stamina) in _COUNTRY_MEALS.items():
+    INGREDIENTS[_raw.casefold()] = {"dish": _dish, "base_cost": _cost}
+    COOKING_XP[_raw.casefold()] = _xp
+
 
 def pot_required_level(pot_name: str):
     pot = POTS.get(pot_name.lower() if pot_name else "")

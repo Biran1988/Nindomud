@@ -448,3 +448,22 @@ PAGES.append(page(
     "See HELP PRAC, HELP SAMURAI SABRE, HELP TRACK, and individual skill help pages for more details.\n"
     "Date: 2026-11-14",
     "passives", "passive", "combat passives", "extra attacks", "multi attacks", "multiple attacks", "auto attacks", "automatic attacks", "passive skill list"))
+
+
+PAGES.append(page("country travel", "Country Travel and Exploration",
+    "Syntax: look sign | examine sign | where | map | survey\n"
+    "         list | buy <item> | sell <item> | cook <meat>\n\n"
+    "Village country roads lead to regional forests, farms, fishing waters and mines. "
+    "Permanent signs at major road junctions identify directions to public countries, "
+    "villages and gathering areas. WHERE identifies your location, MAP lists adjacent "
+    "room names and directions, and SURVEY reports nearby gathering and wildlife. "
+    "Academy Students must earn Genin to leave their village; country border guards "
+    "require Chuunin before outbound mainland travel. Returning home is unrestricted. "
+    "Regional animals provide normal combat experience and livestock drop raw chicken, "
+    "lamb or beef. Cook them with a pot, wood or a permanent roadside campfire. "
+    "Cooked meat restores Stamina outside combat and has a shared 30-second eating timer. "
+    "Environmental items occasionally appear on the ground; GET collects them without "
+    "changing any job reward tables. Wandering caravan merchants sell goods on regular "
+    "mainland road patrols, pausing at rest stops. Use the existing shop commands. "
+    "Existing village missions are unchanged. Date: 2026-11-24",
+    "sign", "signpost", "where", "map", "survey", "caravan", "caravans", "country roads", "campfire", "cooked meat"))

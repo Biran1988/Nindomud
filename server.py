@@ -206,6 +206,8 @@ async def pulse_loop() -> None:
         corpses.process_decay()
         auction.process_expired_auctions()
         combat.process_wander()
+        import country_runtime
+        country_runtime.tick_caravans()
         combat.process_scavengers()
         import mob_aggression
         mob_aggression.process_aggression()

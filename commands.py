@@ -422,6 +422,10 @@ def cmd_move(session, direction: str) -> None:
             if t and t.get("mob_programs") and programs.check_level_gate(session, t["mob_programs"], direction, speaker_name=mob.name.capitalize()):
                 return
 
+    import country_runtime
+    if country_runtime.blocks_border(session, room, direction):
+        return
+
     # Scripted mob "move" trigger: fire before leaving while the
     # triggering player and guard still share a room. A script may
     # transfer the player, in which case do not perform a second move.
@@ -1223,6 +1227,11 @@ def cmd_look(session, args: List[str]) -> None:
 
     if args:
         query = " ".join(args).lower()
+        import country_runtime
+        sign = country_runtime.read_sign(room, query)
+        if sign is not None:
+            session.send(sign)
+            return
         # Physical currency piles can be examined like dropped objects.
         if query == "ryo" or (query.endswith(" ryo")
                               and query.split()[0].isdigit()):
@@ -5782,6 +5791,11 @@ def cmd_examine(session, args: List[str]) -> None:
         return
 
     query = " ".join(args).lower()
+    import country_runtime
+    sign = country_runtime.read_sign(WORLD.get(player.room_vnum), query)
+    if sign is not None:
+        session.send(sign)
+        return
     import scroll_writing
     candidates = list(player.inventory) + list(player.equipment.values())
     match = find_indexed_item(query, candidates)
@@ -7742,6 +7756,7 @@ def cmd_cook(session, args: List[str]) -> None:
     Medicinal Herbs are not food.
     """
     import wood_fuel
+    import country_runtime
     player = session.player
 
     if session.is_busy():
@@ -7758,7 +7773,7 @@ def cmd_cook(session, args: List[str]) -> None:
         return
 
     if not args:
-        session.send("Usage: cook <fish or crop>")
+        session.send("Usage: cook <fish, meat or crop>")
         return
 
     query = " ".join(args).lower()
@@ -7782,7 +7797,7 @@ def cmd_cook(session, args: List[str]) -> None:
             return
     effective_pot = pot_name if pot_name is not None else "a copper cooking pot"
 
-    if wood_fuel.find_fuel(player.inventory) is None:
+    if not country_runtime.free_campfire(room) and wood_fuel.find_fuel(player.inventory) is None:
         session.send("Cooking requires one wood item in your inventory, "
                      "such as Kindling, Birch or a Log (even in a kitchen).")
         return
@@ -7795,20 +7810,22 @@ def cmd_cook(session, args: List[str]) -> None:
         if ingredient_name not in player.inventory:
             session.send(f"You no longer have {ingredient_name} to cook.")
             return
-        fuel = wood_fuel.find_fuel(player.inventory)
-        if fuel is None:
+        campfire = country_runtime.free_campfire(world.WORLD.get(player.room_vnum))
+        fuel = None if campfire else wood_fuel.find_fuel(player.inventory)
+        if fuel is None and not campfire:
             session.send("Your cooking stops: you have no wood to burn. "
                          "The ingredient is not consumed.")
             return
         if pot_name is not None and not _use_held_job_tool(session, held_tool):
             return
         inventory.remove_carried(player, ingredient_name)
-        inventory.remove_carried(player, fuel)
+        if fuel is not None:
+            inventory.remove_carried(player, fuel)
 
         result = cooking.attempt_cook(job_level, ingredient_name.lower(), effective_pot)
         if result["burned"]:
             session.send(f"You burn {ingredient_name} to a crisp! It's ruined. "
-                         f"Your {fuel} was consumed as cooking fuel.")
+                         + (f"Your {fuel} was consumed as cooking fuel." if fuel else "The campfire continues to burn."))
             return
 
         display_name = result["name"]
@@ -7821,7 +7838,10 @@ def cmd_cook(session, args: List[str]) -> None:
             return
 
         session.send(f"You cooked {ingredient_name.lower()}.")
-        session.send(f"You burn {fuel} as cooking fuel.")
+        if fuel is not None:
+            session.send(f"You burn {fuel} as cooking fuel.")
+        else:
+            session.send("You use the permanent campfire for cooking fuel.")
         _award_job_action_xp(session, "cooking", result["xp"])
 
     session.send(f"You start cooking {ingredient_name}...")
@@ -10990,6 +11010,9 @@ from network_bans import cmd_ip, cmd_ban
 import immortal_practice
 
 COMMANDS = {
+    "where": __import__("country_runtime").cmd_where,
+    "map": __import__("country_runtime").cmd_map,
+    "survey": __import__("country_runtime").cmd_survey,
     # Ocean navigation is coordinate-based; the only real room is the boat interior.
     "board": __import__("water_travel").command_board,
     "boat": __import__("water_travel").command_status,

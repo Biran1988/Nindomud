@@ -21,46 +21,49 @@ def main():
     import forest_of_death_grid
     forest_of_death_grid.install_once()
     forest_of_death_grid.install_final_room_once()
-    # Merge the mainland highway and country gates into the existing /data
-    # only once, just like the Forest of Death. Never replace existing
-    # builder rooms or a previously occupied gate exit.
-    import mainland_roads
-    try:
-        mainland_roads.ensure_live_mainland_area()
-    except mainland_roads.RoadInstallationError as error:
-        print(f"[Mainland roads] Area kept unchanged: {error}")
-    try:
-        mainland_roads.install_once()
-    except mainland_roads.RoadInstallationError as error:
-        # An existing room or exit is never replaced by the installer.
-        print(f"[Mainland roads] Installation skipped: {error}")
-    # A prior one-time marker does not guarantee all saved road rooms survived.
-    # Repair the generated highway and just the missing exits at the existing
-    # Leaf/Anki village entry rooms; never replace a regular village room.
-    import mainland_recovery
-    try:
-        result = mainland_recovery.repair_missing_roads()
-        if result["updated_rooms"]:
-            print(f"[Mainland roads] Repaired {result['updated_rooms']} rooms "
-                  f"({result['restored_rooms']} missing, "
-                  f"{result['replaced_unfinished']} unfinished).")
-        for warning in result["unavailable"]:
-            print(f"[Mainland roads] Unavailable entry: {warning}")
-    except mainland_recovery.RoadRecoveryError as error:
-        print(f"[Mainland roads] Repair safely skipped: {error}")
-    # Expand the same reserved mainland area with one-time camp/inn additions.
-    # This does not touch the changes board or replace unrelated /data.
+    import country_runtime
     import roadside_encounters
-    try:
-        roadside_encounters.install_once()
-    except roadside_encounters.RoadsideInstallationError as error:
-        print(f"[Roadside encounters] Installation skipped: {error}")
-    try:
-        repaired = roadside_encounters.repair_missing()
-        if any(repaired.values()):
-            print(f"[Roadside encounters] Restored: {repaired}")
-    except roadside_encounters.RoadsideInstallationError as error:
-        print(f"[Roadside encounters] Repair safely skipped: {error}")
+    if not country_runtime.installed():
+        # Merge the mainland highway and country gates into the existing /data
+        # only once, just like the Forest of Death. Never replace existing
+        # builder rooms or a previously occupied gate exit.
+        import mainland_roads
+        try:
+            mainland_roads.ensure_live_mainland_area()
+        except mainland_roads.RoadInstallationError as error:
+            print(f"[Mainland roads] Area kept unchanged: {error}")
+        try:
+            mainland_roads.install_once()
+        except mainland_roads.RoadInstallationError as error:
+            # An existing room or exit is never replaced by the installer.
+            print(f"[Mainland roads] Installation skipped: {error}")
+        # A prior one-time marker does not guarantee all saved road rooms survived.
+        # Repair the generated highway and just the missing exits at the existing
+        # Leaf/Anki village entry rooms; never replace a regular village room.
+        import mainland_recovery
+        try:
+            result = mainland_recovery.repair_missing_roads()
+            if result["updated_rooms"]:
+                print(f"[Mainland roads] Repaired {result['updated_rooms']} rooms "
+                      f"({result['restored_rooms']} missing, "
+                      f"{result['replaced_unfinished']} unfinished).")
+            for warning in result["unavailable"]:
+                print(f"[Mainland roads] Unavailable entry: {warning}")
+        except mainland_recovery.RoadRecoveryError as error:
+            print(f"[Mainland roads] Repair safely skipped: {error}")
+        # Expand the same reserved mainland area with one-time camp/inn additions.
+        # This does not touch the changes board or replace unrelated /data.
+        import roadside_encounters
+        try:
+            roadside_encounters.install_once()
+        except roadside_encounters.RoadsideInstallationError as error:
+            print(f"[Roadside encounters] Installation skipped: {error}")
+        try:
+            repaired = roadside_encounters.repair_missing()
+            if any(repaired.values()):
+                print(f"[Roadside encounters] Restored: {repaired}")
+        except roadside_encounters.RoadsideInstallationError as error:
+            print(f"[Roadside encounters] Repair safely skipped: {error}")
     # Live Iron Ascension: 250 transfer-only floors in 30501-31500, with
     # one hidden entrance off the Grassland Border Trail (room 20674).
     import iron_ascension
@@ -69,6 +72,11 @@ def main():
         iron_ascension.install_entrance()
     except iron_ascension.IronAscensionError as error:
         print(f"[Iron Ascension] Installation/entrance safely skipped: {error}")
+    try:
+        if country_runtime.install_or_restore():
+            print("[Countries] Expansion installed; country areas are live.")
+    except country_runtime.ExpansionError as error:
+        print(f"[Countries] Installation safely skipped: {error}")
     import commands
     commands.COMMANDS["inn"] = roadside_encounters.cmd_inn
     commands.COMMANDS["ascension"] = iron_ascension.command
@@ -111,5 +119,6 @@ if __name__ == "__main__":
         import mangekyo_discovery
         import mainland_roads
         import iron_ascension
+        import country_runtime
     else:
         main()

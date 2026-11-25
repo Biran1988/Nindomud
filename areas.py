@@ -136,6 +136,8 @@ def perform_area_reset(area) -> None:
             s.send_prompt()
 
     spawn_points.respawn_missing_mobs_in_area(area)
+    import country_runtime
+    country_runtime.reset_area(area)
 
 
 def perform_all_area_resets() -> None:
