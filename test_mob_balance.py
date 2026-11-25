@@ -132,6 +132,60 @@ class MobBalanceTests(unittest.TestCase):
         self.assertIn("Only administrators", session.send.call_args.args[0])
 
 
+    def test_rank_bands_cover_every_level_without_overlap(self):
+        self.assertEqual(mob_balance.rank_brackets(), [
+            ("student", 1, 10), ("genin", 11, 35), ("chunin", 36, 65),
+            ("special jonin", 66, 200), ("jonin", 201, 250)])
+        for rank, low, high in mob_balance.rank_brackets():
+            for level in range(low, high + 1):
+                self.assertEqual(mob_balance.rank_for_level(level), rank)
+
+    def test_independent_settings_and_restart_migration(self):
+        import json
+        path = os.path.join(self.temp.name, "mob_balance.json")
+        with open(path, "w") as handle:
+            json.dump({"hp_percent": 120, "damage_percent": 90, "hitroll_percent": 110}, handle)
+        session = SimpleNamespace(account=SimpleNamespace(staff_level="administrator"), send=Mock())
+        mob_balance.cmd_mobscale(session, ["11-35", "hp", "75"])
+        mob_balance.cmd_mobscale(session, ["chuunin", "damage", "140"])
+        mob_balance.cmd_mobscale(session, ["special", "jounin", "hitroll", "160"])
+        expected = [
+            (10, 120, 90, 110), (11, 75, 90, 110), (35, 75, 90, 110),
+            (36, 120, 140, 110), (65, 120, 140, 110), (66, 120, 90, 160),
+            (200, 120, 90, 160), (201, 120, 90, 110),
+        ]
+        # Force the actual disk-load path rather than reading the cache.
+        with patch.object(mob_balance, "_cached_settings", None):
+            for level, hp, damage, hit in expected:
+                self.assertEqual(mob_balance.settings(level),
+                                 dict(hp_percent=hp, damage_percent=damage, hitroll_percent=hit))
+                self.template["level"] = level
+                mob = combat.spawn_mob(self.vnum, self.room)
+                self.assertEqual(mob.max_health, (80 + 20*level + 2*level*level)*5*hp//100)
+                self.assertEqual(mob.hit_roll, mob_balance.hit_roll_for_level(level))
+                self.assertEqual(mob.damage_dice, mob_balance.damage_dice_for_level(level))
+        # Invalid settings must not change this bracket or any other band.
+        before = mob_balance._load_settings()
+        mob_balance.cmd_mobscale(session, ["genin", "hp", "401"])
+        mob_balance.cmd_mobscale(session, ["10-35", "hp", "200"])
+        self.assertEqual(before, mob_balance._load_settings())
+        mob_balance.cmd_mobscale(session, ["all", "damage", "125"])
+        for rank, _, _ in mob_balance.rank_brackets():
+            self.assertEqual(mob_balance.settings(rank=rank)["damage_percent"], 125)
+        self.assertEqual(mob_balance.settings(11)["hp_percent"], 75)
+        self.assertEqual(mob_balance.settings(66)["hitroll_percent"], 160)
+
+    def test_existing_mob_unchanged_and_custom_mobs_exempt(self):
+        self.template["level"] = 25
+        old = combat.spawn_mob(self.vnum, self.room)
+        old_health = old.max_health
+        mob_balance.set_percent("hp_percent", 50, rank="genin")
+        self.assertEqual(old.max_health, old_health)
+        self.assertEqual(combat.spawn_mob(self.vnum, self.room).max_health, old_health//2)
+        self.template.update(auto_balance=False, hit_dice="1d1+39")
+        self.assertEqual(combat.spawn_mob(self.vnum, self.room).max_health, 40)
+
+
 class EndgameXPTests(unittest.TestCase):
     def test_everything_through_level_225_keeps_old_pace(self):
         self.assertEqual(leveling.endgame_xp_cost_percent(224), 100)
