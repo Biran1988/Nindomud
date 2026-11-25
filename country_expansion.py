@@ -71,7 +71,7 @@ RARE_GROUND = {
     "forest": ("A Wild Mushroom","A Piece of Amber","Medicinal Herbs"),
     "mountain": ("An Unpolished Gemstone",),
     "desert": ("A Desert Flower",),
-    "plains": ("A Medicinal Herb",),
+    "plains": ("Medicinal Herbs",),
 }
 MEAT = (("chicken",10,"A Raw Chicken"),("lamb",13,"A Raw Lamb"),
         ("cow",18,"A Raw Beef"),("sheep",21,"A Raw Lamb"),
