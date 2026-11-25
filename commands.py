@@ -1854,6 +1854,14 @@ def cmd_ask(session, args: List[str]) -> None:
 
 
 VILLAGE_FULL_NAME_COLORS = {
+    "grass": (70, 114),
+    "rain": (67, 250),
+    "waterfall": (37, 121),
+    "sound": (93, 183),
+    "frost": (195, 153),
+    "hotwater": (203, 223),
+    "rock": (137, 244),
+    "moon": (147, 255),
     "whirlpool": (39, 87),
     "leaf": (34, 118),    # Konohagakure
     "cloud": (33, 255),   # Kumogakure
@@ -1870,6 +1878,14 @@ CLASS_WHO_COLOR = {
 }
 # WHO-only display labels and palettes. Internal village/rank IDs are unchanged.
 WHO_VILLAGE_LABELS = {
+    "grass": "Kusa",
+    "rain": "Ame",
+    "waterfall": "Taki",
+    "sound": "Oto",
+    "frost": "Shimo",
+    "hotwater": "Yu",
+    "rock": "Ishi",
+    "moon": "Tsuki",
     "leaf": "Konoha",
     "water": "Mist",
     "cloud": "Cloud",
@@ -1878,6 +1894,14 @@ WHO_VILLAGE_LABELS = {
     "whirlpool": "Uzushio",
 }
 WHO_VILLAGE_COLORS = {
+    "grass": (70, 114),
+    "rain": (67, 250),
+    "waterfall": (37, 121),
+    "sound": (93, 183),
+    "frost": (195, 153),
+    "hotwater": (203, 223),
+    "rock": (137, 244),
+    "moon": (147, 255),
     "leaf": (196, 124),       # bright red / dark red
     "water": (39, 33),        # sky blue / deep blue
     "cloud": (250, 69),      # silver / royal blue (Thunderstorm)

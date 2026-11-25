@@ -394,7 +394,7 @@ def request_courier_mission(player: Player, rank: str) -> str:
 
 
 def missions_for_village(village: str) -> List[dict]:
-    return MISSIONS[village]
+    return MISSIONS.get(village, [])
 
 
 def mission_cooldown_seconds(mission: dict) -> float:

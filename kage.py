@@ -70,7 +70,7 @@ PROMOTIONS_ENABLED = True
 
 
 def kage_title(village: str) -> str:
-    return KAGE_NAMES[village]
+    return KAGE_NAMES.get(village, "the " + VILLAGES[village]["kage_title"])
 
 
 def handle_mission_redirect(player: Player) -> str:

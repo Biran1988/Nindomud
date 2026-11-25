@@ -423,9 +423,11 @@ def ensure_hidden_village_areas() -> None:
     deleted = {entry.get("name", "").lower()
                for entry in storage.load_world_state().get("deleted_areas", [])}
     for key, info in data_villages.VILLAGES.items():
-        if not info.get("hidden_at_creation", False) or key in deleted or find_area(key):
+        area_key = info.get("area_key", key)
+        if (not info.get("hidden_at_creation", False) or key in deleted
+                or area_key.casefold() in deleted or find_area(area_key)):
             continue
         try:
-            register_area(key, info["starting_room_vnum"], info["area_end_vnum"], "system")
+            register_area(area_key, info["starting_room_vnum"], info["area_end_vnum"], "system")
         except ValueError:
             pass  # Preserve any existing builder reservation occupying this range.
