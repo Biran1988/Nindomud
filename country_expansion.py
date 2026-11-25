@@ -58,7 +58,7 @@ FARM_BIOME = "plains"
 LANDMARKS = {4:"Stone Mile Marker",8:"Roadside Well",12:"Travelers' Campsite",
              16:"Wooden Bridge",20:"Roadside Shrine",23:"Border Watchtower"}
 GROUND = {
-    "forest": ("A Piece of Kindling","A Fallen Twig","A Piece of Bark","A Pinecone"),
+    "forest": ("A Bundle of Kindling","A Fallen Twig","A Piece of Bark","A Pinecone"),
     "plains": ("A Bundle of Straw","A Scattered Seed","A Wheat Stalk"),
     "lake": ("A Smooth Stone","A Reed"),
     "river": ("A Smooth Stone","A Reed"),
@@ -68,7 +68,7 @@ GROUND = {
     "swamp": ("A Reed","A Fallen Twig"),
 }
 RARE_GROUND = {
-    "forest": ("A Wild Mushroom","A Piece of Amber","A Medicinal Herb"),
+    "forest": ("A Wild Mushroom","A Piece of Amber","Medicinal Herbs"),
     "mountain": ("An Unpolished Gemstone",),
     "desert": ("A Desert Flower",),
     "plains": ("A Medicinal Herb",),
