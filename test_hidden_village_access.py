@@ -15,7 +15,7 @@ class HiddenVillageAccessTests(test_whirlpool.WhirlpoolTests):
     def test_additional_villages_hidden_and_password_gated(self):
         content.populate()
         for key, info in data_villages.VILLAGES.items():
-            if "area_key" not in info:
+            if "area_key" not in info or info.get("retired_at_creation"):
                 continue
             with self.subTest(key=key):
                 s, out = self.session()
@@ -48,3 +48,20 @@ class HiddenVillageAccessTests(test_whirlpool.WhirlpoolTests):
             s.handle_line("yes")
             self.assertIs(s.state, State.CHARGEN_VILLAGE)
             self.assertIsNone(s.player)
+
+    def test_retired_village_cannot_be_selected_even_with_access_code(self):
+        content.populate()
+        with patch.object(village_access, "verify_whirlpool_access_code", return_value=True):
+            for alias in ("rock", "Ishigakure", "Ishi"):
+                with self.subTest(alias=alias):
+                    self.assertIsNone(data_villages.resolve_village_key(alias))
+                    s, _ = self.session()
+                    s.handle_line(alias)
+                    self.assertIs(s.state, State.CHARGEN_VILLAGE)
+                    self.assertIsNone(s._pending_village)
+            self.assertFalse(village_access.verify_hidden_village_access_code("rock", "test-only"))
+        self.assertEqual(data_villages.resolve_village_key("stone"), "stone")
+        self.assertEqual(data_villages.resolve_village_key("moon"), "moon")
+        self.assertEqual(data_villages.VILLAGES["moon"]["village_id"], 14)
+        self.assertEqual(sum(not v.get("retired_at_creation") for v in data_villages.VILLAGES.values()), 13)
+        self.assertIsNone(areas.find_area("rock"))

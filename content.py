@@ -451,6 +451,8 @@ def populate() -> None:
             area = areas.find_area(v.get("area_key", village))
             if not area or area.prototype or not area.vnum_start <= rooms["kage"] <= area.vnum_end:
                 continue  # Do not seed a hidden home inside someone else's reservation.
+            # Retired villages can still load existing areas and characters, but
+            # their reservations are no longer seeded on new worlds.
         short = v["village_short_name"]
 
         # Per direct request/confirmation (Section 143): "convert

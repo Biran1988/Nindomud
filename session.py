@@ -994,8 +994,9 @@ class Session:
 
         # Guard the final save as well as the selection step: a valid code
         # is required for THIS attempt, never carried over from a prior one.
-        if (VILLAGES.get(self._pending_village, {}).get("hidden_at_creation")
-                and self._authorized_hidden_village != self._pending_village):
+        if (VILLAGES.get(self._pending_village, {}).get("retired_at_creation")
+                or (VILLAGES.get(self._pending_village, {}).get("hidden_at_creation")
+                    and self._authorized_hidden_village != self._pending_village)):
             self._pending_village = None
             self.state = State.CHARGEN_VILLAGE
             self.send("Village selection is not authorized.")

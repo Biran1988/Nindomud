@@ -143,6 +143,8 @@ VILLAGES = {
         "default_headband_vnum": 82951, "rank_headband_base": 82952,
         "default_reputation": 0, "ally_villages": [], "enemy_villages": [],
         "restricted_areas": [], "hidden_at_creation": True,
+        # Retired selection: retain IDs and saved-character compatibility.
+        "retired_at_creation": True,
     },
     "moon": {
         "village_id": 14, "village_name": "Tsukigakure", "village_short_name": "Tsuki",
@@ -158,8 +160,9 @@ VILLAGES = {
 def resolve_village_key(value: str):
     key = value.strip().casefold()
     if key in VILLAGES:
-        return key
-    return next((name for name, info in VILLAGES.items() if key in
+        return key if not VILLAGES[key].get("retired_at_creation") else None
+    return next((name for name, info in VILLAGES.items()
+                 if not info.get("retired_at_creation") and key in
                  (info['village_name'].casefold(), info['village_short_name'].casefold())), None)
 
 

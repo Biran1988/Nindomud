@@ -19,7 +19,8 @@ def verify_hidden_village_access_code(village: str, value: str) -> bool:
     """Use the existing gate unless staff supplies an independent server-only code."""
     import os
     from data_villages import VILLAGES
-    if not VILLAGES.get(village, {}).get("hidden_at_creation"):
+    info = VILLAGES.get(village, {})
+    if not info.get("hidden_at_creation") or info.get("retired_at_creation"):
         return False
     if village == "whirlpool":
         return verify_whirlpool_access_code(value)

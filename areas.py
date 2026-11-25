@@ -424,8 +424,8 @@ def ensure_hidden_village_areas() -> None:
                for entry in storage.load_world_state().get("deleted_areas", [])}
     for key, info in data_villages.VILLAGES.items():
         area_key = info.get("area_key", key)
-        if (not info.get("hidden_at_creation", False) or key in deleted
-                or area_key.casefold() in deleted or find_area(area_key)):
+        if (not info.get("hidden_at_creation", False) or info.get("retired_at_creation")
+                or key in deleted or area_key.casefold() in deleted or find_area(area_key)):
             continue
         try:
             register_area(area_key, info["starting_room_vnum"], info["area_end_vnum"], "system")
